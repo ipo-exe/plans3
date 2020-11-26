@@ -24,14 +24,14 @@ def asc_raster(array, meta, folder, filename):
     for i in range(len(meta_lbls)):
         line = '{}    {}\n'.format(meta_lbls[i], meta[meta_lbls[i]])
         exp_lst.append(line)
-    print(exp_lst)
+    # print(exp_lst)
     #
     # data constructor loop:
     for i in range(len(array)):
         # replace np.nan to no data values
         lcl_row_sum = np.sum((np.isnan(array[i])) * 1)
         if lcl_row_sum > 0:
-            print('Yeas')
+            #print('Yeas')
             for j in range(len(array[i])):
                 if np.isnan(array[i][j]):
                     array[i][j] = int(ndv)
