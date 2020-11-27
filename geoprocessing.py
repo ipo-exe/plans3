@@ -46,15 +46,18 @@ def find_sinks(array):
     return sinks_array
 
 
-def fill_sinks(array):
+def fill_sinks(array, status=False):
     """
     Fill sinks algorithm
     :param array: 2d numpy array of dem
     :return: 2d numpy array of filled dem
     """
+    import time
     rowmaxid = np.shape(array)[0] - 1
     colmaxid = np.shape(array)[1] - 1
     fill_array = array.copy()
+    iter = 1
+    start = time.time()
     while True:
         sink_counter = 0
         # loop inside raster bulk:
@@ -70,7 +73,11 @@ def fill_sinks(array):
                     # print('\nSink Found')
                     fill_array[i][j] =  (np.max(lcl_edge_val) + np.min(lcl_edge_val)) / 2
                     sink_counter = sink_counter + 1
-        print(sink_counter)
+        if status:
+            deltat = time.time() - start
+            print('Fill Sinks -- iteration # {:<6}\t\tSinks left:\t{:8}'
+                  '\t\tEnlapsed time: {:8.1f} s'.format(iter, sink_counter, deltat))
+        iter = iter + 1
         if sink_counter == 0:
             break
     return fill_array
@@ -161,3 +168,7 @@ def slope(array, cellsize, degree=True):
     if degree:
         slope_array = slope_array * 360 / (2 * np.pi)
     return slope_array
+
+# todo
+# def catchment_area(array, cellsize)
+# def extract_points()
