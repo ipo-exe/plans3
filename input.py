@@ -14,11 +14,15 @@ def asc_raster(file):
     #
     # get metadata constructor loop
     meta_lbls = ('ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'NODATA_value')
+    meta_format = ('int', 'int', 'float', 'float', 'float', 'float')
     meta_dct = dict()
     for i in range(6):
         lcl_lst = def_lst[i].split(' ')
         lcl_meta_str = lcl_lst[len(lcl_lst) - 1].split('\n')[0]
-        meta_dct[meta_lbls[i]] = lcl_meta_str
+        if meta_format[i] == 'int':
+            meta_dct[meta_lbls[i]] = int(lcl_meta_str)
+        else:
+            meta_dct[meta_lbls[i]] = float(lcl_meta_str)
     #
     # array constructor loop:
     array_lst = list()
