@@ -1,0 +1,18 @@
+English;Português (BR);Español
+PLANS Menu;Menu do PLANS;Menú PLANS
+Open Project; Abrir Projeto;Abrir Proyecto
+New Project; Novo Projeto;Nuevo Proyecto
+Language;Idioma;Idioma
+Exit; Sair;Salir
+Chose key;Escolha uma chave;Elija clave
+Options;Opções;Opciones
+Keys;Chaves;Llaves
+Warning! Key not found;Aviso! Chave não encontrada;¡Advertencia! Clave no encontrada
+Chosen;Escolhida;Elegido
+Exit menu;Sair do menu;Salir del menú
+Language menu;Menu de idioma;Menú de idioma
+
+
+
+
+
