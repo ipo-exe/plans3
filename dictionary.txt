@@ -7,12 +7,20 @@ Exit; Sair;Salir
 Chose key;Escolha uma chave;Elija clave
 Options;Opções;Opciones
 Keys;Chaves;Llaves
-Warning! Key not found;Aviso! Chave não encontrada;¡Advertencia! Clave no encontrada
+Key not found;Chave não encontrada;Clave no encontrada
 Chosen;Escolhida;Elegido
 Exit menu;Sair do menu;Salir del menú
 Language menu;Menu de idioma;Menú de idioma
-
-
-
-
+Project;Projeto;Proyecto
+Project menu;Menu do projeto;Menú del proyecto
+Observed datasets; Dados observados; Datos observados
+Projected datasets; Dados projetados; Datos proyectados
+Simulate NBS; Simular SBN; Simular SBN
+Optimize NBS; Otimizar SBN; Optimizar SBN
+Invalid name. No spaces allowed;Nome inválido. Espaços não permitidos; Nombre inválido. Espacios no permitidos
+Invalid name. Max of 20 characters allowed; Nome inválido. 20 caracteres no máximo; Nombre inválido. 20 caracteres como máximo
+Warning!;Aviso!;¡Advertencia!
+Enter project name; Digite o nome do projeto; Ingrese el nombre del proyecto
+Project name already exist!; Nome do projeto já existe!; ¡El nombre del proyecto ya existe!
+Available projects; Projetos disponíveis; Proyectos disponibles
 
