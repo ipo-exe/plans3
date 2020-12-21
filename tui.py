@@ -16,6 +16,11 @@ def warning(wng='Warning!', msg=''):
     sleep(0.3)
 
 
+def proceed(msg='Enter any key to proceed'):
+    string = input('\n>>> ' + msg + ': ').strip()
+    ok()
+
+
 def header(p0='title', p1=70, p2='*', p3=True):
     """
     Returns a title string like:
@@ -110,76 +115,112 @@ def validade_project_name(msg='Enter project name', wng='Warning!',
     return nm
 
 
-def menu(options, title='Menu', msg='Chose key', optlbl='Options',
+def menu(options, title='Menu', msg='Chose key', exit=True, exitkey='e', exitmsg='Exit menu',
          keylbl='Keys', wng='Warning!', wngmsg='Key not found', chsn='Chosen'):
     """
     Display a Menu
     :param options: iterable with string options
     :param title: title string
     :param msg: message string
-    :param optlbl: option label string
     :param keylbl: keys label string
     :param wng: not found warning string
     :param chsn: chosen string
     :return: string of option chosen
     """
-    keys = np.arange(1, len(options) + 1)
+    options_prime = list(options.values())[0]
+    keys = np.arange(1, len(options_prime) + 1)
     keys_str = keys.astype(str)
-    def_df = pd.DataFrame({optlbl:options, keylbl:keys})
+    options[keylbl] = keys_str
+    def_df = pd.DataFrame(options)
+    if exit:
+        values = list(def_df.values)
+        rowlen = len(values[0])
+        exit_row = list()
+        for i in range(rowlen):
+            if i == 0:
+                exit_row.append(exitmsg)
+            elif i == rowlen - 1:
+                exit_row.append(exitkey)
+            else:
+                exit_row.append('')
+        values.append(exit_row)
+        def_df = pd.DataFrame(values, columns=def_df.columns)
     menu_str = def_df.to_string(index=False)
     lcl_len = len(menu_str.split('\n')[0])
     print(title)
     print('_' * lcl_len)
     print(menu_str + '\n')
+    exit_flag = False
     while True:
         chosen = input('>>> ' + msg + ': ').strip()
-        index = int(chosen) - 1
-        if chosen in keys_str:
-            ok()
-            print(chsn + ':\t' + options[index] + '\n')
+        if chosen == exitkey:
+            exit_flag = True
             break
         else:
-            warning(wng=wng, msg=wngmsg)
-    return options[index]
+            index = int(chosen) - 1
+            if chosen in keys_str:
+                ok()
+                print(chsn + ':\t' + options_prime[index] + '\n')
+                break
+            else:
+                warning(wng=wng, msg=wngmsg)
+    if exit_flag:
+        return exitmsg
+    else:
+        return options_prime[index]
 
 
 def pick_dir():
     root = Tk()
     root.withdraw()
     folder_selected = filedialog.askdirectory()
+    root.destroy()
     return folder_selected
+
+
+def pick_file(p0="txt", p1=".txt file", p2="select file"):
+    root = Tk()
+    root.withdraw()
+    def_aux_str = "*." + p0
+    def_filename = filedialog.askopenfile(initialdir="/", title=p2, filetypes=((p1, def_aux_str), ("all files", "*.*")))
+    root.destroy()
+    #def_filename = str(def_filename)
+    if def_filename == None:
+        return 'cancel'
+    else:
+        return def_filename.name
 
 
 def main():
     # print header
-    print(header_warp())
+    print(header_warp())  # warp header credentials
     sleep(0.3)
-    print(header_plans())
+    print(header_plans())  # plans header credentials
     sleep(0.3)
     #
     # get root directory
-    rootdir = backend.get_root_dir()
+    rootdir = backend.get_root_dir()  # project standard directory on local machine
     #
     # load dictionary
     dicionary = pd.read_csv('./dictionary.txt', sep=';')
-    lng = dicionary.T.values[0]
-    languages = tuple(dicionary.columns)
+    lng = dicionary.T.values[0]  # array of language strings
+    languages = tuple(dicionary.columns)  # tuple of languages
     #
     # enter session loop:
     while True:
         exit_flag = False
-        # PLANS Menu:
+        # PLANS Menu loop:
         while True:
             header('PLANS 3')
-            session_options = (lng[1], lng[2], lng[3], lng[4])
-            opt = menu(session_options, title=lng[0], msg=lng[5], optlbl=lng[6],
-                       keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+            session_options = (lng[1], lng[2], lng[3])
+            opt = menu({lng[6]:session_options}, title=lng[0], exitmsg= lng[4], msg=lng[5], keylbl=lng[7],
+                       wng=lng[20], wngmsg=lng[8], chsn=lng[9])
             # open project
             if opt == session_options[0]:
                 header(lng[1])
                 projects_df = backend.get_existing_projects(wkplc=rootdir)
                 projects_names = tuple(projects_df['Name'])
-                project_nm = menu(projects_names, title=lng[23], msg=lng[5], optlbl=lng[6],
+                project_nm = menu({lng[6]: projects_names}, exit=False, title=lng[23], msg=lng[5],
                                   keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                 break
             # new project:
@@ -198,7 +239,7 @@ def main():
                 header(lng[3])
                 lang_options = list(languages[:])
                 lang_options.append(lng[10])
-                opt = menu(lang_options, title=lng[11], msg=lng[5], optlbl=lng[6],
+                opt = menu({lng[6]:lang_options}, title=lng[11], exit=False, msg=lng[5],
                        keylbl=lng[7], wng=lng[8], chsn=lng[9])
                 if opt == lng[10]:
                     pass
@@ -206,25 +247,82 @@ def main():
                     lng_id = languages.index(opt)
                     lng = dicionary.T.values[lng_id]
             # exit program
-            elif opt == session_options[3]:
+            elif opt == lng[4]:
                 exit_flag = True
                 break
         # evaluate exit
         if exit_flag:
             break
+        #
         # Project Setup
-        header(lng[12] + ': ' + project_nm)
-        projectdirs = backend.get_prj_dirs_paths(p0=project_nm, wkplc=rootdir)
-        print(projectdirs['Project'])
-        # Project Menu:
+        projectdirs = backend.get_prj_dirs_paths(p0=project_nm, wkplc=rootdir)  # dictionary of project directories
+        #
+        # Project Menu loop:
         while True:
-            project_options = [lng[14], lng[15], lng[16], lng[17], lng[10]]
-            opt = menu(project_options, title=lng[13], msg=lng[5], optlbl=lng[6],
+            header(lng[12] + ': ' + project_nm)
+            print(projectdirs['Project'] + '\n')
+            project_options = [lng[14], lng[15], lng[16], lng[17]]
+            opt = menu({lng[6]:project_options}, title=lng[13], exitmsg=lng[10], msg=lng[5],
                        keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
             # observed datasets
             if opt == project_options[0]:
-                header(lng[14])
-                print('Observed datasets')
+                while True:
+                    header(lng[14])
+                    files_df = backend.verify_observed_files(project_nm, rootdir)
+                    print(files_df.to_string(index=False))
+                    print('\n')
+                    observed_options = [lng[24], lng[25], lng[26]]
+                    opt = menu({lng[6]:observed_options}, title='', exitmsg=lng[10], msg=lng[5],
+                           keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                    # import datasets
+                    if opt == observed_options[0]:
+                        # import menu loop
+                        while True:
+                            header(observed_options[0])
+                            inputfiles_df = files_df[files_df['Type'] == 'imported']
+                            files_lst = list(inputfiles_df['File'])
+                            status_lst = list(inputfiles_df['Status'])
+                            opt = menu({lng[6]: files_lst, 'Status':status_lst}, title='', exitmsg=lng[10],
+                                       msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                            # exit menu condition
+                            if opt == lng[10]:
+                                break
+                            # import file
+                            else:
+                                extension = opt.split('.')[-1]
+                                aux_str = '.' + extension + ' file'
+                                src_filenm = pick_file(p0=extension, p1=aux_str)
+                                if src_filenm == 'cancel':
+                                    pass
+                                else:
+                                    dst_filenm = projectdirs['Observed'] + '/' + opt
+                                    # copy and paste
+                                    backend.importfile(src_filenm, dst_filenm)
+                                    # update database
+                                    files_df = backend.verify_observed_files(project_nm, rootdir)
+                    # derive data
+                    elif opt == observed_options[1]:
+                        header(observed_options[1])
+                        # check if all input data is present
+                        if backend.check_inputfiles(project_nm, rootdir):
+                            files_df = backend.verify_observed_files(project_nm, rootdir)
+                            warning(wng=lng[20], msg=lng[27])
+                            qdf = files_df.query('Type =="imported" and Status == "missing"')
+                            print('>>> ' + lng[28] + ':')
+                            print(qdf.to_string(index=False))
+                            proceed(msg=lng[29])
+                        else:
+                            print('RUN derivation')
+
+                    # calibrate models
+                    elif opt == observed_options[2]:
+                        header(observed_options[2])
+                        # check if all input data is present
+
+                    # exit
+                    elif opt == lng[10]:
+                        break
+
             # projected datasets
             elif opt == project_options[1]:
                 header(lng[15])
@@ -237,8 +335,7 @@ def main():
             elif opt == project_options[3]:
                 header(lng[17])
                 print('Optimize policy')
-            elif opt == project_options[4]:
+            elif opt == lng[10]:
                 break
-
         if exit_flag:
             break

@@ -23,4 +23,10 @@ Warning!;Aviso!;¡Advertencia!
 Enter project name; Digite o nome do projeto; Ingrese el nombre del proyecto
 Project name already exist!; Nome do projeto já existe!; ¡El nombre del proyecto ya existe!
 Available projects; Projetos disponíveis; Proyectos disponibles
+Import data; Importar dados; -
+Derive data; Derivar dados; -
+Calibrate models; Calibrar modelos; -
+Missing input files! Go to <Import data>; Arquivos de entrada não encontrados! Vá em <Importar dados>; -
+Missing files; Arquivos não encontrados; -
+Enter any key to proceed; Digite qualquer tecla para prosseguir; -
 

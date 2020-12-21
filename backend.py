@@ -21,6 +21,7 @@ def get_prj_dirs():
            'Runbin':'runbin', 'Simulation':'simulation', 'Optimization':'optimization'}
     return dct
 
+
 def get_prj_dirs_paths(p0='name', wkplc='C:'):
     dirs = get_prj_dirs()
     dir0 = wkplc + '/' + p0
@@ -33,6 +34,7 @@ def get_prj_dirs_paths(p0='name', wkplc='C:'):
     def_dct = {'Project': dir0, 'Datasets': dir01, 'Observed': dir011, 'Projected': dir012,
                'Runbin': dir02, 'Simulation': dir021, 'Optimization': dir022}
     return def_dct
+
 
 def check_exist_project(p0, wkplc='C:'):
     """
@@ -102,4 +104,80 @@ def get_existing_projects(wkplc='C:'):
     return def_df
 
 
+def get_observed_files():
+    files = get_input_files()
+    type = list()
+    for i in range(len(files)):
+        type.append('imported')
+    df_input = pd.DataFrame({'File':files, 'Type':type})
+    files = get_derived_files()
+    type = list()
+    for i in range(len(files)):
+        type.append('derived')
+    df_deriv = pd.DataFrame({'File': files, 'Type': type})
+    files = get_calib_files()
+    type = list()
+    for i in range(len(files)):
+        type.append('calibrated')
+    df_calib = pd.DataFrame({'File': files, 'Type': type})
+    def_df = df_input.append(df_deriv, ignore_index=True).append(df_calib, ignore_index=True)
+    return def_df
 
+
+def get_derived_files():
+    files = ('slope.asc', 'twi.asc', 'flowdir.asc', 'catcharea.asc', 'qcons.txt')
+    return files
+
+
+def get_calib_files():
+    files = ('calib1.txt', 'calib2.txt')
+    return files
+
+
+def get_input_files():
+    files = ('pop.txt', 'wcons.txt', 'qobs.txt', 'pobs.txt', 'tobs.txt', 'dem.asc', 'aoi.asc', 'gaug.asc',
+             'lulc.asc', 'lulc_param.txt', 'soil.asc', 'soil_param.txt', 'conversion.txt', 'operation.txt',
+             'tariff.txt', 'elasticity.txt', 'tc_param.txt')
+    return files
+
+'''
+def verify_input_files(p0='name', wkplc='C:'):
+    files = get_input_files()
+    existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
+    status = list()
+    for i in range(len(files)):
+        if files[i] in set(existing_files):
+            status.append('OK')
+        else:
+            status.append('Missing')
+    def_dct = {'Files':files, 'Status':status}
+    return def_dct
+'''
+
+def verify_observed_files(p0='name', wkplc='C:'):
+    files_df = get_observed_files()
+    files = files_df['File']
+    existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
+    status = list()
+    for i in range(len(files)):
+        if files[i] in set(existing_files):
+            status.append('OK')
+        else:
+            status.append('missing')
+    files_df['Status'] = status
+    return files_df
+
+
+def check_inputfiles(p0='name', wkplc='C:'):
+    files_df = verify_observed_files(p0=p0, wkplc=wkplc)
+    files_input_df = files_df[files_df['Type'] == 'imported']
+    status = list(files_input_df['Status'])
+    flag = False
+    if 'missing' in set(status):
+        flag = True
+    return flag
+
+
+def importfile(src, dst):
+    from shutil import copyfile
+    copyfile(src=src, dst=dst)
