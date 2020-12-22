@@ -156,6 +156,8 @@ def menu(options, title='Menu', msg='Chose key', exit=True, exitkey='e', exitmsg
         if chosen == exitkey:
             exit_flag = True
             break
+        elif chosen == '':
+            pass
         else:
             index = int(chosen) - 1
             if chosen in keys_str:
@@ -217,12 +219,17 @@ def main():
                        wng=lng[20], wngmsg=lng[8], chsn=lng[9])
             # open project
             if opt == session_options[0]:
-                header(lng[1])
-                projects_df = backend.get_existing_projects(wkplc=rootdir)
-                projects_names = tuple(projects_df['Name'])
-                project_nm = menu({lng[6]: projects_names}, exit=False, title=lng[23], msg=lng[5],
-                                  keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
-                break
+                while True:
+                    header(lng[1])
+                    projects_df = backend.get_existing_projects(wkplc=rootdir)
+                    projects_names = tuple(projects_df['Name'])
+                    project_nm = menu({lng[6]: projects_names}, exitmsg=lng[10], title=lng[23], msg=lng[5],
+                                      keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                    break
+                if project_nm == lng[10]:
+                    pass
+                else:
+                    break
             # new project:
             elif opt == session_options[1]:
                 header(lng[2])
@@ -238,8 +245,7 @@ def main():
             elif opt == session_options[2]:
                 header(lng[3])
                 lang_options = list(languages[:])
-                lang_options.append(lng[10])
-                opt = menu({lng[6]:lang_options}, title=lng[11], exit=False, msg=lng[5],
+                opt = menu({lng[6]:lang_options}, title=lng[11],  exitmsg=lng[10], msg=lng[5],
                        keylbl=lng[7], wng=lng[8], chsn=lng[9])
                 if opt == lng[10]:
                     pass
@@ -302,9 +308,8 @@ def main():
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
                     # derive data
                     elif opt == observed_options[1]:
-                        header(observed_options[1])
                         # check if all input data is present
-                        if backend.check_inputfiles(project_nm, rootdir):
+                        if backend.check_inputfiles(project_nm, rootdir, 'imported'):
                             files_df = backend.verify_observed_files(project_nm, rootdir)
                             warning(wng=lng[20], msg=lng[27])
                             qdf = files_df.query('Type =="imported" and Status == "missing"')
@@ -312,12 +317,25 @@ def main():
                             print(qdf.to_string(index=False))
                             proceed(msg=lng[29])
                         else:
-                            print('RUN derivation')
+                            header(observed_options[1])
+                            print('\n>>> RUN derivation')
 
                     # calibrate models
                     elif opt == observed_options[2]:
-                        header(observed_options[2])
                         # check if all input data is present
+                        check1 = backend.check_inputfiles(project_nm, rootdir, 'imported')
+                        check2 = backend.check_inputfiles(project_nm, rootdir, 'derived')
+                        if check1 or check2:
+                            files_df = backend.verify_observed_files(project_nm, rootdir)
+                            warning(wng=lng[20], msg=lng[27])
+                            qdf = files_df.query('Type =="imported" or Type =="derived" and Status == "missing"')
+                            print('>>> ' + lng[28] + ':')
+                            print(qdf.to_string(index=False))
+                            proceed(msg=lng[29])
+                        else:
+                            header(observed_options[2])
+                            print('\n>>> RUN calibration')
+                            calib_options = ('Hydrology model', '')
 
                     # exit
                     elif opt == lng[10]:

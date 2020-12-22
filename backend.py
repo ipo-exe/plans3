@@ -125,7 +125,7 @@ def get_observed_files():
 
 
 def get_derived_files():
-    files = ('slope.asc', 'twi.asc', 'flowdir.asc', 'catcharea.asc', 'qcons.txt')
+    files = ('cn.asc', 'grad.asc', 'twi.asc', 'flowdir.asc', 'qcons.txt')
     return files
 
 
@@ -135,24 +135,12 @@ def get_calib_files():
 
 
 def get_input_files():
-    files = ('pop.txt', 'wcons.txt', 'qobs.txt', 'pobs.txt', 'tobs.txt', 'dem.asc', 'aoi.asc', 'gaug.asc',
-             'lulc.asc', 'lulc_param.txt', 'soil.asc', 'soil_param.txt', 'conversion.txt', 'operation.txt',
-             'tariff.txt', 'elasticity.txt', 'tc_param.txt')
+    files = ('pop.txt', 'wcons.txt', 'qobs.txt', 'pobs.txt', 'tobs.txt', 'dem.asc', 'slope.asc', 'catcha.asc',
+             'aoi.asc', 'gaug.asc', 'target.asc', 'lulc.asc', 'lulc_param.txt', 'soil.asc', 'soil_param.txt',
+             'ppat.asc', 'tpat.asc', 'conversion.txt', 'operation.txt', 'tariff.txt', 'elasticity.txt',
+             'tc_param.txt')
     return files
 
-'''
-def verify_input_files(p0='name', wkplc='C:'):
-    files = get_input_files()
-    existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
-    status = list()
-    for i in range(len(files)):
-        if files[i] in set(existing_files):
-            status.append('OK')
-        else:
-            status.append('Missing')
-    def_dct = {'Files':files, 'Status':status}
-    return def_dct
-'''
 
 def verify_observed_files(p0='name', wkplc='C:'):
     files_df = get_observed_files()
@@ -168,9 +156,9 @@ def verify_observed_files(p0='name', wkplc='C:'):
     return files_df
 
 
-def check_inputfiles(p0='name', wkplc='C:'):
+def check_inputfiles(p0='name', wkplc='C:', type='imported'):
     files_df = verify_observed_files(p0=p0, wkplc=wkplc)
-    files_input_df = files_df[files_df['Type'] == 'imported']
+    files_input_df = files_df[files_df['Type'] == type]
     status = list(files_input_df['Status'])
     flag = False
     if 'missing' in set(status):
