@@ -64,7 +64,7 @@ def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/', filename='cn'):
     return export_file
 
 
-def map_grad(fslope, folder='C:/', filename='cn'):
+def map_grad(fslope, folder='C:/', filename='grad'):
     """
     derive the topographical gradient tan(B) from the slope in degrees
     :param fslope: string path to slope in degrees raster .asc file
@@ -77,6 +77,8 @@ def map_grad(fslope, folder='C:/', filename='cn'):
     # process data
     slope_rad = np.pi * 2 * slope / 360
     grad = np.tan(slope_rad)
+    plt.imshow(grad)
+    plt.show()
     # export data
     export_file = output.asc_raster(grad, meta, folder, filename)
     return export_file

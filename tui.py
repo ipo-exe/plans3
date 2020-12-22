@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import backend
+import backend, tools
 from time import sleep
 from tkinter import filedialog
 from tkinter import *
@@ -308,18 +308,39 @@ def main():
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
                     # derive data
                     elif opt == observed_options[1]:
-                        # check if all input data is present
-                        if backend.check_inputfiles(project_nm, rootdir, 'imported'):
-                            files_df = backend.verify_observed_files(project_nm, rootdir)
-                            warning(wng=lng[20], msg=lng[27])
-                            qdf = files_df.query('Type =="imported" and Status == "missing"')
-                            print('>>> ' + lng[28] + ':')
-                            print(qdf.to_string(index=False))
-                            proceed(msg=lng[29])
-                        else:
+                        while True:
                             header(observed_options[1])
-                            print('\n>>> RUN derivation')
+                            derivefiles_df = files_df[files_df['Type'] == 'derived']
+                            files_lst = list(derivefiles_df['File'])
+                            opt = menu({lng[6]: files_lst}, title='', exitmsg=lng[10],
+                                       msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                            # exit menu condition
+                            if opt == lng[10]:
+                                break
+                            # derive file
+                            else:
+                                filesderiv_df = backend.verify_input2derived(derived=opt, p0=project_nm, wkplc=rootdir)
 
+                                if backend.check_input2derived(derived=opt, p0=project_nm, wkplc=rootdir):
+                                    warning(wng=lng[20], msg=lng[27])
+                                    print(filesderiv_df.to_string(index=False))
+                                else:
+                                    # get paths
+                                    filesnames = list(filesderiv_df['File'].values)
+                                    print(filesnames)
+                                    filesp = list()
+                                    for i in range(len(filesnames)):
+                                        filesp.append(projectdirs['Observed'] + '/' + filesnames[i])
+                                    # evaluate options
+                                    if opt == 'cn.asc':
+                                        derivedfile = tools.map_cn(filesp[0], filesp[1], filesp[2], filesp[3],
+                                                                   folder=projectdirs['Observed'])
+                                        print('\nFile sucessfully created at: {}'.format(derivedfile))
+                                        ok()
+                                    elif opt == 'grad.asc':
+                                        derivedfile = tools.map_grad(filesp[0], folder=projectdirs['Observed'])
+                                        print('\nFile sucessfully created at: {}'.format(derivedfile))
+                                        ok()
                     # calibrate models
                     elif opt == observed_options[2]:
                         # check if all input data is present
@@ -340,7 +361,6 @@ def main():
                     # exit
                     elif opt == lng[10]:
                         break
-
             # projected datasets
             elif opt == project_options[1]:
                 header(lng[15])

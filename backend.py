@@ -125,8 +125,14 @@ def get_observed_files():
 
 
 def get_derived_files():
-    files = ('cn.asc', 'grad.asc', 'twi.asc', 'flowdir.asc', 'qcons.txt')
+    files = ('cn.asc', 'grad.asc')
     return files
+
+
+def get_input2derived():
+    dct = {'cn.asc':('lulc.asc', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),
+           'grad.asc':('slope.asc',)}
+    return dct
 
 
 def get_calib_files():
@@ -154,6 +160,28 @@ def verify_observed_files(p0='name', wkplc='C:'):
             status.append('missing')
     files_df['Status'] = status
     return files_df
+
+
+def verify_input2derived(derived, p0='name', wkplc='C:'):
+    aux_dct = get_input2derived()
+    files = aux_dct[derived]
+    existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
+    status = list()
+    for i in range(len(files)):
+        if files[i] in set(existing_files):
+            status.append('OK')
+        else:
+            status.append('missing')
+    files_df = pd.DataFrame({'File':files, 'Status':status})
+    return files_df
+
+
+def check_input2derived(derived, p0='name', wkplc='C:'):
+    files_df = verify_input2derived(derived, p0=p0, wkplc=wkplc)
+    if 'missing' in set(files_df['Status'].values):
+        return True
+    else:
+        return False
 
 
 def check_inputfiles(p0='name', wkplc='C:', type='imported'):
