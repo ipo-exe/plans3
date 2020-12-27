@@ -341,6 +341,17 @@ def main():
                                         derivedfile = tools.map_grad(filesp[0], folder=projectdirs['Observed'])
                                         print('\nFile sucessfully created at: {}'.format(derivedfile))
                                         ok()
+                                    elif opt == 'lulc_series.txt':
+                                        derivedfile = tools.import_lulc_series(filesp[0],
+                                                                               rasterfolder=projectdirs['LULC'],
+                                                                               folder=projectdirs['Observed'])
+                                        print('\nFile sucessfully created at: {}'.format(derivedfile))
+                                        ok()
+                                    elif opt == 'lulc_areas.txt':
+                                        derivedfile = tools.lulc_areas(filesp[0], filesp[1], filesp[2],
+                                                                       folder=projectdirs['Observed'])
+                                        print('\nFile sucessfully created at: {}'.format(derivedfile))
+                                        ok()
                     # calibrate models
                     elif opt == observed_options[2]:
                         # check if all input data is present

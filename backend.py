@@ -18,7 +18,8 @@ def get_root_dir():
 
 def get_prj_dirs():
     dct = {'Datasets':'datasets', 'Observed':'observed', 'Projected':'projected',
-           'Runbin':'runbin', 'Simulation':'simulation', 'Optimization':'optimization'}
+           'Runbin':'runbin', 'Simulation':'simulation', 'Optimization':'optimization',
+           'LULC':'lulc', 'CN':'cn', 'PPat':'ppat', 'TPat':'tpat'}
     return dct
 
 
@@ -31,8 +32,13 @@ def get_prj_dirs_paths(p0='name', wkplc='C:'):
     dir012 = dir01 + '/' + dirs['Projected']
     dir021 = dir02 + '/' + dirs['Simulation']
     dir022 = dir02 + '/' + dirs['Optimization']
+    dir0111 = dir011 + '/' + dirs['LULC']
+    dir0112 = dir011 + '/' + dirs['PPat']
+    dir0113 = dir011 + '/' + dirs['TPat']
+    dir0114 = dir011 + '/' + dirs['CN']
     def_dct = {'Project': dir0, 'Datasets': dir01, 'Observed': dir011, 'Projected': dir012,
-               'Runbin': dir02, 'Simulation': dir021, 'Optimization': dir022}
+               'Runbin': dir02, 'Simulation': dir021, 'Optimization': dir022,
+               'LULC':dir0111, 'PPat':dir0112, 'TPat':dir0113, 'CN':dir0114}
     return def_dct
 
 
@@ -64,6 +70,10 @@ def create_new_project(p0, wkplc='C:'):
     subdirs = get_prj_dirs()
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'])
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'])
+    os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['LULC'])
+    os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['CN'])
+    os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['PPat'])
+    os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['TPat'])
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Projected'])
     os.mkdir(new_prj_path + '/' + subdirs['Runbin'])
     os.mkdir(new_prj_path + '/' + subdirs['Runbin'] + '/' + subdirs['Simulation'])
@@ -125,13 +135,15 @@ def get_observed_files():
 
 
 def get_derived_files():
-    files = ('cn.asc', 'grad.asc')
+    files = ('cn.asc', 'grad.asc', 'lulc_series.txt', 'lulc_areas.txt', 'ppat_month.txt', 'tpat_month.txt')
     return files
 
 
 def get_input2derived():
     dct = {'cn.asc':('lulc.asc', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),
-           'grad.asc':('slope.asc',)}
+           'grad.asc':('slope.asc',),
+           'lulc_series.txt':('lulc_input.txt',),
+           'lulc_areas.txt': ('lulc_series.txt', 'lulc_param.txt', 'aoi.asc')}
     return dct
 
 
@@ -142,8 +154,8 @@ def get_calib_files():
 
 def get_input_files():
     files = ('pop.txt', 'wcons.txt', 'qobs.txt', 'pobs.txt', 'tobs.txt', 'dem.asc', 'slope.asc', 'catcha.asc',
-             'aoi.asc', 'gaug.asc', 'target.asc', 'lulc.asc', 'lulc_param.txt', 'soil.asc', 'soil_param.txt',
-             'ppat.asc', 'tpat.asc', 'conversion.txt', 'operation.txt', 'tariff.txt', 'elasticity.txt',
+             'aoi.asc', 'gaug.asc', 'target.asc', 'lulc_input.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt',
+             'ppat_input.txt', 'tpat_input.txt', 'conversion.txt', 'operation.txt', 'tariff.txt', 'elasticity.txt',
              'tc_param.txt')
     return files
 

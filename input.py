@@ -10,7 +10,6 @@ def asc_raster(file):
     def_f = open(file)
     def_lst = def_f.readlines()
     def_f.close()
-    print()
     #
     # get metadata constructor loop
     meta_lbls = ('ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'NODATA_value')
