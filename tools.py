@@ -177,7 +177,6 @@ def lulc_areas(flulcseries, flulcparam, faoi, folder='C:', filename='lulc_areas'
         lcl_meta, lcl_lulc = input.asc_raster(files[i])
         lcl_lulc = lcl_lulc * aoi
         areas = geo.areas(array=lcl_lulc, cellsize=cellsize, values=lulc_classes, factor=factor)
-        print(np.sum(areas))
         #fracs = areas / np.sum(areas)
         for j in range(len(areas)):
             dct[lulc_names[j]].append(areas[j])
