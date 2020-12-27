@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
-import input
-import output
+import input, output, geo
 import matplotlib.pyplot as plt
 
 
-def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/', filename='cn'):
+def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:', filename='cn'):
     """
     derive the CN map based on LULC and Soils groups
     :param flulc: string file path to lulc .asc raster file
@@ -43,28 +42,23 @@ def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/', filename='cn'):
     lulc_param_df = pd.read_csv(flulcparam, sep=';')
     soils_param_df = pd.read_csv(fsoilsparam, sep=';')
     lulc_classes = lulc_param_df['Value'].values
-    soils_classes = soils_param_df['Value'].values * 100
+    soils_classes = soils_param_df['Value'].values
     cn_a = lulc_param_df['CN-A'].values
     cn_b = lulc_param_df['CN-B'].values
     cn_c = lulc_param_df['CN-C'].values
     cn_d = lulc_param_df['CN-D'].values
     cn_values = (cn_a, cn_b, cn_c, cn_d)
     #
+    #
     # process data
-    cn_class = (100 * soils) + lulc
-    cn_map = lulc * 0.0
-    for i in range(len(soils_classes)):
-        for j in range(len(lulc_classes)):
-            lcl_class = soils_classes[i] + lulc_classes[j]
-            lcl_cn = cn_values[i][j]
-            cn_map = cn_map + (cn_class == lcl_class) * lcl_cn
+    cn_map = geo.cn(lulc=lulc, soils=soils, cnvalues=cn_values, lulcclasses=lulc_classes, soilclasses=soils_classes)
     #
     # export data
     export_file = output.asc_raster(cn_map, metalulc, folder, filename)
     return export_file
 
 
-def map_grad(fslope, folder='C:/', filename='grad'):
+def map_grad(fslope, folder='C:', filename='grad'):
     """
     derive the topographical gradient tan(B) from the slope in degrees
     :param fslope: string path to slope in degrees raster .asc file
@@ -74,11 +68,61 @@ def map_grad(fslope, folder='C:/', filename='grad'):
     """
     # import data
     meta, slope = input.asc_raster(fslope)
+    #
     # process data
-    slope_rad = np.pi * 2 * slope / 360
-    grad = np.tan(slope_rad)
-    plt.imshow(grad)
-    plt.show()
+    grad = geo.grad(slope)
+    #
     # export data
     export_file = output.asc_raster(grad, meta, folder, filename)
     return export_file
+
+
+def lulc_areas(flulc, flulcparam, folder='C:', filename='lulc_areas', unit='ha'):
+    """
+    derive csv file of the classes areas of lulc raster
+    :param flulc:  string file path to lulc .asc raster file
+    :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
+    Example:
+
+     Value     Name  NBS  CN-A  CN-B  CN-C  CN-D
+     1        Water    0   100   100   100   100
+     2        Urban    0    77    85    90    92
+     3       Forest    0    30    55    70    77
+     4      Pasture    0    68    79    86    89
+     5        Crops    0    72    81    88    91
+     6   Forest NBS    1    36    60    74    80
+     7  Pasture NBS    1    39    61    74    80
+     8    Crops NBS    1    62    71    78    81
+
+    :param folder: string path to destination folder
+    :param filename: string name of file
+    :param unit: 'ha' for hectares, 'sqkm' for squared km
+    :return: string file path
+    """
+    factor = 1
+    if unit == 'ha':
+        factor = 100
+    elif unit == 'sqkm':
+        factor = 1000
+    else:
+        factor = 1
+    #
+    # import data
+    meta, lulc = input.asc_raster(file=flulc)
+    cellsize = meta['cellsize']
+    lulc_param_df = pd.read_csv(flulcparam, sep=';')
+    lulc_classes = lulc_param_df['Value'].values
+    lulc_names = lulc_param_df['Name'].values
+
+    #
+    # process data
+    areas = geo.areas(array=lulc, cellsize=cellsize, values=lulc_classes, factor=factor)
+    fractions = areas/np.sum(areas)
+    #
+    # export data
+    exp_df = pd.DataFrame({'Value':lulc_classes, 'Name':lulc_names, 'Area':areas, 'Fraction':fractions})
+    print(exp_df)
+    export_file = folder + '/' +  filename + '.txt'
+    exp_df.to_csv(export_file, sep=';', index=False)
+    return export_file
+

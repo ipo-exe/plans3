@@ -362,3 +362,57 @@ def fill_sinks_wang(array, status=True):
                   '\t\tEnlapsed time: {:8.1f} s'.format(iter, process, deltat))
         iter = iter + 1
     return fill_array
+
+
+def cn(lulc, soils, cnvalues, lulcclasses, soilclasses):
+    """
+    derive the CN map based on LULC and Soils groups
+    :param lulc: lulc 2d array
+    :param soils: soils 2d array
+    :param cnvalues: array of CN values for A, B, C and D soils (2d array) in the order of lulc classes
+    :param lulcclasses: array of lulc classes values
+    :param soilclasses: array of soil classses values
+    :return: 2d array of CN
+    """
+    soilclasses = soilclasses * 100
+    cn_class = (100 * soils) + lulc
+    cn_map = lulc * 0.0
+    for i in range(len(soilclasses)):
+        for j in range(len(lulcclasses)):
+            lcl_class = soilclasses[i] + lulcclasses[j]
+            lcl_cn = cnvalues[i][j]
+            cn_map = cn_map + (cn_class == lcl_class) * lcl_cn
+    return cn_map
+
+
+def grad(array):
+    """
+    derive the topographical gradient tan(B) from the slope in degrees
+    :param array: slope in degrees 2d array
+    :return:
+    """
+    slope_rad = np.pi * 2 * array / 360
+    grad = np.tan(slope_rad)
+    return grad
+
+
+def areas(array, cellsize, values, factor=1):
+    """
+    derive a list of areas in array based on a list of values
+    :param array: 2d array
+    :param cellsize: cellsize float
+    :param values: sequence of values to lookup
+    :return: array of areas in cellsize squared units
+    """
+    areas = list()
+    for i in range(len(values)):
+        lcl_val = values[i]
+        lcl_bool = (array == lcl_val) * 1
+        lcl_pixsum = np.sum(lcl_bool)
+        lcl_area = lcl_pixsum * cellsize * cellsize
+        areas.append(lcl_area)
+    return np.array(areas)/(factor * factor)
+
+
+
+
