@@ -332,24 +332,43 @@ def main():
                                     for i in range(len(filesnames)):
                                         filesp.append(projectdirs['Observed'] + '/' + filesnames[i])
                                     # evaluate options
-                                    if opt == 'cn.asc':
-                                        derivedfile = tools.map_cn(filesp[0], filesp[1], filesp[2], filesp[3],
-                                                                   folder=projectdirs['Observed'])
+                                    if opt == 'cn_series.txt':
+                                        print('\n' + 'processing' + '...')
+                                        derivedfile = tools.cn_series(filesp[0], filesp[1], filesp[2], filesp[3],
+                                                                      rasterfolder=projectdirs['CN'],
+                                                                      folder=projectdirs['Observed'])
                                         print('\nFile sucessfully created at: {}'.format(derivedfile))
                                         ok()
                                     elif opt == 'grad.asc':
+                                        print('\n' + 'processing' + '...')
                                         derivedfile = tools.map_grad(filesp[0], folder=projectdirs['Observed'])
                                         print('\nFile sucessfully created at: {}'.format(derivedfile))
                                         ok()
                                     elif opt == 'lulc_series.txt':
+                                        print('\n' + 'processing' + '...')
                                         derivedfile = tools.import_lulc_series(filesp[0],
                                                                                rasterfolder=projectdirs['LULC'],
                                                                                folder=projectdirs['Observed'])
                                         print('\nFile sucessfully created at: {}'.format(derivedfile))
                                         ok()
                                     elif opt == 'lulc_areas.txt':
+                                        print('\n' + 'processing' + '...')
                                         derivedfile = tools.lulc_areas(filesp[0], filesp[1], filesp[2],
                                                                        folder=projectdirs['Observed'])
+                                        print('\nFile sucessfully created at: {}'.format(derivedfile))
+                                        ok()
+                                    elif opt == 'ppat_month.txt':
+                                        print('\n' + 'processing' + '...')
+                                        derivedfile = tools.import_climpat(filesp[0], rasterfolder=projectdirs['PPat'],
+                                                                           folder=projectdirs['Observed'],
+                                                                           filename='ppat_month', alias='p')
+                                        print('\nFile sucessfully created at: {}'.format(derivedfile))
+                                        ok()
+                                    elif opt == 'tpat_month.txt':
+                                        print('\n' + 'processing' + '...')
+                                        derivedfile = tools.import_climpat(filesp[0], rasterfolder=projectdirs['TPat'],
+                                                                           folder=projectdirs['Observed'],
+                                                                           filename='tpat_month', alias='t')
                                         print('\nFile sucessfully created at: {}'.format(derivedfile))
                                         ok()
                     # calibrate models
