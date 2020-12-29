@@ -414,5 +414,39 @@ def areas(array, cellsize, values, factor=1):
     return np.array(areas)/(factor * factor)
 
 
+def mask(array, mask):
+    masked = np.copy(array)
+    masked[mask == 0] = np.nan
+    return masked
 
 
+def twi(catcha, grad, cellsize, gradmin=0.0001):
+    """
+    Derive the Topographical Wetness Index of TOPMODEL (Beven & Kirkby, 1979)
+
+    :param catcha: cathment area 2d array in meters
+    :param grad: gradient of terrain 2d array (tangent of slope)
+    :param cellsize: cell size in meters
+    :param gradmin: minimun gradient threshold
+    :return: Topographical Wetness Index 2d array
+    """
+
+    return np.log(catcha / (cellsize * (grad + gradmin)))
+
+
+def flatten_clear(array, mask):
+    masked = np.copy(array)
+    masked[mask == 0] = np.nan
+    flatten = masked.flatten()
+    cleared = masked[~np.isnan(masked)]
+    return cleared
+
+
+def reclassify(array, upvalues, classes):
+    new = array * 0.0
+    for i in range(len(upvalues)):
+        if i == 0:
+            new = new + ((array <= upvalues[i]) * classes[i])
+        else:
+            new = new + ((array > upvalues[i - 1]) * (array <= upvalues[i]) * classes[i])
+    return new
