@@ -9,7 +9,7 @@ def convert_q2sq(q, area):
     :param area: watershed area in m2
     :return: 1d array of Q in mm/d
     """
-    lcl_sq = q * 1000 * 86400 / area
+    lcl_sq = q * 1000 * 86400 / area  #  m3/s * 1000 mm/m * 86400 s/d / m2
     return lcl_sq
 
 

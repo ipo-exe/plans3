@@ -155,7 +155,7 @@ def get_calib_files():
 
 
 def get_input_files():
-    files = ('pop.txt', 'wcons.txt', 'qobs.txt', 'pobs.txt', 'tobs.txt', 'dem.asc', 'slope.asc', 'catcha.asc',
+    files = ('pop.txt', 'wcons.txt', 'series_calib.txt', 'pobs.txt', 'tobs.txt', 'dem.asc', 'slope.asc', 'catcha.asc',
              'aoi.asc', 'gaug.asc', 'target.asc', 'lulc_input.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt',
              'ppat_input.txt', 'tpat_input.txt', 'conversion.txt', 'operation.txt', 'tariff.txt', 'elasticity.txt',
              'tc_param.txt')
