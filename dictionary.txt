@@ -29,4 +29,5 @@ Calibrate models; Calibrar modelos; -
 Missing input files! Go to <Import data>; Arquivos de entrada não encontrados! Vá em <Importar dados>; -
 Missing files; Arquivos não encontrados; -
 Enter any key to proceed; Digite qualquer tecla para prosseguir; -
-
+File sucessfully created at;Arquivo criado com sucesso em; -
+Processing; Processando; -

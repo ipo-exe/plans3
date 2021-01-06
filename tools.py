@@ -174,6 +174,17 @@ def import_lulc_series(flulcseries, rasterfolder='C:', folder='C:', filename='lu
 
 
 def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:', folder='C:', filename='cn_series'):
+    """
+    derive the CN series raster and txt file
+    :param flulcseries: string filepath to lulc series txt
+    :param flulcparam: string filepath to lulc param txt
+    :param fsoils: string filepath to soils .asc rasterfiles
+    :param fsoilsparam: string filepath to soils parameters
+    :param rasterfolder: string filepath to raster folder
+    :param folder: string filepath to return file
+    :param filename: string of filename
+    :return: string filepath for txt file
+    """
     # import data
     lulc_series_df = pd.read_csv(flulcseries, sep=';')
     # print(lulc_series_df)
@@ -210,6 +221,15 @@ def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:', f
 
 
 def import_climpat(fclimmonth, rasterfolder='C:', folder='C:', filename='clim_month', alias='p'):
+    """
+
+    :param fclimmonth: string filepath to climate raster monthly pattern series txt file
+    :param rasterfolder: string filepath to raster folder
+    :param folder: string filepath to folder
+    :param filename: string of filename
+    :param alias: string climate alies
+    :return: string filepath
+    """
     from shutil import copyfile
 
     # import data
@@ -234,6 +254,52 @@ def import_climpat(fclimmonth, rasterfolder='C:', folder='C:', filename='clim_mo
     exp_file = folder + '/' + filename + '.txt'
     exp_df.to_csv(exp_file, sep=';', index=False)
     return exp_file
+
+
+def series_calib_month(fseries, faoi, folder='C:', filename='series_calib_month'):
+    """
+    Derive the monthly series of calibration file and ET and C variables (monthly)
+    Variables must be: Date, Prec, Flow, Temp. Units: mm, m3/s, celsius
+
+    output variables: Date, Temp, Prec, ET, Flow, C. Units: mm, mm, mm, mm/mm
+
+    :param fseries: string filepath to txt file of daily timeseries
+    :param faoi: string filepatht o aoi.asc raster file (watershed area in boolean image)
+    :param folder: string filepath to folder
+    :param filename: string filename
+    :return: string filepath to monthtly series
+    """
+    import resample, hydrology
+    # import data
+    series_df = pd.read_csv(fseries, sep=';')
+    meta, aoi = input.asc_raster(faoi)
+    cell = meta['cellsize']
+    # process data
+    area = np.sum(aoi) * cell * cell
+    #print('Area {}'.format(area))
+    series_temp = resample.d2m_clim(series_df, var_field='Temp')
+    series_flow = resample.d2m_flow(series_df, var_field='Flow')
+    series_prec = resample.d2m_prec(series_df, var_field='Prec')
+    #
+    prec = series_prec['Sum'].values
+    # convert flow to mm
+    flow = series_flow['Sum'].values
+    spflow = 1000 * flow / area
+    #
+    # monthly C and evap
+    c_month = spflow/prec
+    evap_month = prec - spflow
+    #
+    # export data
+    exp_df = pd.DataFrame({'Date':series_temp['Date'], 'Temp':series_temp['Mean'],
+                           'Prec':prec, 'ET':evap_month, 'Flow':spflow, 'C':c_month})
+    print(exp_df.head())
+    exp_file = folder + '/' + filename + '.txt'
+    exp_df.to_csv(exp_file, sep=';', index=False)
+    return exp_file
+
+
+
 
 
 

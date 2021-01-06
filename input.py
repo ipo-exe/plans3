@@ -1,5 +1,5 @@
 import numpy as np
-
+import pandas as pd
 
 def asc_raster(file):
     """
@@ -40,3 +40,23 @@ def asc_raster(file):
                 if def_array[i][j] == ndv:
                     def_array[i][j] = np.nan
     return meta_dct, def_array
+
+
+def asc_raster_list(file, filefield='File', sep=';'):
+    """
+    batch imput of asc raster
+    :param file: string filepath of batch txt file
+    :param filefield: string of File path field
+    :param sep: string data separator
+    :return: list of metadata dictionaries and list of 2d numpy arrays
+    """
+    lcl_df = pd.read_csv(file, sep=sep)
+    lcl_files = lcl_df[filefield].values
+    array_lst = list()
+    meta_lst = list()
+    for i in range(len(lcl_files)):
+        #print(i)
+        lcl_meta, lcl_array = asc_raster(lcl_files[i])
+        meta_lst.append(meta_lst)
+        array_lst.append(lcl_array)
+    return meta_lst, array_lst
