@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import input, output, geo
+import input, output, geo, hydrology
 import matplotlib.pyplot as plt
 
 
@@ -74,6 +74,26 @@ def map_grad(fslope, folder='C:', filename='grad'):
     #
     # export data
     export_file = output.asc_raster(grad, meta, folder, filename)
+    return export_file
+
+
+def map_twi(fslope, fcatcha, folder='C:', filename='twi'):
+    """
+    Derive the Topographical Wetness Index of TOPMODEL (Beven & Kirkby, 1979)
+    :param fslope: string path to slope in degrees raster .asc file
+    :param fcatcha: string path to catchment area in squared meters raster .asc file
+    :param folder: string path to destination folder
+    :param filename: string of file name
+    :return: string path to file
+    """
+    # import data
+    meta, slope = input.asc_raster(fslope)
+    meta, catcha = input.asc_raster(fcatcha)
+    # process data
+    grad = geo.grad(slope)
+    twi = geo.twi(catcha, grad, cellsize=meta['cellsize'])
+    # export data
+    export_file = output.asc_raster(twi, meta, folder, filename)
     return export_file
 
 
@@ -299,6 +319,42 @@ def series_calib_month(fseries, faoi, folder='C:', filename='series_calib_month'
     return exp_file
 
 
+def run_topmodel(fseries, fppat, ftpat, faoi, ftwi):
+    #
+    print('loading series')
+    lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    #
+    # import aoi raster
+    print('loading aoi')
+    meta, aoi = input.asc_raster(faoi)
+    cell = meta['cellsize']
+    #
+    # import ppat arrays
+    print('loading ppat list')
+    meta_lst, ppat_lst = input.asc_raster_list(file=fppat, filefield='File')
+    aux = (aoi.copy() * 0.0) + 1.0
+    #ppat_lst = [aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux]
+    #
+    # import tpat arrays
+    print('loading tpat list')
+    tpat_lst = [aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux]
+    #meta_lst, tpat_lst = input.asc_raster_list(file=ftpat, filefield='File')
+    #
+    #
+    # get area in m2
+    area = np.sum(aoi) * cell * cell
+    #
+    # import twi raster
+    print('loading twi')
+    meta, twi = input.asc_raster(ftwi)
+    #
+    # set parameters
+    m = 50
+    qo = 10
+    qt0 = 0.1 * qo
+    k = 3
+    hydrology.topmodel(series=lcl_df, twi=twi, aoi=aoi, ppat=ppat_lst, tpat=tpat_lst,
+                       cellsize=cell, qt0=qt0, qo=qo, m=m, k=k)
 
 
 

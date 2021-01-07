@@ -385,13 +385,13 @@ def cn(lulc, soils, cnvalues, lulcclasses, soilclasses):
     return cn_map
 
 
-def grad(array):
+def grad(slope):
     """
     derive the topographical gradient tan(B) from the slope in degrees
     :param array: slope in degrees 2d array
     :return:
     """
-    slope_rad = np.pi * 2 * array / 360
+    slope_rad = np.pi * 2 * slope / 360
     grad = np.tan(slope_rad)
     return grad
 

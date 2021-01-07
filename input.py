@@ -55,7 +55,7 @@ def asc_raster_list(file, filefield='File', sep=';'):
     array_lst = list()
     meta_lst = list()
     for i in range(len(lcl_files)):
-        #print(i)
+        print(i)
         lcl_meta, lcl_array = asc_raster(lcl_files[i])
         meta_lst.append(meta_lst)
         array_lst.append(lcl_array)

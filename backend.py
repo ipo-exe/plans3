@@ -135,14 +135,15 @@ def get_observed_files():
 
 
 def get_derived_files():
-    files = ('cn_series.txt', 'series_calib_month.txt', 'grad.asc', 'lulc_series.txt', 'lulc_areas.txt', 'ppat_month.txt', 'tpat_month.txt')
+    files = ('cn_series.txt', 'series_calib_month.txt', 'twi.asc', 'lulc_series.txt', 'lulc_areas.txt',
+             'ppat_month.txt', 'tpat_month.txt')
     return files
 
 
 def get_input2derived():
     dct = {'cn_series.txt':('lulc_series.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),
            'series_calib_month.txt': ('series_calib.txt','aoi.asc'),
-           'grad.asc':('slope.asc',),
+           'twi.asc':('slope.asc', 'catcha.asc'),
            'lulc_series.txt':('lulc_input.txt',),
            'lulc_areas.txt': ('lulc_series.txt', 'lulc_param.txt', 'aoi.asc'),
            'ppat_month.txt':('ppat_input.txt',),

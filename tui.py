@@ -340,9 +340,9 @@ def main():
                                         #'File sucessfully created at'
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'grad.asc':
+                                    elif opt == 'twi.asc':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.map_grad(filesp[0], folder=projectdirs['Observed'])
+                                        derivedfile = tools.map_twi(filesp[0], filesp[1], folder=projectdirs['Observed'])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'lulc_series.txt':
