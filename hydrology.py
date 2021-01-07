@@ -25,20 +25,6 @@ def convert_sq2q(sq, area):
     return lcl_q
 
 
-def topmodel_y(twi, to, aoi):
-    """
-    Y = average value of [TWIi - ln(To)]
-    :param twi:
-    :param to:
-    :param aoi:
-    :return:
-    """
-    lcl_n = np.sum(aoi)
-    lcl_diff = (twi - np.log(to)) * aoi
-    lcl_y = lcl_diff/lcl_n
-    return lcl_y
-
-
 def topmodel_lambda(twi, aoi):
     lcl_n = np.sum(aoi)
     lcl_twi = twi * aoi
@@ -54,7 +40,6 @@ def topmodel_qb(d, qo, m):
     return qo * np.exp(-d/m)
 
 
-
 def topmodel_di(d, twi, m, lamb):
     """
     local deficit di
@@ -66,6 +51,7 @@ def topmodel_di(d, twi, m, lamb):
     :return: 2d array of local deficit
     """
     lcl_di = d + m * (lamb - twi)
+    #avg_di = avg_2d(lcl_di, aoi)
     lcl_di = ((lcl_di > 0) * 1) * lcl_di  # set negative deficit to zero
     return lcl_di
 
@@ -79,7 +65,49 @@ def topmodel_vsa(vsai, aoi, cellsize):
     return lcl_vsa
 
 
-def topmodel(series, twi, aoi, ppat, tpat, cellsize, qt0, qo, m, k):
+def avg_2d(var, aoi):
+    lcl_avg = np.sum(var * aoi) / np.sum(aoi)  # avg temp
+    return lcl_avg
+
+
+def get_srzi(srzi, pi, peti, srzmaxi):
+    # increment
+    lcl_s1 = srzi + pi
+    # et and pet balance
+    lcl_et = lcl_s1 - peti  # discount
+    lcl_et = peti * (lcl_et >= 0.0) + lcl_s1 * (lcl_et < 0.0)  # positive condition
+    lcl_s2 = lcl_s1 - lcl_et  #
+    lcl_pet = peti - lcl_et
+    # final storage balance
+    lcl_s = srzmaxi * (lcl_s2 >= srzmaxi) + lcl_s2 * (lcl_s2 < srzmaxi)
+    # excess balance
+    lcl_excs = (lcl_s2 - srzmaxi) * (lcl_s2 >= srzmaxi) + 0.0 * (lcl_s2 < srzmaxi)
+    return lcl_s, lcl_et, lcl_pet, lcl_excs
+
+
+def get_suzi(suzi, srzi_ex, peti, suzimaxi, k):
+    # increment
+    lcl_s1 = suzi + srzi_ex
+    # runoff balance
+    lcl_rff = 0.0 * (lcl_s1 < suzimaxi) + (lcl_s1 - suzimaxi) * (lcl_s1 >= suzimaxi)
+    # balance
+    lcl_s2 = lcl_s1 * (lcl_s1 < suzimaxi) + suzimaxi * (lcl_s1 >= suzimaxi)
+    # et and peti balance
+    lcl_et = lcl_s2 - peti
+    lcl_et = peti * (lcl_et >= 0.0) + lcl_s2 * (lcl_et < 0.0)  # positive condition
+    lcl_s3 = lcl_s2 - lcl_et
+    lcl_pet = peti - lcl_et
+    # recharge balance
+    suzimaxi1 = suzimaxi + (2.0 + (suzimaxi <=0))
+    lcl_qvi1 = lcl_s3 / (suzimaxi1 * k)
+    lcl_qvi = lcl_qvi1 * (suzimaxi > 0)
+    # final storage balance
+    lcl_s = lcl_s3 - lcl_qvi
+    return lcl_s, lcl_rff, lcl_et, lcl_pet, lcl_qvi
+
+
+
+def topmodel(series, twi, aoi, ppat, tpat, cellsize, qt0, qo, m, k, trace=False, tracestep=10):
     """
 
     :param series: pandas dataframe of the observed daily time series.
@@ -118,27 +146,19 @@ def topmodel(series, twi, aoi, ppat, tpat, cellsize, qt0, qo, m, k):
     print('Size: {}'.format(size))
     steps = np.arange(0, size)
     #
+    area = np.sum(aoi) * cellsize * cellsize
+    spflow = convert_q2sq(q=df_ts['Flow'].values, area=area)
     #
-    # 2d prec
+    # prec array
     ts_p = np.zeros(size)
-    pattern = ppat[ts_month[0]].copy()
-    pi = ts_pobs[0] * pattern
-    ts_p[0] = np.sum(pi * aoi) / np.sum(aoi)
-    #
-    # 2d temp
+    # temp array
     ts_t = np.zeros(size)
-    pattern = tpat[ts_month[0]].copy()
-    ti = ts_tobs[0] * pattern
-    ts_t[0] = np.sum(ti * aoi) / np.sum(aoi)  # avg temp
-    #
-    # 2d pet
+    # pet array
     ts_pet = np.zeros(size)
-    peti = ti.copy() * 0.0  # todo function to get 2d pet
-    ts_pet[0] = np.sum(peti * aoi) / np.sum(aoi)  # avg pet
-    #
-    # get lambda
-    lamb = topmodel_lambda(twi=twi, aoi=aoi)
-    print('Lambda: {}'.format(lamb))
+    # et array
+    ts_et = np.zeros(size)
+    # output array
+    ts_out = np.zeros(size)
     #
     # deficit array
     d0 = topmodel_d0(qt0=qt0, qo=qo, m=m)
@@ -150,64 +170,101 @@ def topmodel(series, twi, aoi, ppat, tpat, cellsize, qt0, qo, m, k):
     ts_qb = np.zeros(size)
     ts_qb[0] = qt0
     #
+    # get lambda
+    lamb = topmodel_lambda(twi=twi, aoi=aoi)
+    print('Lambda: {}'.format(lamb))
+    #
     # recharge array:
     ts_qv = np.zeros(size)
-    di = topmodel_di(d=d0, twi=twi, m=m, lamb=lamb)
-    vsai = topmodel_vsai(di)
-    plt.imshow(aoi)
-    plt.show()
+    di_now = topmodel_di(d=d0, twi=twi, m=m, lamb=lamb)
+    vsai_now = topmodel_vsai(di_now)
     qv0 = 4
     ts_qv[0] = qv0
     #
     # variable source area array:
     ts_vsa = np.zeros(size)
-    ts_vsa[0] = topmodel_vsa(vsai, aoi, cellsize)
+    ts_vsa[0] = topmodel_vsa(vsai_now, aoi, cellsize)
     print('VSA = {} km2'.format(ts_vsa[0]/ (1000 * 1000)))
     #
     # runoff array
     ts_rff = np.zeros(size)
-    rffi = twi.copy() * 0.0  # 2d runoff
-    ts_rff[0] = np.sum(rffi * aoi) / np.sum(aoi)  # avg rff
+    rff_now = twi.copy() * 0.0  # 2d runoff
     #
     # Suz array
     ts_suz = np.zeros(size)
-    suzi = twi.copy() * 0.0  # 2d suzi
-    ts_suz[0] = np.sum(suzi * aoi) / np.sum(aoi)  # avg suz
+    suzi_now = twi.copy() * 0.0  # 2d suzi
+    ts_suz[0] = avg_2d(suzi_now, aoi)  # avg suz
     #
     # Srz array
     ts_srz = np.zeros(size)
-    srzi = twi.copy() * 0.0  # 2d srzi
-    ts_srz[0] = np.sum(srzi * aoi) / np.sum(aoi)  # avg srz
+    srzi_now = twi.copy() * 0.0  # 2d srzi
+    srzmaxi = twi.copy() * 0.0 + 4.0  # todo method for estimate srzmaxi by CN
+    ts_srz[0] = avg_2d(srzi_now, aoi)  # avg srz
     #
-    for t in range(1, 50):
+    for t in range(1, size):
         print('Step: {}'.format(t))
+        # reset last 2d arrays
+        di_last = di_now.copy()
+        vsai_last = vsai_now.copy()
+        rff_last = rff_now.copy()
+        suzi_last = suzi_now.copy()
+        srzi_last = srzi_now.copy()
+        vsai_last = vsai_now.copy()
         #
         # 2d prec
-        pattern = ppat[ts_month[t - 1]].copy()
-        pi = ts_pobs[t] * pattern
-        ts_p[t] = np.sum(pi * aoi) / np.sum(aoi)  # avg prec
+        pattern = ppat[ts_month[t - 1] - 1].copy()
+        pi_last = ts_pobs[t - 1] * pattern
+        #plt.imshow(di_last, cmap='Blues')
+        #plt.show()
+        ts_p[t - 1] = avg_2d(pi_last, aoi)  # avg prec
         #
         # 2d temp
-        pattern = tpat[ts_month[t - 1]].copy()
-        ti = ts_tobs[t] * pattern
-        ts_t[t] = np.sum(ti * aoi) / np.sum(aoi)  # avg temp
+        pattern = tpat[ts_month[t - 1] - 1].copy()
+        ti_last = ts_tobs[t - 1] * pattern
+        ts_t[t - 1] = avg_2d(ti_last, aoi)  # avg temp
         #
         # 2d pet
-        peti = ti.copy() * 0.0  # todo function to get 2d pet
-        ts_pet[t] = np.sum(peti * aoi) / np.sum(aoi)  # avg pet
+        peti_last = ti_last.copy() * 0.1  # todo function to get 2d pet
+        ts_pet[t - 1] = avg_2d(peti_last, aoi)  # avg pet
         #
-        # todo 2d ESMA
+        # 2d root zone accounting
+        srzi_now, et1i_last, peti_last, srzi_ex_last = get_srzi(srzi_last, pi_last, peti_last, srzmaxi)
+        ts_srz[t] = avg_2d(srzi_now, aoi)
         #
-        # deficit accounting
+        # 2d unsaturated zone accounting
+        suzi_now, rff_last, et2i_last, peti_last, qvi_last = get_suzi(suzi_last, srzi_ex_last, peti_last, di_last, k=k)
+        ts_suz[t] = avg_2d(suzi_now, aoi)
+        ts_rff[t - 1] = avg_2d(rff_last, aoi)
+        ts_qv[t - 1] = avg_2d(qvi_last, aoi)
+        #
+        # 2d saturated zone accounting
         ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1]
+        #
         ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
-
+        #
+        di_now = topmodel_di(d=ts_d[t], twi=twi, m=m, lamb=lamb)
+        vsai_now = topmodel_vsai(di_now)
+        ts_vsa[t] = topmodel_vsa(vsai_now, aoi, cellsize=cellsize)
+        #
+        # ET accounting
+        eti_last = et1i_last + et2i_last
+        ts_et[t - 1] = avg_2d(eti_last, aoi)
+        #
+        # output accounting
+        ts_out[t - 1] = ts_rff[t - 1] + ts_qb[t - 1] + ts_et[t - 1]
+    # discharge
+    ts_qsurf = convert_sq2q(ts_rff, area)
+    ts_qbase = convert_sq2q(ts_qb, area)
+    ts_spq = ts_qb + ts_rff
+    ts_q = ts_qsurf + ts_qbase
     exp_dct = {'Date':df_ts['Date'], 'Step':steps,
                'Prec':ts_p, 'Temp':ts_t, 'PET':ts_pet,
-               'D':ts_d, 'VSA':ts_vsa, 'Qb':ts_qb, 'Qv':ts_qv,
-               'R':ts_rff, 'Suz':ts_suz, 'Srz':ts_srz}
+               'D':ts_d, 'VSA':ts_vsa, 'Qv':ts_qv, 'Qb':ts_qb,
+               'R':ts_rff, 'Qsp':ts_spq, 'Q':ts_q, 'Qsurf':ts_qsurf, 'Qbase':ts_qbase,
+               'ET':ts_et, 'Out':ts_out,
+               'Suz':ts_suz, 'Srz':ts_srz}
     exp_df = pd.DataFrame(exp_dct)
-    print(exp_df.head(30).to_string())
+    return exp_df
 
 
 

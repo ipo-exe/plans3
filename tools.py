@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import input, output, geo, hydrology
 import matplotlib.pyplot as plt
+from scipy.ndimage.filters import gaussian_filter
 
 
 def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:', filename='cn'):
@@ -323,6 +324,10 @@ def run_topmodel(fseries, fppat, ftpat, faoi, ftwi):
     #
     print('loading series')
     lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    lcl_df.query('Date > "2005-01-01" and Date <= "2005-08-01"', inplace=True)
+    #fig, axs = plt.subplots()
+    plt.plot(lcl_df['Date'], lcl_df['Flow'])
+    plt.show()
     #
     # import aoi raster
     print('loading aoi')
@@ -331,31 +336,59 @@ def run_topmodel(fseries, fppat, ftpat, faoi, ftwi):
     #
     # import ppat arrays
     print('loading ppat list')
-    meta_lst, ppat_lst = input.asc_raster_list(file=fppat, filefield='File')
+    #meta_lst, ppat_lst = input.asc_raster_list(file=fppat, filefield='File')
+    #
+    #
     aux = (aoi.copy() * 0.0) + 1.0
-    #ppat_lst = [aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux]
+    #lcl_size = 50
+    #x = 200
+    #y = 200
+    #aux = aux[y:y + lcl_size, x: x + lcl_size]
+    np.random.seed(666)
+    aux = np.random.random(size=np.shape(aoi))
+    aux = gaussian_filter(aux, sigma=2) + 0.8
+    ppat_lst = [aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux]
+    #
     #
     # import tpat arrays
     print('loading tpat list')
+    #
+    np.random.seed(667)
+    aux = np.random.random(size=np.shape(aux))
+    aux = gaussian_filter(aux, sigma=2) + 0.8
     tpat_lst = [aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux, aux]
+    #
     #meta_lst, tpat_lst = input.asc_raster_list(file=ftpat, filefield='File')
     #
     #
     # get area in m2
-    area = np.sum(aoi) * cell * cell
     #
     # import twi raster
     print('loading twi')
     meta, twi = input.asc_raster(ftwi)
     #
     # set parameters
-    m = 50
+    m = 5
     qo = 10
     qt0 = 0.1 * qo
-    k = 3
-    hydrology.topmodel(series=lcl_df, twi=twi, aoi=aoi, ppat=ppat_lst, tpat=tpat_lst,
-                       cellsize=cell, qt0=qt0, qo=qo, m=m, k=k)
-
+    k = 2
+    #twi = twi[y:y + lcl_size, x: x + lcl_size]
+    #aoi = aoi[y:y + lcl_size, x: x + lcl_size] + 1.0
+    sim_df = hydrology.topmodel(series=lcl_df, twi=twi, aoi=aoi, ppat=ppat_lst, tpat=tpat_lst,
+                                cellsize=cell, qt0=qt0, qo=qo, m=m, k=k)
+    print(sim_df.head(20).to_string())
+    fig, axs = plt.subplots(7, 1, sharex=True, figsize=(16, 8))
+    axs[0].plot(sim_df['Date'], sim_df['Prec'])
+    axs[1].plot(sim_df['Date'], sim_df['PET'], 'k')
+    axs[1].plot(sim_df['Date'], sim_df['ET'], 'r')
+    axs[2].plot(sim_df['Date'], sim_df['Q'], 'b')
+    axs[2].plot(sim_df['Date'], sim_df['Qbase'], 'navy')
+    axs[3].plot(sim_df['Date'], sim_df['D'], 'b')
+    axs[4].plot(sim_df['Date'], sim_df['VSA'] / (100 * 100), 'b')
+    axs[5].plot(sim_df['Date'], sim_df['Qv'], 'b')
+    axs[5].plot(sim_df['Date'], sim_df['Qb'], 'k')
+    axs[6].plot(sim_df['Date'], sim_df['Suz'], 'k')
+    plt.show()
 
 
 
