@@ -320,13 +320,16 @@ def series_calib_month(fseries, faoi, folder='C:', filename='series_calib_month'
     return exp_file
 
 
-def run_topmodel(fseries, fppat, ftpat, faoi, ftwi):
+def run_topmodel2(fseries, fppat, ftpat, faoi, ftwi):
     #
     print('loading series')
     lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
-    lcl_df.query('Date > "2005-01-01" and Date <= "2005-08-01"', inplace=True)
-    #fig, axs = plt.subplots()
-    plt.plot(lcl_df['Date'], lcl_df['Flow'])
+    lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
+    fig, axs = plt.subplots(2, 1)
+    axs[0].plot(lcl_df['Date'], lcl_df['Prec'])
+    axs[0].set_ylabel('mm')
+    axs[1].plot(lcl_df['Date'], lcl_df['Flow'])
+    axs[1].set_ylabel('m3s')
     plt.show()
     #
     # import aoi raster
@@ -360,7 +363,6 @@ def run_topmodel(fseries, fppat, ftpat, faoi, ftwi):
     #
     #meta_lst, tpat_lst = input.asc_raster_list(file=ftpat, filefield='File')
     #
-    #
     # get area in m2
     #
     # import twi raster
@@ -368,33 +370,106 @@ def run_topmodel(fseries, fppat, ftpat, faoi, ftwi):
     meta, twi = input.asc_raster(ftwi)
     #
     # set parameters
-    m = 5
-    qo = 10
-    qt0 = 0.1 * qo
-    k = 2
+    m = 2 # mm
+    qo = 0.8  # verified = 0.808 mm/d
+    qt0 = 0.008 # verified = 0.008 mm/d
+    ksat = 10  # mm/d
+    srzmax = 4
     #twi = twi[y:y + lcl_size, x: x + lcl_size]
     #aoi = aoi[y:y + lcl_size, x: x + lcl_size] + 1.0
     sim_df = hydrology.topmodel(series=lcl_df, twi=twi, aoi=aoi, ppat=ppat_lst, tpat=tpat_lst,
-                                cellsize=cell, qt0=qt0, qo=qo, m=m, k=k)
+                                cellsize=cell, qt0=qt0, qo=qo, m=m, k=ksat, srzmax=srzmax)
     print(sim_df.head(20).to_string())
-    fig, axs = plt.subplots(7, 1, sharex=True, figsize=(16, 8))
+    fig, axs = plt.subplots(7, 1, sharex=True, figsize=(12, 10))
     axs[0].plot(sim_df['Date'], sim_df['Prec'])
-    axs[1].plot(sim_df['Date'], sim_df['PET'], 'k')
+    axs[0].set_ylabel('mm')
+    axs[0].set_title('Prec')
+    axs[1].plot(sim_df['Date'], sim_df['PET'], '--k')
     axs[1].plot(sim_df['Date'], sim_df['ET'], 'r')
+    axs[1].set_ylabel('mm')
+    axs[1].set_title('PET and ET')
+    axs[2].plot(lcl_df['Date'], lcl_df['Flow'], 'k')
+    axs[2].plot(sim_df['Date'], sim_df['Qbase'], '--b')
     axs[2].plot(sim_df['Date'], sim_df['Q'], 'b')
-    axs[2].plot(sim_df['Date'], sim_df['Qbase'], 'navy')
+    axs[2].set_ylabel('m3/s')
+    axs[2].set_title('Flow')
     axs[3].plot(sim_df['Date'], sim_df['D'], 'b')
+    axs[3].set_ylabel('mm')
+    axs[3].set_title('Deficit')
     axs[4].plot(sim_df['Date'], sim_df['VSA'] / (100 * 100), 'b')
+    axs[4].set_ylabel('ha')
+    axs[4].set_title('Variable source area')
     axs[5].plot(sim_df['Date'], sim_df['Qv'], 'b')
     axs[5].plot(sim_df['Date'], sim_df['Qb'], 'k')
+    axs[5].set_ylabel('mm')
+    axs[5].set_title('Recharge and baseflow')
     axs[6].plot(sim_df['Date'], sim_df['Suz'], 'k')
+    axs[6].set_ylabel('mm')
+    axs[6].set_title('Unsat zone')
     plt.show()
 
 
-
-
-
-
+def run_topmodel(fseries, faoi, ftwi):
+    print('loading series')
+    lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
+    # import aoi raster
+    print('loading aoi')
+    meta, aoi = input.asc_raster(faoi)
+    cell = meta['cellsize']
+    # import twi raster
+    print('loading twi')
+    meta, twi = input.asc_raster(ftwi)
+    #
+    # import szrmax data
+    np.random.seed(666)
+    aux = np.random.random(size=np.shape(aoi))
+    aux = gaussian_filter(aux, sigma=5)
+    srzmax = 5 * 2 * aux
+    print(np.mean(srzmax))
+    #plt.imshow(srzmax)
+    #plt.show()
+    #
+    m = 3  # mm
+    k = 1  # mm/d
+    qo = 6  # mm/d
+    qt0 = 0.00715  # mm/d
+    #
+    #
+    sim_df = hydrology.topmodel(series=lcl_df, twi=twi, aoi=aoi, m=m, k=k, qo=qo, qt0=qt0, s1max=srzmax, cellsize=cell)
+    fig, axs = plt.subplots(8, 1, sharex=True)
+    ind = 0
+    axs[ind].plot(sim_df['Date'], sim_df['Prec'])
+    axs[ind].set_ylabel('mm')
+    axs[ind].set_ylim(0, 60)
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['PET'], '--k')
+    axs[ind].plot(sim_df['Date'], sim_df['ET'], 'r')
+    axs[ind].set_ylabel('ET mm')
+    axs[ind].set_ylim(0, 10)
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['Q_Obs'])
+    axs[ind].plot(sim_df['Date'], sim_df['Qb'] + sim_df['R'], 'k')
+    axs[ind].plot(sim_df['Date'], sim_df['Qb'], '--k')
+    axs[ind].set_ylabel('Qb mm')
+    axs[ind].set_ylim(0, 60)
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['Qb'], 'k')
+    axs[ind].set_ylabel('Qb mm')
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['S1'], '--b')
+    axs[ind].set_ylabel('S1 mm')
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['S2'], '--b')
+    axs[ind].set_ylabel('S2 mm')
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['D'], 'tab:orange')
+    axs[ind].set_ylabel('D mm')
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['Flow_Obs'])
+    axs[ind].set_ylabel('m3/s')
+    axs[ind].set_ylim(0, 200)
+    plt.show()
 
 
 
