@@ -2,6 +2,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# auxiliar functions
+def avg_2d(var2d, weight):
+    lcl_avg = np.sum(var2d * weight) / np.sum(weight)  # avg
+    return lcl_avg
+
+
+def flatten_clear(array, mask):
+    masked = np.copy(array)
+    masked[mask == 0] = np.nan
+    flatten = masked.flatten()
+    cleared = masked[~np.isnan(masked)]
+    return cleared
+
 
 def convert_q2sq(q, area):
     """
@@ -24,19 +37,22 @@ def convert_sq2q(sq, area):
     lcl_q = sq * area / (1000 * 86400)
     return lcl_q
 
-def avg_2d(var2d, weight):
-    lcl_avg = np.sum(var2d * weight) / np.sum(weight)  # avg
-    return lcl_avg
 
+def nash_cascade(q, k, n):
+    from scipy.special import gamma
+    size = len(q)
+    time = np.arange(0, size)
+    nash = np.power((time / k), (n - 1)) * np.exp(- time / k) / (k * gamma(n))
+    nash_unit = nash/np.sum(nash)
+    for t in range(0, len(time)):
+        lcl_q = q[t]
+        if t == 0:
+            qs = lcl_q * nash_unit
+        else:
+            qs[t:] = qs[t:] + lcl_q * nash_unit[:size - t]
+    return qs
 
-def flatten_clear(array, mask):
-    masked = np.copy(array)
-    masked[mask == 0] = np.nan
-    flatten = masked.flatten()
-    cleared = masked[~np.isnan(masked)]
-    return cleared
-
-
+# topmodel functions
 def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
     #
     # verify bins size
@@ -81,6 +97,10 @@ def topmodel_d0(qt0, qo, m):
     return - m * np.log(qt0/qo)
 
 
+def topmodel_qb(d, qo, m):
+    return qo * np.exp(-d/m)
+
+
 def topmodel_di(d, twi, m, lamb):
     """
     local deficit di
@@ -100,7 +120,7 @@ def topmodel_vsai(di):
     return ((di == 0) * 1)
 
 
-def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
+def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, k=1.5, n=1.5):
     import time
     time_init = time.time()
     #
@@ -116,14 +136,12 @@ def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
     a = a  # mm/CN
     c = c   # mm/Celsius
     lamb = avg_2d(var2d=twi, weight=aoi)
-    print('Lamb = {}'.format(round(lamb)))
     #
     # compute PET
     ts_pet = c * ts_temp
     #
     # set initial conditions
     d0 = topmodel_d0(qt0=qt0, qo=qo, m=m)
-    print('d0 = {}'.format(d0))
     #
     # extract 2d parameters
     s0max = topmodel_s0max(cn=cn, a=a)
@@ -131,13 +149,14 @@ def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
     # extract HRU count matrix and histograms
     print('computing countmatrix')
     countmatrix, twi_hist, s0max_hist = count_matrix(array2d1=twi, array2d2=s0max, bins1=20, bins2=10, aoi=aoi)
+    time_end = time.time()
+    enlapsed = time_end - time_init
+    print('Enlapsed time: {} secs'.format(round(enlapsed, 2)))
     twi_bins = twi_hist[0]
     twi_count = twi_hist[1]
     s0max_bins = s0max_hist[0]
     s0max_count = s0max_hist[1]
-    print(countmatrix)
     shape = np.shape(countmatrix)
-    print(shape)
     rows = shape[0]
     #
     # set 2d count parameter arrays
@@ -146,7 +165,6 @@ def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
     lambi = np.reshape(twi_bins, (rows, 1)) * np.ones(shape=shape, dtype='float32')
     #
     # set 2d count variable arrays
-
     s1i = np.zeros(shape=shape)  # initial condition
     tfi = np.zeros(shape=shape)
     evi = np.zeros(shape=shape)
@@ -160,6 +178,8 @@ def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
     #
     s3i = np.zeros(shape=shape)  # initial condition
     di = topmodel_di(d=d0, twi=lambi, m=m, lamb=lamb)
+    #plt.imshow(di)
+    #plt.show()
     vsai = topmodel_vsai(di=di)
     qvi = np.zeros(shape=shape)
     #
@@ -183,7 +203,7 @@ def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
     ts_qb[0] = qt0
     #
     ts_vsa = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_vsa[0] = np.sum(vsai * countmatrix)
+    ts_vsa[0] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
     #
     # set flows time series arrays
     ts_ev = np.zeros(shape=np.shape(ts_prec), dtype='float32')
@@ -194,9 +214,10 @@ def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
     ts_inf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_tf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     #
-    #
+    # ESMA loop
     for t in range(1, size):
-        print('Step {}'.format(t))
+        #print('Step {}'.format(t))
+        #
         # update S1
         s1i = s1i + ts_prec[t - 1] - tfi - evi
         ts_s1[t] = avg_2d(s1i, countmatrix)
@@ -206,6 +227,7 @@ def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
         # compute current EV
         evi = ((ts_pet[t] * np.ones(shape=shape)) * (s1i > ts_pet[t])) + (s1i * (s1i <= ts_pet[t]))
         ts_ev[t] = avg_2d(evi, countmatrix)
+        #
         #
         # update S2
         s2i = s2i + infi - peri - tpi
@@ -228,18 +250,44 @@ def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
         # compute ET
         eti = evi + tpi
         ts_et[t] = avg_2d(eti, countmatrix)
-
-
-
+        #
+        # update D
+        ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1]
+        # compute Qb
+        ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
+        # compute Di
+        di = topmodel_di(d=ts_d[t], twi=lambi, m=m, lamb=lamb)
+        # compute VSA
+        vsai = topmodel_vsai(di=di)
+        ts_vsa[t] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
+        #
+        # Update S3
+        s3i = s3i + peri - qvi
+        ts_s3[t] = avg_2d(s3i, countmatrix)
+        # compute Qv
+        aux_const = np.max(di) + 3
+        di_aux = di + (aux_const * (di <= 0.0))
+        #plt.imshow(di_aux)
+        #plt.show()
+        qvi = (di_aux != aux_const) * (((ksat * s3i / di_aux) * ((ksat * s3i / di_aux) < s3i)) + (s3i * ((ksat * s3i / di_aux) >= s3i)))
+        ts_qv[t] = avg_2d(qvi, countmatrix)
+    #
+    # compute ts_qs by channel routing
+    ts_qs = nash_cascade(ts_r, k=k, n=n)
+    # compute full discharge
+    ts_q = ts_qb + ts_qs
+    #
+    #
     exp_dct = {'Date':series['Date'].values,
                'Prec':series['Prec'].values,
                'Temp':series['Temp'].values,
                'PET': ts_pet,
                'S1':np.round(ts_s1, 3), 'TF':np.round(ts_tf, 3), 'Ev':np.round(ts_ev, 3),
                'S2':ts_s2, 'Inf':ts_inf, 'R':ts_r, 'Per':ts_per, 'Tp':ts_tp, 'ET':ts_et,
-               'D':ts_d, 'Qb': ts_qb, 'S3':ts_s3, 'Qv':ts_qv,
-               }
+               'D':ts_d, 'Qb': ts_qb, 'S3':ts_s3, 'Qv':ts_qv, 'Qs':ts_qs, 'Q':ts_q, 'VSA':ts_vsa}
+    #
     exp_df = pd.DataFrame(exp_dct)
+    #
     time_end = time.time()
     enlapsed = time_end - time_init
     print('Enlapsed time: {} secs'.format(round(enlapsed, 2)))
