@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import input, output, geo, hydrology
+import input, output, geo, hydrology, bench4
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
@@ -409,7 +409,7 @@ def run_topmodel2(fseries, fppat, ftpat, faoi, ftwi):
     plt.show()
 
 
-def run_topmodel(fseries, faoi, ftwi):
+def run_topmodel(fseries, faoi, ftwi, fcn):
     print('loading series')
     lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
@@ -417,26 +417,52 @@ def run_topmodel(fseries, faoi, ftwi):
     print('loading aoi')
     meta, aoi = input.asc_raster(faoi)
     cell = meta['cellsize']
+
     # import twi raster
     print('loading twi')
     meta, twi = input.asc_raster(ftwi)
     #
-    # import szrmax data
-    np.random.seed(666)
-    aux = np.random.random(size=np.shape(aoi))
-    aux = gaussian_filter(aux, sigma=5)
-    srzmax = 5 * 2 * aux
-    print(np.mean(srzmax))
-    #plt.imshow(srzmax)
-    #plt.show()
+    # import CN raster
+    print('loading cn')
+    meta, cn = input.asc_raster(fcn)
     #
+    #
+    #
+    #
+    area = np.sum(aoi) * cell * cell
+    q = lcl_df['Flow'].values
+    spflow = q * 1000 * 86400 / area  #  m3/s * 1000 mm/m * 86400 s/d / m2
     m = 3  # mm
-    k = 1  # mm/d
+    ksat = 1.5  # mm/d
     qo = 6  # mm/d
-    qt0 = 0.00715  # mm/d
+    qt0 = 0.007  # mm/d
+    a = 1.5
+    c = 0.4
     #
     #
-    sim_df = hydrology.topmodel(series=lcl_df, twi=twi, aoi=aoi, m=m, k=k, qo=qo, qt0=qt0, s1max=srzmax, cellsize=cell)
+    #sim_df = hydrology.topmodel(series=lcl_df, twi=twi, aoi=aoi, m=m, k=k, qo=qo, qt0=qt0, s1max=srzmax, cellsize=cell)
+    sim_df = hydrology.topmodel(lcl_df, twi, cn, aoi, ksat=ksat, m=m, qo=qo, a=a, c=c, qt0=qt0)
+    print(sim_df.head(30).to_string())
+    fig, axs = plt.subplots(6, 1, figsize=(12, 8), sharex=True)
+    ind = 0
+    axs[ind].plot(sim_df['Date'], sim_df['Prec'])
+    axs[ind].set_ylim(0, np.max(sim_df['Prec'].values))
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['R'])
+    axs[ind].set_ylim(0, np.max(sim_df['Prec'].values))
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], spflow)
+    axs[ind].set_ylim(0, np.max(sim_df['Prec'].values))
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['PET'], '--k')
+    axs[ind].plot(sim_df['Date'], sim_df['ET'], 'r')
+    axs[ind].plot(sim_df['Date'], sim_df['Tp'], '--r')
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['S1'])
+    ind = ind + 1
+    axs[ind].plot(sim_df['Date'], sim_df['S2'])
+    plt.show()
+    '''
     fig, axs = plt.subplots(8, 1, sharex=True)
     ind = 0
     axs[ind].plot(sim_df['Date'], sim_df['Prec'])
@@ -469,7 +495,7 @@ def run_topmodel(fseries, faoi, ftwi):
     axs[ind].plot(sim_df['Date'], sim_df['Flow_Obs'])
     axs[ind].set_ylabel('m3/s')
     axs[ind].set_ylim(0, 200)
-    plt.show()
+    plt.show()'''
 
 
 

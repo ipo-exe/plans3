@@ -24,23 +24,247 @@ def convert_sq2q(sq, area):
     lcl_q = sq * area / (1000 * 86400)
     return lcl_q
 
+def avg_2d(var2d, weight):
+    lcl_avg = np.sum(var2d * weight) / np.sum(weight)  # avg
+    return lcl_avg
 
-def topmodel_lambda2(twi, aoi):
-    lcl_n = np.sum(aoi)
-    lcl_twi = twi * aoi
-    lcl_lambda = np.sum(lcl_twi) / lcl_n
-    return lcl_lambda
+
+def flatten_clear(array, mask):
+    masked = np.copy(array)
+    masked[mask == 0] = np.nan
+    flatten = masked.flatten()
+    cleared = masked[~np.isnan(masked)]
+    return cleared
+
+
+def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
+    #
+    # verify bins size
+    a1_flat_clear = flatten_clear(array=array2d1, mask=aoi)
+    a1_unique = np.unique(a1_flat_clear)
+    if len(a1_unique) < bins1:
+        bins1 = len(a1_unique)
+    a2_flat_clear = flatten_clear(array=array2d2, mask=aoi)
+    a2_unique = np.unique(a2_flat_clear)
+    if len(a2_unique) < bins2:
+        bins2 = len(a2_unique)
+    #
+    # extract histograms
+    a1_hist, a1_bins = np.histogram(a1_flat_clear, bins=bins1)
+    a1_bins = a1_bins[1:]
+    #
+    a2_hist, a2_bins = np.histogram(a2_flat_clear, bins=bins2)
+    a2_bins = a2_bins[1:]
+    #
+    # Cross histograms
+    countmatrix = np.zeros(shape=(bins1, bins2), dtype='int32')
+    for i in range(len(countmatrix)):
+        if i == 0:
+            lcl_a1 = 1.0 * (array2d1 <= a1_bins[i])
+        else:
+            lcl_a1 = 1.0 * (array2d1 > a1_bins[i - 1]) * (array2d1 <= a1_bins[i])
+        for j in range(len(countmatrix[i])):
+            if j == 0:
+                lcl_a2 = 1.0 * (array2d2 <= a2_bins[j])
+            else:
+                lcl_a2 = 1.0 * (array2d2 > a2_bins[j - 1]) * (array2d2 <= a2_bins[j])
+            countmatrix[i][j] = np.sum(lcl_a1 * lcl_a2 * aoi)
+    return countmatrix, (a1_bins, a1_hist), (a2_bins, a2_hist)
+
+
+def topmodel_s0max(cn, a):
+    lcl_s0max = a * (100 - cn)
+    return lcl_s0max
 
 
 def topmodel_d0(qt0, qo, m):
     return - m * np.log(qt0/qo)
 
 
-def topmodel_qb(d, qo, m):
+def topmodel_di(d, twi, m, lamb):
+    """
+    local deficit di
+    :param d: global deficit float
+    :param twi: TWI 1d bins array
+    :param m: float
+    :param lamb: average value of TWIi
+    :return: 1d bins array of local deficit
+    """
+    lcl_di = d + m * (lamb - twi)
+    #avg_di = avg_2d(lcl_di, aoi)
+    lcl_di =  np.abs(lcl_di * ((lcl_di > 0) * 1.0))  # set negative deficit to zero
+    return lcl_di
+
+
+def topmodel_vsai(di):
+    return ((di == 0) * 1)
+
+
+def topmodel(series, twi, cn, aoi, ksat, m, qo, a, c, qt0, ):
+    import time
+    time_init = time.time()
+    #
+    # extract data input
+    ts_prec = series['Prec'].values
+    ts_temp = series['Temp'].values
+    size = len(ts_prec)
+    #
+    # extract  1d parameters
+    ksat = ksat  # mm/d
+    m = m  # mm
+    qo = qo  # mm/d
+    a = a  # mm/CN
+    c = c   # mm/Celsius
+    lamb = avg_2d(var2d=twi, weight=aoi)
+    print('Lamb = {}'.format(round(lamb)))
+    #
+    # compute PET
+    ts_pet = c * ts_temp
+    #
+    # set initial conditions
+    d0 = topmodel_d0(qt0=qt0, qo=qo, m=m)
+    print('d0 = {}'.format(d0))
+    #
+    # extract 2d parameters
+    s0max = topmodel_s0max(cn=cn, a=a)
+    #
+    # extract HRU count matrix and histograms
+    print('computing countmatrix')
+    countmatrix, twi_hist, s0max_hist = count_matrix(array2d1=twi, array2d2=s0max, bins1=20, bins2=10, aoi=aoi)
+    twi_bins = twi_hist[0]
+    twi_count = twi_hist[1]
+    s0max_bins = s0max_hist[0]
+    s0max_count = s0max_hist[1]
+    print(countmatrix)
+    shape = np.shape(countmatrix)
+    print(shape)
+    rows = shape[0]
+    #
+    # set 2d count parameter arrays
+    s1maxi = 0.2 * s0max_bins * np.ones(shape=shape, dtype='float32')
+    s2maxi = 0.8 * s0max_bins * np.ones(shape=shape, dtype='float32')
+    lambi = np.reshape(twi_bins, (rows, 1)) * np.ones(shape=shape, dtype='float32')
+    #
+    # set 2d count variable arrays
+
+    s1i = np.zeros(shape=shape)  # initial condition
+    tfi = np.zeros(shape=shape)
+    evi = np.zeros(shape=shape)
+    #
+    s2i = np.zeros(shape=shape)  # initial condition
+    infi = np.zeros(shape=shape)
+    ri = np.zeros(shape=shape)
+    peri = np.zeros(shape=shape)
+    tpi = np.zeros(shape=shape)
+    eti = evi + tpi
+    #
+    s3i = np.zeros(shape=shape)  # initial condition
+    di = topmodel_di(d=d0, twi=lambi, m=m, lamb=lamb)
+    vsai = topmodel_vsai(di=di)
+    qvi = np.zeros(shape=shape)
+    #
+    # set stocks time series arrays and initial conditions
+    ts_s1 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_s1[0] = avg_2d(var2d=s1i, weight=countmatrix)
+    #
+    ts_s2 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_s2[0] = avg_2d(var2d=s2i, weight=countmatrix)
+    #
+    ts_s3 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_s3[0] = avg_2d(var2d=s3i, weight=countmatrix)
+    #
+    ts_d = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_d[0] = d0
+    #
+    ts_qv = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_qv[0] = avg_2d(var2d=qvi, weight=countmatrix)
+    #
+    ts_qb = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_qb[0] = qt0
+    #
+    ts_vsa = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_vsa[0] = np.sum(vsai * countmatrix)
+    #
+    # set flows time series arrays
+    ts_ev = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_tp = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_et = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_r = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_per = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_inf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_tf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    #
+    #
+    for t in range(1, size):
+        print('Step {}'.format(t))
+        # update S1
+        s1i = s1i + ts_prec[t - 1] - tfi - evi
+        ts_s1[t] = avg_2d(s1i, countmatrix)
+        # compute current TF
+        tfi = ((ts_prec[t] - (s1maxi - s1i)) * (ts_prec[t] > (s1maxi - s1i))) + (0.0 * (ts_prec[t] <= (s1maxi - s1i)))
+        ts_tf[t] = avg_2d(tfi, countmatrix)
+        # compute current EV
+        evi = ((ts_pet[t] * np.ones(shape=shape)) * (s1i > ts_pet[t])) + (s1i * (s1i <= ts_pet[t]))
+        ts_ev[t] = avg_2d(evi, countmatrix)
+        #
+        # update S2
+        s2i = s2i + infi - peri - tpi
+        ts_s2[t] = avg_2d(s2i, countmatrix)
+        # compute Inf
+        infi = ((s2maxi - s2i) * ((tfi + s2i) > s2maxi)) + (tfi * ((tfi + s2i) <= s2maxi))
+        ts_inf[t] = avg_2d(infi, countmatrix)
+        # compute R
+        ri = tfi - infi
+        ts_r[t] = avg_2d(ri, countmatrix)
+        # compute PER
+        peri_potential = (s2i * ((ksat * s2i / s2maxi) > s2i)) + ((ksat * s2i / s2maxi) * ((ksat * s2i / s2maxi) <= s2i))
+        peri = (di * (peri_potential > di)) + (peri_potential * (peri_potential <= di))
+        ts_per[t] = avg_2d(peri, countmatrix)
+        # compute TP
+        peti_remain = ts_pet[t] - evi
+        s2i_remain = s2i - peri
+        tpi = (peti_remain * (s2i_remain > peti_remain)) + (s2i_remain * (s2i_remain <= peti_remain))
+        ts_tp[t] = avg_2d(tpi, countmatrix)
+        # compute ET
+        eti = evi + tpi
+        ts_et[t] = avg_2d(eti, countmatrix)
+
+
+
+    exp_dct = {'Date':series['Date'].values,
+               'Prec':series['Prec'].values,
+               'Temp':series['Temp'].values,
+               'PET': ts_pet,
+               'S1':np.round(ts_s1, 3), 'TF':np.round(ts_tf, 3), 'Ev':np.round(ts_ev, 3),
+               'S2':ts_s2, 'Inf':ts_inf, 'R':ts_r, 'Per':ts_per, 'Tp':ts_tp, 'ET':ts_et,
+               'D':ts_d, 'Qb': ts_qb, 'S3':ts_s3, 'Qv':ts_qv,
+               }
+    exp_df = pd.DataFrame(exp_dct)
+    time_end = time.time()
+    enlapsed = time_end - time_init
+    print('Enlapsed time: {} secs'.format(round(enlapsed, 2)))
+    return exp_df
+
+
+
+# trash bin:
+'''
+def topmodel_lambda23(twi, aoi):
+    lcl_n = np.sum(aoi)
+    lcl_twi = twi * aoi
+    lcl_lambda = np.sum(lcl_twi) / lcl_n
+    return lcl_lambda
+
+
+def topmodel_d03(qt0, qo, m):
+    return - m * np.log(qt0/qo)
+
+
+def topmodel_qb3(d, qo, m):
     return qo * np.exp(-d/m)
 
 
-def topmodel_di(d, twi, m, lamb):
+def topmodel_di3(d, twi, m, lamb):
     """
     local deficit di
     :param d: global deficit float
@@ -56,11 +280,11 @@ def topmodel_di(d, twi, m, lamb):
     return lcl_di
 
 
-def topmodel_vsai(di):
+def topmodel_vsai3(di):
     return ((di == 0) * 1)
 
 
-def topmodel_qvi(suzi, di, k):
+def topmodel_qvi3(suzi, di, k):
     #
     lcl_di = (1.0 * (di > 0)) + (10 * (di <= 0))  # replace 0 values by 10 to avoid nan values
     lcl_qvi = k * (suzi / lcl_di)
@@ -68,13 +292,13 @@ def topmodel_qvi(suzi, di, k):
     return lcl_qvi
 
 
-def topmodel_vsa(vsai, aoi, cellsize):
+def topmodel_vsa3(vsai, aoi, cellsize):
     lcl_vsa = np.sum(vsai * aoi) * cellsize * cellsize
     return lcl_vsa
 
 
-def avg_2d(var, aoi):
-    lcl_avg = np.sum(var * aoi) / np.sum(aoi)  # avg temp
+def avg_2d3(var2d, aoi):
+    lcl_avg = np.sum(var2d * aoi) / np.sum(aoi)  # avg
     return lcl_avg
 
 
@@ -277,7 +501,7 @@ def topmodel2(series, twi, aoi, ppat, tpat, cellsize, qt0, qo, m, k, srzmax):
     return exp_df
 
 
-def topmodel(series, twi, aoi, m, k, qo, qt0, s1max, cellsize):
+def topmodel3(series, twi, aoi, m, k, qo, qt0, s1max, cellsize):
     import time
     time_init = time.time()
     #
@@ -342,23 +566,6 @@ def topmodel(series, twi, aoi, m, k, qo, qt0, s1max, cellsize):
         ts_s1[t] = avg_2d(var=s1, aoi=aoi)
         #
         #
-        '''
-        if ts_prec[t] > 0:
-            fig, axs = plt.subplots(1, 4, figsize=(8, 4))
-            axs[0].imshow(s1)
-            axs[0].set_title('S1')
-            axs[0].axis('off')
-            axs[1].imshow(et_s1)
-            axs[1].set_title('ET s1')
-            axs[1].axis('off')
-            axs[2].imshow(exss)
-            axs[2].set_title('Excess')
-            axs[2].axis('off')
-            axs[3].imshow(pet_s2)
-            axs[3].set_title('PET s2')
-            axs[3].axis('off')
-            plt.show()
-            '''
         #
         # Update unsaturated zone stock S2
         s2 = s2 + exss  # increment Excess water
@@ -373,14 +580,6 @@ def topmodel(series, twi, aoi, m, k, qo, qt0, s1max, cellsize):
         # update recharge rate
         ts_qv[t] = avg_2d(var=qvi, aoi=aoi)
         s2 = s2 - qvi  # discount recharge rate
-        '''
-        if ts_qv[t] > 0 :
-            fig, axs = plt.subplots(1, 2)
-            axs[0].imshow(qvi)
-            axs[1].imshow(s2)
-            plt.show()
-        
-        '''
 
 
         ts_s2[t] = avg_2d(var=s2, aoi=aoi)
@@ -408,4 +607,7 @@ def topmodel(series, twi, aoi, m, k, qo, qt0, s1max, cellsize):
 
 
 
+
+
+'''
 
