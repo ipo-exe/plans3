@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import input, output, geo, hydrology, bench4
+import input, output, geo
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
@@ -321,6 +321,7 @@ def series_calib_month(fseries, faoi, folder='C:', filename='series_calib_month'
 
 
 def run_topmodel(fseries, faoi, ftwi, fcn):
+    from hydrology import avg_2d, topmodel_hist, topmodel_sim
     print('loading series')
     lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     #lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
@@ -352,10 +353,14 @@ def run_topmodel(fseries, faoi, ftwi, fcn):
     c = 0.4
     k = 1.1
     n = 2.1
+    lamb = avg_2d(var2d=twi, weight=aoi)
+    #
+    countmatrix, twihist, cnhist = topmodel_hist(twi=twi, cn=cn, aoi=aoi)
+    #
+    sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c, qt0=qt0, k=k, n=n)
     #
     #
-    #sim_df = hydrology.topmodel(series=lcl_df, twi=twi, aoi=aoi, m=m, k=k, qo=qo, qt0=qt0, s1max=srzmax, cellsize=cell)
-    sim_df = hydrology.topmodel(lcl_df, twi, cn, aoi, ksat=ksat, m=m, qo=qo, a=a, c=c, qt0=qt0, k=k, n=n)
+    #
     print(sim_df.head(30).to_string())
     cf = (np.sum(spflow)) / np.sum(sim_df['Prec'])
     print(cf)
