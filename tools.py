@@ -320,114 +320,97 @@ def series_calib_month(fseries, faoi, folder='C:', filename='series_calib_month'
     return exp_file
 
 
-def run_topmodel(fseries, faoi, ftwi, fcn):
+def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:', tui=False):
+    """
+
+    :param fseries: string file path to input series. Required fields: 'Date', 'Prec', 'Temp'
+    :param fparam: string file path to parameters dataframe.
+    Parameters names must be in index. Parameters values must be in a filed called 'Set'.
+    Order and names: m, ksat, qo, a, c, k, n
+    :param faoi: string file path to AOI raster in .asc format
+    :param ftwi: string file path to TWI raster in .asc format
+    :param fcn: string file path to CN raster in .asc format
+    :param folder: string file path to destination folder
+    :param tui: boolean control to printout messages
+    :return:
+    """
     from hydrology import avg_2d, topmodel_hist, topmodel_sim
-    print('loading series')
+    import time
+    #
+    if tui:
+        print('loading series...')
     lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     #lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
-    lcl_df.query('Date > "2005-03-15" and Date <= "2008-03-15"', inplace=True)
+    #lcl_df.query('Date > "2005-03-15" and Date <= "2010-03-15"', inplace=True)
+    #
     # import aoi raster
-    print('loading aoi')
+    if tui:
+        print('loading aoi...')
     meta, aoi = input.asc_raster(faoi)
     cell = meta['cellsize']
-
+    #
     # import twi raster
-    print('loading twi')
+    if tui:
+        print('loading twi...')
     meta, twi = input.asc_raster(ftwi)
     #
     # import CN raster
-    print('loading cn')
+    if tui:
+        print('loading cn...')
     meta, cn = input.asc_raster(fcn)
     #
-    #
-    area = np.sum(aoi) * cell * cell
-    q = lcl_df['Flow'].values
-    spflow = q * 1000 * 86400 / area  #  m3/s * 1000 mm/m * 86400 s/d / m2
-    #
-    # SET OF PARAMETERS
-    m = 5  # mm
-    ksat = 2  # mm/d
-    qo = 1  # mm/d
+    # import parameters
+    if tui:
+        print('loading parameters...')
+    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    m = df_param.loc['m'].values[0]
+    ksat = df_param.loc['ksat'].values[0]
+    qo = df_param.loc['qo'].values[0]
+    a = df_param.loc['a'].values[0]
+    c = df_param.loc['c'].values[0]
+    k = df_param.loc['k'].values[0]
+    n = df_param.loc['n'].values[0]
     qt0 = 0.007  # mm/d
-    a = 1.5
-    c = 0.4
-    k = 1.1
-    n = 2.1
     lamb = avg_2d(var2d=twi, weight=aoi)
     #
+    # compute histograms
+    if tui:
+        print('computing histograms...', end='\t\t')
+    init = time.time()
     countmatrix, twihist, cnhist = topmodel_hist(twi=twi, cn=cn, aoi=aoi)
+    end = time.time()
+    if tui:
+        print('Enlapsed time: {:.3f} seconds'.format(end - init))
     #
+    # run topmodel simulation
+    if tui:
+        print('running simulation...', end='\t\t')
+    init = time.time()
     sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c, qt0=qt0, k=k, n=n)
+    end = time.time()
+    if tui:
+        print('Enlapsed time: {:.3f} seconds'.format(end - init))
     #
+    # export files
+    if tui:
+        print('exporting run parameters...')
+    exp_df = pd.DataFrame({'Parameter':('m', 'ksat', 'qo', 'a', 'c', 'k', 'n'),
+                           'Set':(m, ksat, qo, a, c, k, n)})
+    exp_file1 = folder + '/' + 'parameters.txt'
+    exp_df.to_csv(exp_file1, sep=';', index=False)
     #
+    # export histograms
+    if tui:
+        print('exporting histograms...')
+    exp_df = pd.DataFrame(countmatrix, index=twihist[0], columns=cnhist[0])
+    exp_file2 = folder + '/' + 'histograms.txt'
+    exp_df.to_csv(exp_file2, sep=';', index_label='TWI')
     #
-    print(sim_df.head(30).to_string())
-    cf = (np.sum(spflow)) / np.sum(sim_df['Prec'])
-    print(cf)
-    cf = (np.sum(sim_df['R']) + np.sum(sim_df['Qb'])) / np.sum(sim_df['Prec'])
-    print(cf)
-    fig, axs = plt.subplots(8, 1, figsize=(12, 10), sharex=True)
-    ind = 0
-    axs[ind].plot(sim_df['Date'], sim_df['Prec'])
-    axs[ind].set_ylim(0, np.max(sim_df['Prec'].values))
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['Q'])
-    axs[ind].plot(sim_df['Date'], sim_df['Qb'], 'k')
-    axs[ind].set_ylim(0, 1.2 * np.max(spflow))
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], spflow)
-    axs[ind].plot(sim_df['Date'], sim_df['Qb'], 'k')
-    axs[ind].set_ylim(0, 1.2 * np.max(spflow))
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['PET'], '--k')
-    axs[ind].plot(sim_df['Date'], sim_df['ET'], 'r')
-    axs[ind].plot(sim_df['Date'], sim_df['Tp'], '--r')
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['S1'])
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['S2'])
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['S3'])
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['D'])
-    plt.show()
-    '''
-    fig, axs = plt.subplots(8, 1, sharex=True)
-    ind = 0
-    axs[ind].plot(sim_df['Date'], sim_df['Prec'])
-    axs[ind].set_ylabel('mm')
-    axs[ind].set_ylim(0, 60)
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['PET'], '--k')
-    axs[ind].plot(sim_df['Date'], sim_df['ET'], 'r')
-    axs[ind].set_ylabel('ET mm')
-    axs[ind].set_ylim(0, 10)
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['Q_Obs'])
-    axs[ind].plot(sim_df['Date'], sim_df['Qb'] + sim_df['R'], 'k')
-    axs[ind].plot(sim_df['Date'], sim_df['Qb'], '--k')
-    axs[ind].set_ylabel('Qb mm')
-    axs[ind].set_ylim(0, 60)
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['Qb'], 'k')
-    axs[ind].set_ylabel('Qb mm')
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['S1'], '--b')
-    axs[ind].set_ylabel('S1 mm')
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['S2'], '--b')
-    axs[ind].set_ylabel('S2 mm')
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['D'], 'tab:orange')
-    axs[ind].set_ylabel('D mm')
-    ind = ind + 1
-    axs[ind].plot(sim_df['Date'], sim_df['Flow_Obs'])
-    axs[ind].set_ylabel('m3/s')
-    axs[ind].set_ylim(0, 200)
-    plt.show()'''
-
-
-
-
-
+    # export simulation
+    if tui:
+        print('exporting simulation results...')
+    exp_file3 = folder + '/' + 'simseries.txt'
+    sim_df.to_csv(exp_file3, sep=';', index=False)
+    #
+    return (exp_file1, exp_file2, exp_file3)
 

@@ -217,13 +217,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     ts_temp = series['Temp'].values
     size = len(ts_prec)
     #
-    # extract  1d parameters
-    ksat = ksat  # mm/d
-    m = m  # mm
-    qo = qo  # mm/d
-    a = a  # mm/CN
-    c = c   # mm/Celsius
-    #
     # compute PET
     ts_pet = c * ts_temp
     #
@@ -337,8 +330,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         # compute Qv
         aux_const = np.max(di) + 3
         di_aux = di + (aux_const * (di <= 0.0))
-        #plt.imshow(di_aux)
-        #plt.show()
         qvi = (di_aux != aux_const) * (((ksat * s3i / di_aux) * ((ksat * s3i / di_aux) < s3i)) + (s3i * ((ksat * s3i / di_aux) >= s3i)))
         ts_qv[t] = avg_2d(qvi, countmatrix)
     #
