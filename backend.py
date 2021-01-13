@@ -24,6 +24,13 @@ def get_prj_dirs():
 
 
 def get_prj_dirs_paths(p0='name', wkplc='C:'):
+    """
+
+    :param p0:
+    :param wkplc:
+    :return:
+    """
+
     dirs = get_prj_dirs()
     dir0 = wkplc + '/' + p0
     dir01 = dir0 + '/' + dirs['Datasets']
