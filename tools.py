@@ -241,6 +241,35 @@ def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:', f
     return exp_file
 
 
+def map_cn_avg(fcnseries, fseries, folder='C:/bin', filename='cn_calib'):
+    """
+    Derive the average CN given a time series.
+    :param fcnseries: string file path to CN series dataframe. Required fields: 'Date' and 'File'
+    :param fseries: string file path to series dataframe. Required field: 'Date'
+    :param folder: string file path to destination directory
+    :param filename: string file name (without extension)
+    :return: string file path to derived file
+    """
+    cnseries_df = pd.read_csv(fcnseries, sep=';', parse_dates=['Date'])
+    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    datemin = series_df['Date'].min()
+    datemax = series_df['Date'].max()
+    expression = 'Date >= "{}" and Date <= "{}"'.format(datemin, datemax)
+    cnseries_df.query(expr=expression, inplace=True)
+    files = cnseries_df['File'].values
+    size = len(files)
+    for i in range(size):
+        if i == 0:
+            meta, lcl_cn1 = input.asc_raster(files[i])
+        else:
+            meta, lcl_cn2 = input.asc_raster(files[i])
+            lcl_cn1 = lcl_cn1 + lcl_cn2
+    cn_avg = lcl_cn1 / size
+    #
+    exp_file = output.asc_raster(array=cn_avg, meta=meta, folder=folder, filename=filename)
+    return exp_file
+
+
 def import_climpat(fclimmonth, rasterfolder='C:', folder='C:', filename='clim_month', alias='p'):
     """
 

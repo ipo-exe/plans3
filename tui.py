@@ -267,7 +267,7 @@ def main():
         while True:
             header(lng[12] + ': ' + project_nm)
             print(projectdirs['Project'] + '\n')
-            project_options = [lng[14], lng[15], lng[16], lng[17]]
+            project_options = [lng[14], lng[15], lng[16], lng[17], lng[32]]
             opt = menu({lng[6]:project_options}, title=lng[13], exitmsg=lng[10], msg=lng[5],
                        keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
             # observed datasets
@@ -320,7 +320,6 @@ def main():
                             # derive file
                             else:
                                 filesderiv_df = backend.verify_input2derived(derived=opt, p0=project_nm, wkplc=rootdir)
-
                                 if backend.check_input2derived(derived=opt, p0=project_nm, wkplc=rootdir):
                                     warning(wng=lng[20], msg=lng[27])
                                     print(filesderiv_df.to_string(index=False))
@@ -338,6 +337,11 @@ def main():
                                                                       rasterfolder=projectdirs['CN'],
                                                                       folder=projectdirs['Observed'])
                                         #'File sucessfully created at'
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'cn_calib.asc':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.map_cn_avg(filesp[0], filesp[1], folder=projectdirs['Observed'])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'twi.asc':
@@ -394,7 +398,6 @@ def main():
                             header(observed_options[2])
                             print('\n>>> RUN calibration')
                             calib_options = ('Hydrology model', '')
-
                     # exit
                     elif opt == lng[10]:
                         break
@@ -410,6 +413,18 @@ def main():
             elif opt == project_options[3]:
                 header(lng[17])
                 print('Optimize policy')
+            # simulate hydrology
+            elif opt == project_options[4]:
+                header(lng[32])
+                fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
+                faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
+                ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
+                fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
+                fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
+                dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
+                files = tools.run_topmodel(fseries=fseries, fparam=fparam, faoi=faoi, ftwi=ftwi, fcn=fcn, folder=dst_dir,
+                                           tui=True)
+
             elif opt == lng[10]:
                 break
         if exit_flag:
