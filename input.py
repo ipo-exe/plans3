@@ -29,7 +29,7 @@ def asc_raster(file):
         lcl_lst = def_lst[i].split(' ')[1:]
         lcl_lst[len(lcl_lst) - 1] = lcl_lst[len(lcl_lst) - 1].split('\n')[0]
         array_lst.append(lcl_lst)
-    def_array = np.array(array_lst, dtype='float64')
+    def_array = np.array(array_lst, dtype='float32')
     #
     # replace NoData value by np.nan
     ndv = float(meta_dct['NODATA_value'])

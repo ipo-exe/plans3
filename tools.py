@@ -443,3 +443,55 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:', tui=False):
     #
     return (exp_file1, exp_file2, exp_file3)
 
+
+def watch_simulation_2d(fseries, ftwi, faoi, fparam, folder='C:/bin'):
+    from hydrology import topmodel_di, avg_2d
+    from visuals import pannel_topmodel
+    # import series
+    series_df = pd.read_csv(fseries, sep=';')
+    date = series_df['Date'].values[90:]
+    prec = series_df['Prec'].values[90:]
+    base = series_df['Qb'].values[90:]
+    deficit = series_df['D'].values[90:]
+    defic_max = np.max(deficit)
+    print(defic_max)
+    #
+    # import twi
+    meta, twi = input.asc_raster(ftwi)
+    #
+    # import aoi
+    meta, aoi = input.asc_raster(faoi)
+    #
+    # extract lamb
+    lamb = avg_2d(twi, aoi)
+    #
+    # import parameter m
+    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    m = df_param.loc['m'].values[0]
+    #
+    di = topmodel_di(d=defic_max, twi=twi, m=m, lamb=lamb)
+    dmax = 0.5 * np.max(di)
+    print(dmax)
+    frame = 60
+    lcl_t_index = 20
+    size = len(date)
+    for t in range(size - frame):
+        print(t)
+        if t < 10:
+            suff = '000' + str(t)
+        elif t >= 10 and t < 100:
+            suff = '00' + str(t)
+        elif t >= 100 and t < 1000:
+            suff = '0' + str(t)
+        else:
+            suff = str(t)
+        lcl_date = date[t: t + frame]
+        lcl_p = prec[t: t + frame]
+        lcl_qb = base[t: t + frame]
+        lcl_dfc = deficit[t: t + frame]
+        lcl_d = lcl_dfc[lcl_t_index]
+        lcl_di = topmodel_di(d=lcl_d, twi=twi, m=m, lamb=lamb)
+        lcl_di_mask = geo.mask(lcl_di, aoi)
+        pannel_topmodel(image=lcl_di_mask, imax=dmax, t=lcl_date, x1=lcl_p, x2=lcl_qb, x3=lcl_dfc, vline=lcl_t_index,
+                        folder=folder, suff=suff)
+

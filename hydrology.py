@@ -163,8 +163,9 @@ def topmodel_di(d, twi, m, lamb):
     """
     lcl_di = d + m * (lamb - twi)
     #avg_di = avg_2d(lcl_di, aoi)
-    lcl_di =  np.abs(lcl_di * ((lcl_di > 0) * 1.0))  # set negative deficit to zero
-    return lcl_di
+    mask = 1.0 * (lcl_di > 0)
+    lcl_di2 =  np.abs(lcl_di * mask)  # set negative deficit to zero
+    return lcl_di2
 
 
 def topmodel_vsai(di):
