@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
 
-def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:', filename='cn'):
+def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='cn'):
     """
     derive the CN map based on LULC and Soils groups
     :param flulc: string file path to lulc .asc raster file
@@ -59,7 +59,7 @@ def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:', filename='cn'):
     return export_file
 
 
-def map_grad(fslope, folder='C:', filename='grad'):
+def map_grad(fslope, folder='C:/bin', filename='grad'):
     """
     derive the topographical gradient tan(B) from the slope in degrees
     :param fslope: string path to slope in degrees raster .asc file
@@ -78,7 +78,7 @@ def map_grad(fslope, folder='C:', filename='grad'):
     return export_file
 
 
-def map_twi(fslope, fcatcha, folder='C:', filename='twi'):
+def map_twi(fslope, fcatcha, folder='C:/bin', filename='twi'):
     """
     Derive the Topographical Wetness Index of TOPMODEL (Beven & Kirkby, 1979)
     :param fslope: string path to slope in degrees raster .asc file
@@ -98,7 +98,7 @@ def map_twi(fslope, fcatcha, folder='C:', filename='twi'):
     return export_file
 
 
-def lulc_areas(flulcseries, flulcparam, faoi, folder='C:', filename='lulc_areas', unit='ha'):
+def lulc_areas(flulcseries, flulcparam, faoi, folder='C:/bin', filename='lulc_areas', unit='ha'):
     """
     derive csv file of the classes areas of lulc raster
     :param flulc:series  string file path to lulc series .txt file
@@ -159,7 +159,7 @@ def lulc_areas(flulcseries, flulcparam, faoi, folder='C:', filename='lulc_areas'
     return export_file
 
 
-def import_lulc_series(flulcseries, rasterfolder='C:', folder='C:', filename='lulc_series'):
+def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', filename='lulc_series'):
     """
     import lulc series data set
     :param flulcseries: string for the input files.
@@ -194,7 +194,7 @@ def import_lulc_series(flulcseries, rasterfolder='C:', folder='C:', filename='lu
     return exp_file
 
 
-def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:', folder='C:', filename='cn_series'):
+def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin', folder='C:/bin', filename='cn_series'):
     """
     derive the CN series raster and txt file
     :param flulcseries: string filepath to lulc series txt
@@ -270,7 +270,7 @@ def map_cn_avg(fcnseries, fseries, folder='C:/bin', filename='cn_calib'):
     return exp_file
 
 
-def import_climpat(fclimmonth, rasterfolder='C:', folder='C:', filename='clim_month', alias='p'):
+def import_climpat(fclimmonth, rasterfolder='C:/bin', folder='C:/bin', filename='clim_month', alias='p'):
     """
 
     :param fclimmonth: string filepath to climate raster monthly pattern series txt file
@@ -306,7 +306,7 @@ def import_climpat(fclimmonth, rasterfolder='C:', folder='C:', filename='clim_mo
     return exp_file
 
 
-def series_calib_month(fseries, faoi, folder='C:', filename='series_calib_month'):
+def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_month'):
     """
     Derive the monthly series of calibration file and ET and C variables (monthly)
     Variables must be: Date, Prec, Flow, Temp. Units: mm, m3/s, celsius
@@ -349,20 +349,68 @@ def series_calib_month(fseries, faoi, folder='C:', filename='series_calib_month'
     return exp_file
 
 
-def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:', tui=False):
+def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False):
     """
 
-    :param fseries: string file path to input series. Required fields: 'Date', 'Prec', 'Temp'
+    Run the PLANS3 TOPMODEL
+
+    :param fseries: string file path to input series dataframe.
+    Field separator = ';'
+    Required fields: 'Date', 'Prec', 'Temp'
+
+    Date = daily data in YYYY-MM-DD
+    Prec = precipitation in mm
+    Temp = temperature in Celsius
+
+    Example of dataframe formatting:
+
+    Date;		Prec;	Temp;	Flow
+    2005-01-01;	0.0;	25.96;	0.2423
+    2005-01-02;	0.0;	26.96;	0.1921
+    2005-01-03;	7.35;	25.2;	0.1921
+    2005-01-04;	3.95;	27.76;	0.1493
+    2005-01-05;	0.0;	27.24;	0.1493
+       ...		...	    ...	    ...
+    2015-01-06;	0.0;	27.52;	0.1493
+    2015-01-07;	0.0;	28.84;	0.1132
+    2015-01-08;	12.5;	28.44;	0.1132
+
     :param fparam: string file path to parameters dataframe.
-    Parameters names must be in index. Parameters values must be in a filed called 'Set'.
+
+    Required fields: 'Parameter' and 'Set' , where:
+    Parameter =  string of parameter name
+    Set = float of parameter value
+
     Order and names: m, ksat, qo, a, c, k, n
-    :param faoi: string file path to AOI raster in .asc format
-    :param ftwi: string file path to TWI raster in .asc format
-    :param fcn: string file path to CN raster in .asc format
+
+    Example of dataframe formatting:
+
+    Parameter;  Set;
+    m;          5.0;
+    ksat;       2.0;
+    qo;         1.0;
+    a;          1.5;
+    c;          0.4;
+    k;          1.1;
+    n;          2.1;
+
+    :param faoi: string file path to AOI raster in .asc format.
+    The AOI raster should be a pseudo-boolean image of the watershed area
+
+    :param ftwi: string file path to TWI raster in .asc format.
+
+    :param fcn: string file path to CN raster in .asc format.
+
+    Note: all rasters must have the same shape (rows x columns)
+
     :param folder: string file path to destination folder
-    :param tui: boolean control to printout messages
-    :return:
+    :param tui: boolean control to allow terminal messages
+    :return: tuple of 3 string file paths:
+    1) simulated parameters dataframe
+    2) simulated histograms dataframes (count matrix used)
+    3) simulated of global variables series dataframe
     """
+    #
     from hydrology import avg_2d, topmodel_hist, topmodel_sim
     import time
     #

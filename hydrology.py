@@ -196,7 +196,9 @@ def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
 
 def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, qt0, k=1.5, n=1.5):
     """
-    PLANS 3 TOPMODEL simulation
+
+    PLANS 3 TOPMODEL simulation procedure
+
     :param series: dataframe of input series. Required fields: 'Date', 'Prec', 'Temp'
     :param twihist: tuple of histogram of TWI
     :param cnhist: tuple of histogram of CN

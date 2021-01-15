@@ -25,7 +25,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 6, wspace=0.8, hspace=0.6)
-    #
+    # plot image
     plt.subplot(gs[0:, 0:2])
     im = plt.imshow(image, cmap=cmap, vmin=0, vmax=imax)
     plt.axis('off')
@@ -38,6 +38,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     locs = np.arange(0, size, spaces)
     labels = t[locs]
     #
+    # plot x1
     y = x1
     ymax = x1max
     plt.subplot(gs[0, 2:])
@@ -50,6 +51,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.plot(t[vline], y[vline], 'ro')
     plt.xticks(locs, labels)
     #
+    # plot x2
     y = x2
     ymax = x2max
     plt.subplot(gs[1, 2:])
@@ -62,6 +64,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.plot(t[vline], y[vline], 'ro')
     plt.xticks(locs, labels)
     #
+    # plot x3
     y = x3
     ymax = x3max
     plt.subplot(gs[2, 2:])
@@ -75,7 +78,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.xticks(locs, labels)
     #
     #plt.show()
-    #
+    # export file
     filepath = folder + '/' + filename + '_' + suff + '.png'
     plt.savefig(filepath)
     plt.close(fig)
