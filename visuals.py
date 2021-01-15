@@ -74,9 +74,9 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.plot(t[vline], y[vline], 'ro')
     plt.xticks(locs, labels)
     #
-    plt.show()
+    #plt.show()
     #
-    #filepath = folder + '/' + filename + '_' + suff + '.png'
-    #plt.savefig(filepath)
+    filepath = folder + '/' + filename + '_' + suff + '.png'
+    plt.savefig(filepath)
     plt.close(fig)
     #return filepath
