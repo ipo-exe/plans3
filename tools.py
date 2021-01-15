@@ -444,18 +444,55 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:', tui=False):
     return (exp_file1, exp_file2, exp_file3)
 
 
-def watch_simulation_2d(fseries, ftwi, faoi, fparam, folder='C:/bin'):
+def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var3='D',
+                       size=100, start=0, framef=0.2, watchf=0.2, folder='C:/bin'):
+    """
+    Create frames for video watch of topmodel simulation with TWI map alongside 3 three variables
+    :param fseries: string filepath to simulation series dataframe
+    :param ftwi: string filepath to raster asc file of TWI
+    :param faoi: string filepath to raster asc file of AOI
+    :param fparam: string filepath to simulation parameters dataframe
+    :param var1: string of first variable field name
+    :param var2: string of second variable field name
+    :param var3: string of second variable field name
+    :param size: int number of frames
+    :param start: int index of first frame
+    :param framef: float of frame ratio to full size (0 to 1)
+    :param watchf: float of watch line ratio to full frame (0 to 1)
+    :param folder: string path to destination folder
+    :return: none
+    """
     from hydrology import topmodel_di, avg_2d
-    from visuals import pannel_topmodel
+    from visuals import pannel_1image_3series
+    # utility function
+    def suffix(t):
+        if t < 10:
+            suff = '000' + str(t)
+        elif t >= 10 and t < 100:
+            suff = '00' + str(t)
+        elif t >= 100 and t < 1000:
+            suff = '0' + str(t)
+        else:
+            suff = str(t)
+        return suff
     # import series
     series_df = pd.read_csv(fseries, sep=';')
-    date = series_df['Date'].values[90:]
-    prec = series_df['Prec'].values[90:]
-    base = series_df['Qb'].values[90:]
-    deficit = series_df['D'].values[90:]
-    defic_max = np.max(deficit)
-    print(defic_max)
     #
+    # verify size
+    if len(series_df['Date'].values) < start + size:
+        size = len(series_df['Date'].values) - start
+    #
+    # extract arrays
+    date = series_df['Date'].values[start: start + size]
+    prec = series_df[var1].values[start: start + size]
+    prec_max = np.max(prec)
+    base = series_df[var2].values[start: start + size]
+    base_max = np.max(base)
+    deficit = series_df[var3].values[start: start + size]
+    defic_max = np.max(deficit)
+    #
+    #
+    ttls = ('Local D (mm)', var1 + ' (mm)', var2 + ' (mm)', var3 + ' (mm)')
     # import twi
     meta, twi = input.asc_raster(ftwi)
     #
@@ -470,28 +507,30 @@ def watch_simulation_2d(fseries, ftwi, faoi, fparam, folder='C:/bin'):
     m = df_param.loc['m'].values[0]
     #
     di = topmodel_di(d=defic_max, twi=twi, m=m, lamb=lamb)
-    dmax = 0.5 * np.max(di)
-    print(dmax)
-    frame = 60
-    lcl_t_index = 20
-    size = len(date)
+    di_max = 0.5 * np.max(di)
+    frame = int(size * framef)
+    lcl_t_index = int(frame * watchf)
     for t in range(size - frame):
         print(t)
-        if t < 10:
-            suff = '000' + str(t)
-        elif t >= 10 and t < 100:
-            suff = '00' + str(t)
-        elif t >= 100 and t < 1000:
-            suff = '0' + str(t)
-        else:
-            suff = str(t)
+        # set suffix
+        suff = suffix(t)
+        #
+        # extract local arrays
         lcl_date = date[t: t + frame]
         lcl_p = prec[t: t + frame]
         lcl_qb = base[t: t + frame]
         lcl_dfc = deficit[t: t + frame]
+        #
+        # extract local Deficit
         lcl_d = lcl_dfc[lcl_t_index]
+        #
+        # compute local distributed Deficit
         lcl_di = topmodel_di(d=lcl_d, twi=twi, m=m, lamb=lamb)
-        lcl_di_mask = geo.mask(lcl_di, aoi)
-        pannel_topmodel(image=lcl_di_mask, imax=dmax, t=lcl_date, x1=lcl_p, x2=lcl_qb, x3=lcl_dfc, vline=lcl_t_index,
-                        folder=folder, suff=suff)
+        # mask down imagem
+        lcl_di_mask = geo.mask(lcl_di, aoi) #[90:1940, 50:1010]
+        # export image
+        pannel_1image_3series(image=lcl_di_mask, imax=di_max,
+                              t=lcl_date, x1=lcl_p, x2=lcl_qb, x3=lcl_dfc,
+                              x1max=prec_max, x2max=base_max, x3max=defic_max, titles=ttls,
+                              vline=lcl_t_index, folder=folder, suff=suff)
 
