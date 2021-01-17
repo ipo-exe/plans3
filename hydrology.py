@@ -118,7 +118,26 @@ def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
             countmatrix[i][j] = np.sum(lcl_a1 * lcl_a2 * aoi)
     return countmatrix, (a1_bins, a1_hist), (a2_bins, a2_hist)
 
-# topmpdel functions
+
+def map_back(zmatrix, a1, a2, bins1, bins2):
+    # initiate map array
+    map = np.zeros(shape=np.shape(a1))
+    for i in range(len(zmatrix)):
+        if i == 0:
+            mask1 = (a1 <= bins1[i])
+        else:
+            mask1 = (a1 > bins1[i - 1]) * (a1 <= bins1[i])
+        for j in range(len(zmatrix[i])):
+            if j == 0:
+                mask2 = (a2 <= bins2[j])
+            else:
+                mask2 = (a2 > bins2[j - 1]) * (a2 <= bins2[j])
+            # compute local map:
+            lclmap = mask1 * mask2 * zmatrix[i][j]
+            map = map + lclmap
+    return map
+
+# topmodel functions
 def topmodel_s0max(cn, a):
     """
     Plans 3 Model of S0max as a function of CN
@@ -194,7 +213,8 @@ def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
     return countmatrix, twi_hist, cn_hist
 
 
-def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, qt0, k=1.5, n=1.5):
+def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, qt0, k, n,
+                 mapback=False, tui=False, mapvar='R'):
     """
 
     PLANS 3 TOPMODEL simulation procedure
@@ -232,6 +252,7 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     s0max_count = cnhist[1]
     shape = np.shape(countmatrix)
     rows = shape[0]
+    cols = shape[1]
     #
     # set 2d count parameter arrays
     s1maxi = 0.2 * s0max_bins * np.ones(shape=shape, dtype='float32')
@@ -280,9 +301,16 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     ts_inf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_tf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     #
+    # Trace setup
+    if mapback:
+        ts_trace = np.zeros(shape=(size, rows, cols), dtype='float32')
+    #
+    if tui:
+        print('Soil moisture accounting simulation...')
     # ESMA loop
     for t in range(1, size):
-        #print('Step {}'.format(t))
+        if tui:
+            print('Step {}'.format(t))
         #
         # update S1
         s1i = s1i + ts_prec[t - 1] - tfi - evi
@@ -335,8 +363,15 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         di_aux = di + (aux_const * (di <= 0.0))
         qvi = (di_aux != aux_const) * (((ksat * s3i / di_aux) * ((ksat * s3i / di_aux) < s3i)) + (s3i * ((ksat * s3i / di_aux) >= s3i)))
         ts_qv[t] = avg_2d(qvi, countmatrix)
+        #
+        # trace section
+        if mapback:
+            if mapvar == 'R':
+                ts_trace[t] = ri
     #
     # RUNOFF ROUTING
+    if tui:
+        print('Runoff routing...')
     ts_qs = nash_cascade(ts_r, k=k, n=n)
     #
     # compute full discharge
@@ -352,5 +387,8 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
                            'S2':ts_s2, 'Inf':ts_inf, 'R':ts_r, 'Per':ts_per, 'Tp':ts_tp, 'ET':ts_et,
                            'D':ts_d, 'Qb': ts_qb, 'S3':ts_s3, 'Qv':ts_qv, 'Qs':ts_qs, 'Q':ts_q, 'VSA':ts_vsa})
     #
-    return exp_df
+    if mapback:
+        return exp_df, ts_trace
+    else:
+        return exp_df
 

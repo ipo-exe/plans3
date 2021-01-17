@@ -349,7 +349,7 @@ def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_mo
     return exp_file
 
 
-def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False):
+def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, mapback=False):
     """
 
     Run the PLANS3 TOPMODEL
@@ -364,16 +364,16 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False):
 
     Example of dataframe formatting:
 
-    Date;		Prec;	Temp;	Flow
-    2005-01-01;	0.0;	25.96;	0.2423
-    2005-01-02;	0.0;	26.96;	0.1921
-    2005-01-03;	7.35;	25.2;	0.1921
-    2005-01-04;	3.95;	27.76;	0.1493
-    2005-01-05;	0.0;	27.24;	0.1493
-       ...		...	    ...	    ...
-    2015-01-06;	0.0;	27.52;	0.1493
-    2015-01-07;	0.0;	28.84;	0.1132
-    2015-01-08;	12.5;	28.44;	0.1132
+    Date;		Prec;	Temp;
+    2005-01-01;	0.0;	25.96;
+    2005-01-02;	0.0;	26.96;
+    2005-01-03;	7.35;	25.2;
+    2005-01-04;	3.95;	27.76;
+    2005-01-05;	0.0;	27.24;
+       ...		...	    ...
+    2015-01-06;	0.0;	27.52;
+    2015-01-07;	0.0;	28.84;
+    2015-01-08;	12.5;	28.44;
 
     :param fparam: string file path to parameters dataframe.
 
@@ -411,7 +411,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False):
     3) simulated of global variables series dataframe
     """
     #
-    from hydrology import avg_2d, topmodel_hist, topmodel_sim
+    from hydrology import avg_2d, topmodel_hist, topmodel_sim, map_back
     import time
     #
     if tui:
@@ -447,7 +447,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False):
     c = df_param.loc['c'].values[0]
     k = df_param.loc['k'].values[0]
     n = df_param.loc['n'].values[0]
-    qt0 = 0.007  # mm/d
+    qt0 = 0.2  # mm/d
     lamb = avg_2d(var2d=twi, weight=aoi)
     #
     # compute histograms
@@ -463,10 +463,23 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False):
     if tui:
         print('running simulation...', end='\t\t')
     init = time.time()
-    sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c, qt0=qt0, k=k, n=n)
+    # tracing conditionals:
+    if mapback:
+        sim_df, mapped = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
+                                      qt0=qt0, k=k, n=n, tui=tui, mapback=mapback)
+    else:
+        sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
+                              qt0=qt0, k=k, n=n, tui=tui, mapback=mapback)
     end = time.time()
     if tui:
         print('Enlapsed time: {:.3f} seconds'.format(end - init))
+    #
+    # todo set mapback export
+    if mapback:
+        for t in range(len(traced)):
+            map = map_back(zmatrix=traced[t], a1=twi, a2=cn, bins1=twihist[0], bins2=cnhist[0])
+            plt.imshow(map, cmap='Blues')
+            plt.show()
     #
     # export files
     if tui:
