@@ -324,8 +324,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         if tui:
             print('Step {}'.format(t))
         #
-        # NEW CODE
-        # todo HOUSTON WE GOT A PROBLEM HERE. TP, QV AND S2 WITH NEGATIVE VALUES.
         # update S1
         s1i = s1i - evi - tfi + preci
         ts_s1[t] = avg_2d(s1i, countmatrix)
@@ -340,7 +338,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         tfi = ((preci + s1i - evi - s1maxi) * ((preci + s1i - evi) >= s1maxi)) # + ((preci * 0.0) * ((preci + s1i - evi) < s1maxi))
         ts_tf[t] = avg_2d(tfi, countmatrix)
         #
-        #
         # update S2
         s2i = s2i - qvi - tpi + infi
         ts_s2[t] = avg_2d(s2i, countmatrix)
@@ -348,44 +345,22 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         # compute TP
         peti = peti - evi  # update peti
         di_aux = di + ((np.max(di) + 3) * (di <= 0.0))  # auxiliar Di to replace zero values by a higher positive value to avoid division by zero
-        #plt.imshow(di_aux)
-        #plt.show()
         ptpi = ((s2i * (rzdi >= di)) + ((s2i * rzdi / di_aux) * (rzdi < di))) * (di > 0.0)  # compute potential TP
-        #plt.imshow(ptpi)
-        #plt.title('ptpi')
-        #plt.show()
         tpi = (ptpi * (peti >= ptpi)) + (peti * (peti < ptpi))
-        #plt.imshow(tpi)
-        #plt.title('tpi')
-        #plt.show()
         ts_tp[t] = avg_2d(tpi, countmatrix)
         #
         # compute QV
         pqvi = (ksat * s2i / di_aux) * (di > 0.0)  # potential QV
-        #plt.imshow(pqvi)
-        #plt.title('pqvi')
-        #plt.show()
         qvi = ((pqvi) * (s2i - tpi >= pqvi)) + ((s2i - tpi) * (s2i - tpi < pqvi))
-        #plt.imshow(qvi)
-        #plt.title('qvi')
-        #plt.show()
         ts_qv[t] = avg_2d(qvi, countmatrix)
-        #
         #
         # compute Inf
         infi = ((di - s2i + tpi + qvi) * (tfi >= (di - s2i + tpi + qvi))) + (tfi * (tfi < (di - s2i + tpi + qvi)))
         ts_inf[t] = avg_2d(infi, countmatrix)
-        #plt.imshow(infi)
-        #plt.title('infi')
-        #plt.show()
         #
         # compute R
         ri = tfi - infi
-        #plt.imshow(ri)
-        #plt.title('ri')
-        #plt.show()
         ts_r[t] = avg_2d(ri, countmatrix)
-        #
         #
         # compute TP-GW
         peti = peti - tpi  # remaining local PET
@@ -409,8 +384,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         # compute VSA
         vsai = topmodel_vsai(di=di)
         ts_vsa[t] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
-        #
-        # END OF NEW CODE
         #
         #
         '''
