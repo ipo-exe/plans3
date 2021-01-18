@@ -256,10 +256,20 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     #
     # set 2d count parameter arrays
     s1maxi = 0.2 * s0max_bins * np.ones(shape=shape, dtype='float32')
+    #plt.imshow(s1maxi)
+    #plt.title('s1max')
+    #plt.show()
     s2maxi = 0.8 * s0max_bins * np.ones(shape=shape, dtype='float32')
+    rzdi = s2maxi.copy()
+    #plt.imshow(rzdi)
+    #plt.title('rzdi')
+    #plt.show()
+
     lambi = np.reshape(twi_bins, (rows, 1)) * np.ones(shape=shape, dtype='float32')
     #
     # set 2d count variable arrays
+    preci = ts_prec[0] * np.ones(shape=shape)
+    peti = ts_pet[0] * np.ones(shape=shape)
     s1i = np.zeros(shape=shape)  # initial condition
     tfi = np.zeros(shape=shape)
     evi = np.zeros(shape=shape)
@@ -267,11 +277,12 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     s2i = np.zeros(shape=shape)  # initial condition
     infi = np.zeros(shape=shape)
     ri = np.zeros(shape=shape)
-    peri = np.zeros(shape=shape)
+    #peri = np.zeros(shape=shape)
     tpi = np.zeros(shape=shape)
-    eti = evi + tpi
+    tpgwi = np.zeros(shape=shape)
+    eti = evi + tpi + tpgwi
     #
-    s3i = np.zeros(shape=shape)  # initial condition
+    #s3i = np.zeros(shape=shape)  # initial condition
     di = topmodel_di(d=d0, twi=lambi, m=m, lamb=lamb)
     vsai = topmodel_vsai(di=di)
     qvi = np.zeros(shape=shape)
@@ -281,8 +292,8 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     ts_s1[0] = avg_2d(var2d=s1i, weight=countmatrix)
     ts_s2 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_s2[0] = avg_2d(var2d=s2i, weight=countmatrix)
-    ts_s3 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_s3[0] = avg_2d(var2d=s3i, weight=countmatrix)
+    #ts_s3 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    #ts_s3[0] = avg_2d(var2d=s3i, weight=countmatrix)
     ts_d = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_d[0] = d0
     ts_qv = np.zeros(shape=np.shape(ts_prec), dtype='float32')
@@ -295,9 +306,10 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     # set flows time series arrays
     ts_ev = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_tp = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    ts_tpgw = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_et = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_r = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_per = np.zeros(shape=np.shape(ts_prec), dtype='float32')
+    # ts_per = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_inf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_tf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     #
@@ -312,17 +324,109 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         if tui:
             print('Step {}'.format(t))
         #
+        # NEW CODE
+        # todo HOUSTON WE GOT A PROBLEM HERE. TP, QV AND S2 WITH NEGATIVE VALUES.
+        # update S1
+        s1i = s1i - evi - tfi + preci
+        ts_s1[t] = avg_2d(s1i, countmatrix)
+        #
+        # compute current EV
+        peti = ts_pet[t] * np.ones(shape=shape)  # update PET
+        evi = ((peti) * (s1i >= peti)) + (s1i * (s1i < peti))
+        ts_ev[t] = avg_2d(evi, countmatrix)
+        #
+        # compute current TF
+        preci = ts_prec[t] * np.ones(shape=shape)  # update PREC
+        tfi = ((preci + s1i - evi - s1maxi) * ((preci + s1i - evi) >= s1maxi)) # + ((preci * 0.0) * ((preci + s1i - evi) < s1maxi))
+        ts_tf[t] = avg_2d(tfi, countmatrix)
+        #
+        #
+        # update S2
+        s2i = s2i - qvi - tpi + infi
+        ts_s2[t] = avg_2d(s2i, countmatrix)
+        #
+        # compute TP
+        peti = peti - evi  # update peti
+        di_aux = di + ((np.max(di) + 3) * (di <= 0.0))  # auxiliar Di to replace zero values by a higher positive value to avoid division by zero
+        #plt.imshow(di_aux)
+        #plt.show()
+        ptpi = ((s2i * (rzdi >= di)) + ((s2i * rzdi / di_aux) * (rzdi < di))) * (di > 0.0)  # compute potential TP
+        #plt.imshow(ptpi)
+        #plt.title('ptpi')
+        #plt.show()
+        tpi = (ptpi * (peti >= ptpi)) + (peti * (peti < ptpi))
+        #plt.imshow(tpi)
+        #plt.title('tpi')
+        #plt.show()
+        ts_tp[t] = avg_2d(tpi, countmatrix)
+        #
+        # compute QV
+        pqvi = (ksat * s2i / di_aux) * (di > 0.0)  # potential QV
+        #plt.imshow(pqvi)
+        #plt.title('pqvi')
+        #plt.show()
+        qvi = ((pqvi) * (s2i - tpi >= pqvi)) + ((s2i - tpi) * (s2i - tpi < pqvi))
+        #plt.imshow(qvi)
+        #plt.title('qvi')
+        #plt.show()
+        ts_qv[t] = avg_2d(qvi, countmatrix)
+        #
+        #
+        # compute Inf
+        infi = ((di - s2i + tpi + qvi) * (tfi >= (di - s2i + tpi + qvi))) + (tfi * (tfi < (di - s2i + tpi + qvi)))
+        ts_inf[t] = avg_2d(infi, countmatrix)
+        #plt.imshow(infi)
+        #plt.title('infi')
+        #plt.show()
+        #
+        # compute R
+        ri = tfi - infi
+        #plt.imshow(ri)
+        #plt.title('ri')
+        #plt.show()
+        ts_r[t] = avg_2d(ri, countmatrix)
+        #
+        #
+        # compute TP-GW
+        peti = peti - tpi  # remaining local PET
+        ptpgwi = (s2maxi - di) * (di < s2maxi)  # potential local TP
+        tpgwi = (peti * (ptpgwi > peti)) + (ptpgwi * (ptpgwi <= peti))
+        ts_tpgw[t] = avg_2d(tpgwi, countmatrix)
+        #
+        # compute ET
+        eti = evi + tpi + tpgwi
+        ts_et[t] = avg_2d(eti, countmatrix)
+        #
+        # update D
+        ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1]
+        #
+        # compute Qb
+        ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
+        #
+        # Update Di
+        di = topmodel_di(d=ts_d[t], twi=lambi, m=m, lamb=lamb)
+        #
+        # compute VSA
+        vsai = topmodel_vsai(di=di)
+        ts_vsa[t] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
+        #
+        # END OF NEW CODE
+        #
+        #
+        '''
+        # old code
         # update S1
         s1i = s1i + ts_prec[t - 1] - tfi - evi
         ts_s1[t] = avg_2d(s1i, countmatrix)
+        #
         # compute current TF
         tfi = ((ts_prec[t] - (s1maxi - s1i)) * (ts_prec[t] > (s1maxi - s1i))) + (0.0 * (ts_prec[t] <= (s1maxi - s1i)))
         ts_tf[t] = avg_2d(tfi, countmatrix)
+        #
         # compute current EV
         evi = ((ts_pet[t] * np.ones(shape=shape)) * (s1i > ts_pet[t])) + (s1i * (s1i <= ts_pet[t]))
         ts_ev[t] = avg_2d(evi, countmatrix)
-        #
-        #
+        # 
         # update S2
         s2i = s2i + infi - peri - tpi
         ts_s2[t] = avg_2d(s2i, countmatrix)
@@ -364,6 +468,8 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         qvi = (di_aux != aux_const) * (((ksat * s3i / di_aux) * ((ksat * s3i / di_aux) < s3i)) + (s3i * ((ksat * s3i / di_aux) >= s3i)))
         ts_qv[t] = avg_2d(qvi, countmatrix)
         #
+        
+        '''
         # trace section
         if mapback:
             if mapvar == 'R':
@@ -384,8 +490,8 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
                            'Temp':series['Temp'].values,
                            'PET': ts_pet,
                            'S1':np.round(ts_s1, 3), 'TF':np.round(ts_tf, 3), 'Ev':np.round(ts_ev, 3),
-                           'S2':ts_s2, 'Inf':ts_inf, 'R':ts_r, 'Per':ts_per, 'Tp':ts_tp, 'ET':ts_et,
-                           'D':ts_d, 'Qb': ts_qb, 'S3':ts_s3, 'Qv':ts_qv, 'Qs':ts_qs, 'Q':ts_q, 'VSA':ts_vsa})
+                           'S2':ts_s2, 'Inf':ts_inf, 'R':ts_r, 'Tp':ts_tp, 'Tpgw':ts_tpgw,  'ET':ts_et,
+                           'D':ts_d, 'Qb': ts_qb, 'Qv':ts_qv, 'Qs':ts_qs, 'Q':ts_q, 'VSA':ts_vsa})
     #
     if mapback:
         return exp_df, ts_trace

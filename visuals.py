@@ -216,4 +216,55 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True,
         return filepath
 
 
-
+def pannel_topmodel(dataframe):
+    #
+    fig = plt.figure(figsize=(16, 8))  # Width, Height
+    gs = mpl.gridspec.GridSpec(7, 1, wspace=0.8, hspace=0.6)
+    #
+    ind = 0
+    ax = fig.add_subplot(gs[ind, 0])
+    plt.plot(dataframe['Date'], dataframe['Prec'])
+    plt.ylabel('Prec mm')
+    ax2 = ax.twinx()
+    plt.plot(dataframe['Date'], dataframe['Temp'], 'tab:orange')
+    plt.ylabel('Temp °C')
+    #
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['PET'], 'k', label='PET')
+    plt.plot(dataframe['Date'], dataframe['ET'], 'tab:red', label='ET')
+    plt.plot(dataframe['Date'], dataframe['Tp'], 'r', label='Tp')
+    plt.ylabel('PET & ET\nmm')
+    #plt.legend()
+    #
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['S1'])
+    plt.ylabel('S1\nmm')
+    #
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['R'], 'tab:orange')
+    plt.plot(dataframe['Date'], dataframe['Inf'], 'k')
+    plt.ylabel('R & Inf\nmm')
+    #
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['D'], 'k')
+    plt.plot(dataframe['Date'], dataframe['S2'])
+    plt.ylabel('S2 & D\nmm')
+    #
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['Qv'])
+    plt.ylabel('Qv\nmm')
+    #
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['Qobs'], 'tab:orange')
+    plt.plot(dataframe['Date'], dataframe['Q'])
+    plt.plot(dataframe['Date'], dataframe['Qb'], 'navy')
+    plt.ylim(0.9 * np.min((dataframe['Q'].values, dataframe['Qobs'].values)), 1.1 * np.max((dataframe['Q'].values, dataframe['Qobs'].values)))
+    plt.ylabel('Q mm')
+    plt.yscale('log')
+    plt.show()
