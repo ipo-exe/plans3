@@ -349,7 +349,7 @@ def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_mo
     return exp_file
 
 
-def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, mapback=False):
+def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, mapback=False, mapvar='R-ET-S1-S2-Qv'):
     """
 
     Run the PLANS3 TOPMODEL
@@ -405,10 +405,20 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
 
     :param folder: string file path to destination folder
     :param tui: boolean control to allow terminal messages
-    :return: tuple of 3 string file paths:
+    :param mapback: boolean control to map simulated variables
+    :param mapvar: string code to set mapped variables (see topmodel routine for code formatting)
+    :return:
+    when mapback=False:
+    tuple of 3 string file paths:
     1) simulated parameters dataframe
     2) simulated histograms dataframes (count matrix used)
     3) simulated of global variables series dataframe
+    when mapback=True:
+    tuple of 4 elements:
+    1) string file path of simulated parameters dataframe
+    2) string file path of simulated histograms dataframes (count matrix used)
+    3) string file path of simulated of global variables series dataframe
+    4) tuple of string file paths of map lists files
     """
     #
     from hydrology import avg_2d, topmodel_hist, topmodel_sim, map_back
@@ -450,6 +460,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     qt0 = 0.2  # mm/d
     lamb = avg_2d(var2d=twi, weight=aoi)
     #
+    #
     # compute histograms
     if tui:
         print('computing histograms...', end='\t\t')
@@ -459,14 +470,15 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     if tui:
         print('Enlapsed time: {:.3f} seconds'.format(end - init))
     #
+    #
     # run topmodel simulation
     if tui:
         print('running simulation...', end='\t\t')
     init = time.time()
-    # tracing conditionals:
+    # mapback conditionals:
     if mapback:
         sim_df, mapped = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                                      qt0=qt0, k=k, n=n, tui=tui, mapback=mapback)
+                                      qt0=qt0, k=k, n=n, tui=tui, mapback=mapback, mapvar=mapvar)
     else:
         sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
                               qt0=qt0, k=k, n=n, tui=tui, mapback=mapback)
@@ -474,12 +486,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     if tui:
         print('Enlapsed time: {:.3f} seconds'.format(end - init))
     #
-    # todo set mapback export
-    if mapback:
-        for t in range(len(traced)):
-            map = map_back(zmatrix=traced[t], a1=twi, a2=cn, bins1=twihist[0], bins2=cnhist[0])
-            plt.imshow(map, cmap='Blues')
-            plt.show()
+    #
     #
     # export files
     if tui:
@@ -494,7 +501,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
         print('exporting histograms...')
     exp_df = pd.DataFrame(countmatrix, index=twihist[0], columns=cnhist[0])
     exp_file2 = folder + '/' + 'histograms.txt'
-    exp_df.to_csv(exp_file2, sep=';', index_label='TWI')
+    exp_df.to_csv(exp_file2, sep=';', index_label='TWI\CN')
     #
     # export simulation
     if tui:
@@ -502,7 +509,44 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     exp_file3 = folder + '/' + 'simseries.txt'
     sim_df.to_csv(exp_file3, sep=';', index=False)
     #
-    return (exp_file1, exp_file2, exp_file3)
+    if mapback:
+        if tui:
+            print('exporting variable maps...', end='\t\t')
+        init = time.time()
+        #
+        from os import mkdir
+        mapvar_lst = mapvar.split('-')  # load string variables alias to list
+        mapfiles_lst = list()
+        stamp = pd.to_datetime(sim_df['Date'], format='%y-%m-%d')
+        for var in mapvar_lst:  # loop across all variables
+            lcl_folder = folder + '/' + var
+            mkdir(lcl_folder)  # make diretory
+            lcl_files = np.empty(shape=np.shape(stamp), dtype='S100')
+            for t in range(len(stamp)):  # loop across all timesteps
+                lcl_filename = var + '_' + str(stamp[t]).split(sep=' ')[0] + '.txt'
+                lcl_file = lcl_folder + '/' + lcl_filename
+                lcl_files[t] = lcl_file
+                # export local dataframe to text file in local folder
+                lcl_exp_df = pd.DataFrame(mapped[var][t], index=twihist[0], columns=cnhist[0])
+                lcl_exp_df.to_csv(lcl_file, sep=';', index_label='TWI\CN')
+                # map = map_back(zmatrix=mapped[var][t], a1=twi, a2=cn, bins1=twihist[0], bins2=cnhist[0])
+                # plt.imshow(map[550:1020, 600:950], cmap='jet_r')
+                # plt.show()
+            # export map list file to main folder:
+            lcl_exp_df = pd.DataFrame({'Date': sim_df['Date'], 'File': lcl_files})
+            lcl_file = folder + '/' + var + '_maps' + '.txt'
+            lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
+            mapfiles_lst.append(lcl_file)
+        #
+        mapfiles_lst = tuple(mapfiles_lst)
+        end = time.time()
+        if tui:
+            print('Enlapsed time: {:.3f} seconds'.format(end - init))
+    #
+    if mapback:
+        (exp_file1, exp_file2, exp_file3, mapfiles_lst)
+    else:
+        return (exp_file1, exp_file2, exp_file3)
 
 
 def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var3='D',

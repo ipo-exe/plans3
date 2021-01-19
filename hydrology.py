@@ -120,6 +120,15 @@ def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
 
 
 def map_back(zmatrix, a1, a2, bins1, bins2):
+    """
+    Map back feature using a Z-Matrix
+    :param zmatrix: 2d numpy array of z matrix of values
+    :param a1: 2d numpy array reference array of rows
+    :param a2: 2d numpy array reference array of columns
+    :param bins1: 1d numpy array of array 1 histogram bins
+    :param bins2: 1d numpy array of array 2 histogram bins
+    :return: 2d numpy array
+    """
     # initiate map array
     map = np.zeros(shape=np.shape(a1))
     for i in range(len(zmatrix)):
@@ -214,7 +223,7 @@ def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
 
 
 def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, qt0, k, n,
-                 mapback=False, tui=False, mapvar='R'):
+                 mapback=False, mapvar='R-ET-S1-S2', tui=False):
     """
 
     PLANS 3 TOPMODEL simulation procedure
@@ -232,7 +241,31 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     :param qt0: positive float - baseflow at t=0 in mm/d
     :param k: positive float - Nash Cascade residence time in days
     :param n: positive float - equivalent number of reservoirs in Nash Cascade
-    :return: dataframe of simulated variables
+    :param mapback: boolean control to map back variables
+    :param mapvar: string code of variables to map back. Available variables:
+    'Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw' (see below the relation)
+    :param tui: boolean to control terminal messages
+    :return: dataframe of simulated variables:
+
+    'Date': date (from input)
+    'Prec': precipitation (from input), mm
+    'Temp': temperature (from input), deg C
+    'PET': simulated potential evapotranspiration, mm
+    'S1': simulated water in S1 stock (canopy interceptation), mm
+    'TF': simulated throughfall, mm
+    'Ev': simulated evaporation from canopy, mm
+    'S2': simulated water in S2 stock (unsaturated zone), mm
+    'Inf': simulated infiltration, mm
+    'R': simulated overland runoff, mm
+    'Tp': simulated transpiration from unsaturated zone (S2), mm
+    'Tpgw': simulated transpiration from the saturated zone, mm
+    'ET': simulated actual evapotranspiration, mm
+    'D': simulated soil water deficit, mm
+    'Qb': simualted baseflow, mm
+    'Qv':simulated recharge, mm
+    'Qs':simulated surface flow, mm
+    'Q': simulated streamflow, mm
+    'VSA': simulated variable source area (saturated areas), in %
     """
     #
     # extract data input
@@ -315,7 +348,11 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     #
     # Trace setup
     if mapback:
-        ts_trace = np.zeros(shape=(size, rows, cols), dtype='float32')
+        mapvar_lst = mapvar.split('-')
+        print(mapvar_lst)
+        map_dct = dict()
+        for e in mapvar_lst:
+            map_dct[e] = np.zeros(shape=(size, rows, cols), dtype='float32')
     #
     if tui:
         print('Soil moisture accounting simulation...')
@@ -355,7 +392,9 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         ts_qv[t] = avg_2d(qvi, countmatrix)
         #
         # compute Inf
-        infi = ((di - s2i + tpi + qvi) * (tfi >= (di - s2i + tpi + qvi))) + (tfi * (tfi < (di - s2i + tpi + qvi)))
+        pinfi = (rzdi * (tfi >= rzdi)) + (tfi * (tfi < rzdi))  # potential infiltration -- infiltration capacity
+        infi = ((di - s2i + tpi + qvi) * (pinfi >= (di - s2i + tpi + qvi))) + (pinfi * (pinfi < (di - s2i + tpi + qvi)))
+        #old code: infi = ((di - s2i + tpi + qvi) * (tfi >= (di - s2i + tpi + qvi))) + (tfi * (tfi < (di - s2i + tpi + qvi)))
         ts_inf[t] = avg_2d(infi, countmatrix)
         #
         # compute R
@@ -445,8 +484,9 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         '''
         # trace section
         if mapback:
-            if mapvar == 'R':
-                ts_trace[t] = ri
+            dct = {'Qv':qvi, 'R': ri, 'ET':eti, 'S1':s1i, 'S2':s2i, 'Inf':infi, 'Tp':tpi, 'Ev':evi, 'Tpgw':tpgwi}
+            for e in mapvar_lst:
+                map_dct[e][t] = dct[e]
     #
     # RUNOFF ROUTING
     if tui:
@@ -467,7 +507,7 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
                            'D':ts_d, 'Qb': ts_qb, 'Qv':ts_qv, 'Qs':ts_qs, 'Q':ts_q, 'VSA':ts_vsa})
     #
     if mapback:
-        return exp_df, ts_trace
+        return exp_df, map_dct
     else:
         return exp_df
 
