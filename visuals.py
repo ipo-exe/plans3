@@ -88,33 +88,34 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
         return filepath
 
 
-def pannel_4image_4series(im4, t, y4, y4max, y4min, cmaps, imtitles, ytitles, ylabels, vline=20,
+def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitles, ylabels, vline=20,
                           folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
     #
     fig = plt.figure(figsize=(16, 9))  # Width, Height
     gs = mpl.gridspec.GridSpec(4, 10, wspace=0.8, hspace=0.6)
     #
     # images
+    # Left Upper
     ax = fig.add_subplot(gs[0:2, 0:2])
-    im = plt.imshow(im4[0], cmap=cmaps[0]) # vmin=0, vmax=1)
+    im = plt.imshow(im4[0], cmap=cmaps[0], vmin=0, vmax=imax)
     plt.axis('off')
     plt.title(imtitles[0])
     plt.colorbar(im, shrink=0.4)
-    #
+    # Left bottom
     ax = fig.add_subplot(gs[2:4, 0:2])
-    im = plt.imshow(im4[1], cmap=cmaps[1])  # vmin=0, vmax=1)
+    im = plt.imshow(im4[1], cmap=cmaps[1], vmin=0, vmax=0.5 * imax)
     plt.axis('off')
     plt.title(imtitles[1])
     plt.colorbar(im, shrink=0.4)
-    #
+    # Right Upper
     ax = fig.add_subplot(gs[0:2, 2:4])
-    im = plt.imshow(im4[2], cmap=cmaps[2])  # vmin=0, vmax=1)
+    im = plt.imshow(im4[2], cmap=cmaps[2], vmin=0, vmax=2.33)
     plt.axis('off')
     plt.title(imtitles[2])
     plt.colorbar(im, shrink=0.4)
-    #
+    # Right Bottom
     ax = fig.add_subplot(gs[2:4, 2:4])
-    im = plt.imshow(im4[3], cmap=cmaps[3])  # vmin=0, vmax=1)
+    im = plt.imshow(im4[3], cmap=cmaps[3], vmin=0, vmax=imax)
     plt.axis('off')
     plt.title(imtitles[3])
     plt.colorbar(im, shrink=0.4)
@@ -126,6 +127,8 @@ def pannel_4image_4series(im4, t, y4, y4max, y4min, cmaps, imtitles, ytitles, yl
     spaces = int(size / 5)
     locs = np.arange(0, size, spaces)
     labels = t[locs]
+    #print(locs)
+    #print(labels)
     #
     ax = fig.add_subplot(gs[0, 5:])
     lcl = 0
@@ -133,40 +136,40 @@ def pannel_4image_4series(im4, t, y4, y4max, y4min, cmaps, imtitles, ytitles, yl
     plt.plot(t, y)
     plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    plt.xticks(locs, labels)
+    #plt.xticks(locs, labels)
     var = y[vline]
     plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
     plt.ylabel(ylabels[lcl])
     #
-    ax2 = fig.add_subplot(gs[1, 5:], sharex=ax)
+    ax2 = fig.add_subplot(gs[1, 5:])#, sharex=ax)
     lcl = lcl + 1
     y = y4[lcl]
     plt.plot(t, y)
     plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    plt.xticks(locs, labels)
+    #plt.xticks(locs, labels)
     var = y[vline]
     plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
     plt.ylabel(ylabels[lcl])
     #
-    ax2 = fig.add_subplot(gs[2, 5:], sharex=ax)
+    ax2 = fig.add_subplot(gs[2, 5:])#, sharex=ax)
     lcl = lcl + 1
     y = y4[lcl]
     plt.plot(t, y)
     plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    plt.xticks(locs, labels)
+    #plt.xticks(locs, labels)
     var = y[vline]
     plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
     plt.ylabel(ylabels[lcl])
     #
-    ax2 = fig.add_subplot(gs[3, 5:], sharex=ax)
+    ax2 = fig.add_subplot(gs[3, 5:])#, sharex=ax)
     lcl = lcl + 1
     y = y4[lcl]
-    plt.plot(t, y)
+    plt.plot(t, y, 'k')
     plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    plt.xticks(locs, labels)
+    #plt.xticks(locs, labels)
     var = y[vline]
     plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
     plt.ylabel(ylabels[lcl])
@@ -385,7 +388,10 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
         plt.close(fig)
     else:
         # export file
-        filepath = folder + '/' + filename + '_' + suff + '.png'
+        if suff != '':
+            filepath = folder + '/' + filename + '_' + suff + '.png'
+        else:
+            filepath = folder + '/' + filename + '.png'
         plt.savefig(filepath)
         plt.close(fig)
         return filepath

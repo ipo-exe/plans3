@@ -413,15 +413,18 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     1) simulated parameters dataframe
     2) simulated histograms dataframes (count matrix used)
     3) simulated of global variables series dataframe
+    4) visual pannel string file path
     when mapback=True:
     tuple of 4 elements:
     1) string file path of simulated parameters dataframe
     2) string file path of simulated histograms dataframes (count matrix used)
     3) string file path of simulated of global variables series dataframe
+    5) visual pannel string file path
     4) tuple of string file paths of map lists files
     """
     #
     from hydrology import avg_2d, topmodel_hist, topmodel_sim, map_back
+    from visuals import pannel_topmodel
     import time
     #
     if tui:
@@ -478,10 +481,10 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     # mapback conditionals:
     if mapback:
         sim_df, mapped = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                                      qt0=qt0, k=k, n=n, tui=tui, mapback=mapback, mapvar=mapvar)
+                                      qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar)
     else:
         sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                              qt0=qt0, k=k, n=n, tui=tui, mapback=mapback)
+                              qt0=qt0, k=k, n=n, tui=False, mapback=mapback)
     end = time.time()
     if tui:
         print('Enlapsed time: {:.3f} seconds'.format(end - init))
@@ -509,6 +512,12 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     exp_file3 = folder + '/' + 'simseries.txt'
     sim_df.to_csv(exp_file3, sep=';', index=False)
     #
+    # export visual pannel
+    if tui:
+        print('exporting visual results...')
+    sim_df['Qobs'] = lcl_df['Q']
+    exp_file4 = pannel_topmodel(sim_df, grid=False, show=False, qobs=True, folder=folder)
+    #
     if mapback:
         if tui:
             print('exporting variable maps...', end='\t\t')
@@ -521,11 +530,11 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
         for var in mapvar_lst:  # loop across all variables
             lcl_folder = folder + '/' + var
             mkdir(lcl_folder)  # make diretory
-            lcl_files = np.empty(shape=np.shape(stamp), dtype='S100')
+            lcl_files = list()
             for t in range(len(stamp)):  # loop across all timesteps
                 lcl_filename = var + '_' + str(stamp[t]).split(sep=' ')[0] + '.txt'
                 lcl_file = lcl_folder + '/' + lcl_filename
-                lcl_files[t] = lcl_file
+                lcl_files.append(lcl_file)
                 # export local dataframe to text file in local folder
                 lcl_exp_df = pd.DataFrame(mapped[var][t], index=twihist[0], columns=cnhist[0])
                 lcl_exp_df.to_csv(lcl_file, sep=';', index_label='TWI\CN')
@@ -544,9 +553,9 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
             print('Enlapsed time: {:.3f} seconds'.format(end - init))
     #
     if mapback:
-        (exp_file1, exp_file2, exp_file3, mapfiles_lst)
+        (exp_file1, exp_file2, exp_file3, exp_file4, mapfiles_lst)
     else:
-        return (exp_file1, exp_file2, exp_file3)
+        return (exp_file1, exp_file2, exp_file3, exp_file4)
 
 
 def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var3='D',
@@ -581,7 +590,7 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
             suff = str(t)
         return suff
     # import series
-    series_df = pd.read_csv(fseries, sep=';')
+    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     #
     # verify size
     if len(series_df['Date'].values) < start + size:
@@ -638,4 +647,122 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
                               t=lcl_date, x1=lcl_p, x2=lcl_qb, x3=lcl_dfc,
                               x1max=prec_max, x2max=base_max, x3max=defic_max, titles=ttls,
                               vline=lcl_t_index, folder=folder, suff=suff)
+
+
+def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries,
+                     size=200, start=0, framef=0.2, watchf=0.2,
+                     folder='C:/bin'):
+    from hydrology import topmodel_di, avg_2d, map_back
+    from visuals import pannel_4image_4series
+    #
+    # import series
+    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    #
+    # extract arrays
+    date = series_df['Date'].values[start: start + size]
+    prec = series_df['Prec'].values
+    imax = 0.1 * np.max(prec)
+    #
+    series1 = series_df[varseries[0]].values[start: start + size]
+    series1_max = np.max(series1)
+    #
+    series2 = series_df[varseries[1]].values[start: start + size]
+    series2_max = np.max(series2)
+    #
+    series3 = series_df[varseries[2]].values[start: start + size]
+    series3_max = np.max(series3)
+    #
+    series4 = series_df[varseries[3]].values[start: start + size]
+    series4_max = np.max(series4)
+    #
+    deficit = series_df['D'].values[start: start + size]
+    defic_max = np.max(deficit)
+    #
+    # extract maplists
+    map1_df = pd.read_csv(fmaps[0], sep=';')
+    map2_df = pd.read_csv(fmaps[1], sep=';')
+    map3_df = pd.read_csv(fmaps[2], sep=';')
+
+    #
+    # import twi
+    meta, twi = input.asc_raster(ftwi)
+    #
+    # import cn
+    meta, cn = input.asc_raster(fcn)
+    #
+    # import aoi
+    meta, aoi = input.asc_raster(faoi)
+    #
+    # extract lamb
+    lamb = avg_2d(twi, aoi)
+    #
+    # import parameter m
+    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    m = df_param.loc['m'].values[0]
+    #
+    di = topmodel_di(d=defic_max, twi=twi, m=m, lamb=lamb)
+    di_max = 0.5 * np.max(di)
+    #
+    # frame loops
+    frame = int(size * framef)
+    lcl_t_index = int(frame * watchf)
+    for t in range(size - frame):
+        print(t)
+        # extract local arrays
+        lcl_date = date[t: t + frame]
+        lcl_s1 = series1[t: t + frame]
+        lcl_s2 = series2[t: t + frame]
+        lcl_s3 = series3[t: t + frame]
+        lcl_s4 = series4[t: t + frame]
+        #plt.plot(lcl_date, lcl_s1)
+        #plt.show()
+        lcl_dfc = deficit[t: t + frame]
+        #
+        # extract image 1
+        lcl_im_files = map1_df['File'].values[t: t + frame]
+        lcl_im_path = lcl_im_files[lcl_t_index]
+        zmap, hist_twi, hist_cn = input.zmap(file=lcl_im_path)
+        im1 = map_back(zmatrix=zmap, a1=twi, a2=cn, bins1=hist_twi, bins2=hist_cn)
+        im1 = geo.mask(im1, aoi)  # [90:1940, 50:1010]
+        #
+        # extract image 2
+        lcl_im_files = map2_df['File'].values[t: t + frame]
+        lcl_im_path = lcl_im_files[lcl_t_index]
+        zmap, hist_twi, hist_cn = input.zmap(file=lcl_im_path)
+        im2 = map_back(zmatrix=zmap, a1=twi, a2=cn, bins1=hist_twi, bins2=hist_cn)
+        im2 = geo.mask(im2, aoi)  # [90:1940, 50:1010]
+        #
+        # extract image 2
+        lcl_im_files = map3_df['File'].values[t: t + frame]
+        lcl_im_path = lcl_im_files[lcl_t_index]
+        zmap, hist_twi, hist_cn = input.zmap(file=lcl_im_path)
+        im3 = map_back(zmatrix=zmap, a1=twi, a2=cn, bins1=hist_twi, bins2=hist_cn)
+        im3 = geo.mask(im3, aoi)  # [90:1940, 50:1010]
+        #
+        # extract local Deficit
+        lcl_d = lcl_dfc[lcl_t_index]
+        lcl_di = topmodel_di(d=lcl_d, twi=twi, m=m, lamb=lamb)
+        im4 = geo.mask(lcl_di, aoi)  # [90:1940, 50:1010]
+        #
+        # load parameters
+        im = (im1, im2, im3, im4)
+        y4 = (lcl_s1, lcl_s2, lcl_s3, lcl_s4)
+        y4max = (series1_max, series2_max, series3_max, series4_max)
+        y4min = (0, 0, 0, 0)
+        #
+        stamp = pd.to_datetime(lcl_date, format='%y-%m-%d')
+        suff = str(stamp[lcl_t_index]).split(' ')[0]
+        #print(suff)
+        #
+        # other params
+        #cmaps = ('YlGnBu', 'YlOrRd', 'viridis_r', 'jet')
+        cmaps = ('viridis_r', 'viridis_r', 'viridis_r', 'jet')
+        imtitles = ('Runoff (mm/d)', 'ET (mm/d)', 'Recharge (mm/d)', 'Local Deficit (mm)')
+        ytitles = ('Precipitation', 'Canopy water', 'Soil water', 'Baseflow')
+        ylabels = ('mm', 'mm', 'mm', 'mm')
+        # export image
+        pannel_4image_4series(im, imax, stamp, y4, y4max, y4min, cmaps, vline=lcl_t_index,
+                              imtitles=imtitles, ytitles=ytitles, ylabels=ylabels, show=False, suff=suff)
+
+
 

@@ -85,7 +85,7 @@ def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
     2) tuple of histogram of raster 1: fist: bins - 1d numpy array, second: count - 1d numpy array
     3) tuple of histogram of raster 2: fist: bins - 1d numpy array, second: count - 1d numpy array
     """
-    #
+    np.warnings.filterwarnings('ignore')
     # verify bins size
     a1_flat_clear = flatten_clear(array=array2d1, mask=aoi)
     a1_unique = np.unique(a1_flat_clear)
@@ -349,7 +349,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     # Trace setup
     if mapback:
         mapvar_lst = mapvar.split('-')
-        print(mapvar_lst)
         map_dct = dict()
         for e in mapvar_lst:
             map_dct[e] = np.zeros(shape=(size, rows, cols), dtype='float32')
@@ -425,63 +424,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         ts_vsa[t] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
         #
         #
-        '''
-        # old code
-        # update S1
-        s1i = s1i + ts_prec[t - 1] - tfi - evi
-        ts_s1[t] = avg_2d(s1i, countmatrix)
-        #
-        # compute current TF
-        tfi = ((ts_prec[t] - (s1maxi - s1i)) * (ts_prec[t] > (s1maxi - s1i))) + (0.0 * (ts_prec[t] <= (s1maxi - s1i)))
-        ts_tf[t] = avg_2d(tfi, countmatrix)
-        #
-        # compute current EV
-        evi = ((ts_pet[t] * np.ones(shape=shape)) * (s1i > ts_pet[t])) + (s1i * (s1i <= ts_pet[t]))
-        ts_ev[t] = avg_2d(evi, countmatrix)
-        # 
-        # update S2
-        s2i = s2i + infi - peri - tpi
-        ts_s2[t] = avg_2d(s2i, countmatrix)
-        # compute Inf
-        infi = ((s2maxi - s2i) * ((tfi + s2i) > s2maxi)) + (tfi * ((tfi + s2i) <= s2maxi))
-        ts_inf[t] = avg_2d(infi, countmatrix)
-        # compute R
-        ri = tfi - infi
-        ts_r[t] = avg_2d(ri, countmatrix)
-        # compute PER
-        peri_potential = (s2i * ((ksat * s2i / s2maxi) > s2i)) + ((ksat * s2i / s2maxi) * ((ksat * s2i / s2maxi) <= s2i))
-        peri = (di * (peri_potential > di)) + (peri_potential * (peri_potential <= di))
-        ts_per[t] = avg_2d(peri, countmatrix)
-        # compute TP
-        peti_remain = ts_pet[t] - evi
-        s2i_remain = s2i - peri
-        tpi = (peti_remain * (s2i_remain > peti_remain)) + (s2i_remain * (s2i_remain <= peti_remain))
-        ts_tp[t] = avg_2d(tpi, countmatrix)
-        # compute ET
-        eti = evi + tpi
-        ts_et[t] = avg_2d(eti, countmatrix)
-        #
-        # update D
-        ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1]
-        # compute Qb
-        ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
-        # compute Di
-        di = topmodel_di(d=ts_d[t], twi=lambi, m=m, lamb=lamb)
-        # compute VSA
-        vsai = topmodel_vsai(di=di)
-        ts_vsa[t] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
-        #
-        # Update S3
-        s3i = s3i + peri - qvi
-        ts_s3[t] = avg_2d(s3i, countmatrix)
-        # compute Qv
-        aux_const = np.max(di) + 3
-        di_aux = di + (aux_const * (di <= 0.0))
-        qvi = (di_aux != aux_const) * (((ksat * s3i / di_aux) * ((ksat * s3i / di_aux) < s3i)) + (s3i * ((ksat * s3i / di_aux) >= s3i)))
-        ts_qv[t] = avg_2d(qvi, countmatrix)
-        #
-        
-        '''
         # trace section
         if mapback:
             dct = {'Qv':qvi, 'R': ri, 'ET':eti, 'S1':s1i, 'S2':s2i, 'Inf':infi, 'Tp':tpi, 'Ev':evi, 'Tpgw':tpgwi}

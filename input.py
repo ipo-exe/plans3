@@ -60,3 +60,14 @@ def asc_raster_list(file, filefield='File', sep=';'):
         meta_lst.append(meta_lst)
         array_lst.append(lcl_array)
     return meta_lst, array_lst
+
+
+def zmap(file, yfield='TWI\CN'):
+    lcl_df = pd.read_csv(file, sep=';')
+    yhist = lcl_df[yfield].values
+    #print(yhist)
+    xhist = np.array(lcl_df.columns[1:], dtype='float32')
+    #print(xhist)
+    zmap = lcl_df.values[:, 1:]
+    #print(zmap)
+    return zmap, yhist, xhist
