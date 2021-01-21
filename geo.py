@@ -1,30 +1,95 @@
 import numpy as np
-import matplotlib.pyplot as plt
+'''
+This is the PLANS 3 geoprocessing module
+
+'''
 
 
-def stddem():
+def areas(array, cellsize, values, factor=1):
     """
-    Utility function for code development
-    :return: asc file metadata dictionary and 2d numpy array of standard dem
+    derive a list of areas in array based on a list of values
+    :param array: 2d array
+    :param cellsize: cellsize float
+    :param values: sequence of values to lookup
+    :return: array of areas in cellsize squared units
     """
-    lst = [(60, 75, 80, 75, 65, 50, 65, 75, 80, 75, 70),
-           (70, 65, 70, 85, 72, 55, 70, 80, 70, 65, 75),
-           (80, 75, 40, 75, 70, 62, 65, 62, 60, 68, 70),
-           (78, 85, 65, 40, 60, 65, 62, 40, 62, 70, 65),
-           (40, 60, 70, 60, 50, 45, 50, 55, 60, 50, 60),
-           (55, 45, 50, 45, 40, 50, 55, 60, 55, 45, 55),
-           (60, 65, 45, 18, 20, 45, 50, 45, 40, 48, 50),
-           (65, 60, 55, 12, 15, 40, 30, 35, 50, 55, 35),
-           (70, 45, 35, 10, 5, 20, 25, 45, 40, 35, 30),
-           (65, 40, 45, 50, 45, 35, 15, 20, 45, 42, 35),
-           (50, 55, 50, 40, 50, 55, 45, 10, 20, 30, 40),]
-    dct = {'ncols': '11',
-           'nrows': '11',
-           'xllcorner': '559490.0',
-           'yllcorner': '6704830.0',
-           'cellsize': '100',
-           'NODATA_value': '-9999'}
-    return dct, np.array(lst)
+    areas = list()
+    for i in range(len(values)):
+        lcl_val = values[i]
+        lcl_bool = (array == lcl_val) * 1
+        lcl_pixsum = np.sum(lcl_bool)
+        lcl_area = lcl_pixsum * cellsize * cellsize
+        areas.append(lcl_area)
+    return np.array(areas)/(factor * factor)
+
+
+def cn(lulc, soils, cnvalues, lulcclasses, soilclasses):
+    """
+    derive the CN map based on LULC and Soils groups
+    :param lulc: lulc 2d array
+    :param soils: soils 2d array
+    :param cnvalues: array of CN values for A, B, C and D soils (2d array) in the order of lulc classes
+    :param lulcclasses: array of lulc classes values
+    :param soilclasses: array of soil classses values
+    :return: 2d array of CN
+    """
+    soilclasses = soilclasses * 100
+    cn_class = (100 * soils) + lulc
+    cn_map = lulc * 0.0
+    for i in range(len(soilclasses)):
+        for j in range(len(lulcclasses)):
+            lcl_class = soilclasses[i] + lulcclasses[j]
+            lcl_cn = cnvalues[i][j]
+            cn_map = cn_map + (cn_class == lcl_class) * lcl_cn
+    return cn_map
+
+
+def downstream_coordinates(dir, x, y):
+    """
+    Compute x and y donwstream cell coordinates based on cell flow direction
+
+    D8 - Direction convetion:
+
+    4   3   2
+    5   0   1
+    6   7   8
+
+    :param dir: int flow direction code
+    :param x: int x (row) array index
+    :param y: int y (column) array index
+    :return: x and y downstream cell array indexes
+    """
+    if dir == 1:
+        x = x
+        y = y + 1
+    elif dir == 2:
+        x = x - 1
+        y = y + 1
+    elif dir == 3:
+        x = x - 1
+        y = y
+    elif dir == 4:
+        x = x - 1
+        y = y - 1
+    elif dir == 5:
+        x = x
+        y = y - 1
+    elif dir == 6:
+        x = x + 1
+        y = y - 1
+    elif dir == 7:
+        x = x + 1
+        y = y
+    elif dir == 8:
+        x = x + 1
+        y = y + 1
+    elif dir == 0:
+        x = x
+        y = y
+    return x, y
+
+
+# todo def extract_points()
 
 
 def find_sinks(dem):
@@ -101,6 +166,81 @@ def fill_sinks(dem, status=False):
         if sink_counter == 0:
             break
     return fill_array
+
+
+def flatten_clear(array, mask):
+    masked = np.copy(array)
+    masked[mask == 0] = np.nan
+    flatten = masked.flatten()
+    cleared = masked[~np.isnan(masked)]
+    return cleared
+
+
+def flow_acc(flowdir):
+    """
+    Flow accumulation algorithm
+
+    D8 - Direction convetion:
+
+    4   3   2
+    5   0   1
+    6   7   8
+
+    Reverse direction convention:
+
+    8   7   6
+    1   0   5
+    2   3   4
+
+
+    :param flowdir: 2d numpy array of flow direction using the above convention
+    :return: 2d numpy array of flow accum (number of accumulated cells)
+    """
+    #
+    # get the initiation grid
+    nidp_array = local_flowacc(flowdir)
+    #
+    # load the flow acc array
+    flow_accum = np.ones(shape=np.shape(flowdir))
+    #
+    # moving window scanning loop in the NIDP array:
+    for i in range(len(nidp_array)):
+        for j in range(len(nidp_array[i])):
+            #
+            # get local value of NIDP
+            lcl_nidp = nidp_array[i][j]
+            #
+            # source cell condition:
+            if lcl_nidp == 0:
+                #
+                # start tracing procedure:
+                x = i
+                y = j
+                accumulate = True
+                while True:
+                    # todo this is messed up. fix tracing procedure.
+                    #
+                    # get current flow accum value:
+                    if accumulate:
+                        local_flow_acc = flow_accum[x][y]
+                    #
+                    # get flow direction
+                    direction = flowdir[x][y]
+                    #
+                    # move to downstream cell -- get next x and y
+                    x, y = downstream_coordinates(dir=direction, x=x, y=y)
+                    #
+                    # update flow accumulation array
+                    downstream_flow_accum = flow_accum[x][y]
+                    # propagate
+                    flow_accum[x][y] = downstream_flow_accum + local_flow_acc
+                    if downstream_flow_accum > 1:
+                        accumulate = False
+                    #
+                    # check stop condition
+                    if flowdir[x][y] == 0:
+                        break
+    return flow_accum
 
 
 def flow_dir(dem):
@@ -185,9 +325,9 @@ def flow_dir(dem):
     return flowdir_array
 
 
-def flow_acc(flowdir):
+def local_flowacc(flowdir):
     """
-    Flow accumulation algorithm of Zhou et al (2019)
+    compute the local flow accumulation
 
     D8 - Direction convetion:
 
@@ -201,183 +341,65 @@ def flow_acc(flowdir):
     1   0   5
     2   3   4
 
-
-    :param flowdir: 2d numpy array of flow direction using the above convention
-    :return: 2d numpy array of flow accum
+    :param flowdir: 2d numpy array of flow direction
+    :return: 2d numpy array of local flow direction
     """
-
-    def nidp(flowdir):
-        rowmaxid = np.shape(flowdir)[0] - 1
-        colmaxid = np.shape(flowdir)[1] - 1
-        #
-        # load the flow dir array
-        local_accum = np.zeros(shape=np.shape(flowdir))
-        #
-        # load the flow dir convention window:
-        reverse_directions = np.array(((8, 7, 6), (1, 0, 5), (2, 3, 4)))
-        #
-        # moving window scanning loop:
-        for i in range(len(flowdir)):
-            for j in range(len(flowdir[i])):
-                #
-                # find the window and directions
-                if i == 0 and j == 0:
-                    #print('First corner')
-                    window = flowdir[:i + 2, : j + 2]
-                    windir = reverse_directions[1:, 1:]
-                elif i == 0 and j == colmaxid:
-                    #print('Second corner')
-                    window = flowdir[:2, j - 1:]
-                    windir = reverse_directions[1:, :2]
-                elif i == rowmaxid and j == 0:
-                    #print('Third corner')
-                    window = flowdir[i - 1:, :j + 2]
-                    windir = reverse_directions[:2, 1:]
-                elif i == rowmaxid and j == colmaxid:
-                    #print('Forth corner')
-                    window = flowdir[i - 1:, j - 1:]
-                    windir = reverse_directions[:2, :2]
-                elif i == 0 and 0 < j < colmaxid:
-                    #print('Upper edge')
-                    window = flowdir[:i + 2, j - 1: j + 2]
-                    windir = reverse_directions[1:, :]
-                elif i == rowmaxid and 0 < j < colmaxid:
-                    #print('Lower edge')
-                    window = flowdir[i - 1:, j - 1: j + 2]
-                    windir = reverse_directions[:2, :]
-                elif 0 < i < rowmaxid and j == 0:
-                    #print('Left edge')
-                    window = flowdir[i - 1: i + 2, :j + 2]
-                    windir = reverse_directions[:, 1:]
-                elif 0 < i < rowmaxid and j == colmaxid:
-                    #print('Right edge')
-                    window = flowdir[i - 1: i + 2, j - 1:]
-                    windir = reverse_directions[:, :2]
-                else:
-                    #print('Bulk')
-                    window = flowdir[i - 1: i + 2, j - 1: j + 2]
-                    windir = reverse_directions
-                    # print(window)
-                # count number of poiting neighbor cells
-                lcl_count = np.sum(1.0 * (window == windir))
-                # insert on flow dir array
-                local_accum[i][j] = lcl_count
-            #
-        return local_accum
-
-
-    def downstream_coordinates(dir, x, y):
-        """
-        Compute x and y donwstream cell coordinates based on cell flow direction
-
-        D8 - Direction convetion:
-
-        4   3   2
-        5   0   1
-        6   7   8
-
-        :param dir: int flow direction code
-        :param x: int x (row) array index
-        :param y: int y (column) array index
-        :return: x and y downstream cell array indexes
-        """
-        if dir == 1:
-            x = x
-            y = y + 1
-        elif dir == 2:
-            x = x - 1
-            y = y + 1
-        elif dir == 3:
-            x = x - 1
-            y = y
-        elif dir == 4:
-            x = x - 1
-            y = y - 1
-        elif dir == 5:
-            x = x
-            y = y - 1
-        elif dir == 6:
-            x = x + 1
-            y = y - 1
-        elif dir == 7:
-            x = x + 1
-            y = y
-        elif dir == 8:
-            x = x + 1
-            y = y + 1
-        elif dir == 0:
-            x = x
-            y = y
-        return x, y
-
+    rowmaxid = np.shape(flowdir)[0] - 1
+    colmaxid = np.shape(flowdir)[1] - 1
     #
-    # get the initiation grid
-    nidp_array = nidp(flowdir)
+    # load the flow dir array
+    local_accum = np.zeros(shape=np.shape(flowdir))
     #
-    # load the flow acc array
-    flow_accum = np.ones(shape=np.shape(flowdir))
+    # load the flow dir convention window:
+    reverse_directions = np.array(((8, 7, 6), (1, 0, 5), (2, 3, 4)))
     #
-    # moving window scanning loop in the NIDP array:
-    for i in range(len(nidp_array)):
-        for j in range(len(nidp_array[i])):
-            print('{}-{}'.format(i, j))
+    # moving window scanning loop:
+    for i in range(len(flowdir)):
+        for j in range(len(flowdir[i])):
             #
-            # get local value of NIDP
-            lcl_nidp = nidp_array[i][j]
-            #
-            # source cell condition:
-            if lcl_nidp == 0:
-                #
-                # start tracing procedure:
-                x = i
-                y = j
-                while True:
-                    # todo this is messed up. fix tracing procedure.
-                    #
-                    # get current flow accum value:
-                    local_flow_acc = flow_accum[x][y]
-                    #
-                    # get flow direction
-                    direction = flowdir[x][y]
-                    #
-                    # move to downstream cell -- get next x and y
-                    x, y = downstream_coordinates(dir=direction, x=x, y=y)
-                    #
-                    # update flow accumulation array
-                    downstream_flow_accum = flow_accum[x][y]
-                    flow_accum[x][y] = downstream_flow_accum + local_flow_acc
-                    print(flow_accum[x][y])
-                    # check stop condition
-                    if nidp_array[x][y] > 1 or flowdir[x][y] == 0:
-                        nidp_array[x][y] = 1
-                        break
-            plt.imshow(flow_accum)
-            plt.show()
-    return flow_accum
-
-
-
-
-def slope(array, cellsize, degree=True):
-    """
-    Slope algorithm based on gradient built in functions of numpy
-    :param array: 2d numpy array of dem
-    :param cellsize: float value of cellsize (delta x = delta y)
-    :param degree: boolean to control output units. Defalt = True. If False output units are in radians
-    :return: 2d numpy array of slope
-    """
-    grad = np.gradient(array)
-    gradx = grad[0] / cellsize
-    grady = grad[1] / cellsize
-    gradv = np.sqrt((gradx * gradx) + (grady * grady))
-    slope_array = np.arctan(gradv)
-    if degree:
-        slope_array = slope_array * 360 / (2 * np.pi)
-    return slope_array
-
-# todo
-# def catchment_area(array, cellsize)
-# def extract_points()
+            # find the window and directions
+            if i == 0 and j == 0:
+                # print('First corner')
+                window = flowdir[:i + 2, : j + 2]
+                windir = reverse_directions[1:, 1:]
+            elif i == 0 and j == colmaxid:
+                # print('Second corner')
+                window = flowdir[:2, j - 1:]
+                windir = reverse_directions[1:, :2]
+            elif i == rowmaxid and j == 0:
+                # print('Third corner')
+                window = flowdir[i - 1:, :j + 2]
+                windir = reverse_directions[:2, 1:]
+            elif i == rowmaxid and j == colmaxid:
+                # print('Forth corner')
+                window = flowdir[i - 1:, j - 1:]
+                windir = reverse_directions[:2, :2]
+            elif i == 0 and 0 < j < colmaxid:
+                # print('Upper edge')
+                window = flowdir[:i + 2, j - 1: j + 2]
+                windir = reverse_directions[1:, :]
+            elif i == rowmaxid and 0 < j < colmaxid:
+                # print('Lower edge')
+                window = flowdir[i - 1:, j - 1: j + 2]
+                windir = reverse_directions[:2, :]
+            elif 0 < i < rowmaxid and j == 0:
+                # print('Left edge')
+                window = flowdir[i - 1: i + 2, :j + 2]
+                windir = reverse_directions[:, 1:]
+            elif 0 < i < rowmaxid and j == colmaxid:
+                # print('Right edge')
+                window = flowdir[i - 1: i + 2, j - 1:]
+                windir = reverse_directions[:, :2]
+            else:
+                # print('Bulk')
+                window = flowdir[i - 1: i + 2, j - 1: j + 2]
+                windir = reverse_directions
+                # print(window)
+            # count number of poiting neighbor cells
+            lcl_count = np.sum(1.0 * (window == windir))
+            # insert on flow dir array
+            local_accum[i][j] = lcl_count
+    return local_accum
 
 
 def fill_sinks_wang(array, status=True):
@@ -552,27 +574,6 @@ def fill_sinks_wang(array, status=True):
     return fill_array
 
 
-def cn(lulc, soils, cnvalues, lulcclasses, soilclasses):
-    """
-    derive the CN map based on LULC and Soils groups
-    :param lulc: lulc 2d array
-    :param soils: soils 2d array
-    :param cnvalues: array of CN values for A, B, C and D soils (2d array) in the order of lulc classes
-    :param lulcclasses: array of lulc classes values
-    :param soilclasses: array of soil classses values
-    :return: 2d array of CN
-    """
-    soilclasses = soilclasses * 100
-    cn_class = (100 * soils) + lulc
-    cn_map = lulc * 0.0
-    for i in range(len(soilclasses)):
-        for j in range(len(lulcclasses)):
-            lcl_class = soilclasses[i] + lulcclasses[j]
-            lcl_cn = cnvalues[i][j]
-            cn_map = cn_map + (cn_class == lcl_class) * lcl_cn
-    return cn_map
-
-
 def grad(slope):
     """
     derive the topographical gradient tan(B) from the slope in degrees
@@ -584,28 +585,78 @@ def grad(slope):
     return grad
 
 
-def areas(array, cellsize, values, factor=1):
-    """
-    derive a list of areas in array based on a list of values
-    :param array: 2d array
-    :param cellsize: cellsize float
-    :param values: sequence of values to lookup
-    :return: array of areas in cellsize squared units
-    """
-    areas = list()
-    for i in range(len(values)):
-        lcl_val = values[i]
-        lcl_bool = (array == lcl_val) * 1
-        lcl_pixsum = np.sum(lcl_bool)
-        lcl_area = lcl_pixsum * cellsize * cellsize
-        areas.append(lcl_area)
-    return np.array(areas)/(factor * factor)
-
-
 def mask(array, mask):
+    """
+    utility function for masking an array
+    :param array: 2d numpy array
+    :param mask: 2d numpy pseudo-boolean array (1 and 0)
+    :return: masked 2d numpy array (nan assigned to 0 values on mask)
+    """
     masked = np.copy(array)
     masked[mask == 0] = np.nan
     return masked
+
+
+def reclassify(array, upvalues, classes):
+    """
+    utility function -
+    Reclassify array based on list of upper values and list of classes
+
+    :param array: 2d numpy array to reclassify
+    :param upvalues: 1d numpy array of upper values
+    :param classes: 1d array of classes values
+    :return: 2d numpy array reclassified
+    """
+    new = array * 0.0
+    for i in range(len(upvalues)):
+        if i == 0:
+            new = new + ((array <= upvalues[i]) * classes[i])
+        else:
+            new = new + ((array > upvalues[i - 1]) * (array <= upvalues[i]) * classes[i])
+    return new
+
+
+def slope(dem, cellsize, degree=True):
+    """
+    Slope algorithm based on gradient built in functions of numpy
+    :param dem: 2d numpy array of dem
+    :param cellsize: float value of cellsize (delta x = delta y)
+    :param degree: boolean to control output units. Defalt = True. If False output units are in radians
+    :return: 2d numpy array of slope
+    """
+    grad = np.gradient(dem)
+    gradx = grad[0] / cellsize
+    grady = grad[1] / cellsize
+    gradv = np.sqrt((gradx * gradx) + (grady * grady))
+    slope_array = np.arctan(gradv)
+    if degree:
+        slope_array = slope_array * 360 / (2 * np.pi)
+    return slope_array
+
+
+def stddem():
+    """
+    Utility function for code development
+    :return: asc file metadata dictionary and 2d numpy array of standard dem
+    """
+    lst = [(60, 75, 80, 75, 65, 50, 65, 75, 80, 75, 70),
+           (70, 65, 70, 85, 72, 55, 70, 80, 70, 65, 75),
+           (80, 75, 40, 75, 70, 62, 65, 62, 60, 68, 70),
+           (78, 85, 65, 40, 60, 65, 62, 40, 62, 70, 65),
+           (40, 60, 70, 60, 50, 45, 50, 55, 60, 50, 60),
+           (55, 45, 50, 45, 40, 50, 55, 60, 55, 45, 55),
+           (60, 65, 45, 18, 20, 45, 50, 45, 40, 48, 50),
+           (65, 60, 55, 12, 15, 40, 30, 35, 50, 55, 35),
+           (70, 45, 35, 10, 5, 20, 25, 45, 40, 35, 30),
+           (65, 40, 45, 50, 45, 35, 15, 20, 45, 42, 35),
+           (50, 55, 50, 40, 50, 55, 45, 10, 20, 30, 40),]
+    dct = {'ncols': '11',
+           'nrows': '11',
+           'xllcorner': '559490.0',
+           'yllcorner': '6704830.0',
+           'cellsize': '100',
+           'NODATA_value': '-9999'}
+    return dct, np.array(lst)
 
 
 def twi(catcha, grad, cellsize, gradmin=0.0001):
@@ -618,23 +669,5 @@ def twi(catcha, grad, cellsize, gradmin=0.0001):
     :param gradmin: minimun gradient threshold
     :return: Topographical Wetness Index 2d array
     """
-
     return np.log(catcha / (cellsize * (grad + gradmin)))
 
-
-def flatten_clear(array, mask):
-    masked = np.copy(array)
-    masked[mask == 0] = np.nan
-    flatten = masked.flatten()
-    cleared = masked[~np.isnan(masked)]
-    return cleared
-
-
-def reclassify(array, upvalues, classes):
-    new = array * 0.0
-    for i in range(len(upvalues)):
-        if i == 0:
-            new = new + ((array <= upvalues[i]) * classes[i])
-        else:
-            new = new + ((array > upvalues[i - 1]) * (array <= upvalues[i]) * classes[i])
-    return new
