@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def stddem():
@@ -26,20 +27,20 @@ def stddem():
     return dct, np.array(lst)
 
 
-def find_sinks(array):
+def find_sinks(dem):
     """
     Find sink cells on a dem
-    :param array: 2d numpy array of dem
+    :param dem: 2d numpy array of dem
     :return: 2d numpy array of sink classes (1 = is a pit sink, 2 = is a plain sink)
     """
-    rowmaxid = np.shape(array)[0] - 1
-    colmaxid = np.shape(array)[1] - 1
-    sinks_array = array * 0.0  # create the blank boolean array
+    rowmaxid = np.shape(dem)[0] - 1
+    colmaxid = np.shape(dem)[1] - 1
+    sinks_array = dem * 0.0  # create the blank boolean array
     # loop inside raster bulk:
     for i in range(1, rowmaxid - 1):
         for j in range(1, colmaxid - 1):
-            lcl_value = array[i][j]
-            window = array[i - 1: i + 2, j - 1: j + 2]
+            lcl_value = dem[i][j]
+            window = dem[i - 1: i + 2, j - 1: j + 2]
             lcl_edge_val_lst = (window[0][0], window[0][1], window[0][2], window[1][2], window[1][0],
                                 window[2][0], window[2][1], window[2][2],)
             lcl_edge_val = np.array(lcl_edge_val_lst)
@@ -55,16 +56,16 @@ def find_sinks(array):
     return sinks_array
 
 
-def fill_sinks(array, status=False):
+def fill_sinks(dem, status=False):
     """
-    Fill sinks algorithm
-    :param array: 2d numpy array of dem
+    Fill sinks NAIVE algorithm
+    :param dem: 2d numpy array of dem
     :return: 2d numpy array of filled dem
     """
     import time
-    rowmaxid = np.shape(array)[0] - 1
-    colmaxid = np.shape(array)[1] - 1
-    fill_array = array.copy()
+    rowmaxid = np.shape(dem)[0] - 1
+    colmaxid = np.shape(dem)[1] - 1
+    fill_array = dem.copy()
     iter = 1
     start = time.time()
     while True:
@@ -102,73 +103,259 @@ def fill_sinks(array, status=False):
     return fill_array
 
 
-def flow_dir(array):
+def flow_dir(dem):
     """
     Flow direction algorithm - based on the lowest neighboring cell
 
-    Direction convetion:
+    D8 - Direction convetion:
 
-    2   3   4
-    9   1   5
-    8   7   6
+    4   3   2
+    5   0   1
+    6   7   8
 
-    :param array: 2d numpy array of dem
+    :param dem: 2d numpy array of dem
     :return: 2d numpy array of flow direction
     """
-    rowmaxid = np.shape(array)[0] - 1
-    colmaxid = np.shape(array)[1] - 1
-    flowdir_array = array * 0.0
-    directions = np.array(((2, 3, 4), (9, 1, 5), (8, 7, 6)))
-    for i in range(len(array)):
-        for j in range(len(array[i])):
-            lcl_value = array[i][j]
+    rowmaxid = np.shape(dem)[0] - 1
+    colmaxid = np.shape(dem)[1] - 1
+    #
+    # load the flow dir array
+    flowdir_array = np.zeros(shape=np.shape(dem))
+    #
+    # load the flow dir convention window:
+    directions = np.array(((4, 3, 2), (5, 0, 1), (6, 7, 8)))
+    #
+    # moving window scanning loop:
+    for i in range(len(dem)):
+        for j in range(len(dem[i])):
+            lcl_value = dem[i][j]
             #
             # find the window and directions
             if i == 0 and j == 0:
                 # print('First corner')
-                window = array[:i + 2, : j + 2]
+                window = dem[:i + 2, : j + 2]
                 windir = directions[1:, 1:]
             elif i == 0 and j == colmaxid:
                 # print('Second corner')
-                window = array[:2, j - 1:]
+                window = dem[:2, j - 1:]
                 windir = directions[1:, :2]
             elif i == rowmaxid and j == 0:
                 # print('Third corner')
-                window = array[i - 1:, :j + 2]
+                window = dem[i - 1:, :j + 2]
                 windir = directions[:2, 1:]
             elif i == rowmaxid and j == colmaxid:
                 # print('Forth corner')
-                window = array[i - 1:, j - 1:]
+                window = dem[i - 1:, j - 1:]
                 windir = directions[:2, :2]
             elif i == 0 and 0 < j < colmaxid:
                 # print('Upper edge')
-                window = array[:i + 2, j - 1: j + 2]
+                window = dem[:i + 2, j - 1: j + 2]
                 windir = directions[1:, :]
             elif i == rowmaxid and 0 < j < colmaxid:
                 # print('Lower edge')
-                window = array[i - 1:, j - 1: j + 2]
+                window = dem[i - 1:, j - 1: j + 2]
                 windir = directions[:2, :]
             elif 0 < i < rowmaxid and j == 0:
                 # print('Left edge')
-                window = array[i - 1: i + 2, :j + 2]
+                window = dem[i - 1: i + 2, :j + 2]
                 windir = directions[:, 1:]
             elif 0 < i < rowmaxid and j == colmaxid:
                 # print('Right edge')
-                window = array[i - 1: i + 2, j - 1:]
+                window = dem[i - 1: i + 2, j - 1:]
                 windir = directions[:, :2]
             else:
                 # print('Bulk')
-                window = array[i - 1: i + 2, j - 1: j + 2]
+                window = dem[i - 1: i + 2, j - 1: j + 2]
                 windir = directions
                 # print(window)
+            #
+            # lowest elevation method:
             lcl_min = np.min(window)
+            #
+            # sink conditionals
             if lcl_value == lcl_min:
-                flowdir_array[i][j] = directions[1, 1]
+                lcl_direction = directions[1, 1]
             else:
                 mask = ((window == lcl_min) * 1) * windir
                 lcl_direction = np.max(mask)
-                flowdir_array[i][j] = lcl_direction
+            #
+            # insert on flow dir array
+            flowdir_array[i][j] = lcl_direction
+            #
     return flowdir_array
+
+
+def flow_acc(flowdir):
+    """
+    Flow accumulation algorithm of Zhou et al (2019)
+
+    D8 - Direction convetion:
+
+    4   3   2
+    5   0   1
+    6   7   8
+
+    Reverse direction convention:
+
+    8   7   6
+    1   0   5
+    2   3   4
+
+
+    :param flowdir: 2d numpy array of flow direction using the above convention
+    :return: 2d numpy array of flow accum
+    """
+
+    def nidp(flowdir):
+        rowmaxid = np.shape(flowdir)[0] - 1
+        colmaxid = np.shape(flowdir)[1] - 1
+        #
+        # load the flow dir array
+        local_accum = np.zeros(shape=np.shape(flowdir))
+        #
+        # load the flow dir convention window:
+        reverse_directions = np.array(((8, 7, 6), (1, 0, 5), (2, 3, 4)))
+        #
+        # moving window scanning loop:
+        for i in range(len(flowdir)):
+            for j in range(len(flowdir[i])):
+                #
+                # find the window and directions
+                if i == 0 and j == 0:
+                    #print('First corner')
+                    window = flowdir[:i + 2, : j + 2]
+                    windir = reverse_directions[1:, 1:]
+                elif i == 0 and j == colmaxid:
+                    #print('Second corner')
+                    window = flowdir[:2, j - 1:]
+                    windir = reverse_directions[1:, :2]
+                elif i == rowmaxid and j == 0:
+                    #print('Third corner')
+                    window = flowdir[i - 1:, :j + 2]
+                    windir = reverse_directions[:2, 1:]
+                elif i == rowmaxid and j == colmaxid:
+                    #print('Forth corner')
+                    window = flowdir[i - 1:, j - 1:]
+                    windir = reverse_directions[:2, :2]
+                elif i == 0 and 0 < j < colmaxid:
+                    #print('Upper edge')
+                    window = flowdir[:i + 2, j - 1: j + 2]
+                    windir = reverse_directions[1:, :]
+                elif i == rowmaxid and 0 < j < colmaxid:
+                    #print('Lower edge')
+                    window = flowdir[i - 1:, j - 1: j + 2]
+                    windir = reverse_directions[:2, :]
+                elif 0 < i < rowmaxid and j == 0:
+                    #print('Left edge')
+                    window = flowdir[i - 1: i + 2, :j + 2]
+                    windir = reverse_directions[:, 1:]
+                elif 0 < i < rowmaxid and j == colmaxid:
+                    #print('Right edge')
+                    window = flowdir[i - 1: i + 2, j - 1:]
+                    windir = reverse_directions[:, :2]
+                else:
+                    #print('Bulk')
+                    window = flowdir[i - 1: i + 2, j - 1: j + 2]
+                    windir = reverse_directions
+                    # print(window)
+                # count number of poiting neighbor cells
+                lcl_count = np.sum(1.0 * (window == windir))
+                # insert on flow dir array
+                local_accum[i][j] = lcl_count
+            #
+        return local_accum
+
+
+    def downstream_coordinates(dir, x, y):
+        """
+        Compute x and y donwstream cell coordinates based on cell flow direction
+
+        D8 - Direction convetion:
+
+        4   3   2
+        5   0   1
+        6   7   8
+
+        :param dir: int flow direction code
+        :param x: int x (row) array index
+        :param y: int y (column) array index
+        :return: x and y downstream cell array indexes
+        """
+        if dir == 1:
+            x = x
+            y = y + 1
+        elif dir == 2:
+            x = x - 1
+            y = y + 1
+        elif dir == 3:
+            x = x - 1
+            y = y
+        elif dir == 4:
+            x = x - 1
+            y = y - 1
+        elif dir == 5:
+            x = x
+            y = y - 1
+        elif dir == 6:
+            x = x + 1
+            y = y - 1
+        elif dir == 7:
+            x = x + 1
+            y = y
+        elif dir == 8:
+            x = x + 1
+            y = y + 1
+        elif dir == 0:
+            x = x
+            y = y
+        return x, y
+
+    #
+    # get the initiation grid
+    nidp_array = nidp(flowdir)
+    #
+    # load the flow acc array
+    flow_accum = np.ones(shape=np.shape(flowdir))
+    #
+    # moving window scanning loop in the NIDP array:
+    for i in range(len(nidp_array)):
+        for j in range(len(nidp_array[i])):
+            print('{}-{}'.format(i, j))
+            #
+            # get local value of NIDP
+            lcl_nidp = nidp_array[i][j]
+            #
+            # source cell condition:
+            if lcl_nidp == 0:
+                #
+                # start tracing procedure:
+                x = i
+                y = j
+                while True:
+                    # todo this is messed up. fix tracing procedure.
+                    #
+                    # get current flow accum value:
+                    local_flow_acc = flow_accum[x][y]
+                    #
+                    # get flow direction
+                    direction = flowdir[x][y]
+                    #
+                    # move to downstream cell -- get next x and y
+                    x, y = downstream_coordinates(dir=direction, x=x, y=y)
+                    #
+                    # update flow accumulation array
+                    downstream_flow_accum = flow_accum[x][y]
+                    flow_accum[x][y] = downstream_flow_accum + local_flow_acc
+                    print(flow_accum[x][y])
+                    # check stop condition
+                    if nidp_array[x][y] > 1 or flowdir[x][y] == 0:
+                        nidp_array[x][y] = 1
+                        break
+            plt.imshow(flow_accum)
+            plt.show()
+    return flow_accum
+
+
 
 
 def slope(array, cellsize, degree=True):
@@ -195,6 +382,7 @@ def slope(array, cellsize, degree=True):
 
 def fill_sinks_wang(array, status=True):
     import time
+    # todo optimze and revise
 
     def find_edge_mask(array):
         rowmaxid = np.shape(array)[0] - 1
