@@ -89,7 +89,72 @@ def downstream_coordinates(dir, x, y):
     return x, y
 
 
-# todo def extract_points()
+def extract_grid_centroids(array, meta, byvalue=False, value=1):
+    """
+    extract centroid of array cells
+    :param array: 2d numpy array
+    :param meta: metadata dictionary with 'xllcorner', 'yllcorner' and 'cellsize'
+    :return: dictionary of X, Y and Z values
+    """
+    shape = np.shape(array)
+    nrows = shape[0]
+    ncols = shape[1]
+    if byvalue:
+        size = int(np.sum(1.0 * (array == value)))
+    else:
+        size = int(nrows * ncols)
+
+    xll = float(meta['xllcorner'])
+    yll = float(meta['yllcorner'])
+    cellsize = float(meta['cellsize'])
+
+    x_long = np.zeros(shape=size)
+    y_lat = np.zeros(shape=size)
+    z_val = np.zeros(shape=size)
+    # get relative coordinates
+    count = 0
+    for i in range(nrows):
+        for j in range(ncols):
+            if byvalue:
+                if array[i][j] == value:
+                    z_val[count] = array[i][j]
+                    x_long[count] = (j * cellsize)
+                    y_lat[count] = ((nrows - i - 1) * cellsize)
+                    count = count + 1
+            else:
+                z_val[count] = array[i][j]
+                x_long[count] = (j * cellsize)
+                y_lat[count] = ((nrows - i - 1) * cellsize)
+                count = count + 1
+    # get absolute coordinates
+    x_long = x_long + xll + (cellsize / 2)
+    y_lat = y_lat + yll + (cellsize / 2)
+    return {'X':x_long, 'Y':y_lat, 'Z':z_val}
+
+
+def extract_grid_nodes(array, meta):
+    shape = np.shape(array)
+    nrows = shape[0] + 1
+    ncols = shape[1] + 1
+    size = int(nrows * ncols)
+
+    xll = float(meta['xllcorner'])
+    yll = float(meta['yllcorner'])
+    cellsize = float(meta['cellsize'])
+
+    x_long = np.zeros(shape=size)
+    y_lat = np.zeros(shape=size)
+    # get relative coordinates
+    count = 0
+    for i in range(nrows):
+        for j in range(ncols):
+            x_long[count] = (j * cellsize)
+            y_lat[count] = ((nrows - i - 2) * cellsize)
+            count = count + 1
+    # get absolute coordinates
+    x_long = x_long + xll
+    y_lat = y_lat + yll + cellsize
+    return {'X': x_long, 'Y': y_lat}
 
 
 def find_sinks(dem):
@@ -176,7 +241,7 @@ def flatten_clear(array, mask):
     return cleared
 
 
-def flow_acc(flowdir):
+def flow_acc(flowdir, status=False):
     """
     Flow accumulation algorithm
 
@@ -199,6 +264,9 @@ def flow_acc(flowdir):
     #
     # get the initiation grid
     nidp_array = local_flowacc(flowdir)
+    if status:
+        c = 1
+        cmax = np.sum(1.0 * (nidp_array == 0))
     #
     # load the flow acc array
     flow_accum = np.ones(shape=np.shape(flowdir))
@@ -212,13 +280,15 @@ def flow_acc(flowdir):
             #
             # source cell condition:
             if lcl_nidp == 0:
+                if status:
+                    print('Flow Accumulation\t{:.3f} %'.format(100 * c / cmax))
+                    c = c + 1
                 #
                 # start tracing procedure:
                 x = i
                 y = j
                 accumulate = True
                 while True:
-                    # todo this is messed up. fix tracing procedure.
                     #
                     # get current flow accum value:
                     if accumulate:
@@ -243,7 +313,7 @@ def flow_acc(flowdir):
     return flow_accum
 
 
-def flow_dir(dem):
+def flow_dir(dem, status=False):
     """
     Flow direction algorithm - based on the lowest neighboring cell
 
@@ -265,9 +335,14 @@ def flow_dir(dem):
     # load the flow dir convention window:
     directions = np.array(((4, 3, 2), (5, 0, 1), (6, 7, 8)))
     #
+    cmax = np.shape(dem)[0] * np.shape(dem)[1]
+    c = 1
     # moving window scanning loop:
     for i in range(len(dem)):
         for j in range(len(dem[i])):
+            if status:
+                print('Flow Direction\t{:.3f} %'.format(100 * c / cmax))
+                c = c + 1
             lcl_value = dem[i][j]
             #
             # find the window and directions
@@ -659,6 +734,31 @@ def stddem():
     return dct, np.array(lst)
 
 
+def stdmask():
+    """
+    Utility function for code development
+    :return: asc file metadata dictionary and 2d numpy array of standard dem
+    """
+    lst = [(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+           (0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0),
+           (0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0),
+           (0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0),
+           (0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0),
+           (0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0),
+           (0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0),
+           (0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0),
+           (0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0),
+           (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+           (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)]
+    dct = {'ncols': '11',
+           'nrows': '11',
+           'xllcorner': '559490.0',
+           'yllcorner': '6704830.0',
+           'cellsize': '100',
+           'NODATA_value': '-9999'}
+    return dct, np.array(lst)
+
+
 def twi(catcha, grad, cellsize, gradmin=0.0001):
     """
     Derive the Topographical Wetness Index of TOPMODEL (Beven & Kirkby, 1979)
@@ -670,4 +770,51 @@ def twi(catcha, grad, cellsize, gradmin=0.0001):
     :return: Topographical Wetness Index 2d array
     """
     return np.log(catcha / (cellsize * (grad + gradmin)))
+
+
+def write_wkt_points(x_long, y_lat):
+    """
+    Writes on a tuple Points WKT geometry strings
+    :param x_long: 1d array of x - longitude vertex coordinates
+    :param y_lat: 1d array of y - latitude vertex coordinates
+    :return: tuple of Points WKT geometry strings
+    """
+
+    wkt_lst = list()
+    for i in range(len(x_long)):
+        wkt_lst.append('Point ({} {})'.format(x_long[i], y_lat[i]))
+    return tuple(wkt_lst)
+
+
+def write_wkt_linestring(x_long, y_lat):
+    """
+    Writes a string of WKT LineString geometry
+    :param x_long: 1d array of x - longitude vertex coordinates
+    :param y_lat: 1d array of y - latitude vertex coordinates
+    :return: string of WKT LineString geometry
+    """
+    vertex_lst = list()
+    for i in range(len(x_long)):
+        vertex_lst.append('{} {}'.format(x_long[i], y_lat[i]))
+    argument = vertex_lst[0]
+    for i in range(1, len(vertex_lst)):
+        argument = argument + ', ' + vertex_lst[i]
+    return 'LineString ({})'.format(argument)
+
+
+def write_wkt_polygon(x_long, y_lat):
+    """
+    Writes a string of WKT Polygon geometry
+    :param x_long: 1d array of x - longitude vertex coordinates
+    :param y_lat: 1d array of y - latitude vertex coordinates
+    :return: a string of WKT Polygon geometry
+    """
+    vertex_lst = list()
+    for i in range(len(x_long)):
+        vertex_lst.append('{} {}'.format(x_long[i], y_lat[i]))
+    argument = vertex_lst[0]
+    for i in range(1, len(vertex_lst)):
+        argument = argument + ', ' + vertex_lst[i]
+    return 'Polygon (({}))'.format(argument)
+
 

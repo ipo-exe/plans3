@@ -32,11 +32,11 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.title(titles[0])
     plt.colorbar(im, shrink=0.4)
     #
-    # set x ticks
+    '''# set x ticks
     size = len(t)
     spaces = int(size / 5)
     locs = np.arange(0, size, spaces)
-    labels = t[locs]
+    labels = t[locs]'''
     #
     # plot x1
     y = x1
@@ -49,7 +49,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.ylim(0, 1.1 * ymax)
     plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    plt.xticks(locs, labels)
+    #plt.xticks(locs, labels)
     #
     # plot x2
     y = x2
@@ -62,7 +62,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.ylim(0, 1.1 * ymax)
     plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    plt.xticks(locs, labels)
+    #plt.xticks(locs, labels)
     #
     # plot x3
     y = x3
@@ -75,7 +75,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.ylim(0, 1.1 * ymax)
     plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    plt.xticks(locs, labels)
+    #plt.xticks(locs, labels)
     #
     if show:
         plt.show()

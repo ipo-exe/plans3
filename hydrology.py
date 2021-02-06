@@ -146,6 +146,50 @@ def map_back(zmatrix, a1, a2, bins1, bins2):
             map = map + lclmap
     return map
 
+# PET model functions
+def pet_gsc():
+    """
+    PET model Solar Constant
+    :return: float solar constant in W/m2
+    """
+    return 1360.0  # W/m2
+
+
+def pet_g(n):
+    """
+    PET model Solar Radiation as a function of Julian Day
+    :param n: julian day
+    :return: solar radiation (float or array) in W/m2
+    """
+    return pet_gsc() * (1 + 0.033 * np.cos(2 * np.pi * n / 365))
+
+
+def pet_declination(n):
+    """
+    PET model - Earth declination angle
+    :param n: julian day
+    :return: Earth declination angle in radians
+    """
+    return (2 * np.pi * 23.45 / 360) * np.sin(2 * np.pi * (284 + n) / 365)
+
+
+def pet_hss(declination, latitude):
+    """
+    PET model - Sun Set angle
+    :param declination: declination angle in radians
+    :param latitude: latitude angle in radians
+    :return: Sun Set angle in radians
+    """
+    return np.arccos(-np.tan(latitude) * np.tan(declination))
+
+
+def pet_etrad_day(n, latitude):
+    g = pet_g(n)
+    declination = pet_declination(n)
+    hss = pet_hss(declination=declination, latitude=latitude)
+
+
+
 # topmodel functions
 def topmodel_s0max(cn, a):
     """
