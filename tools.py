@@ -390,7 +390,8 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     ksat;       2.0;
     qo;         1.0;
     a;          1.5;
-    c;          0.4;
+    c;          100.0;
+    lat;        -30.0;
     k;          1.1;
     n;          2.1;
 
@@ -458,6 +459,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     qo = df_param.loc['qo'].values[0]
     a = df_param.loc['a'].values[0]
     c = df_param.loc['c'].values[0]
+    lat = df_param.loc['lat'].values[0]
     k = df_param.loc['k'].values[0]
     n = df_param.loc['n'].values[0]
     qt0 = 0.2  # mm/d
@@ -481,7 +483,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     # mapback conditionals:
     if mapback:
         sim_df, mapped = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                                      qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar)
+                                      lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar)
     else:
         sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
                               qt0=qt0, k=k, n=n, tui=False, mapback=mapback)
@@ -494,8 +496,8 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     # export files
     if tui:
         print('exporting run parameters...')
-    exp_df = pd.DataFrame({'Parameter':('m', 'ksat', 'qo', 'a', 'c', 'k', 'n'),
-                           'Set':(m, ksat, qo, a, c, k, n)})
+    exp_df = pd.DataFrame({'Parameter':('m', 'ksat', 'qo', 'a', 'c', 'lat', 'k', 'n'),
+                           'Set':(m, ksat, qo, a, c, lat, k, n)})
     exp_file1 = folder + '/' + 'parameters.txt'
     exp_df.to_csv(exp_file1, sep=';', index=False)
     #

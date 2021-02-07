@@ -150,45 +150,83 @@ def map_back(zmatrix, a1, a2, bins1, bins2):
 def pet_gsc():
     """
     PET model Solar Constant
-    :return: float solar constant in W/m2
+    :return: float solar constant in [W/m2]
     """
     return 1360.0  # W/m2
 
 
-def pet_g(n):
+def pet_g(day):
     """
     PET model Solar Radiation as a function of Julian Day
-    :param n: julian day
-    :return: solar radiation (float or array) in W/m2
+    :param day: julian day
+    :return: solar radiation (float or array) in [W/m2]
     """
-    return pet_gsc() * (1 + 0.033 * np.cos(2 * np.pi * n / 365))
+    return pet_gsc() * (1 + 0.033 * np.cos(2 * np.pi * day / 365))
 
 
-def pet_declination(n):
+def pet_declination(day):
     """
     PET model - Earth declination angle
-    :param n: julian day
-    :return: Earth declination angle in radians
+    :param day: julian day
+    :return: Earth declination angle in [radians]
     """
-    return (2 * np.pi * 23.45 / 360) * np.sin(2 * np.pi * (284 + n) / 365)
+    return (2 * np.pi * 23.45 / 360) * np.sin(2 * np.pi * (284 + day) / 365)
 
 
 def pet_hss(declination, latitude):
     """
-    PET model - Sun Set angle
-    :param declination: declination angle in radians
-    :param latitude: latitude angle in radians
-    :return: Sun Set angle in radians
+    PET model - Sun Set Hour angle
+    :param declination: declination angle in [radians]
+    :param latitude: latitude angle in [radians]
+    :return: Sun Set Hour angle in [radians]
     """
     return np.arccos(-np.tan(latitude) * np.tan(declination))
 
 
-def pet_etrad_day(n, latitude):
-    g = pet_g(n)
-    declination = pet_declination(n)
-    hss = pet_hss(declination=declination, latitude=latitude)
+def pet_daily_hetrad(day, latitude):
+    """
+    PET model - Daily integration of the instant Horizontal Extraterrestrial Radiation Equations
+    :param day: int - Julian day
+    :param latitude: float - latitude in [radians]
+    :return: Horizontal Daily Extraterrestrial Radiation in [MJ/(d * m2)]
+    """
+    g = pet_g(day)  # Get instant solar radiation in W/m2
+    declination = pet_declination(day)  # Get declination in radians
+    hss = pet_hss(declination=declination, latitude=latitude)  # get sun set hour angle in radians
+    het = (24 * 3600 / np.pi) * g * ((np.cos(latitude) * np.cos(declination) * np.sin(hss))
+                                     + (hss * np.sin(latitude) * np.sin(declination)))  # J/(d * m2)
+    return het / (1000000)  # MJ/(d * m2)
 
 
+def pet_latent_heat_flux():
+    """
+    PET model - Latent Heat Flux of water in MJ/kg
+    :return: float -  Latent Heat Flux of water in MJ/kg
+    """
+    return 2.45  # MJ/kg
+
+
+def pet_water_spmass():
+    """
+    PET model - Water specific mass in kg/m3
+    :return: float - Water specific mass in kg/m3
+    """
+    return 1000.0  # kg/m3
+
+
+def pet_oudin(temperature, day, latitude, k1=100, k2=5):
+    """
+    PET Oudin Model - Radiation and Temperature based PET model of  Oudin et al (2005b)
+    :param temperature: float or array of daily average temperature in [C]
+    :param day: int or array of Julian day
+    :param latitude: latitude angle in [radians]
+    :param k1: Scalar parameter in [C * m/mm]
+    :param k2: Minimum air temperature [C]
+    :return: Potential Evapotranspiration in [mm/d]
+    """
+    het = pet_daily_hetrad(day, latitude)
+    pet = (1000 * het / (pet_latent_heat_flux() * pet_water_spmass() * k1)) * (temperature + k2) * ((temperature + k2) > 0) * 1.0
+    return pet
 
 # topmodel functions
 def topmodel_s0max(cn, a):
@@ -266,7 +304,7 @@ def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
     return countmatrix, twi_hist, cn_hist
 
 
-def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, qt0, k, n,
+def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, lat, qt0, k, n,
                  mapback=False, mapvar='R-ET-S1-S2', tui=False):
     """
 
@@ -281,7 +319,8 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     :param m: positive float - effective transmissivity decay coefficient in mm
     :param qo: positive float - max baseflow when d=0 in mm/d
     :param a: positive float - scaling parameter for S0max model
-    :param c: positive float - scaling parameter for PET model
+    :param c: positive float - scaling parameter for PET model in Celcius
+    :param lat: float - latitude in degrees for PET model
     :param qt0: positive float - baseflow at t=0 in mm/d
     :param k: positive float - Nash Cascade residence time in days
     :param n: positive float - equivalent number of reservoirs in Nash Cascade
@@ -318,7 +357,10 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     size = len(ts_prec)
     #
     # compute PET
-    ts_pet = c * ts_temp
+    days = series['Date'].dt.dayofyear
+    ts_days = days.values
+    lat = lat * np.pi / 180  # convet lat to radians
+    ts_pet = pet_oudin(temperature=ts_temp, day=ts_days, latitude=lat, k1=c)
     #
     # set initial conditions
     d0 = topmodel_d0(qt0=qt0, qo=qo, m=m)
