@@ -173,9 +173,33 @@ def pet_declination(day):
     return (2 * np.pi * 23.45 / 360) * np.sin(2 * np.pi * (284 + day) / 365)
 
 
+def pet_zenital_angle(day, latitude, hour):
+    """
+    Zenital incidence angle in radians on a horizontal plane
+    :param day: int julian day
+    :param latitude: latitude angle in [radians]
+    :param hour: hour angle in [radians]
+    :return: zenital incidence angle in radians
+    """
+    dcl = pet_declination(day=day)
+    return np.arccos((np.cos(latitude) * np.cos(dcl) * np.cos(hour)) + (np.sin(latitude) * np.sin(dcl)))
+
+
+def pet_altitude_angle(day, latitude, hour):
+    """
+    Altitude incidence angle in radians on a horizontal plane
+    :param day: int julian day
+    :param latitude: latitude angle in [radians]
+    :param hour: hour angle in [radians]
+    :return: zenital incidence angle in radians
+    """
+    zenit = pet_zenital_angle(day=day, latitude=latitude, hour=hour)
+    return (np.pi / 2) - zenit
+
+
 def pet_hss(declination, latitude):
     """
-    PET model - Sun Set Hour angle
+    PET model - Sun Set Hour angle in radians
     :param declination: declination angle in [radians]
     :param latitude: latitude angle in [radians]
     :return: Sun Set Hour angle in [radians]

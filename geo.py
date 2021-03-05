@@ -653,7 +653,7 @@ def grad(slope):
     """
     derive the topographical gradient tan(B) from the slope in degrees
     :param array: slope in degrees 2d array
-    :return:
+    :return: gradient (m/m) of terrain
     """
     slope_rad = np.pi * 2 * slope / 360
     grad = np.tan(slope_rad)
@@ -691,12 +691,52 @@ def reclassify(array, upvalues, classes):
     return new
 
 
+def rusle_l(slope, cellsize):
+    """
+    RUSLE L Factor (McCool et al. 1989; USDA, 1997)
+
+    L = (x / 22.13) ^ m
+
+    where:
+    m = β / (1 + β)
+    and:
+    β = (sinθ ⁄ 0.0896) ⁄ (3.0⋅(sinθ)^0.8 + 0.56)
+
+    x is the plot lenght taken as 1.4142 * cellsize  (diagonal length of cell)
+
+    :param slope: slope in degrees of terrain 2d array
+    :param cellsize: cell size in meters
+    :return: RUSLE L factor 2d array
+    """
+    slope_rad = np.pi * 2 * slope / 360
+    lcl_grad = np.sin(slope_rad)
+    beta = (lcl_grad / 0.0896) / ((3 * np.power(lcl_grad, 0.8)) + 0.56)
+    m = beta / (1.0 + beta)
+    return np.power(np.sqrt(2) * cellsize / 22.13, m)
+
+
+def rusle_s(slope):
+    """
+    RUSLE S Factor (McCool et al. 1987; USDA, 1997)
+
+    S = 10.8 sinθ + 0.03     sinθ < 0.09
+    S = 16.8 sinθ - 0.5      sinθ >= 0.09
+
+    :param slope: slope in degrees of terrain 2d array
+    :return: RUSLE S factor 2d array
+    """
+    slope_rad = np.pi * 2 * slope / 360
+    lcl_grad = np.sin(slope_rad)
+    lcl_s = ((10.8 * lcl_grad + 0.03 ) * (lcl_grad < 0.09)) + ((16.8 * lcl_grad - 0.5 ) * (lcl_grad >= 0.09))
+    return lcl_s
+
+
 def slope(dem, cellsize, degree=True):
     """
     Slope algorithm based on gradient built in functions of numpy
     :param dem: 2d numpy array of dem
     :param cellsize: float value of cellsize (delta x = delta y)
-    :param degree: boolean to control output units. Defalt = True. If False output units are in radians
+    :param degree: boolean to control output units. Default = True. If False output units are in radians
     :return: 2d numpy array of slope
     """
     grad = np.gradient(dem)
@@ -770,6 +810,46 @@ def twi(catcha, grad, cellsize, gradmin=0.0001):
     :return: Topographical Wetness Index 2d array
     """
     return np.log(catcha / (cellsize * (grad + gradmin)))
+
+
+def usle_l(slope, cellsize):
+    """
+    Wischmeier & Smith (1978) L factor
+
+    L = (x / 22.13) ^ m
+
+    where:
+
+    m = 0.2 when sinθ < 0.01;
+    m = 0.3 when 0.01 ≤ sinθ ≤ 0.03;
+    m = 0.4 when 0.03 < sinθ < 0.05;
+    m = 0.5 when sinθ ≥ 0.05
+
+    x is the plot lenght taken as 1.4142 * cellsize  (diagonal length of cell)
+
+    :param slope: slope in degrees of terrain 2d array
+    :param cellsize: cell size in meters
+    :return: Wischmeier & Smith (1978) L factor 2d array
+    """
+    slope_rad = np.pi * 2 * slope / 360
+    lcl_grad = np.sin(slope_rad)
+    m = reclassify(lcl_grad, upvalues=(0.01, 0.03, 0.05, np.max(lcl_grad)), classes=(0.2, 0.3, 0.4, 0.5))
+    return np.power(np.sqrt(2) * cellsize / 22.13, m)
+
+
+def usle_s(slope):
+    """
+    Wischmeier & Smith (1978) S factor
+
+    S = 65.41(sinθ)^2 + 4.56sinθ + 0.065
+
+    :param slope: slope in degrees of terrain 2d array
+    :return:
+    """
+    slope_rad = np.pi * 2 * slope / 360
+    lcl_grad = np.sin(slope_rad)
+    return (65.41 * np.power(lcl_grad, 2)) + (4.56 * lcl_grad) + 0.065
+
 
 
 def write_wkt_points(x_long, y_lat):
