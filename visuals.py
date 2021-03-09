@@ -17,7 +17,7 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     :param x2max: float max value of x2
     :param x3max: float max value of x3
     :param vline: int of index position of vertical line
-    :param folder: string folder path to expor image
+    :param folder: string folder path to export image
     :param filename: string of file name
     :param suff: string of suffix
     :return: string file path of plot
@@ -90,6 +90,25 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
 
 def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitles, ylabels, vline=20,
                           folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
+    """
+    Plot a pannel with 4 images (left) and  4 signals (right).
+    :param im4: tuple of 4 2d arrays (images)
+    :param imax: float of images vmax
+    :param t: 1d array of x-axis shared variable
+    :param y4: tuple of 4 signal series arrays
+    :param y4max: tuple of 4 vmax of series arrays
+    :param y4min: tuple of 4 vmin of series arrays
+    :param cmaps: tuple of 4 string codes to color maps
+    :param imtitles: tuple of 4 string titles for images
+    :param ytitles: tuple of 4 string titles of series
+    :param ylabels: tuple of 4 string y axis labels
+    :param vline: int of index position of vertical line
+    :param folder: string folder path to export image
+    :param show: boolean to show image instead of exporting
+    :param filename: string of file name
+    :param suff: string of suffix
+    :return: string file path of plot
+    """
     #
     fig = plt.figure(figsize=(16, 9))  # Width, Height
     gs = mpl.gridspec.GridSpec(4, 10, wspace=0.8, hspace=0.6)
@@ -392,6 +411,82 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
             filepath = folder + '/' + filename + '_' + suff + '.png'
         else:
             filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
+
+
+def pannel_topmodel_maps(t, prec, precmax, qb, qbmax, pet, et, etmax, maps, mapsmax, vline=20,
+                         folder='C:/bin', filename='pannel_topmodel', suff='', show=True):
+    #
+    fig = plt.figure(figsize=(15, 7))  # Width, Height
+    nrows = 3
+    ncols = 8
+    gs = mpl.gridspec.GridSpec(nrows, ncols, wspace=0.8, hspace=0.6)
+    #
+    titles = ('Precip. (mm).', 'VSA', 'Deficit', 'Canopy water ', 'Soil water',
+              'Throughfall', 'Infiltration', 'Runoff', 'Recharge',
+              'ET', 'Evap. (Canopy)', 'Transp. (Soil)', 'Transp. (GW)')
+    count = 0
+    for i in range(0, nrows):
+        for j in range(0, 5):
+            if i > 0 and j == 0:
+                pass
+            else:
+                ax = fig.add_subplot(gs[i, j])
+                if i == 0 and j == 1:
+                    lcl_max = 1
+                    lcl_cmap = 'Blues'
+                elif i == 0 and j == 2:
+                    lcl_max = mapsmax
+                    lcl_cmap = 'jet'
+                else:
+                    lcl_max = mapsmax
+                    lcl_cmap = 'viridis_r'
+                im = plt.imshow(maps[count], cmap=lcl_cmap, vmin=0, vmax=lcl_max)
+                plt.axis('off')
+                plt.title(titles[count])
+                if i == 0 and j == 1:
+                    pass
+                else:
+                    plt.colorbar(im, shrink=0.5)
+                count = count + 1
+    #
+    #vline = 20
+    #t = np.arange(0, 100)
+    lcly = prec
+    ax = fig.add_subplot(gs[0, 5:])
+    plt.plot(t, lcly)
+    plt.vlines(t[vline], ymin=0, ymax=precmax, colors='r')
+    plt.plot(t[vline], lcly[vline], 'ro')
+    plt.title('Precipitation: {:.2f} mm'.format(lcly[vline]), loc='left')
+    plt.ylabel('mm')
+    #
+    lcly = qb
+    ax = fig.add_subplot(gs[1, 5:])
+    plt.plot(t, lcly, 'navy')
+    plt.vlines(t[vline], ymin=0, ymax=qbmax, colors='r')
+    plt.plot(t[vline], lcly[vline], 'ro')
+    plt.title('Baseflow: {:.2f} mm'.format(lcly[vline]), loc='left')
+    plt.ylabel('mm')
+    #
+    lcly = et
+    lcly2 = pet
+    ax = fig.add_subplot(gs[2, 5:])
+    plt.plot(t, lcly, 'tab:red', label='ET')
+    plt.plot(t, lcly2 , 'grey', label='PET')
+    plt.vlines(t[vline], ymin=0, ymax=etmax, colors='r')
+    plt.plot(t[vline], lcly[vline], 'ro')
+    plt.title('Actual ET: {:.2f} mm'.format(lcly[vline]), loc='left')
+    plt.ylabel('mm')
+    plt.legend( ncol=2, loc='upper right')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        filepath = folder + '/' + filename + '_' + suff + '.png'
         plt.savefig(filepath)
         plt.close(fig)
         return filepath

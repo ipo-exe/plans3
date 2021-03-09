@@ -353,7 +353,7 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     :param n: positive float - equivalent number of reservoirs in Nash Cascade
     :param mapback: boolean control to map back variables
     :param mapvar: string code of variables to map back. Available variables:
-    'Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw' (see below the relation)
+    'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw' (see below the relation)
     :param tui: boolean to control terminal messages
     :return: dataframe of simulated variables:
 
@@ -403,15 +403,10 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     #
     # set 2d count parameter arrays
     s1maxi = 0.2 * s0max_bins * np.ones(shape=shape, dtype='float32')  # canopy water
-    #plt.imshow(s1maxi)
-    #plt.title('s1max')
-    #plt.show()
     s2maxi = 0.8 * s0max_bins * np.ones(shape=shape, dtype='float32')  # rootzone
     rzdi = s2maxi.copy()
-    #plt.imshow(rzdi)
-    #plt.title('s2max')
-    #plt.show()
-
+    #
+    # get local Lambda
     lambi = np.reshape(twi_bins, (rows, 1)) * np.ones(shape=shape, dtype='float32')
     #
     # set 2d count variable arrays
@@ -420,11 +415,11 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     s1i = np.zeros(shape=shape)  # initial condition
     tfi = np.zeros(shape=shape)
     evi = np.zeros(shape=shape)
+    qri = np.zeros(shape=shape)
     #
     s2i = np.zeros(shape=shape)  # initial condition
     infi = np.zeros(shape=shape)
     ri = np.zeros(shape=shape)
-    #peri = np.zeros(shape=shape)
     tpi = np.zeros(shape=shape)
     tpgwi = np.zeros(shape=shape)
     eti = evi + tpi + tpgwi
@@ -439,8 +434,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     ts_s1[0] = avg_2d(var2d=s1i, weight=countmatrix)
     ts_s2 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_s2[0] = avg_2d(var2d=s2i, weight=countmatrix)
-    #ts_s3 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    #ts_s3[0] = avg_2d(var2d=s3i, weight=countmatrix)
     ts_d = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_d[0] = d0
     ts_qv = np.zeros(shape=np.shape(ts_prec), dtype='float32')
@@ -456,7 +449,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     ts_tpgw = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_et = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_r = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    # ts_per = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_inf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     ts_tf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
     #
@@ -474,59 +466,60 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         if tui:
             print('Step {}'.format(t))
         #
-        # update S1
+        # update S1 - Canopy storage - interceptation
         s1i = s1i - evi - tfi + preci
         ts_s1[t] = avg_2d(s1i, countmatrix)
         #
-        # compute current EV
+        # compute current EV - Evaporation from canopy storage
         peti = ts_pet[t] * np.ones(shape=shape)  # update PET
         evi = ((peti) * (s1i >= peti)) + (s1i * (s1i < peti))
         ts_ev[t] = avg_2d(evi, countmatrix)
         #
-        # compute current TF
+        # compute current TF - Throughfall (or "effective preciputation")
         preci = ts_prec[t] * np.ones(shape=shape)  # update PREC
-        tfi = ((preci + s1i - evi - s1maxi) * ((preci + s1i - evi) >= s1maxi)) # + ((preci * 0.0) * ((preci + s1i - evi) < s1maxi))
+        tfi = ((preci + s1i - evi - s1maxi) * ((preci + s1i - evi) >= s1maxi))
         ts_tf[t] = avg_2d(tfi, countmatrix)
         #
-        # update S2
+        # update S2 - Unsaturated soil water - vadoze zone
         s2i = s2i - qvi - tpi + infi
         ts_s2[t] = avg_2d(s2i, countmatrix)
         #
-        # compute TP
+        # compute TP - Plant transpiration from vadoze zone
         peti = peti - evi  # update peti
         di_aux = di + ((np.max(di) + 3) * (di <= 0.0))  # auxiliar Di to replace zero values by a higher positive value to avoid division by zero
         ptpi = ((s2i * (rzdi >= di)) + ((s2i * rzdi / di_aux) * (rzdi < di))) * (di > 0.0)  # compute potential TP
         tpi = (ptpi * (peti >= ptpi)) + (peti * (peti < ptpi))
         ts_tp[t] = avg_2d(tpi, countmatrix)
         #
-        # compute QV
+        # compute QV - Vertical flow to saturated zone - Water table recharge
         pqvi = (ksat * s2i / di_aux) * (di > 0.0)  # potential QV
         qvi = ((pqvi) * (s2i - tpi >= pqvi)) + ((s2i - tpi) * (s2i - tpi < pqvi))
         ts_qv[t] = avg_2d(qvi, countmatrix)
         #
-        # compute Inf
+        # compute Inf - Infiltration from surface. Soil has a potential infiltration capacity equal to the rootzone
         pinfi = (rzdi * (tfi >= rzdi)) + (tfi * (tfi < rzdi))  # potential infiltration -- infiltration capacity
         infi = ((di - s2i + tpi + qvi) * (pinfi >= (di - s2i + tpi + qvi))) + (pinfi * (pinfi < (di - s2i + tpi + qvi)))
         ts_inf[t] = avg_2d(infi, countmatrix)
         #
-        # compute R
+        # compute R - Runoff water
         ri = tfi - infi
         ts_r[t] = avg_2d(ri, countmatrix)
         #
-        # compute TP-GW
-        peti = peti - tpi  # remaining local PET
-        ptpgwi = (s2maxi - di) * (di < s2maxi)  # potential local TP
+        # compute TP-GW - Plant transpiration directly from the water table (if within reach of the root zone)
+        peti = peti - tpi  # update peti
+        ptpgwi = (rzdi - di) * (di < rzdi)  # potential local TP
+        #ptpgwi = (s2maxi - di) * (di < s2maxi)  # potential local TP
         tpgwi = (peti * (ptpgwi > peti)) + (ptpgwi * (ptpgwi <= peti))
         ts_tpgw[t] = avg_2d(tpgwi, countmatrix)
         #
-        # compute ET
+        # compute ET - Actual Evapo-transpiration
         eti = evi + tpi + tpgwi
         ts_et[t] = avg_2d(eti, countmatrix)
         #
-        # update D
+        # update D water balance
         ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1] + ts_tpgw[t - 1]
         #
-        # compute Qb
+        # compute Qb - Baseflow
         ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
         #
         # Update Di
@@ -538,16 +531,16 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         #
         # trace section
         if mapback:
-            dct = {'Qv':qvi, 'R': ri, 'ET':eti, 'S1':s1i, 'S2':s2i, 'Inf':infi, 'Tp':tpi, 'Ev':evi, 'Tpgw':tpgwi}
+            dct = {'TF':tfi, 'Qv':qvi, 'R': ri, 'ET':eti, 'S1':s1i, 'S2':s2i, 'Inf':infi, 'Tp':tpi, 'Ev':evi, 'Tpgw':tpgwi}
             for e in mapvar_lst:
                 map_dct[e][t] = dct[e]
     #
-    # RUNOFF ROUTING
+    # RUNOFF ROUTING by Nash Cascade of linear reservoirs
     if tui:
         print('Runoff routing...')
     ts_qs = nash_cascade(ts_r, k=k, n=n)
     #
-    # compute full discharge
+    # compute full discharge Q
     ts_q = ts_qb + ts_qs
     #
     # export data

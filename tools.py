@@ -651,9 +651,8 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
                               vline=lcl_t_index, folder=folder, suff=suff)
 
 
-def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries,
-                     size=200, start=0, framef=0.2, watchf=0.2,
-                     folder='C:/bin'):
+def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, imtitles, ylabels, ytitles,
+                     size=200, start=0, framef=0.3, watchf=0.2, folder='C:/bin', show=False):
     """
     Create frames for video watch of topmodel simulation with TWI map + 3 other maps alongside 4 variables
 
@@ -666,6 +665,10 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries,
     :param fparam: string file path to simulation parameters .txt file
     :param fmaps: list or tuple storing 3 string file paths to directory of 3 maps
     :param varseries: list or tuple with 4 strings of variables field names (must exist in series DataFrame)
+    :param cmaps: tuple of 4 strings kargs to color maps. Example: ('viridis_r', 'viridis_r', 'viridis_r', 'jet')
+    :param imtitles: tuple of 4 strings with image titles.
+    :param ylabels: tuple of 4 strings with y axis labels in series.
+    :param ytitles: tuple of 4 strings of series titles
     :param size: int number of frames
     :param start: int index of first frame
     :param framef: float of frame ratio to full size (0 to 1)
@@ -681,7 +684,7 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries,
     #
     # extract arrays
     date = series_df['Date'].values[start: start + size]
-    prec = series_df['Prec'].values
+    prec = series_df['Prec'].values[start: start + size]
     imax = 0.1 * np.max(prec)
     #
     series1 = series_df[varseries[0]].values[start: start + size]
@@ -703,7 +706,6 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries,
     map1_df = pd.read_csv(fmaps[0], sep=';')
     map2_df = pd.read_csv(fmaps[1], sep=';')
     map3_df = pd.read_csv(fmaps[2], sep=';')
-
     #
     # import twi
     meta, twi = input.asc_raster(ftwi)
@@ -773,17 +775,92 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries,
         #
         stamp = pd.to_datetime(lcl_date, format='%y-%m-%d')
         suff = str(stamp[lcl_t_index]).split(' ')[0]
-        #print(suff)
         #
-        # other params
-        #cmaps = ('YlGnBu', 'YlOrRd', 'viridis_r', 'jet')
-        cmaps = ('viridis_r', 'viridis_r', 'viridis_r', 'jet')
-        imtitles = ('Runoff (mm/d)', 'Tp-Soil (mm/d)', 'Tp-GW (mm/d)', 'Local Deficit (mm)')
-        ytitles = ('Precipitation', 'Potential ET', 'Actual ET', 'Baseflow')
-        ylabels = ('mm', 'mm', 'mm', 'mm')
         # export image
         pannel_4image_4series(im, imax, stamp, y4, y4max, y4min, cmaps, vline=lcl_t_index,
-                              imtitles=imtitles, ytitles=ytitles, ylabels=ylabels, show=False, suff=suff)
+                              imtitles=imtitles, ytitles=ytitles, ylabels=ylabels, show=show, suff=suff)
 
 
+def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftfmaps, finfmaps, frmaps, fqvmaps, fetmaps,
+                         fevmaps, ftpmaps, ftpgwmaps, size=600, start=0, framef=0.25, watchf=0.2, folder='C:/bin',
+                         show=False):
+    from hydrology import topmodel_di, avg_2d, map_back
+    from visuals import pannel_topmodel_maps
+    #
+    # import series
+    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    #
+    # extract arrays
+    date = series_df['Date'].values[start: start + size]
+    prec = series_df['Prec'].values[start: start + size]
+    pet = series_df['PET'].values[start: start + size]
+    et = series_df['ET'].values[start: start + size]
+    qb = series_df['Qb'].values[start: start + size]
+    deficit = series_df['D'].values[start: start + size]
+    #
+    # extract maps dataframes
+    maps_dfs_files = (fs1maps, fs2maps, ftfmaps, finfmaps, frmaps, fqvmaps, fetmaps, fevmaps, ftpmaps, ftpgwmaps)
+    maps_dfs = list()  # list of dataframes
+    for i in range(len(maps_dfs_files)):
+        lcl_df = pd.read_csv(maps_dfs_files[i], sep=';')
+        maps_dfs.append(lcl_df.copy())
+
+    # import twi
+    meta, twi = input.asc_raster(ftwi)
+    #
+    # import cn
+    meta, cn = input.asc_raster(fcn)
+    #
+    # import aoi
+    meta, aoi = input.asc_raster(faoi)
+    #
+    # extract lamb
+    lamb = avg_2d(twi, aoi)
+    #
+    # import parameter m
+    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    m = df_param.loc['m'].values[0]
+    #
+    # extract parameters
+    imax = 0.25 * np.max(prec)
+    precmax = np.max(prec)
+    qbmax = np.max(qb)
+    etmax = np.max(pet)
+    #
+    # frame loops
+    frame = int(size * framef)
+    lcl_t_index = int(frame * watchf)
+    for t in range(size - frame):
+        print(t)
+        # extract local arrays
+        lcl_date = date[t: t + frame]
+        lcl_prec = prec[t: t + frame]
+        lcl_qb = qb[t: t + frame]
+        lcl_pet = pet[t: t + frame]
+        lcl_et = et[t: t + frame]
+        lcl_dfc = deficit[t: t + frame]
+        #
+        # extract maps
+        lcl_d = lcl_dfc[lcl_t_index]
+        lcl_di = topmodel_di(d=lcl_d, twi=twi, m=m, lamb=lamb)
+        di_map = geo.mask(lcl_di, aoi)
+        vsai_map = geo.mask((di_map <= 0) * 1.0, aoi)
+        lcl_p = lcl_prec[lcl_t_index]
+        pi_map = geo.mask(lcl_p + (lcl_di * 0.0), aoi)
+        maps_lst = [pi_map, vsai_map, di_map]
+        #
+        for i in range(0, len(maps_dfs)):
+            lcl_im_files = maps_dfs[i]['File'].values[t: t + frame]
+            lcl_im_path = lcl_im_files[lcl_t_index]
+            zmap, hist_twi, hist_cn = input.zmap(file=lcl_im_path)
+            im = map_back(zmatrix=zmap, a1=twi, a2=cn, bins1=hist_twi, bins2=hist_cn)
+            im = geo.mask(im, aoi)
+            maps_lst.append(im)
+        #
+        #
+        # load params
+        stamp = pd.to_datetime(lcl_date, format='%y-%m-%d')
+        suff = str(stamp[lcl_t_index]).split(' ')[0]
+        pannel_topmodel_maps(t=lcl_date, prec=lcl_prec, precmax=precmax, qb=lcl_qb, qbmax=qbmax, pet=lcl_pet, et=lcl_et,
+                             etmax=etmax, maps=maps_lst, mapsmax=imax, vline=lcl_t_index, suff=suff, show=show)
 
