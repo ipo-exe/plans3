@@ -109,7 +109,7 @@ def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitl
     plt.colorbar(im, shrink=0.4)
     # Right Upper
     ax = fig.add_subplot(gs[0:2, 2:4])
-    im = plt.imshow(im4[2], cmap=cmaps[2], vmin=0, vmax=2.33)
+    im = plt.imshow(im4[2], cmap=cmaps[2], vmin=0, vmax=0.5 * imax)
     plt.axis('off')
     plt.title(imtitles[2])
     plt.colorbar(im, shrink=0.4)

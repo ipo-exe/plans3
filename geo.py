@@ -851,7 +851,6 @@ def usle_s(slope):
     return (65.41 * np.power(lcl_grad, 2)) + (4.56 * lcl_grad) + 0.065
 
 
-
 def write_wkt_points(x_long, y_lat):
     """
     Writes on a tuple Points WKT geometry strings

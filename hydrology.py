@@ -256,6 +256,9 @@ def pet_oudin(temperature, day, latitude, k1=100, k2=5):
 def topmodel_s0max(cn, a):
     """
     Plans 3 Model of S0max as a function of CN
+
+    s0max = a * (100 - CN + b)
+
     :param cn: float or nd array of CN
     :param a: scaling parameter in mm/CN
     :return: float or nd array of S0max
@@ -392,20 +395,21 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     twi_bins = twihist[0]
     twi_count = twihist[1]
     s0max_bins = topmodel_s0max(cn=cnhist[0], a=a)  # convert cn to S0max
+    #print(s0max_bins)
     s0max_count = cnhist[1]
     shape = np.shape(countmatrix)
     rows = shape[0]
     cols = shape[1]
     #
     # set 2d count parameter arrays
-    s1maxi = 0.2 * s0max_bins * np.ones(shape=shape, dtype='float32')
+    s1maxi = 0.2 * s0max_bins * np.ones(shape=shape, dtype='float32')  # canopy water
     #plt.imshow(s1maxi)
     #plt.title('s1max')
     #plt.show()
-    s2maxi = 0.8 * s0max_bins * np.ones(shape=shape, dtype='float32')
+    s2maxi = 0.8 * s0max_bins * np.ones(shape=shape, dtype='float32')  # rootzone
     rzdi = s2maxi.copy()
     #plt.imshow(rzdi)
-    #plt.title('rzdi')
+    #plt.title('s2max')
     #plt.show()
 
     lambi = np.reshape(twi_bins, (rows, 1)) * np.ones(shape=shape, dtype='float32')
@@ -503,7 +507,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         # compute Inf
         pinfi = (rzdi * (tfi >= rzdi)) + (tfi * (tfi < rzdi))  # potential infiltration -- infiltration capacity
         infi = ((di - s2i + tpi + qvi) * (pinfi >= (di - s2i + tpi + qvi))) + (pinfi * (pinfi < (di - s2i + tpi + qvi)))
-        #old code: infi = ((di - s2i + tpi + qvi) * (tfi >= (di - s2i + tpi + qvi))) + (tfi * (tfi < (di - s2i + tpi + qvi)))
         ts_inf[t] = avg_2d(infi, countmatrix)
         #
         # compute R
@@ -521,7 +524,7 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         ts_et[t] = avg_2d(eti, countmatrix)
         #
         # update D
-        ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1]
+        ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1] + ts_tpgw[t - 1]
         #
         # compute Qb
         ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
@@ -532,7 +535,6 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         # compute VSA
         vsai = topmodel_vsai(di=di)
         ts_vsa[t] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
-        #
         #
         # trace section
         if mapback:
@@ -562,4 +564,3 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         return exp_df, map_dct
     else:
         return exp_df
-

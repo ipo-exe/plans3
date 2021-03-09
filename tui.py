@@ -423,7 +423,7 @@ def main():
                 fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
                 dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
                 files = tools.run_topmodel(fseries=fseries, fparam=fparam, faoi=faoi, ftwi=ftwi, fcn=fcn, folder=dst_dir,
-                                           tui=True, mapback=True, mapvar='R-Qv-ET')
+                                           tui=True, mapback=True, mapvar='R-Qv-ET-Tp-Tpgw')
             elif opt == lng[10]:
                 break
         if exit_flag:

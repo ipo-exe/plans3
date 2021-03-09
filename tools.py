@@ -654,6 +654,25 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
 def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries,
                      size=200, start=0, framef=0.2, watchf=0.2,
                      folder='C:/bin'):
+    """
+    Create frames for video watch of topmodel simulation with TWI map + 3 other maps alongside 4 variables
+
+    4 maps and 4 variables
+
+    :param fseries: string file path to simulation series .txt file
+    :param ftwi: string file path to TWI raster .asc file
+    :param fcn: string file path to CN raster .asc file
+    :param faoi: string file path to AOI raster .asc file
+    :param fparam: string file path to simulation parameters .txt file
+    :param fmaps: list or tuple storing 3 string file paths to directory of 3 maps
+    :param varseries: list or tuple with 4 strings of variables field names (must exist in series DataFrame)
+    :param size: int number of frames
+    :param start: int index of first frame
+    :param framef: float of frame ratio to full size (0 to 1)
+    :param watchf: float of watch line ratio to full frame (0 to 1)
+    :param folder: string path to destination folder
+    :return: none
+    """
     from hydrology import topmodel_di, avg_2d, map_back
     from visuals import pannel_4image_4series
     #
@@ -759,8 +778,8 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries,
         # other params
         #cmaps = ('YlGnBu', 'YlOrRd', 'viridis_r', 'jet')
         cmaps = ('viridis_r', 'viridis_r', 'viridis_r', 'jet')
-        imtitles = ('Runoff (mm/d)', 'ET (mm/d)', 'Recharge (mm/d)', 'Local Deficit (mm)')
-        ytitles = ('Precipitation', 'Canopy water', 'Soil water', 'Baseflow')
+        imtitles = ('Runoff (mm/d)', 'Tp-Soil (mm/d)', 'Tp-GW (mm/d)', 'Local Deficit (mm)')
+        ytitles = ('Precipitation', 'Potential ET', 'Actual ET', 'Baseflow')
         ylabels = ('mm', 'mm', 'mm', 'mm')
         # export image
         pannel_4image_4series(im, imax, stamp, y4, y4max, y4min, cmaps, vline=lcl_t_index,
