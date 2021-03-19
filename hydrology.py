@@ -2,6 +2,67 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+'''
+def find_nse(qobs, qsim, type='lin'):
+    """
+    Nash-Sutcliffe efficiency of 2 arrays of same length
+    :param qobs: observed array
+    :param qsim: simulated array
+    :param type: 'log' for NSElog10
+    :return: float number of NSE
+    """
+    qavg = qobs * 0.0 + np.mean(qsim)
+    if type == 'log':
+        qobs = np.log10(qobs)
+        qsim = np.log10(qsim)
+        qavg = np.log10(qavg)
+    nse = 1 - (np.sum(np.power(qobs - qsim, 2))/ np.sum((qobs - qavg)))
+    return nse
+
+
+def find_pbias(qobs, qsim):
+    """
+    Percent bias coefficient (PBIAS)
+    :param qobs:
+    :param qsim:
+    :return:   
+    
+    """
+       
+    pbias = 100 * np.sum(qobs - qsim) / np.sum(qobs)
+    return pbias
+
+
+def find_rmse(qobs, qsim, type='lin'):
+    """
+    Root of mean squared error of 2 arrays of same length
+    :param qobs: observed array
+    :param qsim: simulated array
+    :param type: log' for RMSElog10
+    :return: float
+    """
+    if type == 'log':
+        qobs = np.log10(qobs)
+        qsim = np.log10(qsim)
+    rmse = np.sqrt(np.mean(np.power(qobs - qsim, 2)))
+    return rmse
+
+
+def find_cfc(a):
+    """
+
+    :param a: array
+    :return: tuple with exeedance probability (%) and CFC values from input array
+    """
+    ptles = np.arange(0, 101, 1)
+    cfc = np.percentile(a, ptles)
+    exeed = 100 - ptles
+    return (exeed, cfc)
+
+
+'''
+
+
 # auxiliar functions
 def avg_2d(var2d, weight):
     """
@@ -376,6 +437,14 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     'Qs':simulated surface flow, mm
     'Q': simulated streamflow, mm
     'VSA': simulated variable source area (saturated areas), in %
+
+
+    And
+
+    Dictionary of encoded 2d numpy arrays maps if mapback=True.
+    Keys to access maps: 'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw'
+    Each key stores an array of 2d numpy arrays (i.e., 3d array) in the ascending order of the time series.
+
     """
     #
     # extract data input
