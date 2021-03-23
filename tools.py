@@ -560,6 +560,88 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
         return (exp_file1, exp_file2, exp_file3, exp_file4)
 
 
+def integrate_map(ftwi, fcn, faoi, fmaps, filename, yfield='TWI\CN', folder='C:/bin', tui=False, show=False):
+    """
+
+    Integrate (adds up) variable maps based on Z-Maps of TOPMODEL.
+
+    :param ftwi: string file path to TWI raster in .asc format.
+    :param fcn: string file path to CN raster in .asc format.
+    :param faoi: string file path to AOI raster in .asc format.
+    The AOI raster should be a pseudo-boolean image of the watershed area
+
+    Note: all rasters must have the same shape (rows x columns)
+
+    :param fmaps: string file maps to .txt file of listed z-map files of desired variable
+    :param filename: string of output file name (without path and extension)
+    :param yfield: string of fieldname Y variable on z-map dataframe
+    :param folder: string path to output directory
+    :param tui: boolean to control TUI displays
+    :param show: boolean to control plotting displays
+    :return: string file path to output file
+    """
+    from hydrology import map_back
+    # import twi
+    meta, twi = input.asc_raster(ftwi)
+    #
+    # import cn
+    meta, cn = input.asc_raster(fcn)
+    #
+    # import aoi
+    meta, aoi = input.asc_raster(faoi)
+    #
+    # read file of maps files
+    maps_df = pd.read_csv(fmaps, sep=';')
+    #
+    # extract the length of integral
+    integral_len = len(maps_df['File'])
+    #
+    # set up a blank map:
+    integral_map = np.zeros(shape=np.shape(twi))
+    #
+    # loop across all maps:
+    for i in range(integral_len):
+        if tui:
+            print('{:.1f} %'.format(100 * i / integral_len))
+        #
+        # retrieve zmap file:
+        lcl_fmap = maps_df['File'][i]
+        #
+        # extract zmap and histograms bins
+        lcl_zmap, hist_twi, hist_cn = input.zmap(file=lcl_fmap, yfield=yfield)
+        #
+        # hidden plotting procedure:
+        """
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        # Make data.
+        X = np.arange(0, len(lcl_xhist))
+        Y = np.arange(0, len(lcl_yhist))
+        X, Y = np.meshgrid(X, Y)
+        #R = np.sqrt(X ** 2 + Y ** 2)
+        #Z = np.sin(R)
+        Z = lcl_zmap
+        # Plot the surface.
+        surf = ax.plot_surface(X, Y, Z, cmap='viridis', linewidth=0, antialiased=False)
+        plt.show()
+        """
+        #
+        # map back:
+        lcl_map = map_back(zmatrix=lcl_zmap, a1=twi, a2=cn, bins1=hist_twi, bins2=hist_cn)
+        #
+        # accumulate values:
+        integral_map = integral_map + lcl_map
+    #
+    # show conditional
+    if show:
+        im =geo.mask(integral_map, aoi)
+        plt.imshow(im, cmap='jet')
+        plt.show()
+    # export file
+    fout = output.asc_raster(integral_map, meta=meta, filename=filename, folder=folder)
+    return fout
+
+
+
 def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var3='D',
                        size=100, start=0, framef=0.2, watchf=0.2, folder='C:/bin'):
     """

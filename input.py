@@ -63,6 +63,15 @@ def asc_raster_list(file, filefield='File', sep=';'):
 
 
 def zmap(file, yfield='TWI\CN'):
+    """
+    Import a zmap to a 2d numpy array and respective 1d arrays of histogram values (it is a 2D histogram)
+    :param file: string filepath to zmap file
+    :param yfield: string of Y (vertical) variable
+    :return: 3 returns:
+    1) 2d numpy array of ZMAP
+    2) 1d numpy array of Y (vertical) variable histogram values
+    3) 1d numpy array of X (horizontal) variable histogram values
+    """
     lcl_df = pd.read_csv(file, sep=';')
     yhist = lcl_df[yfield].values
     #print(yhist)
