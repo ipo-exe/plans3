@@ -349,18 +349,21 @@ def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_mo
     return exp_file
 
 
-def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, mapback=False, mapvar='R-ET-S1-S2-Qv'):
+def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
+                 tui=False, mapback=False, mapvar='R-ET-S1-S2-Qv', qobs=False):
     """
 
     Run the PLANS3 TOPMODEL
 
-    :param fseries: string file path to input series dataframe.
+    :param fseries: string file path to input series dataframe. File format: .txt
     Field separator = ';'
     Required fields: 'Date', 'Prec', 'Temp'
+    Optional: 'Q'
 
     Date = daily data in YYYY-MM-DD
     Prec = precipitation in mm
     Temp = temperature in Celsius
+    Q = observed flow in mm
 
     Example of dataframe formatting:
 
@@ -395,8 +398,8 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     k;          1.1;
     n;          2.1;
 
-    :param faoi: string file path to AOI raster in .asc format.
-    The AOI raster should be a pseudo-boolean image of the watershed area
+    :param faoi: string file path to AOI (Area Of Interest) raster in .asc format.
+    The AOI raster should be a pseudo-boolean (1 and 0) image of the watershed area
 
     :param ftwi: string file path to TWI raster in .asc format.
 
@@ -405,8 +408,8 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     Note: all rasters must have the same shape (rows x columns)
 
     :param folder: string file path to destination folder
-    :param tui: boolean control to allow terminal messages
-    :param mapback: boolean control to map simulated variables
+    :param tui: boolean control to allow terminal messages. Default: False
+    :param mapback: boolean control to map simulated variables. Default: False
     :param mapvar: string code to set mapped variables (see topmodel routine for code formatting)
     :return:
     when mapback=False:
@@ -465,7 +468,6 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     qt0 = 0.2  # mm/d
     lamb = avg_2d(var2d=twi, weight=aoi)
     #
-    #
     # compute histograms
     if tui:
         print('computing histograms...', end='\t\t')
@@ -483,10 +485,10 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, m
     # mapback conditionals:
     if mapback:
         sim_df, mapped = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                                      lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar)
+                                      lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar, qobs=qobs)
     else:
         sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                              qt0=qt0, k=k, n=n, tui=False, mapback=mapback)
+                              qt0=qt0, k=k, n=n, tui=False, mapback=mapback, qobs=qobs)
     end = time.time()
     if tui:
         print('Enlapsed time: {:.3f} seconds'.format(end - init))
@@ -641,7 +643,6 @@ def integrate_map(ftwi, fcn, faoi, fmaps, filename, yfield='TWI\CN', folder='C:/
     return fout
 
 
-
 def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var3='D',
                        size=100, start=0, framef=0.2, watchf=0.2, folder='C:/bin'):
     """
@@ -732,7 +733,7 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
                               x1max=prec_max, x2max=base_max, x3max=defic_max, titles=ttls,
                               vline=lcl_t_index, folder=folder, suff=suff)
 
-
+# todo mudar fmaps docstring
 def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, imtitles, ylabels, ytitles,
                      size=200, start=0, framef=0.3, watchf=0.2, folder='C:/bin', show=False):
     """
@@ -863,9 +864,34 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, 
                               imtitles=imtitles, ytitles=ytitles, ylabels=ylabels, show=show, suff=suff)
 
 
-def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftfmaps, finfmaps, frmaps, fqvmaps, fetmaps,
-                         fevmaps, ftpmaps, ftpgwmaps, size=600, start=0, framef=0.25, watchf=0.2, folder='C:/bin',
-                         show=False):
+def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftfmaps, finfmaps, frmaps, fqvmaps,
+                         fetmaps, fevmaps, ftpmaps, ftpgwmaps, size=600, start=0, framef=0.25, watchf=0.2,
+                         folder='C:/bin', show=False):
+    """
+
+    :param fseries:
+    :param ftwi:
+    :param fcn:
+    :param faoi:
+    :param fparam:
+    :param fs1maps:
+    :param fs2maps:
+    :param ftfmaps:
+    :param finfmaps:
+    :param frmaps:
+    :param fqvmaps:
+    :param fetmaps:
+    :param fevmaps:
+    :param ftpmaps:
+    :param ftpgwmaps:
+    :param size:
+    :param start:
+    :param framef:
+    :param watchf:
+    :param folder:
+    :param show:
+    :return:
+    """
     from hydrology import topmodel_di, avg_2d, map_back
     from visuals import pannel_topmodel_maps
     #
@@ -945,4 +971,115 @@ def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftf
         suff = str(stamp[lcl_t_index]).split(' ')[0]
         pannel_topmodel_maps(t=lcl_date, prec=lcl_prec, precmax=precmax, qb=lcl_qb, qbmax=qbmax, pet=lcl_pet, et=lcl_et,
                              etmax=etmax, maps=maps_lst, mapsmax=imax, vline=lcl_t_index, suff=suff, show=show)
+
+
+def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:/bin', tui=False):
+    """
+    Analyst of Observed - Simulated series
+    :param fseries: string filepath to series dataframe
+    :param fld_obs: string of field of observed series data
+    :param fld_sim: string of field of simulated series data
+    :param fld_date: string of date field
+    :param folder: string of export directory
+    :param tui: boolean to control TUI displays
+    :return: tuple of strings of exported files
+    """
+    import analyst
+    from visuals import pannel_obs_sim_analyst
+    if tui:
+        print(' *** Obs Sim Analyst ***')
+    #
+    # extract Dataframe
+    def_df = pd.read_csv(fseries, sep=';', parse_dates=[fld_date])
+    #
+    # extract obs and sim arrays:
+    obs = def_df[fld_obs].values
+    #sim = obs - 0.1 * obs
+    sim = def_df[fld_sim].values
+    obslog = np.log10(obs)
+    simlog = np.log10(sim)
+    #
+    #
+    # **** Series Analysis ****
+    # Error series analyst
+    e = analyst.error(obs=obs, sim=sim)
+    se = analyst.sq_error(obs=obs, sim=sim)
+    elog = analyst.error(obs=obslog, sim=simlog)
+    selog = analyst.sq_error(obs=obslog, sim=simlog)
+    # built Dataframe
+    series_df = pd.DataFrame({'Date':def_df[fld_date], 'Obs':obs, 'Sim':sim, 'Obslog':obslog, 'Simlog':simlog, 'E':e,
+                              'Elog':elog, 'SE':se, 'SElog':selog})
+    # coefs analyst of series
+    pbias = analyst.pbias(obs=obs, sim=sim)
+    rmse = analyst.rmse(obs=obs, sim=sim)
+    rmselog = analyst.rmse(obs=obslog, sim=simlog)
+    nse = analyst.nse(obs=obs, sim=sim)
+    nselog = analyst.nse(obs=obslog, sim=simlog)
+    linreg = analyst.linreg(obs=obs, sim=sim)
+    kge = analyst.kge(obs=obs, sim=sim)
+    kgelog = analyst.kge(obs=obslog, sim=simlog)
+    #
+    #
+    # **** Frequency analysis ****
+    freq_obs = analyst.frequency(series=obs)
+    freq_sim = analyst.frequency(series=sim)
+    obs_freq = freq_obs['Values']
+    sim_freq = freq_sim['Values']
+    obslog_freq = np.log10(obs_freq)
+    simlog_freq = np.log10(sim_freq)
+    #
+    # Error frequency analyst
+    e_freq = analyst.error(obs=obs_freq, sim=sim_freq)
+    se_freq = analyst.sq_error(obs=obs_freq, sim=sim_freq)
+    elog_freq = analyst.error(obs=obslog_freq, sim=simlog_freq)
+    selog_freq = analyst.sq_error(obs=obslog_freq, sim=simlog_freq)
+    #
+    # built dataframe
+    freq_df = pd.DataFrame({'Percentiles': freq_obs['Percentiles'], 'Exeedance': freq_obs['Exeedance'],
+                            'ProbabObs': freq_obs['Probability'], 'ValuesObs': freq_obs['Values'],
+                            'ValuesObslog': obslog_freq, 'ProbabSim': freq_sim['Probability'],
+                            'ValuesSim': freq_sim['Values'], 'ValuesSimlog': simlog_freq,
+                            'E':e_freq, 'Elog':elog_freq,  'SE':se_freq, 'SElog':selog_freq
+                            })
+    #
+    # coefs analyst of series
+    rmse_freq = analyst.rmse(obs=obs_freq, sim=sim_freq)
+    rmselog_freq = analyst.rmse(obs=obslog_freq, sim=simlog_freq)
+    linreg_freq = analyst.linreg(obs=obs_freq, sim=sim_freq)
+    linreg_freq_log = analyst.linreg(obs=obslog_freq, sim=simlog_freq)
+    #
+    # built dataframe of parameters
+    params = ('PBias', 'RMSE', 'RMSElog', 'NSE', 'NSElog', 'KGE', 'KGElog', 'A', 'B', 'R', 'P', 'SD',
+              'RMSE-CFC', 'RMSElog-CFC', 'R-CFC', 'Rlog-CFC')
+    values = (pbias, rmse, rmselog, nse, nselog, kge, kgelog, linreg['A'], linreg['B'], linreg['R'], linreg['P'],
+              linreg['SD'], rmse_freq, rmselog_freq, linreg_freq['R'], linreg_freq_log['R'])
+    param_df = pd.DataFrame({'Parameter': params, 'Value': values})
+    print(param_df.to_string())
+    v = float(param_df[param_df['Parameter'] == 'KGE']['Value'])
+    print(v)
+    print(type(v))
+    #
+    #
+    #
+    # **** Export Data ****
+    # 1) series data
+    exp_file1 = folder + '/' + 'analyst_series.txt'
+    series_df.to_csv(exp_file1, sep=';', index=False)
+    # 2) frequency data
+    exp_file2 = folder + '/' + 'analyst_freq.txt'
+    freq_df.to_csv(exp_file2, sep=';', index=False)
+    # 3) parameters data
+    exp_file3 = folder + '/' + 'analyst_params.txt'
+    param_df.to_csv(exp_file3, sep=';', index=False)
+    #
+    # export visual:
+    exp_file4 = pannel_obs_sim_analyst(series=series_df, freq=freq_df, params=param_df)
+    #
+    return (exp_file1, exp_file2, exp_file3, exp_file4)
+
+
+
+
+
+
 

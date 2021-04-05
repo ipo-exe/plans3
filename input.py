@@ -5,7 +5,7 @@ def asc_raster(file):
     """
     A function to import .ASC raster files
     :param file: string of file path with the '.asc' extension
-    :return: metadata dictionary and numpy 2d array
+    :return: 1) metadata dictionary and 2) numpy 2d array
     """
     def_f = open(file)
     def_lst = def_f.readlines()

@@ -3,6 +3,132 @@ import matplotlib as mpl
 import numpy as np
 
 
+def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', fld_date='Date', filename='analyst', suff='',
+                   folder='C:/bin', show=False):
+    """
+
+    :param series: Series Analyst dataframe (from obs_sim_analyst() function in tools.py)
+    :param freq: Frequency Analyst dataframe (from obs_sim_analyst() function in tools.py)
+    :param params: Parameters Analyst dataframe
+    :param fld_obs: string of field of observed series data
+    :param fld_sim: string of field of simulated series data
+    :param fld_date: string of date field
+    :param filename: string of file name
+    :param suff: optional string for suffix
+    :param folder: string of export directory
+    :param show: boolean to control showing figure
+    :return: string of file
+    """
+    #
+    fig = plt.figure(figsize=(18, 9))  # Width, Height
+    gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9)
+    vmax = np.max((np.max(series[fld_obs]), np.max(series[fld_sim])))
+    vmin = np.min((np.min(series[fld_obs]), np.min(series[fld_sim])))
+    #
+    # plot of CFCs
+    plt.subplot(gs[0:2, 0:2])
+    plt.title('CFCs', loc='left')
+    plt.plot(freq['Exeedance'], freq['ValuesObs'], 'tab:grey', label='Obs')
+    plt.plot(freq['Exeedance'], freq['ValuesSim'], 'tab:blue', label='Sim')
+    plt.ylim((vmin, 1.2 * vmax))
+    plt.yscale('log')
+    plt.ylabel('mm')
+    plt.xlabel('Exeed. %')
+    plt.grid(True)
+    plt.legend(loc='upper right')
+    #
+    # plot of series
+    plt.subplot(gs[0:2, 3:10])
+    plt.title('Series', loc='left')
+    plt.plot(series[fld_date], series[fld_obs], 'tab:grey', linewidth=2, label='Observed')
+    plt.plot(series[fld_date], series[fld_sim], 'tab:blue', label='Simulated')
+    plt.ylim((vmin, 1.2 * vmax))
+    plt.yscale('log')
+    plt.ylabel('mm')
+    plt.grid(True)
+    plt.legend(loc='upper right', ncol=2)
+    #
+    # plot of Scatter
+    plt.subplot(gs[0:2, 11:])
+    plt.title('Obs vs. Sim', loc='left')
+    plt.scatter(series[fld_obs], series[fld_sim], c='tab:grey', s=15, alpha=0.3, edgecolors='none')
+    plt.xlabel('Q-obs  (mm)')
+    plt.ylabel('Q-sim  (mm)')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.plot([0, vmax], [0, vmax], 'tab:grey', linestyle='--', label='1:1')
+    plt.ylim((vmin, 1.2 * vmax))
+    plt.xlim((vmin, 1.2 * vmax))
+    plt.grid(True)
+    plt.legend(loc='upper left')
+    #
+    # plot of CFC Erros
+    plt.subplot(gs[2, 0:2])
+    plt.title('CFC Error', loc='left')
+    plt.plot(freq['Exeedance'], freq['E'], 'tab:red')
+    plt.ylabel('mm')
+    plt.xlabel('Exeed. %')
+    plt.grid(True)
+    #
+    # plot Error
+    plt.subplot(gs[2, 3:10])
+    plt.title('Series - Error', loc='left')
+    plt.plot(series[fld_date], series['E'], 'tab:red')
+    plt.ylabel('mm')
+    plt.grid(True)
+    #
+    # plot
+    plt.subplot(gs[3, 0:2])
+    plt.title('CFC - Squared Error', loc='left')
+    plt.plot(freq['Exeedance'], freq['SE'], 'tab:red')
+    plt.ylabel('mm ^ 2')
+    plt.xlabel('Exeed. %')
+    plt.grid(True)
+    #
+    # plot
+    plt.subplot(gs[3, 3:10])
+    plt.title('Series - Sq. Error', loc='left')
+    plt.plot(series[fld_date], series['SE'], 'tab:red')
+    plt.ylabel('mm ^ 2')
+    plt.grid(True)
+    #
+    plt.subplot(gs[3, 11:])
+    plt.title('Analyst parameters', loc='left')
+    plt.text(x=0, y=0.8,  s='Pbias : {:.1f}%'.format(float(params[params['Parameter'] == 'PBias']['Value'])))
+    plt.text(x=0, y=0.6,  s='R : {:.1f}'.format(float(params[params['Parameter'] == 'R']['Value'])))
+    plt.text(x=0, y=0.4,  s='RMSE : {:.1f} mm'.format(float(params[params['Parameter'] == 'RMSE']['Value'])))
+    plt.text(x=0, y=0.2,  s='NSE : {:.1f}'.format(float(params[params['Parameter'] == 'NSE']['Value'])))
+    plt.text(x=0, y=0.0,  s='KGE : {:.1f}'.format(float(params[params['Parameter'] == 'KGE']['Value'])))
+    plt.text(x=0, y=-0.2, s='RMSElog : {:.1f}'.format(float(params[params['Parameter'] == 'RMSElog']['Value'])))
+    plt.text(x=0, y=-0.4, s='NSElog : {:.1f}'.format(float(params[params['Parameter'] == 'NSElog']['Value'])))
+    plt.text(x=0, y=-0.8, s='CFC-R : {:.1f}'.format(float(params[params['Parameter'] == 'RMSE-CFC']['Value'])))
+    plt.text(x=0, y=-1.0, s='CFC-RMSE : {:.1f}'.format(float(params[params['Parameter'] == 'RMSE-CFC']['Value'])))
+    plt.text(x=0, y=-1.2, s='CFC-RMSElog : {:.1f}'.format(float(params[params['Parameter'] == 'RMSElog-CFC']['Value'])))
+    plt.axis('off')
+    #
+    # plot
+    plt.subplot(gs[4, 0:2])
+    plt.title('CFC - Sq. Error of Log', loc='left')
+    plt.plot(freq['Exeedance'], freq['SElog'], 'tab:red')
+    plt.xlabel('Exeed. %')
+    plt.grid(True)
+    # plot
+    plt.subplot(gs[4, 3:10])
+    plt.title('Series - Sq. Error of Log', loc='left')
+    plt.plot(series[fld_date], series['SElog'], 'tab:red')
+    plt.grid(True)
+    #
+    # export file
+    filepath = folder + '/' + filename + '_' + suff + '.png'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        plt.savefig(filepath)
+        plt.close(fig)
+    return filepath
+
+
 def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, titles, vline=20,
                           cmap='jet', folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
     """
@@ -481,6 +607,8 @@ def pannel_topmodel_maps(t, prec, precmax, qb, qbmax, pet, et, etmax, maps, maps
     plt.ylabel('mm')
     plt.legend( ncol=2, loc='upper right')
     #
+    # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
+    fig.autofmt_xdate()
     if show:
         plt.show()
         plt.close(fig)

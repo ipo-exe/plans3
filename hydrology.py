@@ -182,10 +182,10 @@ def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
 
 def map_back(zmatrix, a1, a2, bins1, bins2):
     """
-    Map back feature using a Z-Matrix
+    Map back function using a Z-Matrix
     :param zmatrix: 2d numpy array of z matrix of values
-    :param a1: 2d numpy array reference array of rows
-    :param a2: 2d numpy array reference array of columns
+    :param a1: 2d numpy array reference array of rows (ex: TWI)
+    :param a2: 2d numpy array reference array of columns  (ex: CN)
     :param bins1: 1d numpy array of array 1 histogram bins
     :param bins2: 1d numpy array of array 2 histogram bins
     :return: 2d numpy array
@@ -219,7 +219,7 @@ def pet_gsc():
 def pet_g(day):
     """
     PET model Solar Radiation as a function of Julian Day
-    :param day: julian day
+    :param day: int - julian day
     :return: solar radiation (float or array) in [W/m2]
     """
     return pet_gsc() * (1 + 0.033 * np.cos(2 * np.pi * day / 365))
@@ -228,7 +228,7 @@ def pet_g(day):
 def pet_declination(day):
     """
     PET model - Earth declination angle
-    :param day: julian day
+    :param day: int - julian day
     :return: Earth declination angle in [radians]
     """
     return (2 * np.pi * 23.45 / 360) * np.sin(2 * np.pi * (284 + day) / 365)
@@ -301,7 +301,7 @@ def pet_water_spmass():
 
 def pet_oudin(temperature, day, latitude, k1=100, k2=5):
     """
-    PET Oudin Model - Radiation and Temperature based PET model of  Oudin et al (2005b)
+    PET Oudin Model - Radiation and Temperature based PET model of  Ref: Oudin et al (2005b)
     :param temperature: float or array of daily average temperature in [C]
     :param day: int or array of Julian day
     :param latitude: latitude angle in [radians]
@@ -393,12 +393,13 @@ def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
 
 
 def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, lat, qt0, k, n,
-                 mapback=False, mapvar='R-ET-S1-S2', tui=False):
+                 mapback=False, mapvar='R-ET-S1-S2', tui=False, qobs=False):
     """
 
     PLANS 3 TOPMODEL simulation procedure
 
-    :param series: dataframe of input series. Required fields: 'Date', 'Prec', 'Temp'
+    :param series: Pandas DataFrame of input series.
+    Required fields: 'Date', 'Prec', 'Temp'. Optional: 'Q' (Q obs, in mm)
     :param twihist: tuple of histogram of TWI
     :param cnhist: tuple of histogram of CN
     :param countmatrix: 2D histogram of TWI and CN
@@ -416,7 +417,7 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     :param mapvar: string code of variables to map back. Available variables:
     'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw' (see below the relation)
     :param tui: boolean to control terminal messages
-    :return: dataframe of simulated variables:
+    :return: Pandas DataFrame of simulated variables:
 
     'Date': date (from input)
     'Prec': precipitation (from input), mm
@@ -435,13 +436,12 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     'Qb': simualted baseflow, mm
     'Qv':simulated recharge, mm
     'Qs':simulated surface flow, mm
-    'Q': simulated streamflow, mm
+    'Q': simulated streamflow, mm  (Q = Qb + Qs)
     'VSA': simulated variable source area (saturated areas), in %
 
-
     And
-
-    Dictionary of encoded 2d numpy arrays maps if mapback=True.
+    if mapback=True:
+    Dictionary of encoded 2d numpy arrays maps
     Keys to access maps: 'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw'
     Each key stores an array of 2d numpy arrays (i.e., 3d array) in the ascending order of the time series.
 
@@ -609,18 +609,19 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         print('Runoff routing...')
     ts_qs = nash_cascade(ts_r, k=k, n=n)
     #
-    # compute full discharge Q
+    # compute full discharge Q = Qb + Qs
     ts_q = ts_qb + ts_qs
     #
     # export data
-    #
-    exp_df = pd.DataFrame({'Date':series['Date'].values,
-                           'Prec':series['Prec'].values,
-                           'Temp':series['Temp'].values,
+    exp_df = pd.DataFrame({'Date': series['Date'].values,
+                           'Prec': series['Prec'].values,
+                           'Temp': series['Temp'].values,
                            'PET': ts_pet,
-                           'S1':np.round(ts_s1, 3), 'TF':np.round(ts_tf, 3), 'Ev':np.round(ts_ev, 3),
-                           'S2':ts_s2, 'Inf':ts_inf, 'R':ts_r, 'Tp':ts_tp, 'Tpgw':ts_tpgw,  'ET':ts_et,
-                           'D':ts_d, 'Qb': ts_qb, 'Qv':ts_qv, 'Qs':ts_qs, 'Q':ts_q, 'VSA':ts_vsa})
+                           'S1': np.round(ts_s1, 3), 'TF': np.round(ts_tf, 3), 'Ev': np.round(ts_ev, 3),
+                           'S2': ts_s2, 'Inf': ts_inf, 'R': ts_r, 'Tp': ts_tp, 'Tpgw': ts_tpgw, 'ET': ts_et,
+                           'D': ts_d, 'Qb': ts_qb, 'Qv': ts_qv, 'Qs': ts_qs, 'Q': ts_q, 'VSA': ts_vsa})
+    if qobs:
+        exp_df['Qobs'] = series['Q'].values
     #
     if mapback:
         return exp_df, map_dct
