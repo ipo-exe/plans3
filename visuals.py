@@ -22,6 +22,8 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     #
     fig = plt.figure(figsize=(18, 9))  # Width, Height
     gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9)
+    #
+    # min max setup
     vmax = np.max((np.max(series[fld_obs]), np.max(series[fld_sim])))
     vmin = np.min((np.min(series[fld_obs]), np.min(series[fld_sim])))
     #
@@ -50,7 +52,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     #
     # plot of Scatter
     plt.subplot(gs[0:2, 11:])
-    plt.title('Obs vs. Sim', loc='left')
+    plt.title('Obs vs. Sim  (R={:.2f})'.format(float(params[params['Parameter'] == 'R']['Value'])), loc='left')
     plt.scatter(series[fld_obs], series[fld_sim], c='tab:grey', s=15, alpha=0.3, edgecolors='none')
     plt.xlabel('Q-obs  (mm)')
     plt.ylabel('Q-sim  (mm)')
@@ -95,7 +97,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.subplot(gs[3, 11:])
     plt.title('Analyst parameters', loc='left')
     plt.text(x=0, y=0.8,  s='Pbias : {:.1f}%'.format(float(params[params['Parameter'] == 'PBias']['Value'])))
-    plt.text(x=0, y=0.6,  s='R : {:.1f}'.format(float(params[params['Parameter'] == 'R']['Value'])))
+    plt.text(x=0, y=0.6,  s='R : {:.2f}'.format(float(params[params['Parameter'] == 'R']['Value'])))
     plt.text(x=0, y=0.4,  s='RMSE : {:.1f} mm'.format(float(params[params['Parameter'] == 'RMSE']['Value'])))
     plt.text(x=0, y=0.2,  s='NSE : {:.1f}'.format(float(params[params['Parameter'] == 'NSE']['Value'])))
     plt.text(x=0, y=0.0,  s='KGE : {:.1f}'.format(float(params[params['Parameter'] == 'KGE']['Value'])))
@@ -118,15 +120,18 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.plot(series[fld_date], series['SElog'], 'tab:red')
     plt.grid(True)
     #
-    # export file
-    filepath = folder + '/' + filename + '_' + suff + '.png'
     if show:
         plt.show()
         plt.close(fig)
     else:
+        # export file
+        if suff != '':
+            filepath = folder + '/' + filename + '_' + suff + '.png'
+        else:
+            filepath = folder + '/' + filename + '.png'
         plt.savefig(filepath)
         plt.close(fig)
-    return filepath
+        return filepath
 
 
 def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, titles, vline=20,
