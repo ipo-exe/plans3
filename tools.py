@@ -987,7 +987,7 @@ def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folde
     import analyst
     from visuals import pannel_obs_sim_analyst
     if tui:
-        print(' *** Obs Sim Analyst ***')
+        print('performing obs vs. sim analysis...')
     #
     # extract Dataframe
     def_df = pd.read_csv(fseries, sep=';', parse_dates=[fld_date])
@@ -1054,8 +1054,13 @@ def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folde
     values = (pbias, rmse, rmselog, nse, nselog, kge, kgelog, linreg['A'], linreg['B'], linreg['R'], linreg['P'],
               linreg['SD'], rmse_freq, rmselog_freq, linreg_freq['R'], linreg_freq_log['R'])
     param_df = pd.DataFrame({'Parameter': params, 'Value': values})
+    if tui:
+        print('ObsSim analysis results:\n')
+        print(param_df.to_string())
     #
     # **** Export Data ****
+    if tui:
+        print('exporting analysis data and visuals...')
     # 1) series data
     exp_file1 = folder + '/' + 'analyst_series.txt'
     series_df.to_csv(exp_file1, sep=';', index=False)
