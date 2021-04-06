@@ -416,14 +416,16 @@ def main():
             # simulate hydrology
             elif opt == project_options[4]:
                 header(lng[32])
-                fseries = projectdirs['Observed'] + '/' + 'series_calib_2yr.txt'
+                fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
                 faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
                 ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
                 fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
                 fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
                 dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
                 files = tools.run_topmodel(fseries=fseries, fparam=fparam, faoi=faoi, ftwi=ftwi, fcn=fcn, folder=dst_dir,
-                                           tui=True, mapback=True, mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True)
+                                           tui=True, mapback=False, mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True)
+                files_analyst = tools.obs_sim_analyst(fseries=files[2], fld_obs='Qobs', fld_sim='Q', folder=dst_dir, tui=True)
+
             elif opt == lng[10]:
                 break
         if exit_flag:

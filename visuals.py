@@ -6,7 +6,7 @@ import numpy as np
 def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', fld_date='Date', filename='analyst', suff='',
                    folder='C:/bin', show=False):
     """
-
+    Pannel of Obs vs. Sim Analyst
     :param series: Series Analyst dataframe (from obs_sim_analyst() function in tools.py)
     :param freq: Frequency Analyst dataframe (from obs_sim_analyst() function in tools.py)
     :param params: Parameters Analyst dataframe
@@ -101,7 +101,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.text(x=0, y=0.0,  s='KGE : {:.1f}'.format(float(params[params['Parameter'] == 'KGE']['Value'])))
     plt.text(x=0, y=-0.2, s='RMSElog : {:.1f}'.format(float(params[params['Parameter'] == 'RMSElog']['Value'])))
     plt.text(x=0, y=-0.4, s='NSElog : {:.1f}'.format(float(params[params['Parameter'] == 'NSElog']['Value'])))
-    plt.text(x=0, y=-0.8, s='CFC-R : {:.1f}'.format(float(params[params['Parameter'] == 'RMSE-CFC']['Value'])))
+    plt.text(x=0, y=-0.8, s='CFC-R : {:.1f}'.format(float(params[params['Parameter'] == 'R-CFC']['Value'])))
     plt.text(x=0, y=-1.0, s='CFC-RMSE : {:.1f}'.format(float(params[params['Parameter'] == 'RMSE-CFC']['Value'])))
     plt.text(x=0, y=-1.2, s='CFC-RMSElog : {:.1f}'.format(float(params[params['Parameter'] == 'RMSElog-CFC']['Value'])))
     plt.axis('off')
@@ -151,18 +151,13 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 6, wspace=0.8, hspace=0.6)
+    #
     # plot image
     plt.subplot(gs[0:, 0:2])
     im = plt.imshow(image, cmap=cmap, vmin=0, vmax=imax)
     plt.axis('off')
     plt.title(titles[0])
     plt.colorbar(im, shrink=0.4)
-    #
-    '''# set x ticks
-    size = len(t)
-    spaces = int(size / 5)
-    locs = np.arange(0, size, spaces)
-    labels = t[locs]'''
     #
     # plot x1
     y = x1
@@ -175,7 +170,6 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.ylim(0, 1.1 * ymax)
     plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    #plt.xticks(locs, labels)
     #
     # plot x2
     y = x2
@@ -188,7 +182,6 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.ylim(0, 1.1 * ymax)
     plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    #plt.xticks(locs, labels)
     #
     # plot x3
     y = x3
@@ -201,7 +194,10 @@ def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, title
     plt.ylim(0, 1.1 * ymax)
     plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    #plt.xticks(locs, labels)
+    #
+    # Fix date formatting
+    # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
+    fig.autofmt_xdate()
     #
     if show:
         plt.show()
@@ -231,7 +227,7 @@ def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitl
     :param vline: int of index position of vertical line
     :param folder: string folder path to export image
     :param show: boolean to show image instead of exporting
-    :param filename: string of file name
+    :param filename: string of file name (without extension)
     :param suff: string of suffix
     :return: string file path of plot
     """
@@ -240,24 +236,28 @@ def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitl
     gs = mpl.gridspec.GridSpec(4, 10, wspace=0.8, hspace=0.6)
     #
     # images
+    #
     # Left Upper
     ax = fig.add_subplot(gs[0:2, 0:2])
     im = plt.imshow(im4[0], cmap=cmaps[0], vmin=0, vmax=imax)
     plt.axis('off')
     plt.title(imtitles[0])
     plt.colorbar(im, shrink=0.4)
+    #
     # Left bottom
     ax = fig.add_subplot(gs[2:4, 0:2])
     im = plt.imshow(im4[1], cmap=cmaps[1], vmin=0, vmax=0.5 * imax)
     plt.axis('off')
     plt.title(imtitles[1])
     plt.colorbar(im, shrink=0.4)
+    #
     # Right Upper
     ax = fig.add_subplot(gs[0:2, 2:4])
     im = plt.imshow(im4[2], cmap=cmaps[2], vmin=0, vmax=0.5 * imax)
     plt.axis('off')
     plt.title(imtitles[2])
     plt.colorbar(im, shrink=0.4)
+    #
     # Right Bottom
     ax = fig.add_subplot(gs[2:4, 2:4])
     im = plt.imshow(im4[3], cmap=cmaps[3], vmin=0, vmax=imax)
@@ -272,8 +272,6 @@ def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitl
     spaces = int(size / 5)
     locs = np.arange(0, size, spaces)
     labels = t[locs]
-    #print(locs)
-    #print(labels)
     #
     ax = fig.add_subplot(gs[0, 5:])
     lcl = 0
@@ -281,7 +279,6 @@ def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitl
     plt.plot(t, y)
     plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    #plt.xticks(locs, labels)
     var = y[vline]
     plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
     plt.ylabel(ylabels[lcl])
@@ -292,7 +289,6 @@ def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitl
     plt.plot(t, y)
     plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    #plt.xticks(locs, labels)
     var = y[vline]
     plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
     plt.ylabel(ylabels[lcl])
@@ -303,7 +299,6 @@ def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitl
     plt.plot(t, y)
     plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    #plt.xticks(locs, labels)
     var = y[vline]
     plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
     plt.ylabel(ylabels[lcl])
@@ -314,10 +309,13 @@ def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitl
     plt.plot(t, y, 'k')
     plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
     plt.plot(t[vline], y[vline], 'ro')
-    #plt.xticks(locs, labels)
     var = y[vline]
     plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
     plt.ylabel(ylabels[lcl])
+    #
+    # Fix date formatting
+    # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
+    fig.autofmt_xdate()
     #
     if show:
         plt.show()
@@ -460,7 +458,7 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True,
 
 def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel_topmodel', suff=''):
     """
-    visualize the topmodel variables in a single pannel
+    visualize the topmodel global variables in a single pannel
     :param dataframe: pandas dataframe from hydrology.topmodel_sim()
     :param grid: boolean for grid
     :param folder: string to destination directory
@@ -543,16 +541,39 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
 
 
 def pannel_topmodel_maps(t, prec, precmax, qb, qbmax, pet, et, etmax, maps, mapsmax, vline=20,
-                         folder='C:/bin', filename='pannel_topmodel', suff='', show=True):
+                         folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
+    """
+    Plot a pannel of all 13 processes maps of Topmodel and precipitation, baseflow and ET series.
+    :param t: Series or Array of dates
+    :param prec: array of precipiation data
+    :param precmax: float of max value of precipitation
+    :param qb: array of baseflow data
+    :param qbmax: float of max value of baseflow
+    :param pet: array of PET data
+    :param et: array of ET data
+    :param etmax: float of max value of ET
+    :param maps: iterable object (tuple, list, array) of 2d-arrays of 13 processes maps in the following order:
+    Prec, VSA, D, S1, S2, TF, Inf, R, Qv, ET, Ev, Tp, Tpgw .
+    :param mapsmax: float of max value of map processes
+    :param vline: int of index position of vertical line
+    :param folder: string path to destination folder
+    :param filename: string of file name (without extension)
+    :param suff: string suffix to file name
+    :param show: boolean control to show or save frame - Default: False
+    :return: string file path of plot (only when show=False)
+    """
     #
     fig = plt.figure(figsize=(15, 7))  # Width, Height
     nrows = 3
     ncols = 8
     gs = mpl.gridspec.GridSpec(nrows, ncols, wspace=0.8, hspace=0.6)
     #
+    # titles setup
     titles = ('Precip. (mm).', 'VSA', 'Deficit', 'Canopy water ', 'Soil water',
               'Throughfall', 'Infiltration', 'Runoff', 'Recharge',
               'ET', 'Evap. (Canopy)', 'Transp. (Soil)', 'Transp. (GW)')
+    #
+    # plotting maps loop
     count = 0
     for i in range(0, nrows):
         for j in range(0, 5):
@@ -562,13 +583,13 @@ def pannel_topmodel_maps(t, prec, precmax, qb, qbmax, pet, et, etmax, maps, maps
                 ax = fig.add_subplot(gs[i, j])
                 if i == 0 and j == 1:
                     lcl_max = 1
-                    lcl_cmap = 'Blues'
+                    lcl_cmap = 'Blues'  # color map
                 elif i == 0 and j == 2:
                     lcl_max = mapsmax
-                    lcl_cmap = 'jet'
+                    lcl_cmap = 'jet'  # color map
                 else:
                     lcl_max = mapsmax
-                    lcl_cmap = 'viridis_r'
+                    lcl_cmap = 'viridis_r'  # color map
                 im = plt.imshow(maps[count], cmap=lcl_cmap, vmin=0, vmax=lcl_max)
                 plt.axis('off')
                 plt.title(titles[count])
@@ -578,43 +599,42 @@ def pannel_topmodel_maps(t, prec, precmax, qb, qbmax, pet, et, etmax, maps, maps
                     plt.colorbar(im, shrink=0.5)
                 count = count + 1
     #
-    #vline = 20
-    #t = np.arange(0, 100)
-    lcly = prec
     ax = fig.add_subplot(gs[0, 5:])
-    plt.plot(t, lcly)
+    plt.plot(t, prec)
     plt.vlines(t[vline], ymin=0, ymax=precmax, colors='r')
-    plt.plot(t[vline], lcly[vline], 'ro')
-    plt.title('Precipitation: {:.2f} mm'.format(lcly[vline]), loc='left')
+    plt.plot(t[vline], prec[vline], 'ro')
+    plt.title('Precipitation: {:.2f} mm'.format(prec[vline]), loc='left')
     plt.ylabel('mm')
     #
-    lcly = qb
     ax = fig.add_subplot(gs[1, 5:])
-    plt.plot(t, lcly, 'navy')
+    plt.plot(t, qb, 'navy')
     plt.vlines(t[vline], ymin=0, ymax=qbmax, colors='r')
-    plt.plot(t[vline], lcly[vline], 'ro')
-    plt.title('Baseflow: {:.2f} mm'.format(lcly[vline]), loc='left')
+    plt.plot(t[vline], qb[vline], 'ro')
+    plt.title('Baseflow: {:.2f} mm'.format(qb[vline]), loc='left')
     plt.ylabel('mm')
     #
-    lcly = et
-    lcly2 = pet
     ax = fig.add_subplot(gs[2, 5:])
-    plt.plot(t, lcly, 'tab:red', label='ET')
-    plt.plot(t, lcly2 , 'grey', label='PET')
+    plt.plot(t, et, 'tab:red', label='ET')
+    plt.plot(t, pet , 'grey', label='PET')
     plt.vlines(t[vline], ymin=0, ymax=etmax, colors='r')
-    plt.plot(t[vline], lcly[vline], 'ro')
-    plt.title('Actual ET: {:.2f} mm'.format(lcly[vline]), loc='left')
+    plt.plot(t[vline], et[vline], 'ro')
+    plt.title('Actual ET: {:.2f} mm'.format(et[vline]), loc='left')
     plt.ylabel('mm')
     plt.legend( ncol=2, loc='upper right')
     #
+    # Fix date formatring
     # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
     fig.autofmt_xdate()
+    #
     if show:
         plt.show()
         plt.close(fig)
     else:
         # export file
-        filepath = folder + '/' + filename + '_' + suff + '.png'
+        if suff != '':
+            filepath = folder + '/' + filename + '_' + suff + '.png'
+        else:
+            filepath = folder + '/' + filename + '.png'
         plt.savefig(filepath)
         plt.close(fig)
         return filepath

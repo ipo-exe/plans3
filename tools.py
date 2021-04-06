@@ -488,7 +488,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
                                       lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar, qobs=qobs)
     else:
         sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                              qt0=qt0, k=k, n=n, tui=False, mapback=mapback, qobs=qobs)
+                                      lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar, qobs=qobs)
     end = time.time()
     if tui:
         print('Enlapsed time: {:.3f} seconds'.format(end - init))
@@ -557,7 +557,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
             print('Enlapsed time: {:.3f} seconds'.format(end - init))
     #
     if mapback:
-        (exp_file1, exp_file2, exp_file3, exp_file4, mapfiles_lst)
+        return (exp_file1, exp_file2, exp_file3, exp_file4, mapfiles_lst)
     else:
         return (exp_file1, exp_file2, exp_file3, exp_file4)
 
@@ -733,11 +733,11 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
                               x1max=prec_max, x2max=base_max, x3max=defic_max, titles=ttls,
                               vline=lcl_t_index, folder=folder, suff=suff)
 
-# todo mudar fmaps docstring
+
 def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, imtitles, ylabels, ytitles,
                      size=200, start=0, framef=0.3, watchf=0.2, folder='C:/bin', show=False):
     """
-    Create frames for video watch of topmodel simulation with TWI map + 3 other maps alongside 4 variables
+    Create frames of topmodel simulation with TWI map + 3 other maps alongside 4 variables
 
     4 maps and 4 variables
 
@@ -746,7 +746,7 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, 
     :param fcn: string file path to CN raster .asc file
     :param faoi: string file path to AOI raster .asc file
     :param fparam: string file path to simulation parameters .txt file
-    :param fmaps: list or tuple storing 3 string file paths to directory of 3 maps
+    :param fmaps: list or tuple storing 3 string file paths of the mapfiles
     :param varseries: list or tuple with 4 strings of variables field names (must exist in series DataFrame)
     :param cmaps: tuple of 4 strings kargs to color maps. Example: ('viridis_r', 'viridis_r', 'viridis_r', 'jet')
     :param imtitles: tuple of 4 strings with image titles.
@@ -868,29 +868,30 @@ def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftf
                          fetmaps, fevmaps, ftpmaps, ftpgwmaps, size=600, start=0, framef=0.25, watchf=0.2,
                          folder='C:/bin', show=False):
     """
-
-    :param fseries:
-    :param ftwi:
-    :param fcn:
-    :param faoi:
-    :param fparam:
-    :param fs1maps:
-    :param fs2maps:
-    :param ftfmaps:
-    :param finfmaps:
-    :param frmaps:
-    :param fqvmaps:
-    :param fetmaps:
-    :param fevmaps:
-    :param ftpmaps:
-    :param ftpgwmaps:
-    :param size:
-    :param start:
-    :param framef:
-    :param watchf:
-    :param folder:
-    :param show:
-    :return:
+    Create frames of topmodel simulation with all 13 processes maps alongside with 3 variables series: Precipitation,
+    base flow and ET (with PET)
+    :param fseries: string file path to simulation series .txt file
+    :param ftwi: string file path to TWI raster .asc file
+    :param fcn: string file path to CN raster .asc file
+    :param faoi: string file path to AOI raster .asc file
+    :param fparam: string file path to simulation parameters .txt file
+    :param fs1maps: string file path to S1 .txt mapfile
+    :param fs2maps: string file path to S1 .txt mapfile
+    :param ftfmaps: string file path to S1 .txt mapfile
+    :param finfmaps: string file path to S1 .txt mapfile
+    :param frmaps: string file path to S1 .txt mapfile
+    :param fqvmaps: string file path to S1 .txt mapfile
+    :param fetmaps: string file path to S1 .txt mapfile
+    :param fevmaps: string file path to S1 .txt mapfile
+    :param ftpmaps: string file path to S1 .txt mapfile
+    :param ftpgwmaps: string file path to S1 .txt mapfile
+    :param size: int number of frames
+    :param start: int index of first frame
+    :param framef: float of frame ratio to full size (0 to 1)
+    :param watchf: float of watch line ratio to full frame (0 to 1)
+    :param folder: string path to destination folder
+    :param show: boolean control to show or save frame
+    :return: none
     """
     from hydrology import topmodel_di, avg_2d, map_back
     from visuals import pannel_topmodel_maps
@@ -964,7 +965,6 @@ def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftf
             im = map_back(zmatrix=zmap, a1=twi, a2=cn, bins1=hist_twi, bins2=hist_cn)
             im = geo.mask(im, aoi)
             maps_lst.append(im)
-        #
         #
         # load params
         stamp = pd.to_datetime(lcl_date, format='%y-%m-%d')
@@ -1054,12 +1054,6 @@ def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folde
     values = (pbias, rmse, rmselog, nse, nselog, kge, kgelog, linreg['A'], linreg['B'], linreg['R'], linreg['P'],
               linreg['SD'], rmse_freq, rmselog_freq, linreg_freq['R'], linreg_freq_log['R'])
     param_df = pd.DataFrame({'Parameter': params, 'Value': values})
-    print(param_df.to_string())
-    v = float(param_df[param_df['Parameter'] == 'KGE']['Value'])
-    print(v)
-    print(type(v))
-    #
-    #
     #
     # **** Export Data ****
     # 1) series data
@@ -1073,7 +1067,7 @@ def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folde
     param_df.to_csv(exp_file3, sep=';', index=False)
     #
     # export visual:
-    exp_file4 = pannel_obs_sim_analyst(series=series_df, freq=freq_df, params=param_df)
+    exp_file4 = pannel_obs_sim_analyst(series=series_df, freq=freq_df, params=param_df, folder=folder)
     #
     return (exp_file1, exp_file2, exp_file3, exp_file4)
 
