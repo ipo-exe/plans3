@@ -272,7 +272,7 @@ def map_cn_avg(fcnseries, fseries, folder='C:/bin', filename='cn_calib'):
 
 def import_climpat(fclimmonth, rasterfolder='C:/bin', folder='C:/bin', filename='clim_month', alias='p'):
     """
-
+    #### Possibly deprecated function !! ####
     :param fclimmonth: string filepath to climate raster monthly pattern series txt file
     :param rasterfolder: string filepath to raster folder
     :param folder: string filepath to folder
@@ -567,6 +567,21 @@ def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False,
     from hydrology import avg_2d, topmodel_hist, topmodel_sim, topmodel_calib, map_back
     from visuals import pannel_topmodel
     import time
+    from os import mkdir
+
+    def stamped(g):
+        if g < 10:
+            stamp = '0000' + str(g)
+        elif g >= 10 and g < 100:
+            stamp = '000' + str(g)
+        elif g >= 100 and g < 1000:
+            stamp = '00' + str(g)
+        elif g >= 1000 and g < 10000:
+            stamp = '0' + str(g)
+        else:
+            stamp = str(g)
+        return stamp
+
     #
     if tui:
         print('loading series...')
@@ -620,12 +635,12 @@ def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False,
     #
     # run topmodel calibration
     if tui:
-        print('running calibration...', end='\t\t')
+        print('running calibration...')
     init = time.time()
     pset, traced, tracedpop = topmodel_calib(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, lat=lat, qt0=qt0,
                                              ksat_range=ksat_rng, m_range=m_rng, qo_range=qo_rng, a_range=a_rng,
                                              c_range=c_rng, k_range=k_rng, n_range=n_rng, generations=generations,
-                                             popsize=popsize, metric=metric)
+                                             popsize=popsize, metric=metric, tracefrac=1, tracepop=True)
     end = time.time()
     if tui:
         print('Enlapsed time: {:.3f} seconds'.format(end - init))
@@ -641,10 +656,12 @@ def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False,
                                   n=pset[6], qt0=qt0, mapback=True, mapvar=mapvar, qobs=True)
     end = time.time()
     if tui:
-        print('Enlapsed time: {:.3f} seconds'.format(end - init))
+        print('enlapsed time: {:.3f} seconds'.format(end - init))
     #
     #
     # **** export files *****
+    #
+    # export calibrated parameters
     if tui:
         print('exporting run parameters...')
     exp_df = pd.DataFrame({'Parameter': ('m', 'ksat', 'qo', 'a', 'c', 'lat', 'k', 'n'),
@@ -675,12 +692,48 @@ def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False,
     # run analyst
     obs_sim_analyst(fseries=exp_file3, folder=folder, tui=True)
     #
+    if tui:
+        print('exporting generations dataframes...')
+    # export generations
+    lcl_folder = folder + '/generations'
+    mkdir(lcl_folder)  # make diretory
+    lcl_folder1 = lcl_folder + '/parents'
+    mkdir(lcl_folder1)  # make diretory
+    lcl_folder2 = lcl_folder + '/population'
+    mkdir(lcl_folder2)  # make diretory
+    #
+    # export parents
+    lcl_files = list()
+    lcl_gen_ids = list()
+    for g in range(len(traced)):
+        stamp = stamped(g=g)
+        lcl_filepath = lcl_folder1 + '/gen_' + stamp + '.txt'
+        traced[g].to_csv(lcl_filepath, sep=';', index=False)
+        lcl_gen_ids.append(g)
+        lcl_files.append(lcl_filepath)
+    traced_df = pd.DataFrame({'Gen':lcl_gen_ids, 'File':lcl_files})
+    exp_file5 = folder + '/' + 'generations_parents.txt'
+    traced_df.to_csv(exp_file5, sep=';', index=False)
+    #
+    # export full population
+    lcl_files = list()
+    lcl_gen_ids = list()
+    for g in range(len(tracedpop)):
+        stamp = stamped(g=g)
+        lcl_filepath = lcl_folder2 + '/gen_' + stamp + '.txt'
+        tracedpop[g].to_csv(lcl_filepath, sep=';', index=False)
+        lcl_gen_ids.append(g)
+        lcl_files.append(lcl_filepath)
+    traced_df = pd.DataFrame({'Gen': lcl_gen_ids, 'File': lcl_files})
+    exp_file6 = folder + '/' + 'generations_population.txt'
+    traced_df.to_csv(exp_file6, sep=';', index=False)
+    #
+    # export maps
     if mapback:
         if tui:
             print('exporting variable maps...', end='\t\t')
         init = time.time()
         #
-        from os import mkdir
         mapvar_lst = mapvar.split('-')  # load string variables alias to list
         mapfiles_lst = list()
         stamp = pd.to_datetime(sim_df['Date'], format='%y-%m-%d')

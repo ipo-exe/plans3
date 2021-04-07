@@ -79,8 +79,8 @@ def create_new_project(p0, wkplc='C:'):
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'])
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['LULC'])
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['CN'])
-    os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['PPat'])
-    os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['TPat'])
+    #os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['PPat'])  # deprecated
+    #os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['TPat'])  # deprecated
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Projected'])
     os.mkdir(new_prj_path + '/' + subdirs['Runbin'])
     os.mkdir(new_prj_path + '/' + subdirs['Runbin'] + '/' + subdirs['Simulation'])
@@ -163,6 +163,11 @@ def get_input2calibhydro():
     return files
 
 
+def get_input2simbhydro():
+    files = ('cn_calib.asc', 'twi.asc',  'aoi.asc', 'series_calib.txt', 'hydro_param.txt')
+    return files
+
+
 def get_input_files():
     files = ('pop.txt', 'wcons.txt', 'series_calib.txt', 'dem.asc', 'slope.asc', 'catcha.asc',
              'aoi.asc', 'gaug.asc', 'target.asc', 'lulc_input.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt',
@@ -188,6 +193,20 @@ def verify_observed_files(p0='name', wkplc='C:'):
 def verify_calibhydro_files(p0='name', wkplc='C:'):
     files_df = get_observed_files()
     files = get_input2calibhydro()
+    existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
+    status = list()
+    for i in range(len(files)):
+        if files[i] in set(existing_files):
+            status.append('OK')
+        else:
+            status.append('missing')
+    files_df = pd.DataFrame({'File':files, 'Status':status})
+    return files_df
+
+
+def verify_simhydro_files(p0='name', wkplc='C:'):
+    files_df = get_observed_files()
+    files = get_input2simbhydro()
     existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
     status = list()
     for i in range(len(files)):
@@ -237,6 +256,16 @@ def check_calibhydro_files(p0='name', wkplc='C:'):
         return True
     else:
         return False
+
+
+def check_simhydro_files(p0='name', wkplc='C:'):
+    files_df = verify_simhydro_files(p0=p0, wkplc=wkplc)
+    if 'missing' in set(files_df['Status'].values):
+        return True
+    else:
+        return False
+
+
 
 def importfile(src, dst):
     from shutil import copyfile

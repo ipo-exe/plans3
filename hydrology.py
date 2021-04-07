@@ -655,16 +655,27 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
     :param mapvar: string code of variables to map back. Available variables:
     'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw' (see docstrig in topmodel_sim())
     :param tui: boolean to control terminal messages
-    :param generations:
-    :param popsize:
-    :param grid:
-    :param offsfrac:
-    :param mutrate:
-    :param puremutrate:
-    :param cutfrac:
-    :param tracefrac:
-    :param tracepop:
-    :param metric:
+    :param generations: int - number of generations
+    :param popsize: int - number of initial population
+    :param grid: int - grid mesh to partitionate the ranges
+    :param offsfrac: positive float - offspring fraction to initial population
+    :param mutrate: float (0 to 1) - rate of mutation
+    :param puremutrate: float (0 to 1) - internal rate of pure mutations
+    :param cutfrac: float (0 to 0.5) - fraction of cutsize in crossover
+    :param tracefrac: float (0 to 1) - fraction of parents tracing
+    :param tracepop: boolean to control full population tracing
+    :param metric: string code to metric. Available codes:
+
+    'NSE' - NSE of series values
+    'NSElog' - NSE of log10 of series values
+    'KGE' - KGE of series values
+    'KGElog' - KGE of log10 of series values
+    'PBias' - Pbias of series values
+    'RMSE' - RMSE of series values
+    'RMSElog' - RMSE of log10 of series values
+    'RMSE-CFC' - RMSE of CFCs values
+    'RMSElog-CFC' - RMSE of log10 of CFCs values
+
     :return: Pandas DataFrame of simulated variables: see topmodel_sim() docstring.
     And
     if mapback=True:
@@ -674,10 +685,46 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
 
     """
     from evolution import generate_population, generate_offspring, recruitment
-    from analyst import nse, kge, rmse
+    from analyst import nse, kge, rmse, pbias, frequency
     from sys import getsizeof
     from datetime import datetime
 
+    def wrapper(traced, lowerb, ranges):
+        """
+        Wrapper function to return list of dataframes with expressed genes
+        :param traced: list of dictionaries with encoded generations
+        :param lowerb: numpy array of lowerbound values
+        :param ranges: numpy array of range values
+        :return: list of dataframes of each generation
+        """
+        df_lst = list()
+        # generation loop:
+        for g in range(len(traced)):
+            ksat_lst = list()
+            m_lst = list()
+            qo_lst = list()
+            a_lst = list()
+            c_lst = list()
+            k_lst = list()
+            n_lst = list()
+            # individual loop:
+            for i in range(len(traced[g]['DNAs'])):
+                lcl_dna = traced[g]['DNAs'][i]
+                #print(lcl_dna[0], end='\t\t')
+                lcl_pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerb, ranges=ranges)
+                #print(lcl_pset)
+                ksat_lst.append(lcl_pset[0])
+                m_lst.append(lcl_pset[1])
+                qo_lst.append(lcl_pset[2])
+                a_lst.append(lcl_pset[3])
+                c_lst.append(lcl_pset[4])
+                k_lst.append(lcl_pset[5])
+                n_lst.append(lcl_pset[6])
+            lcl_df = pd.DataFrame({'Id':traced[g]['Ids'], 'Score':traced[g]['Scores'], 'ksat':ksat_lst, 'm':m_lst,
+                                   'qo':qo_lst, 'a':a_lst, 'c':c_lst, 'k':k_lst, 'n':n_lst})
+            #print(lcl_df.to_string())
+            df_lst.append(lcl_df.copy())
+        return df_lst
 
     def express_parameter_set(gene, lowerb, ranges):
         """
@@ -688,6 +735,7 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
         :return: numpy array of parameter set
         """
         return (np.array(gene) * ranges / 100) + lowerb
+
     # run setup
     runsize = generations * popsize * 2
     #
@@ -695,7 +743,8 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
     # reset random state using time
     seed = int(str(datetime.now())[-6:])
     np.random.seed(seed)
-    print('Random Seed: {}'.format(seed))
+    if tui:
+        print('Random Seed: {}'.format(seed))
     #
     #
     # bounds setup
@@ -763,9 +812,21 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
                 lcl_dna_score = rmse(obs=series['Q'].values, sim=sim_df['Q'].values) * -1
             elif metric == 'RMSElog':
                 lcl_dna_score = rmse(obs=np.log10(series['Q'].values), sim=np.log10(sim_df['Q'].values)) * -1
+            elif metric == 'PBias':
+                lcl_dna_score = 1 / np.abs(pbias(obs=series['Q'].values, sim=sim_df['Q'].values))
+            elif metric == 'RMSE-CFC':
+                cfc_obs = frequency(series=series['Q'].values)['Values']
+                cfc_sim = frequency(series=sim_df['Q'].values)['Values']
+                lcl_dna_score = rmse(obs=cfc_obs, sim=cfc_sim) * -1
+            elif metric == 'RMSElog-CFC':
+                cfc_obs = frequency(series=series['Q'].values)['Values']
+                cfc_sim = frequency(series=sim_df['Q'].values)['Values']
+                lcl_dna_score = rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim)) * -1
+            else:
+                lcl_dna_score = nse(obs=series['Q'].values, sim=sim_df['Q'].values)
             # printing
             if tui:
-                print('Status: {:7.2f}% | Set '.format(runstatus), end='\t')
+                print('Status: {:8.4f} % | Set '.format(runstatus), end='\t')
                 print('{:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f}'.format(pset[0], pset[1], pset[2],
                                                                                        pset[3],pset[4], pset[5],
                                                                                        pset[6]), end='\t\t')
@@ -803,22 +864,25 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
         # tracing
         tr_len = int(len(parents) * tracefrac)
         # printing
-        if tui:
+        '''if tui:
             for i in range(tr_len):
-                print('{}\t\t\tScore: {}'.format(parents[i], round(parents_scores[i], 3)))
+                print('{}\t\t\tScore: {}'.format(parents[i], round(parents_scores[i], 3)))'''
         #
         # trace best parents
         trace.append({'DNAs': parents[:tr_len], 'Ids': parents_ids[:tr_len], 'Scores': parents_scores[:tr_len]})
     #
     # retrieve last best solution
     last = trace[len(trace) - 1]
-    last_gene = last['DNAs'][0]
+    last_dna = last['DNAs'][0]
     last_score = last['Scores'][0]
-    pset = express_parameter_set(last_gene, lowerb=lowerbound, ranges=ranges)
-    print('\n\nBEST solution:')
-    print(pset)
-    print('Score = {}'.format(last_score))
+    pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges)
+    if tui:
+        print('\n\nBEST solution:')
+        print(pset)
+        print('Score = {}'.format(last_score))
+    wtrace = wrapper(traced=trace, lowerb=lowerbound, ranges=ranges)
+    wtrace_pop = wrapper(traced=trace_pop, lowerb=lowerbound, ranges=ranges)
     if tracepop:
-        return pset[0], trace, tracepop
+        return pset, wtrace, wtrace_pop
     else:
-        return pset[0], trace
+        return pset, wtrace

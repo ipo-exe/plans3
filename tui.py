@@ -394,56 +394,53 @@ def main():
                                 break
                             # calibrate hydrology:
                             elif opt == calib_options[0]:
-                                header(calib_options[0])
-                                filesclib_df = backend.verify_calibhydro_files(project_nm, rootdir)
-                                print('Run!')
+                                # checker protocol
                                 if backend.check_calibhydro_files(project_nm, rootdir):
                                     warning(wng=lng[20], msg=lng[27])
                                     filesclib_df = backend.verify_calibhydro_files(project_nm, rootdir)
                                     print(filesclib_df[filesclib_df['Status'] == 'missing'].to_string(index=False))
                                 else:
                                     while True:
-                                        metrics_options = ('NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog')
-                                        opt = menu({'Metric':metrics_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7],
+                                        header(calib_options[0])
+                                        metrics_options = ('NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias',
+                                                           'RMSE-CFC', 'RMSElog-CFC')
+                                        metric = menu({'Metric':metrics_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7],
                                                    wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                                         # exit menu condition
-                                        if opt == lng[10]:
+                                        if metric == lng[10]:
                                             break
                                         else:
-                                            aux_str = 'CalibHydro' + '_' + opt
+                                            aux_str = 'CalibHydro' + '_' + metric
                                             dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
                                             fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
                                             faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
                                             ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
                                             fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
                                             fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
-                                            generations = 5
+                                            size_opts = ('Small - Size:20 Gens:5', 'Medium - Size:100 Gens:50',
+                                                             'Large - Size:500 Gens:200')
+                                            scale = menu({'Scale': size_opts}, exitkey='d', exitmsg='Use default (Small)', msg=lng[5],
+                                                           keylbl=lng[7],wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                                             popsize = 20
+                                            generations = 5
+                                            if scale == size_opts[0]:
+                                                popsize = 20
+                                                generations = 5
+                                            elif scale == size_opts[1]:
+                                                popsize = 100
+                                                generations = 20
+                                            elif scale == size_opts[2]:
+                                                popsize = 500
+                                                generations = 200
                                             pset = tools.calib_topmodel(fseries=fseries, fparam=fparam, faoi=faoi,ftwi=ftwi,
                                                                         fcn=fcn, folder=dst_dir, generations=generations,
-                                                                        popsize=popsize, metric=opt, tui=True)
+                                                                        popsize=popsize, metric=metric, tui=True)
                                             # overwrite file
                                             aux_df = pd.read_csv(pset, sep=';')
                                             aux_df.to_csv(fparam, sep=';', index=False)
                             elif opt == calib_options[1]:
                                 header(calib_options[1])
-                                print('Run!')
-
-                        '''# check if all input data is present
-                        check1 = backend.check_inputfiles(project_nm, rootdir, 'imported')
-                        check2 = backend.check_inputfiles(project_nm, rootdir, 'derived')
-                        if check1 or check2:
-                            files_df = backend.verify_observed_files(project_nm, rootdir)
-                            warning(wng=lng[20], msg=lng[27])
-                            qdf = files_df.query('Type =="imported" or Type =="derived" and Status == "missing"')
-                            print('>>> ' + lng[28] + ':')
-                            print(qdf.to_string(index=False))
-                            proceed(msg=lng[29])
-                        else:
-                            header(observed_options[2])
-                            print('\n>>> RUN calibration')
-                            calib_options = ('Hydrology model', '')'''
-
+                                print('missing code!')
                     # exit
                     elif opt == lng[10]:
                         break
@@ -461,16 +458,24 @@ def main():
                 print('Optimize policy')
             # simulate hydrology
             elif opt == project_options[4]:
+                # checker protocol
                 header(lng[32])
-                fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
-                faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
-                ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
-                fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
-                fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
-                dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
-                files = tools.run_topmodel(fseries=fseries, fparam=fparam, faoi=faoi, ftwi=ftwi, fcn=fcn, folder=dst_dir,
-                                           tui=True, mapback=False, mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True)
-                files_analyst = tools.obs_sim_analyst(fseries=files[2], fld_obs='Qobs', fld_sim='Q', folder=dst_dir, tui=True)
+                if backend.check_simhydro_files(project_nm, rootdir):
+                    warning(wng=lng[20], msg=lng[27])
+                    filessim_df = backend.verify_simhydro_files(project_nm, rootdir)
+                    print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
+                else:
+                    fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
+                    faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
+                    ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
+                    fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
+                    fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
+                    dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
+                    files = tools.run_topmodel(fseries=fseries, fparam=fparam, faoi=faoi, ftwi=ftwi,
+                                               fcn=fcn, folder=dst_dir, tui=True, mapback=False,
+                                               mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True)
+                    files_analyst = tools.obs_sim_analyst(fseries=files[2], fld_obs='Qobs', fld_sim='Q',
+                                                          folder=dst_dir, tui=True)
 
             elif opt == lng[10]:
                 break
