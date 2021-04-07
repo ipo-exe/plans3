@@ -132,18 +132,17 @@ def get_observed_files():
     for i in range(len(files)):
         type.append('derived')
     df_deriv = pd.DataFrame({'File': files, 'Type': type})
-    files = get_calib_files()
+    '''files = get_calib_files()
     type = list()
     for i in range(len(files)):
         type.append('calibrated')
-    df_calib = pd.DataFrame({'File': files, 'Type': type})
-    def_df = df_input.append(df_deriv, ignore_index=True).append(df_calib, ignore_index=True)
+    df_calib = pd.DataFrame({'File': files, 'Type': type})'''
+    def_df = df_input.append(df_deriv, ignore_index=True)#.append(df_calib, ignore_index=True)
     return def_df
 
 
 def get_derived_files():
-    files = ('cn_series.txt', 'cn_calib.asc', 'series_calib_month.txt', 'twi.asc', 'lulc_series.txt', 'lulc_areas.txt',
-             'ppat_month.txt', 'tpat_month.txt')
+    files = ('cn_series.txt', 'cn_calib.asc', 'twi.asc', 'lulc_series.txt', 'lulc_areas.txt')
     return files
 
 
@@ -159,15 +158,15 @@ def get_input2derived():
     return dct
 
 
-def get_calib_files():
-    files = ('calib1.txt', 'calib2.txt')
+def get_input2calibhydro():
+    files = ('cn_calib.asc', 'twi.asc',  'gaug.asc', 'series_calib.txt', 'hydro_param.txt')
     return files
 
 
 def get_input_files():
-    files = ('pop.txt', 'wcons.txt', 'series_calib.txt', 'pobs.txt', 'tobs.txt', 'dem.asc', 'slope.asc', 'catcha.asc',
+    files = ('pop.txt', 'wcons.txt', 'series_calib.txt', 'dem.asc', 'slope.asc', 'catcha.asc',
              'aoi.asc', 'gaug.asc', 'target.asc', 'lulc_input.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt',
-             'ppat_input.txt', 'tpat_input.txt', 'conversion.txt', 'operation.txt', 'tariff.txt', 'elasticity.txt',
+             'conversion.txt', 'operation.txt', 'tariff.txt', 'elasticity.txt',
              'tc_param.txt', 'hydro_param.txt')
     return files
 
@@ -183,6 +182,20 @@ def verify_observed_files(p0='name', wkplc='C:'):
         else:
             status.append('missing')
     files_df['Status'] = status
+    return files_df
+
+
+def verify_calibhydro_files(p0='name', wkplc='C:'):
+    files_df = get_observed_files()
+    files = get_input2calibhydro()
+    existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
+    status = list()
+    for i in range(len(files)):
+        if files[i] in set(existing_files):
+            status.append('OK')
+        else:
+            status.append('missing')
+    files_df = pd.DataFrame({'File':files, 'Status':status})
     return files_df
 
 
@@ -218,6 +231,13 @@ def check_inputfiles(p0='name', wkplc='C:', type='imported'):
     return flag
 
 
+def check_calibhydro_files(p0='name', wkplc='C:'):
+    files_df = verify_calibhydro_files(p0=p0, wkplc=wkplc)
+    if 'missing' in set(files_df['Status'].values):
+        return True
+    else:
+        return False
+
 def importfile(src, dst):
     from shutil import copyfile
     copyfile(src=src, dst=dst)
@@ -238,6 +258,6 @@ def nowsep(p0='-'):
 
 
 def create_rundir(label='', wkplc='C:'):
-    dir_nm = wkplc + '/' + 'SimHydro' + '_' + nowsep()
+    dir_nm = wkplc + '/' + label + '_' + nowsep()
     os.mkdir(dir_nm)
     return dir_nm

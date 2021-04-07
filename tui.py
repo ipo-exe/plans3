@@ -384,7 +384,52 @@ def main():
                                         ok()
                     # calibrate models
                     elif opt == observed_options[2]:
-                        # check if all input data is present
+                        while True:
+                            header(observed_options[2])
+                            calib_options = ('Calibrate Hydrology', 'Calibrate Population')
+                            opt = menu({'Model':calib_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7], wng=lng[20],
+                                       wngmsg=lng[8], chsn=lng[9])
+                            # exit menu condition
+                            if opt == lng[10]:
+                                break
+                            # calibrate hydrology:
+                            elif opt == calib_options[0]:
+                                header(calib_options[0])
+                                filesclib_df = backend.verify_calibhydro_files(project_nm, rootdir)
+                                print('Run!')
+                                if backend.check_calibhydro_files(project_nm, rootdir):
+                                    warning(wng=lng[20], msg=lng[27])
+                                    filesclib_df = backend.verify_calibhydro_files(project_nm, rootdir)
+                                    print(filesclib_df[filesclib_df['Status'] == 'missing'].to_string(index=False))
+                                else:
+                                    while True:
+                                        metrics_options = ('NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog')
+                                        opt = menu({'Metric':metrics_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7],
+                                                   wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                                        # exit menu condition
+                                        if opt == lng[10]:
+                                            break
+                                        else:
+                                            aux_str = 'CalibHydro' + '_' + opt
+                                            dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
+                                            fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
+                                            faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
+                                            ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
+                                            fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
+                                            fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
+                                            generations = 5
+                                            popsize = 20
+                                            pset = tools.calib_topmodel(fseries=fseries, fparam=fparam, faoi=faoi,ftwi=ftwi,
+                                                                        fcn=fcn, folder=dst_dir, generations=generations,
+                                                                        popsize=popsize, metric=opt, tui=True)
+                                            # overwrite file
+                                            aux_df = pd.read_csv(pset, sep=';')
+                                            aux_df.to_csv(fparam, sep=';', index=False)
+                            elif opt == calib_options[1]:
+                                header(calib_options[1])
+                                print('Run!')
+
+                        '''# check if all input data is present
                         check1 = backend.check_inputfiles(project_nm, rootdir, 'imported')
                         check2 = backend.check_inputfiles(project_nm, rootdir, 'derived')
                         if check1 or check2:
@@ -397,7 +442,8 @@ def main():
                         else:
                             header(observed_options[2])
                             print('\n>>> RUN calibration')
-                            calib_options = ('Hydrology model', '')
+                            calib_options = ('Hydrology model', '')'''
+
                     # exit
                     elif opt == lng[10]:
                         break

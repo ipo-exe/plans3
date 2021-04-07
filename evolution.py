@@ -545,6 +545,7 @@ def generate_offspring(pop, nucleotides, offsfrac=1, mutrate=0.10, puremutrate=0
     """
     offsp_lst = list()
     offsize = int(offsfrac * len(pop))
+    #print('>>> {}'.format(offsize))
     count = 0
     while True:
         # get random order of mating pool
@@ -560,7 +561,8 @@ def generate_offspring(pop, nucleotides, offsfrac=1, mutrate=0.10, puremutrate=0
             count = count + 1
             offsp_lst.append(offsp_b)
             count = count + 1
-        if count == offsize:
+            #print(count)
+        if count >= offsize:
             break
     return tuple(offsp_lst)
 
@@ -654,9 +656,9 @@ def fitness_moea(dna, solutions):
 
 
 def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrate=0.20, puremutrate=0.10,
-           cutfrac=0.2, tracefrac=0.3, tracepop=False, fittype='similarity'):
+           cutfrac=0.2, tracefrac=0.3, tracepop=False, fittype='similarity', tui=False):
     """
-    Evolution of DNAs based on the NSGA-II approach but single-objective
+    Benchmark Evolution of DNAs based on the NSGA-II approach but single-objective
     :param pop0: initial population DNAs
     :param nucleotides: tuple of genes nucleotides (tuple of tuples)
     :param solution: tuple of gene solutions (tuple of objects) --- needed for fitness function
@@ -678,13 +680,15 @@ def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrat
     if tracepop:
         trace_pop = list()
     for g in range(generations):
-        print('\n\nGeneration {}\n'.format(g + 1))
+        if tui:
+            print('\n\nGeneration {}\n'.format(g + 1))
         # get offstring
         offspring = generate_offspring(parents, offsfrac=offsfrac, nucleotides=nucleotides, mutrate=mutrate,
                                        puremutrate=puremutrate, cutfrac=cutfrac)
         # recruit new population
         population = recruitment(parents, offspring)
-        print('Population: {} KB'.format(getsizeof(population)))
+        if tui:
+            print('Population: {} KB'.format(getsizeof(population)))
         # fit new population
         ids_lst = list()
         scores_lst = list()
@@ -696,6 +700,7 @@ def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrat
             #
             # get local score and id:
             lcl_dna = population[i]  # local dna
+            #
             #
             #
             # Get fitness score:
@@ -733,8 +738,9 @@ def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrat
         parents = tuple(parents_lst)  # parents DNAs
         #
         # printing
-        for i in range(10):
-            print('{}'.format(round(parents_scores[i], 3)))
+        if tui:
+            for i in range(10):
+                print('{}'.format(round(parents_scores[i], 3)))
         tr_len = int(len(pop0) * tracefrac)
         #print('>>> {}'.format(tr_len))
         #
@@ -742,10 +748,12 @@ def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrat
         trace.append({'DNAs':parents[:tr_len],
                       'Ids':parents_ids[:tr_len],
                       'Scores':parents_scores[:tr_len]})
-        print('Trace size: {} KB'.format(getsizeof(trace)))
-        print('Trace len: {}'.format(len(trace)))
+        if tui:
+            print('Trace size: {} KB'.format(getsizeof(trace)))
+            print('Trace len: {}'.format(len(trace)))
         #if parents_scores[i] > 90:
-        #    break
+    #
+    # returns
     if tracepop:
         return trace, trace_pop
     else:
@@ -904,9 +912,8 @@ def demo2():
     # evolve
     generations = 100
     traced, tracedpop = evolve(pop0=pop, nucleotides=(nucleo,), solution=(solution,), seed=666,
-                                   generations=generations,
-                                   mutrate=mutrate, puremutrate=puremutrate, cutfrac=cutfrac, tracefrac=1,
-                                   tracepop=True, fittype='rmse')
+                               generations=generations, mutrate=mutrate, puremutrate=puremutrate, cutfrac=cutfrac,
+                               tracefrac=1, tracepop=True, fittype='rmse')
     # retrieve last one
     last = traced[len(traced) - 1]
     sample_gene = last['DNAs'][0]

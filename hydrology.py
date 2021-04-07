@@ -532,8 +532,8 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         print('Soil moisture accounting simulation...')
     # ESMA loop
     for t in range(1, size):
-        if tui:
-            print('Step {}'.format(t))
+        #if tui:
+        #   print('Step {}'.format(t))
         #
         # update S1 - Canopy storage - interceptation
         s1i = s1i - evi - tfi + preci
@@ -627,3 +627,198 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         return exp_df, map_dct
     else:
         return exp_df
+
+
+def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_range, m_range, qo_range, a_range,
+                   c_range, k_range, n_range, mapback=False, mapvar='R-ET-S1-S2', tui=True, grid=100,
+                   generations=100, popsize=200, offsfrac=1, mutrate=0.4, puremutrate=0.1, cutfrac=0.33,
+                   tracefrac=0.1, tracepop=True, metric='NSE'):
+    """
+    PLANS 3 TOPMODEL calibration procedure
+
+    :param series: Pandas DataFrame of input series.
+    Required fields: 'Date', 'Prec', 'Temp', 'Q' (Observed Q, in mm)
+    :param twihist: tuple of histogram of TWI
+    :param cnhist: tuple of histogram of CN
+    :param countmatrix: 2D histogram of TWI and CN
+    :param lamb: positive float - average TWI value of the AOI
+    :param lat: float - latitude in degrees for PET model
+    :param qt0: positive float - baseflow at t=0 in mm/d
+    :param ksat_range: tuple with min and max floats - search range of effective saturated hydraulic conductivity in mm/d
+    :param m_range: tuple with min and max floats - search range of effective transmissivity decay coefficient in mm
+    :param qo_range: tuple with min and max floats - search range of max baseflow when d=0 in mm/d
+    :param a_range: tuple with min and max floats - search range of scaling parameter for S0max model
+    :param c_range: tuple with min and max floats - search range of scaling parameter for PET model in Celcius
+    :param k_range: tuple with min and max floats - search range of Nash Cascade residence time in days
+    :param n_range: tuple with min and max floats - search range of equivalent number of reservoirs in Nash Cascade
+    :param mapback: boolean control to map back variables (best of last generation)
+    :param mapvar: string code of variables to map back. Available variables:
+    'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw' (see docstrig in topmodel_sim())
+    :param tui: boolean to control terminal messages
+    :param generations:
+    :param popsize:
+    :param grid:
+    :param offsfrac:
+    :param mutrate:
+    :param puremutrate:
+    :param cutfrac:
+    :param tracefrac:
+    :param tracepop:
+    :param metric:
+    :return: Pandas DataFrame of simulated variables: see topmodel_sim() docstring.
+    And
+    if mapback=True:
+    Dictionary of encoded 2d numpy arrays maps
+    Keys to access maps: 'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw'
+    Each key stores an array of 2d numpy arrays (i.e., 3d array) in the ascending order of the time series.
+
+    """
+    from evolution import generate_population, generate_offspring, recruitment
+    from analyst import nse, kge, rmse
+    from sys import getsizeof
+    from datetime import datetime
+
+
+    def express_parameter_set(gene, lowerb, ranges):
+        """
+        Expression of parameter set
+        :param gene: gene tuple
+        :param lowerb: numpy array of lowerbound values
+        :param ranges: numpy array of range values
+        :return: numpy array of parameter set
+        """
+        return (np.array(gene) * ranges / 100) + lowerb
+    # run setup
+    runsize = generations * popsize * 2
+    #
+    #
+    # reset random state using time
+    seed = int(str(datetime.now())[-6:])
+    np.random.seed(seed)
+    print('Random Seed: {}'.format(seed))
+    #
+    #
+    # bounds setup
+    lowerbound = np.array((np.min(ksat_range), np.min(m_range), np.min(qo_range), np.min(a_range), np.min(c_range),
+                           np.min(k_range), np.min(n_range)))
+    upperbound = np.array((np.max(ksat_range), np.max(m_range), np.max(qo_range), np.max(a_range), np.max(c_range),
+                           np.max(k_range), np.max(n_range)))
+    ranges = upperbound - lowerbound
+    #
+    #
+    # Evolution setup
+    nucleotides = tuple(np.arange(0, grid + 1))
+    parents = generate_population(nucleotides=(nucleotides,), genesizes=(7,), popsize=popsize)
+    #for e in parents:
+    #    print(e[0])
+    trace = list()  # list to append best solutions
+    if tracepop:
+        trace_pop = list()
+    #
+    #
+    # generation loop:
+    counter = 0
+    for g in range(generations):
+        if tui:
+            print('\n\nGeneration {}\n'.format(g + 1))
+        # get offstring
+        offspring = generate_offspring(parents, offsfrac=offsfrac, nucleotides=(nucleotides,), mutrate=mutrate,
+                                       puremutrate=puremutrate, cutfrac=cutfrac)
+        # recruit new population
+        population = recruitment(parents, offspring)
+        if tui:
+            print('Population: {} KB'.format(getsizeof(population)))
+        # fit new population
+        ids_lst = list()
+        scores_lst = list()
+        pop_dct = dict()
+        if tracepop:
+            dnas_lst = list()
+        # loop in individuals
+        for i in range(len(population)):
+            runstatus = 100 * counter / runsize
+            counter = counter + 1
+            #
+            # get local score and id:
+            lcl_dna = population[i]  # local dna
+            #
+            #
+            #
+            # express parameter set
+            pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerbound, ranges=ranges)  # express the parameter set
+            # run topmodel
+            sim_df = topmodel_sim(series=series, twihist=twihist, cnhist=cnhist, countmatrix=countmatrix, lamb=lamb,
+                                  ksat=pset[0], m=pset[1], qo=pset[2], a=pset[3], c=pset[4], lat=lat, k=pset[5],
+                                  n=pset[6], qt0=qt0, mapback=False, qobs=True)
+            # Get fitness score:
+            if metric == 'NSE':
+                lcl_dna_score = nse(obs=series['Q'].values, sim=sim_df['Q'].values)
+            elif metric == 'NSElog':
+                lcl_dna_score = nse(obs=np.log10(series['Q'].values), sim=np.log10(sim_df['Q'].values))
+            elif metric == 'KGE':
+                lcl_dna_score = kge(obs=series['Q'].values, sim=sim_df['Q'].values)
+            elif metric == 'KGElog':
+                lcl_dna_score = kge(obs=np.log10(series['Q'].values), sim=np.log10(sim_df['Q'].values))
+            elif metric == 'RMSE':
+                lcl_dna_score = rmse(obs=series['Q'].values, sim=sim_df['Q'].values) * -1
+            elif metric == 'RMSElog':
+                lcl_dna_score = rmse(obs=np.log10(series['Q'].values), sim=np.log10(sim_df['Q'].values)) * -1
+            # printing
+            if tui:
+                print('Status: {:7.2f}% | Set '.format(runstatus), end='\t')
+                print('{:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f}'.format(pset[0], pset[1], pset[2],
+                                                                                       pset[3],pset[4], pset[5],
+                                                                                       pset[6]), end='\t\t')
+                print('Score = {:.3f}'.format(lcl_dna_score))
+            #
+            #
+            lcl_dna_id = 'G' + str(g + 1) + '-' + str(i)
+            #
+            # store in retrieval system:
+            pop_dct[lcl_dna_id] = lcl_dna
+            ids_lst.append(lcl_dna_id)
+            scores_lst.append(lcl_dna_score)
+            if tracepop:
+                dnas_lst.append(lcl_dna)
+        #
+        # trace full population
+        if tracepop:
+            trace_pop.append({'DNAs': dnas_lst[:], 'Ids': ids_lst[:], 'Scores': scores_lst[:]})
+        #
+        # rank new population (Survival)
+        df_population_rank = pd.DataFrame({'Id': ids_lst, 'Score': scores_lst})
+        df_population_rank.sort_values(by='Score', ascending=False, inplace=True)
+        #
+        # Selection of mating pool
+        df_parents_rank = df_population_rank.nlargest(len(parents), columns=['Score'])
+        #
+        parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
+        parents_scores = df_parents_rank['Score'].values  # numpy array of float scores
+        #
+        parents_lst = list()
+        for i in range(len(parents_ids)):
+            parents_lst.append(pop_dct[parents_ids[i]])
+        parents = tuple(parents_lst)  # update parents DNAs
+        #
+        # tracing
+        tr_len = int(len(parents) * tracefrac)
+        # printing
+        if tui:
+            for i in range(tr_len):
+                print('{}\t\t\tScore: {}'.format(parents[i], round(parents_scores[i], 3)))
+        #
+        # trace best parents
+        trace.append({'DNAs': parents[:tr_len], 'Ids': parents_ids[:tr_len], 'Scores': parents_scores[:tr_len]})
+    #
+    # retrieve last best solution
+    last = trace[len(trace) - 1]
+    last_gene = last['DNAs'][0]
+    last_score = last['Scores'][0]
+    pset = express_parameter_set(last_gene, lowerb=lowerbound, ranges=ranges)
+    print('\n\nBEST solution:')
+    print(pset)
+    print('Score = {}'.format(last_score))
+    if tracepop:
+        return pset[0], trace, tracepop
+    else:
+        return pset[0], trace
