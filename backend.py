@@ -2,6 +2,47 @@ import os
 import pandas as pd
 
 
+def print_readme(file='./docs.txt'):
+    df = pd.read_csv(file, sep='|')
+    #print(df.to_string())
+
+    def header1(string):
+        return '# ' + string
+
+    def header1_code(string):
+        return '# `' + string + '`'
+
+    def header2(string):
+        return '## ' + string
+
+    def header2_code(string):
+        return '## `' + string + '`'
+
+    iotypes = df['ioType'].unique()
+    lines = list()
+    for i in range(len(iotypes)):
+        aux_string = iotypes[i] + ' files'
+        s = header1(string=aux_string)
+        print(s, end='\n')
+        lcl_df = df[df['ioType'] == iotypes[i]].copy()
+        lcl_df.sort_values(by='FileName', inplace=True)
+        # print(lcl_df.to_string())
+        for j in range(len(lcl_df.index)):
+            aux_string = lcl_df['FileName'].values[j] + '.' + lcl_df['FileFormat'].values[j]
+            s = header2_code(string=aux_string)
+            print(s)
+            print('**File type:** ', end='')
+            print(lcl_df['FileType'].values[j], end='\n\n')
+            print('**Description:**')
+            print(lcl_df['Info'].values[j], end='\n\n')
+            print('**Requirements:**')
+            req_full = lcl_df['Requirements'].values[j]
+            req_lst = req_full.split('>>')
+            for k in range(len(req_lst[1:])):
+                print('*  ' + req_lst[1:][k].replace('>', '').replace('"', '`').strip())
+            print('\n\n')
+
+
 def get_root_dir():
     """
     function to get the root directory

@@ -422,10 +422,10 @@ def main():
                                             scale = menu({'Scale': size_opts}, exitkey='d', exitmsg='Use default (Small)', msg=lng[5],
                                                            keylbl=lng[7],wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                                             popsize = 20
-                                            generations = 5
+                                            generations = 20
                                             if scale == size_opts[0]:
                                                 popsize = 20
-                                                generations = 5
+                                                generations = 20
                                             elif scale == size_opts[1]:
                                                 popsize = 100
                                                 generations = 20
