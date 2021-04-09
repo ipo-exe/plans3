@@ -32,7 +32,7 @@ def print_readme(file='./docs.txt'):
             s = header2_code(string=aux_string)
             print(s)
             print('**File type:** ', end='')
-            print(lcl_df['FileType'].values[j], end='\n\n')
+            print(lcl_df['FileType'].values[j] + '.', end='\n\n')
             print('**Description:**')
             print(lcl_df['Info'].values[j], end='\n\n')
             print('**Requirements:**')
