@@ -17,9 +17,10 @@ Now, `plans3` has deep changes in hydrology modelling.
 ## What is included in this repository
 
 - [x] All files required to run `plans3`;
-- [x] A directory called `samples` with examples of input files;
-- [x] A markdown file called `iofiles.md` of I/O file documentation;
-- [ ] A markdown file called `guide.md` for a quick guide of `plans3` applications;
+- [x] A directory called `./samples` with examples of input files;
+- [x] A directory called `./docs` with documentation files;
+- [x] In `./docs`: a markdown file called `iofiles.md` of I/O file documentation;
+- [ ] In `./docs`: a markdown file called `guide.md` for a quick guide of `plans3` applications;
 - [ ] A comprehensive `plans3_handbook.pdf` document.
 
 ## `python` and packages required
