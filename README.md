@@ -32,7 +32,7 @@ Now, `plans3` has deep changes in hydrology modelling.
 * [matplotlib](https://matplotlib.org/)
 * [scipy](https://www.scipy.org/)
 
-## How to install `plans3` on a local machine
+## Installing `plans3` on a local machine
 
 ### Step 1: install python 3.8+
 Go to https://www.python.org/downloads/ and download it. Make sure you add Python to PATH (checkbox on the installation wizard).
@@ -59,7 +59,9 @@ and then:
 ### Step 3: download a clone of this repository
 Download the ZIP file for the entire repository. Extract the files on any diretory of your machine.
 
-## Running `plans3` by the Terminal User Interface (`TUI`)
+## Running `plans3` as a desktop application
+
+### The terminal-based user interface `TUI`
 After installing `plans3` on your machine, double-click on `run_tui.py` and it will run the terminal-based application. 
 
 Alternatively, you may create a python file on the same directory, 
@@ -101,6 +103,25 @@ Chosen:	Open Project
 
 ```
 
+### The default `plans3` desktop project
+
+In the first time you run the `TUI` application, `plans3` automatically creates a directory called `C:/Plans3`. 
+This is the standard root directory for all desktop `plans3` _projects_. 
+Projects are subdirectories inside the root folder, like `C:/Plans3/myproject/`. 
+
+Once a project is named by the user, `plans3` create the project strucutre, which is divided in two main folders:
+* A directory for datasets in `C:/Plans3/myproject/datasets/`
+* A directory for storing output files in `C:/Plans3/myproject/runbin`
+
+The `./datasets` directory is divided in `./datasets/observed` and `./datasets/projected`. 
+* `./datasets/observed` stores all input and derived data files for the _observation period_ of the project. 
+* `./datasets/projected` stores all input and derived data files for projected scenarios periods. 
+
+The `./runbin` directory is divided in `./runbin/simulation` and `./runbin/optimization`. 
+* `./runbin/simulation` stores all output data files of simulation procedures, which are located in time-stamped subfolders. 
+* `./datasets/projected` stores all output data files of optimization procedures, which are located in time-stamped subfolders. 
+
+
 ## Running `plans3` as a python package
 Since `plans3` is a function-based software, you may desire to run very specific available functions or 
 even embed it on your custom python code. 
@@ -136,60 +157,57 @@ frequency(series)
 `plans3` is a function-based software. 
 It contains a collection of modules of python functions, which are described below:
 
-### `tools.py`
+#### `analyst.py`
+This module holds all data analysis basic functions.
+
+#### `backend.py`
+General backend tasks. It performs the silent routines for the desktop application.  
+
+#### `evolution.py`
+This module holds all evolutionary computing related basic functions.
+
+#### `geo.py`
+This module holds all geoprocessing related basic functions.
+
+#### `hydrology.py`
+This module holds all hydrolgy related models, incluing the model calibration routine.
+
+#### `input.py`
+This module holds pre-processing input functions.
+
+#### `output.py`
+This module holds post-processing output functions.
+
+#### `resample.py`
+A collection of model functions and convenience functions for resampling time scale in time series analysis.
+
+#### `tools.py`
 The specific backend tasks of `plans3`. 
 It performs the silent routines of input, output and process execution.
 
-### `analyst.py`
-This module holds all data analysis basic functions.
-
-### `backend.py`
-General backend tasks. It performs the silent routines for the desktop application.  
-
-### `evolution.py`
-This module holds all evolutionary computing related basic functions.
-
-### `geo.py`
-This module holds all geoprocessing related basic functions.
-
-### `hydrology.py`
-This module holds all hydrolgy related models, incluing the model calibration routine.
-
-### `input.py`
-This module holds pre-processing input functions.
-
-### `output.py`
-This module holds post-processing output functions.
-
-### `resample.py`
-A collection of model functions and convenience functions for resampling time scale in time series analysis.
-
-### `tui.py`
+#### `tui.py`
 A terminal frontend of `plans3` is handled by the `tui.py` module. 
 The interface is a simple terminal-based user interface that presents menus for the user.
 
-### `visuals.py`
+#### `visuals.py`
 This module holds all built-in functions for creating data visualisations.
-
-
-## Structure of a Plans2 Project
-
-In the first time you run it, Plans2 automatically creates a directory in `C:/Plans2`. 
-This is the standard root directory for all Plans2 projetcs. 
-Projects are subdirectories inside the root folder, like `C:/Plans2/myproject/`. 
-Once a project is named by the user, Plans2 create the project strucutre, which includes:
-* A directory for datasets in `C:/Plans2/myproject/datasets/`
-* A directory for storing execution files in `C:/Plans2/myproject/runbin`
-
-Datasets are divided in `./datasets/observed` and `./datasets/projected`. 
-`./datasets/observed` stores all data files for the "present" time of the water system being modelled. 
-
-## The Terminal-based interface (TUI)
-
-text
 
 ## IO files
 
+A full documentaion of IO files is provided by the `iofiles.md` document in `./docs`.
+
+### Files formatting
+Input and output files in `plans3` are all in open source format, namely `.txt` csv data frames
+ and `.asc` raster maps. 
+ 
+ 🔴 Warning! ⚠ in csv files the field separator **must** be semicolon `;` and decimal plate separator **must** be period `.`.
+ 
+> tip: you may want to use [QGIS](https://qgis.org/en/site/) to **translate** your `.tif` raster maps to `.asc` files.
+ 
+ 
+ 
+ 
+ 
 
 
 
