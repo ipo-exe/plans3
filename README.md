@@ -119,7 +119,7 @@ The `./datasets` directory is divided in `./datasets/observed` and `./datasets/p
 
 The `./runbin` directory is divided in `./runbin/simulation` and `./runbin/optimization`. 
 * `./runbin/simulation` stores all output data files of simulation procedures, which are located in time-stamped subfolders. 
-* `./datasets/projected` stores all output data files of optimization procedures, which are located in time-stamped subfolders. 
+* `./datasets/optimization` stores all output data files of optimization procedures, which are located in time-stamped subfolders. 
 
 
 ## Running `plans3` as a python package
