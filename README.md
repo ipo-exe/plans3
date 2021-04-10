@@ -202,7 +202,12 @@ Input and output files in `plans3` are all in open source format, namely `.txt` 
  
  🔴 Warning! ⚠ in csv files the field separator **must** be semicolon `;` and decimal plate separator **must** be period `.`.
  
-> tip: you may want to use [QGIS](https://qgis.org/en/site/) to **translate** your `.tif` raster maps to `.asc` files.
+ 🔴 Warning! ⚠ the raster maps **must** be in a _projected_ coordinate reference system, which means 
+  coordinates in _meters_ and _squared grid cells_. 
+ 
+> tip: you may want to use [QGIS](https://qgis.org/en/site/) to **translate** your `.tif` 
+>raster maps to `.asc` files and vice-versa. The only issue here is that `.asc` files do not store 
+>the datum `EPSG` code so you will have to manually set it in the layer properties within QGIS (or another GIS application).
  
  
  
