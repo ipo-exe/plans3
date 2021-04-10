@@ -1,14 +1,15 @@
-# `plans3` - Planning Nature-based Solutions
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/logo.png "Logo Title Text 1")
+# `plans3` - **Planning Nature-based Solutions**
 
-## What is `plans3`?
+###**Warning!** ⚠ this project is not a stable release
+
+> `plans3` is still under development. This readme file is a pilot document.
+
+#### What is `plans3`?
 **Planning Nature-based Solutions** (`plans3`) is a modelling framework for planning the 
 expansion of nature-based solutions in watersheds.
 
-Warning! 
-
-This is an underdevelopment project!
-
-### Why the "3" on `plans3`?
+#### Why the "3" on `plans3`?
 `plans` was born in 2018 within the scope of a master's degree research project. 
 While `plans1` was just a handful of python scripts, `plans2` has an application-like structure. 
 Now, `plans3` has deep changes in hydrology modelling.
@@ -190,5 +191,5 @@ text
 
 
 
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/logo.png "Logo Title Text 1")
+
 
