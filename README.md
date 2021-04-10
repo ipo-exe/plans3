@@ -190,5 +190,5 @@ text
 
 
 
-![alt text](https://github.com/ipo-exe/plans3/blob/main/logo.png "Logo Title Text 1")
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/logo.png "Logo Title Text 1")
 
