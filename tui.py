@@ -285,7 +285,7 @@ def main():
                         # import menu loop
                         while True:
                             header(observed_options[0])
-                            inputfiles_df = files_df[files_df['Type'] == 'imported']
+                            inputfiles_df = files_df[files_df['Type'] == 'input']
                             files_lst = list(inputfiles_df['File'])
                             status_lst = list(inputfiles_df['Status'])
                             opt = menu({lng[6]: files_lst, 'Status':status_lst}, title='', exitmsg=lng[10],
