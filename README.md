@@ -1,9 +1,9 @@
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/logo.png "Logo Title Text 1")
 # `plans3` - **Planning Nature-based Solutions**
 
-### Warning! ⚠ this project is not a stable release
+#### 🔴 Warning! ⚠ this project is _not_ a stable release!
 
-> `plans3` is still under development. This readme file is a pilot document.
+> `plans3` is still under development. This `README.md` file is a pilot document.
 
 #### What is `plans3`?
 **Planning Nature-based Solutions** (`plans3`) is a modelling framework for planning the 
