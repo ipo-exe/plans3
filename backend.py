@@ -4,7 +4,6 @@ import pandas as pd
 
 def print_readme(file='./docs.txt'):
     df = pd.read_csv(file, sep='|')
-    #print(df.to_string())
 
     def header1(string):
         return '# ' + string
@@ -31,18 +30,47 @@ def print_readme(file='./docs.txt'):
             aux_string = lcl_df['FileName'].values[j] + '.' + lcl_df['FileFormat'].values[j]
             s = header2_code(string=aux_string)
             print(s)
+            # IO type
+            print('**IO:** ', end='')
+            print(lcl_df['ioType'].values[j] + '.', end='\n\n')
+            # file type
             print('**File type:** ', end='')
             print(lcl_df['FileType'].values[j] + '.', end='\n\n')
+            # description
             print('**Description:**')
-            print(lcl_df['Info'].values[j], end='\n\n')
+            descr = lcl_df['Info'].values[j].strip()
+            if descr[0] == '>':
+                decr_lst = descr.split('>>')
+                for k in range(len(decr_lst[1:])):
+                    print(decr_lst[1:][k], end='\n')
+                print('\n\n')
+            else:
+                print(descr, end='\n\n')
+            # requirements
             print('**Requirements:**')
             req_full = lcl_df['Requirements'].values[j]
             req_lst = req_full.split('>>')
             for k in range(len(req_lst[1:])):
                 print('*  ' + req_lst[1:][k].replace('>', '').replace('"', '`').strip())
-            print('\n\n')
-
-
+            print('\n')
+            # example:
+            examp = lcl_df['Example'].values[j]
+            if examp == 'none':
+                pass
+            else:
+                print('**Example:**')
+                print('```')
+                examp_lst = examp.split('>>')
+                data_dct = dict()
+                for e in examp_lst[1:]:
+                    field = e.split('>')[0].strip() + ';'
+                    data = e.split('>')[1].strip().split(';')
+                    for k in range(len(data)):
+                        data[k] = data[k] + ';'
+                    data_dct[field] = data
+                data_df = pd.DataFrame(data_dct)
+                print(data_df.to_string(index=False))
+                print('```\n\n')
 def get_root_dir():
     """
     function to get the root directory
