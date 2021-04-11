@@ -14,7 +14,7 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
         return '## `' + string + '`\n\n'
 
     def parag(string):
-        return string + '\n\n'
+        return string + '\n'
 
     def extract_example(string):
         lcl_items = string.split('>>')[1:]
@@ -59,38 +59,49 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
         for j in range(len(files)):
             lines.append(header2_code(files[j] + '.' + formats[j]))
             # io
-            lines.append(parag('**I/O**: ' + type_df['ioType'].values[j] + '.'))
+            lines.append(parag('- **I/O**: ' + type_df['ioType'].values[j] + '.'))
             # file type
-            lines.append(parag('**File type**: '+ type_df['FileType'].values[j] + '.'))
+            lines.append(parag('- **File type**: '+ type_df['FileType'].values[j] + '.'))
             # data type
-            lines.append(parag('**Dataset type**: '+ type_df['DataClass'].values[j] + '.'))
+            lines.append(parag('- **Dataset type**: '+ type_df['DataClass'].values[j] + '.'))
             # data info
             if type_df['DataInfo'].values[j].strip()[0] == '>':
-                lines.append(parag('**Dataset description**:'))
-                items = type_df['DataInfo'].values[j].strip().split('>>')
+                lines.append(parag('- **Dataset description**:'))
+                items = type_df['DataInfo'].values[j].strip().split('>>')[1:]
                 # items loop
                 for k in range(len(items)):
-                    aux_string = items[k].replace('"', '`')
+                    aux_string = '\t' + items[k].replace('"', '`')
                     lines.append(parag(aux_string))
             else:
-                lines.append(parag('**Dataset description**: '+ type_df['DataInfo'].values[j]))
+                lines.append(parag('- **Dataset description**: '+ type_df['DataInfo'].values[j]))
             # data reqs
             if type_df['DataReq'].values[j].strip()[0] == '>':
-                lines.append(parag('**Requirements**:'))
-                items = type_df['DataReq'].values[j].strip().split('>>')
+                lines.append(parag('- **Requirements**:'))
+                items = type_df['DataReq'].values[j].strip().split('>>')[1:]
                 # items loop
                 for k in range(len(items)):
-                    aux_string = items[k].replace('"', '`')
-                    aux_string = aux_string.replace('>', '* ')
+                    aux_string = items[k].replace('"', '`').strip()
+                    print(aux_string)
+                    if aux_string[0] == '>':
+                        aux_string = aux_string.replace('>', '')
+                        aux_string = '\t\t - ' + aux_string
+                    else:
+                        aux_string = '\t - ' + aux_string
                     lines.append(parag(aux_string))
             else:
-                lines.append(parag('**Requirements**: ' + type_df['DataReq'].values[j]))
+                lines.append(parag('- **Requirements**: ' + type_df['DataReq'].values[j]))
             # example
             example = type_df['DataEx'].values[j].strip()
-            if example == 'none':
+            if example == 'none' and type_df['FileType'].values[j].strip().replace('.', '') != 'raster map':
                 pass
+            elif type_df['FileType'].values[j].strip().replace('.', '') == 'raster map':
+                lines.append(parag('- **Example**:'))
+                fig = 'dem' + '.' + 'png' # files[j] + '.' + 'png'
+                path = 'https://github.com/ipo-exe/plans3/blob/main/docs/figs/'
+                line = '![alt text](' + path + fig + ' "' + files[j] + '")'
+                lines.append(parag(line))
             else:
-                lines.append(parag('**Example**:'))
+                lines.append(parag('- **Example**:'))
                 example_df_str = extract_example(example)
                 lines.append('```\n')
                 lines.append(example_df_str)
