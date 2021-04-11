@@ -209,4 +209,6 @@ Input and output files in `plans3` are all in open source format, namely `.txt` 
 >raster maps to `.asc` files and vice-versa. The only issue here is that `.asc` files do not store 
 >the datum `EPSG` code so you will have to manually set it in the layer properties within QGIS (or another GIS application).
  
-
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=GDYraQg_otE
+" target="_blank"><img src="http://img.youtube.com/vi/GDYraQg_otE/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
