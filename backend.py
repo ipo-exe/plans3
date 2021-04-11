@@ -96,7 +96,7 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
                 pass
             elif type_df['FileType'].values[j].strip().replace('.', '') == 'raster map':
                 lines.append(parag('- **Example**:'))
-                fig = 'dem' + '.' + 'png' # files[j] + '.' + 'png'
+                fig = 'dem' + '.' + 'PNG' # files[j] + '.' + 'png'
                 path = 'https://github.com/ipo-exe/plans3/blob/main/docs/figs/'
                 line = '\n\t![alt text](' + path + fig + ' "' + files[j] + '")'
                 lines.append(parag(line))

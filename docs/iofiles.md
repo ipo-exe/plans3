@@ -50,7 +50,7 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: degrees.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "aoi_slope")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_slope")
 ## `aoi_shru_series.txt`
 
 - **I/O**: derived.
@@ -87,7 +87,7 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: TWI units.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_twi")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_twi")
 ## `calib_shru.asc`
 
 - **I/O**: derived.
@@ -101,7 +101,7 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: class index.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_shru")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_shru")
 ## `calib_slope.asc`
 
 - **I/O**: derived.
@@ -115,7 +115,7 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: degrees.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_slope")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_slope")
 ## `calib_shru_param.txt`
 
 - **I/O**: derived.
@@ -161,7 +161,7 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: class index.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "aoi_shru_YYYY")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_shru_YYYY")
 ## `aoi_lulc_YYYY.asc`
 
 - **I/O**: extracted.
@@ -175,7 +175,7 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: class index.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "aoi_lulc_YYYY")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_lulc_YYYY")
 ## `aoi_lulc_series.txt`
 
 - **I/O**: extracted.
@@ -239,7 +239,7 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: TWI units.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "aoi_twi")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_twi")
 ## `aoi_lulc_param.txt`
 
 - **I/O**: input.
@@ -278,7 +278,7 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: squared meters.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "aoi_catcha")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_catcha")
 ## `aoi_dem.asc`
 
 - **I/O**: input.
@@ -291,7 +291,7 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 	 - Grid cells must be squared.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "aoi_dem")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_dem")
 ## `aoi_basin.asc`
 
 - **I/O**: input.
@@ -306,7 +306,7 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells must be 1.0 where the the area is TRUE and 0.0 where the area is FALSE.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "aoi_basin")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_basin")
 ## `calib_soils.asc`
 
 - **I/O**: input.
@@ -320,7 +320,7 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 	 - Cells values units: class index.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_soils")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_soils")
 ## `aoi_lulc_series_input.txt`
 
 - **I/O**: input.
@@ -381,7 +381,7 @@ Id; SoilClass; f_Ksat; Porosity;
 	 - Cells values units: class index.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_lulc")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_lulc")
 ## `calib_soils_param.txt`
 
 - **I/O**: input.
@@ -418,7 +418,7 @@ Id; SoilClass; f_Ksat; Porosity;
 	 - Grid cells must be squared.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_dem")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_dem")
 ## `calib_catcha.asc`
 
 - **I/O**: input.
@@ -432,7 +432,7 @@ Id; SoilClass; f_Ksat; Porosity;
 	 - Cells values units: squared meters.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_catcha")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_catcha")
 ## `calib_basin.asc`
 
 - **I/O**: input.
@@ -447,7 +447,7 @@ Id; SoilClass; f_Ksat; Porosity;
 	 - Cells must be 1.0 where the the area is TRUE and 0.0 where the area is FALSE.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_basin")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_basin")
 ## `calib_series.txt`
 
 - **I/O**: input.
@@ -488,7 +488,7 @@ Id; SoilClass; f_Ksat; Porosity;
 	 - Cells values units: any units.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "calib_etpat")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_etpat")
 ## `hydro_param.txt`
 
 - **I/O**: input.
@@ -543,7 +543,7 @@ Parameter;   Set;  Min;  Max;
 	 - Cells values units: class index.
 - **Example**:
 
-	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.png "aoi_soils")
+	![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_soils")
 ## `calib_lulc_param.txt`
 
 - **I/O**: input.
