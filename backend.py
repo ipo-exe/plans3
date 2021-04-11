@@ -98,7 +98,7 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
                 lines.append(parag('- **Example**:'))
                 fig = 'dem' + '.' + 'png' # files[j] + '.' + 'png'
                 path = 'https://github.com/ipo-exe/plans3/blob/main/docs/figs/'
-                line = '![alt text](' + path + fig + ' "' + files[j] + '")'
+                line = '\n\t![alt text](' + path + fig + ' "' + files[j] + '")'
                 lines.append(parag(line))
             else:
                 lines.append(parag('- **Example**:'))
