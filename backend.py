@@ -20,15 +20,22 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
         lcl_items = string.split('>>')[1:]
         #print(lcl_items)
         fields_names = list()
-        for e in lcl_items:
-            fields_names.append(e.split('>')[0].strip() + ';')
+        for e in range(len(lcl_items)):
+            if e == len(lcl_items) - 1:
+                fields_names.append(lcl_items[e].split('>')[0].strip())
+            else:
+                fields_names.append(lcl_items[e].split('>')[0].strip() + ';')
         #print(fields_names)
         data_lst = list()
-        for e in lcl_items:
-            lcl_data_str = e.split('>')[1].strip()
+        for e in range(len(lcl_items)):
+            lcl_data_str = lcl_items[e].split('>')[1].strip()
             lcl_data_lst = lcl_data_str.split(';')
-            for c in range(len(lcl_data_lst)):
-                lcl_data_lst[c] = lcl_data_lst[c].strip() + ';'
+            if e == len(lcl_items) - 1:
+                for c in range(len(lcl_data_lst)):
+                    lcl_data_lst[c] = lcl_data_lst[c].strip()
+            else:
+                for c in range(len(lcl_data_lst)):
+                    lcl_data_lst[c] = lcl_data_lst[c].strip() + ';'
             data_lst.append(lcl_data_lst)
         ex_dct = dict()
         for c in range(len(lcl_items)):
@@ -266,7 +273,8 @@ def get_observed_files(infile='./docs/iofiles.txt', sep='|'):
 def get_input2derived():
     dct = {'calib_twi.asc':('calib_slope.asc', 'calib_catcha.asc'),
            'aoi_twi.asc':('aoi_slope.asc', 'aoi_catcha.asc'),
-           'calib_shru.asc': ('calib_lulc.asc', 'calib_soils.asc', 'calib_lulc_param.txt', 'calib_soils_param.txt')}
+           'calib_shru.asc': ('calib_lulc.asc', 'calib_soils.asc', 'calib_lulc_param.txt', 'calib_soils_param.txt'),
+           'aoi_lulc_series.txt':('aoi_lulc_series_input.txt',)}
     # deprecated:
     '''
     dct = {'cn_series.txt':('lulc_series.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),

@@ -5,6 +5,54 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
 
+def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='shru'):
+    """
+
+    :param flulc: string file path to lulc .asc raster file
+    :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
+
+    Example:
+    Id;     LULC; f_Canopy; f_RootDepth; f_Depression
+    1;   Forest;     1100;        15.1;         15.5
+    2;    Urban;      180;         3.5;          0.1
+    3;    Water;      0.0;         0.0;        103.0
+    4;    Crops;      320;         2.8;         20.1
+    5;  Pasture;      500;         4.4;         25.0
+
+    :param fsoils: string path to soils.asc raster file
+    :param fsoilsparam: string path to soils parameters .txt file. Separator = ;
+
+    Example:
+    Id; SoilClass; f_Ksat; Porosity
+    1;    Soil_A;    110;     0.12
+    2;    Soil_B;     98;     0.10
+    3;    Soil_C;     74;     0.08
+    4;    Soil_D;     32;     0.05
+    5;    Soil_E;      5;     0.04
+
+    :param folder: string path to destination folder
+    :param filename: string name of file
+    :return: string file path
+    """
+    #
+    # import data
+    metalulc, lulc = input.asc_raster(flulc)
+    metasoils, soils = input.asc_raster(fsoils)
+    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
+    soils_param_df = pd.read_csv(fsoilsparam, sep=';\s+', engine='python')
+    lulc_ids = lulc_param_df['Id'].values
+    soils_ids = soils_param_df['Id'].values
+    #
+    # process data
+    shru_map = geo.xmap(map1=lulc, map2=soils, map1ids=lulc_ids, map2ids=soils_ids, map1f=100, map2f=1)
+    plt.imshow(shru_map)
+    plt.show()
+    #
+    # export data
+    export_file = output.asc_raster(shru_map, metalulc, folder, filename)
+    return export_file
+
+
 def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='cn'):
     """
     derive the CN map based on LULC and Soils groups
@@ -40,8 +88,8 @@ def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='cn
     # import data
     metalulc, lulc = input.asc_raster(flulc)
     metasoils, soils = input.asc_raster(fsoils)
-    lulc_param_df = pd.read_csv(flulcparam, sep=';')
-    soils_param_df = pd.read_csv(fsoilsparam, sep=';')
+    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
+    soils_param_df = pd.read_csv(fsoilsparam, sep=';\s+', engine='python')
     lulc_classes = lulc_param_df['Value'].values
     soils_classes = soils_param_df['Value'].values
     cn_a = lulc_param_df['CN-A'].values
@@ -130,10 +178,10 @@ def lulc_areas(flulcseries, flulcparam, faoi, folder='C:/bin', filename='lulc_ar
         factor = 1
     #
     # import data
-    lulc_series_df = pd.read_csv(flulcseries, sep=';')
+    lulc_series_df = pd.read_csv(flulcseries, sep=';\s+', engine='python')
     dates = lulc_series_df['Date'].values
     files = lulc_series_df['File'].values
-    lulc_param_df = pd.read_csv(flulcparam, sep=';')
+    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
     lulc_classes = lulc_param_df['Value'].values
     lulc_names = lulc_param_df['Name'].values
     metaaoi, aoi = input.asc_raster(faoi)
@@ -159,19 +207,20 @@ def lulc_areas(flulcseries, flulcparam, faoi, folder='C:/bin', filename='lulc_ar
     return export_file
 
 
-def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', filename='lulc_series'):
+def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', filename='lulc_series', suff=''):
     """
     import lulc series data set
     :param flulcseries: string for the input files.
     :param rasterfolder: string path to raster dataset folder
     :param folder: string path to file folder
     :param filename: string file name
+    :param suff: string of filename suffix
     :return: string - file path
     """
     from shutil import copyfile
     #
     # import data
-    lulc_series_df = pd.read_csv(flulcseries, sep=';')
+    lulc_series_df = pd.read_csv(flulcseries, sep=';\s+', engine='python')
     #print(lulc_series_df)
     dates = lulc_series_df['Date'].values
     files = lulc_series_df['File'].values
@@ -182,6 +231,8 @@ def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', file
         src = files[i]
         lcl_date = dates[i]
         lcl_filenm = 'lulc_' + str(lcl_date) + '.asc'
+        if suff != '':
+            lcl_filenm = suff + '_' + 'lulc_' + str(lcl_date) + '.asc'
         dst = rasterfolder + '/' + lcl_filenm
         copyfile(src=src, dst=dst)
         #print(lcl_expf)
@@ -207,13 +258,13 @@ def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin
     :return: string filepath for txt file
     """
     # import data
-    lulc_series_df = pd.read_csv(flulcseries, sep=';')
+    lulc_series_df = pd.read_csv(flulcseries, sep=';\s+', engine='python')
     # print(lulc_series_df)
     dates = lulc_series_df['Date'].values
     files = lulc_series_df['File'].values
     metasoils, soils = input.asc_raster(fsoils)
-    lulc_param_df = pd.read_csv(flulcparam, sep=';')
-    soils_param_df = pd.read_csv(fsoilsparam, sep=';')
+    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
+    soils_param_df = pd.read_csv(fsoilsparam, sep=';\s+', engine='python')
     lulc_classes = lulc_param_df['Value'].values
     soils_classes = soils_param_df['Value'].values
     cn_a = lulc_param_df['CN-A'].values
@@ -250,8 +301,8 @@ def map_cn_avg(fcnseries, fseries, folder='C:/bin', filename='cn_calib'):
     :param filename: string file name (without extension)
     :return: string file path to derived file
     """
-    cnseries_df = pd.read_csv(fcnseries, sep=';', parse_dates=['Date'])
-    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    cnseries_df = pd.read_csv(fcnseries, sep=';\s+', engine='python', parse_dates=['Date'])
+    series_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
     datemin = series_df['Date'].min()
     datemax = series_df['Date'].max()
     expression = 'Date >= "{}" and Date <= "{}"'.format(datemin, datemax)
@@ -283,7 +334,7 @@ def import_climpat(fclimmonth, rasterfolder='C:/bin', folder='C:/bin', filename=
     from shutil import copyfile
 
     # import data
-    clim_df = pd.read_csv(fclimmonth, sep=';')
+    clim_df = pd.read_csv(fclimmonth, sep=';\s+', engine='python')
     #print(clim_df)
     months = clim_df['Month'].values
     files = clim_df['File'].values
@@ -321,7 +372,7 @@ def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_mo
     """
     import resample, hydrology
     # import data
-    series_df = pd.read_csv(fseries, sep=';')
+    series_df = pd.read_csv(fseries, sep=';\s+', engine='python')
     meta, aoi = input.asc_raster(faoi)
     cell = meta['cellsize']
     # process data
@@ -433,7 +484,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
     #
     if tui:
         print('loading series...')
-    lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    lcl_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
     #lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
     #lcl_df.query('Date > "2005-03-15" and Date <= "2010-03-15"', inplace=True)
     #
@@ -456,7 +507,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
     # import parameters
     if tui:
         print('loading parameters...')
-    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    df_param = pd.read_csv(fparam, sep=';\s+', engine='python', index_col='Parameter')
     m = df_param.loc['m'].values[0]
     ksat = df_param.loc['ksat'].values[0]
     qo = df_param.loc['qo'].values[0]
@@ -585,7 +636,7 @@ def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False,
     #
     if tui:
         print('loading series...')
-    lcl_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    lcl_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
     # lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
     # lcl_df.query('Date > "2005-03-15" and Date <= "2010-03-15"', inplace=True)
     #
@@ -608,7 +659,7 @@ def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False,
     # import parameters ranges
     if tui:
         print('loading parameters ranges...')
-    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    df_param = pd.read_csv(fparam, sep=';\s+', engine='python', index_col='Parameter')
     mins = df_param[df_param.columns[1]].values
     maxs = df_param[df_param.columns[2]].values
     ksat_rng = (df_param.loc['ksat'].values[1], df_param.loc['ksat'].values[2])
@@ -796,7 +847,7 @@ def integrate_map(ftwi, fcn, faoi, fmaps, filename, yfield='TWI\CN', folder='C:/
     meta, aoi = input.asc_raster(faoi)
     #
     # read file of maps files
-    maps_df = pd.read_csv(fmaps, sep=';')
+    maps_df = pd.read_csv(fmaps, sep=';\s+', engine='python')
     #
     # extract the length of integral
     integral_len = len(maps_df['File'])
@@ -878,7 +929,7 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
             suff = str(t)
         return suff
     # import series
-    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    series_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
     #
     # verify size
     if len(series_df['Date'].values) < start + size:
@@ -905,7 +956,7 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
     lamb = avg_2d(twi, aoi)
     #
     # import parameter m
-    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    df_param = pd.read_csv(fparam, sep=';\s+', engine='python', index_col='Parameter')
     m = df_param.loc['m'].values[0]
     #
     di = topmodel_di(d=defic_max, twi=twi, m=m, lamb=lamb)
@@ -966,7 +1017,7 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, 
     from visuals import pannel_4image_4series
     #
     # import series
-    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    series_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
     #
     # extract arrays
     date = series_df['Date'].values[start: start + size]
@@ -989,9 +1040,9 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, 
     defic_max = np.max(deficit)
     #
     # extract maplists
-    map1_df = pd.read_csv(fmaps[0], sep=';')
-    map2_df = pd.read_csv(fmaps[1], sep=';')
-    map3_df = pd.read_csv(fmaps[2], sep=';')
+    map1_df = pd.read_csv(fmaps[0], sep=';\s+', engine='python')
+    map2_df = pd.read_csv(fmaps[1], sep=';\s+', engine='python')
+    map3_df = pd.read_csv(fmaps[2], sep=';\s+', engine='python')
     #
     # import twi
     meta, twi = input.asc_raster(ftwi)
@@ -1006,7 +1057,7 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, 
     lamb = avg_2d(twi, aoi)
     #
     # import parameter m
-    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    df_param = pd.read_csv(fparam, sep=';\s+', engine='python', index_col='Parameter')
     m = df_param.loc['m'].values[0]
     #
     di = topmodel_di(d=defic_max, twi=twi, m=m, lamb=lamb)
@@ -1100,7 +1151,7 @@ def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftf
     from visuals import pannel_topmodel_maps
     #
     # import series
-    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    series_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
     #
     # extract arrays
     date = series_df['Date'].values[start: start + size]
@@ -1114,7 +1165,7 @@ def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftf
     maps_dfs_files = (fs1maps, fs2maps, ftfmaps, finfmaps, frmaps, fqvmaps, fetmaps, fevmaps, ftpmaps, ftpgwmaps)
     maps_dfs = list()  # list of dataframes
     for i in range(len(maps_dfs_files)):
-        lcl_df = pd.read_csv(maps_dfs_files[i], sep=';')
+        lcl_df = pd.read_csv(maps_dfs_files[i], sep=';\s+', engine='python')
         maps_dfs.append(lcl_df.copy())
 
     # import twi
@@ -1130,7 +1181,7 @@ def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftf
     lamb = avg_2d(twi, aoi)
     #
     # import parameter m
-    df_param = pd.read_csv(fparam, sep=';', index_col='Parameter')
+    df_param = pd.read_csv(fparam, sep=';\s+', engine='python', index_col='Parameter')
     m = df_param.loc['m'].values[0]
     #
     # extract parameters
@@ -1192,7 +1243,7 @@ def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folde
         print('performing obs vs. sim analysis...')
     #
     # extract Dataframe
-    def_df = pd.read_csv(fseries, sep=';', parse_dates=[fld_date])
+    def_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=[fld_date])
     #
     # extract obs and sim arrays:
     obs = def_df[fld_obs].values

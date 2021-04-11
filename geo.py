@@ -23,6 +23,29 @@ def areas(array, cellsize, values, factor=1):
     return np.array(areas)/(factor * factor)
 
 
+def xmap(map1, map2, map1ids, map2ids, map1f=100, map2f=1):
+    """
+    Generalized crossing map function
+    :param map1: 2d array of map 1
+    :param map2: 2d array of map 1
+    :param map1ids: 1d array of map 1 ids
+    :param map2ids: 1d array of map 2 ids
+    :param map1f: int - factor of map 1 in map algebra
+    :param map2f: int - factor of map 2 in map algebra
+    :return: 2d array of crossed map
+    """
+    map1_values = map1ids * map1f
+    map2_values = map2ids * map2f
+
+    xmap = map1 * 0.0
+    for i in range(len(map1_values)):
+        for j in range(len(map2_values)):
+            xmap_value = map1_values[i] + map2_values[j]
+            lcl_xmap = (map1 == map1ids[i]) * (map2 == map2ids[j]) * xmap_value
+            xmap = xmap + lcl_xmap
+    return xmap
+
+
 def cn(lulc, soils, cnvalues, lulcclasses, soilclasses):
     """
     derive the CN map based on LULC and Soils groups

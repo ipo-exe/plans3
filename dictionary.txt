@@ -11,8 +11,8 @@ Key not found;Chave não encontrada;Clave no encontrada
 Chosen;Escolhida;Elegido
 Exit menu;Sair do menu;Salir del menú
 Language menu;Menu de idioma;Menú de idioma
-Project;Projeto;Proyecto
-Project menu;Menu do projeto;Menú del proyecto
+Project; Projeto; Proyecto
+Project menu; Menu do projeto; Menú del proyecto
 Observed datasets; Dados observados; Datos observados
 Projected datasets; Dados projetados; Datos proyectados
 Simulate NBS; Simular SBN; Simular SBN

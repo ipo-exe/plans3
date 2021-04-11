@@ -91,7 +91,7 @@ def header_plans():
     def_str0 = 'plans - planning nature-based solutions'.upper()
     def_str1 = 'Version: 3.0'
     def_str3 = 'This software is under the GNU GPL3.0 license'
-    def_str4 = 'Source code repository: https://github.com/ipo-exe/plans/'
+    def_str4 = 'Source code repository: https://github.com/ipo-exe/plans3/'
     def_str = def_str0 + '\n' + def_str1 + '\n' + def_str3 + '\n' + def_str4 + '\n\n'
     return def_str
 
@@ -204,7 +204,7 @@ def main():
     rootdir = backend.get_root_dir()  # project standard directory on local machine
     #
     # load dictionary
-    dicionary = pd.read_csv('./dictionary.txt', sep=';')
+    dicionary = pd.read_csv('./dictionary.txt', sep=';', engine='python', encoding='utf-8')
     lng = dicionary.T.values[0]  # array of language strings
     languages = tuple(dicionary.columns)  # tuple of languages
     #
@@ -351,11 +351,20 @@ def main():
                                                                     filename=opt.split('.')[0])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'lulc_series.txt':
+                                    elif opt == 'aoi_lulc_series.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.import_lulc_series(filesp[0],
                                                                                rasterfolder=projectdirs['LULC'],
-                                                                               folder=projectdirs['Observed'])
+                                                                               folder=projectdirs['Observed'],
+                                                                               suff='aoi')
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'aoi_shru_series.txt':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.import_lulc_series(filesp[0],
+                                                                               rasterfolder=projectdirs['LULC'],
+                                                                               folder=projectdirs['Observed'],
+                                                                               suff='aoi')
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'lulc_areas.txt':

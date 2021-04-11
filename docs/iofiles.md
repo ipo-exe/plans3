@@ -8,6 +8,29 @@ This document present the list of all Input / Output files of `plans3`.
 ---
 # derived files
 
+## `aoi_lulc_series.txt`
+
+- **I/O**: derived.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Yearly time series of project file paths to LULC .asc raster maps of the AOI basin in the observation period. 
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - Mandatory fields:
+		 -  `Date`: date of record (month and day can be arbitrary).
+		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
+- **Example**:
+```
+       Date;                        File
+ 2015-01-01;  C:/ … /lulc_2015-01-01.asc
+ 2016-01-01;  C:/ … /lulc_2016-01-01.asc
+          …;                           …
+ 2018-01-01;  C:/ … /lulc_2017-01-01.asc
+ 2019-01-01;  C:/ … /lulc_2018-01-01.asc
+```
+
 ## `aoi_shru_param.txt`
 
 - **I/O**: derived.
@@ -27,14 +50,14 @@ This document present the list of all Input / Output files of `plans3`.
 		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
 - **Example**:
 ```
-Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
- 1;   Forest_Soil_A;    110;     0.12;     1100;        15.1;         15.5;
- 2;   Forest_Soil_B;     98;     0.10;     1100;        15.1;         15.5;
- 3;   Forest_Soil_C;     74;     0.08;     1100;        15.1;         15.5;
- 4;    Urban_Soil_B;     98;     0.10;      180;         3.5;          0.1;
- 5;    Water_Soil_C;     74;     0.08;      0.0;         0.0;        103.0;
- 6;    Crops_Soil_A;    110;     0.12;      320;         2.8;         20.1;
- 7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0;
+Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
+ 1;   Forest_Soil_A;    110;     0.12;     1100;        15.1;         15.5
+ 2;   Forest_Soil_B;     98;     0.10;     1100;        15.1;         15.5
+ 3;   Forest_Soil_C;     74;     0.08;     1100;        15.1;         15.5
+ 4;    Urban_Soil_B;     98;     0.10;      180;         3.5;          0.1
+ 5;    Water_Soil_C;     74;     0.08;      0.0;         0.0;        103.0
+ 6;    Crops_Soil_A;    110;     0.12;      320;         2.8;         20.1
+ 7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0
 ```
 
 ## `aoi_shru_series.txt`
@@ -52,12 +75,12 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 		 -  `File`: file path to SHRU .asc raster maps.
 - **Example**:
 ```
-       Date;                        File;
- 2015-01-01;  C:/ … /shru_2015-01-01.asc;
- 2016-01-01;  C:/ … /shru_2016-01-01.asc;
-          …;                           …;
- 2018-01-01;  C:/ … /shru_2017-01-01.asc;
- 2019-01-01;  C:/ … /shru_2018-01-01.asc;
+       Date;                        File
+ 2015-01-01;  C:/ … /shru_2015-01-01.asc
+ 2016-01-01;  C:/ … /shru_2016-01-01.asc
+          …;                           …
+ 2018-01-01;  C:/ … /shru_2017-01-01.asc
+ 2019-01-01;  C:/ … /shru_2018-01-01.asc
 ```
 
 ## `calib_twi.asc`
@@ -124,14 +147,14 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
 - **Example**:
 ```
-Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
- 1;   Forest_Soil_A;    110;     0.12;     1100;        15.1;         15.5;
- 2;   Forest_Soil_B;     98;     0.10;     1100;        15.1;         15.5;
- 3;   Forest_Soil_C;     74;     0.08;     1100;        15.1;         15.5;
- 4;    Urban_Soil_B;     98;     0.10;      180;         3.5;          0.1;
- 5;    Water_Soil_C;     74;     0.08;      0.0;         0.0;        103.0;
- 6;    Crops_Soil_A;    110;     0.12;      320;         2.8;         20.1;
- 7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0;
+Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
+ 1;   Forest_Soil_A;    110;     0.12;     1100;        15.1;         15.5
+ 2;   Forest_Soil_B;     98;     0.10;     1100;        15.1;         15.5
+ 3;   Forest_Soil_C;     74;     0.08;     1100;        15.1;         15.5
+ 4;    Urban_Soil_B;     98;     0.10;      180;         3.5;          0.1
+ 5;    Water_Soil_C;     74;     0.08;      0.0;         0.0;        103.0
+ 6;    Crops_Soil_A;    110;     0.12;      320;         2.8;         20.1
+ 7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0
 ```
 
 ---
@@ -167,29 +190,6 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/lulc.PNG "aoi_lulc_YYYY")
 
-## `aoi_lulc_series.txt`
-
-- **I/O**: extracted.
-- **File type**: csv data frame.
-- **Dataset type**: observed.
-- **Dataset description**: Yearly time series of project file paths to LULC .asc raster maps of the AOI basin in the observation period. 
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record (month and day can be arbitrary).
-		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
-- **Example**:
-```
-       Date;                        File;
- 2015-01-01;  C:/ … /lulc_2015-01-01.asc;
- 2016-01-01;  C:/ … /lulc_2016-01-01.asc;
-          …;                           …;
- 2018-01-01;  C:/ … /lulc_2017-01-01.asc;
- 2019-01-01;  C:/ … /lulc_2018-01-01.asc;
-```
-
 ---
 # input files
 
@@ -209,12 +209,12 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 		 -  `Temp`: mean daily temperature in Celsius.
 - **Example**:
 ```
-       Date;  Prec;  Temp;
- 1985-01-01;   0.0;  25.2;
- 1986-01-01;  12.1;  23.0;
-          …;     …;     …;
- 1988-01-01;   0.0;  21.0;
- 1989-01-01;   5.0;  22.8;
+       Date;  Prec;  Temp
+ 1985-01-01;   0.0;  25.2
+ 1986-01-01;  12.1;  23.0
+          …;     …;     …
+ 1988-01-01;   0.0;  21.0
+ 1989-01-01;   5.0;  22.8
 ```
 
 ## `aoi_slope.asc`
@@ -249,12 +249,12 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
 - **Example**:
 ```
-Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
- 1;   Forest;     1100;        15.1;         15.5;
- 2;    Urban;      180;         3.5;          0.1;
- 3;    Water;      0.0;         0.0;        103.0;
- 4;    Crops;      320;         2.8;         20.1;
- 5;  Pasture;      500;         4.4;         25.0;
+Id;     LULC; f_Canopy; f_RootDepth; f_Depression
+ 1;   Forest;     1100;        15.1;         15.5
+ 2;    Urban;      180;         3.5;          0.1
+ 3;    Water;      0.0;         0.0;        103.0
+ 4;    Crops;      320;         2.8;         20.1
+ 5;  Pasture;      500;         4.4;         25.0
 ```
 
 ## `aoi_catcha.asc`
@@ -318,12 +318,12 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 		 -  `Porosity`: positive real number of soil porosity.
 - **Example**:
 ```
-Id; SoilClass; f_Ksat; Porosity;
- 1;    Soil_A;    110;     0.12;
- 2;    Soil_B;     98;     0.10;
- 3;    Soil_C;     74;     0.08;
- 4;    Soil_D;     32;     0.05;
- 5;    Soil_E;      5;     0.04;
+Id; SoilClass; f_Ksat; Porosity
+ 1;    Soil_A;    110;     0.12
+ 2;    Soil_B;     98;     0.10
+ 3;    Soil_C;     74;     0.08
+ 4;    Soil_D;     32;     0.05
+ 5;    Soil_E;      5;     0.04
 ```
 
 ## `calib_soils.asc`
@@ -371,12 +371,12 @@ Id; SoilClass; f_Ksat; Porosity;
 		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
 - **Example**:
 ```
-       Date;                File;
- 2015-01-01;  C:/data/lulc01.asc;
- 2016-01-01;  C:/data/lulc02.asc;
-          …;                   …;
- 2018-01-01;  C:/data/lulc04.asc;
- 2019-01-01;  C:/data/lulc05.asc;
+       Date;                File
+ 2015-01-01;  C:/data/lulc01.asc
+ 2016-01-01;  C:/data/lulc02.asc
+          …;                   …
+ 2018-01-01;  C:/data/lulc04.asc
+ 2019-01-01;  C:/data/lulc05.asc
 ```
 
 ## `calib_lulc.asc`
@@ -410,12 +410,12 @@ Id; SoilClass; f_Ksat; Porosity;
 		 -  `Porosity`: positive real number of soil porosity.
 - **Example**:
 ```
-Id; SoilClass; f_Ksat; Porosity;
- 1;    Soil_A;    110;     0.12;
- 2;    Soil_B;     98;     0.10;
- 3;    Soil_C;     74;     0.08;
- 4;    Soil_D;     32;     0.05;
- 5;    Soil_E;      5;     0.04;
+Id; SoilClass; f_Ksat; Porosity
+ 1;    Soil_A;    110;     0.12
+ 2;    Soil_B;     98;     0.10
+ 3;    Soil_C;     74;     0.08
+ 4;    Soil_D;     32;     0.05
+ 5;    Soil_E;      5;     0.04
 ```
 
 ## `calib_dem.asc`
@@ -497,12 +497,12 @@ Id; SoilClass; f_Ksat; Porosity;
 		 -  `Flow`: mean daily flow in m3/s.
 - **Example**:
 ```
-       Date;  Prec;  Temp;      Q;  Flow;
- 1985-01-01;   0.0;  25.2;  0.051;  2.43;
- 1986-01-01;  12.1;  23.0;  0.050;  2.38;
-          …;     …;     …;      …;     …;
- 1988-01-01;   0.0;  21.0;  0.047;  2.21;
- 1989-01-01;   5.0;  22.8;  0.046;  2.17;
+       Date;  Prec;  Temp;      Q;  Flow
+ 1985-01-01;   0.0;  25.2;  0.051;  2.43
+ 1986-01-01;  12.1;  23.0;  0.050;  2.38
+          …;     …;     …;      …;     …
+ 1988-01-01;   0.0;  21.0;  0.047;  2.21
+ 1989-01-01;   5.0;  22.8;  0.046;  2.17
 ```
 
 ## `calib_etpat.asc`
@@ -544,17 +544,17 @@ Id; SoilClass; f_Ksat; Porosity;
 		 -  `Max`: positive real number of upper bound of parameter space.
 - **Example**:
 ```
-Parameter;   Set;  Min;  Max;
-        m;  1.25;  0.1;   10;
-       qo;  6.87;  0.1;  100;
-    cpmax;  10.1;  0.1;  500;
-    dpmax;  50.2;  0.1;  500;
-    rtmax;   611;  0.1;  500;
-     ksat;  5.24;  0.1;  100;
-        c;  98.5;  0.1;  120;
-      lat;   -30;  -30;  -30;
-        k;   2.4;  0.1;   10;
-        n;   5.9;  0.1;   20;
+Parameter;   Set;  Min;  Max
+        m;  1.25;  0.1;   10
+       qo;  6.87;  0.1;  100
+    cpmax;  10.1;  0.1;  500
+    dpmax;  50.2;  0.1;  500
+    rtmax;   611;  0.1;  500
+     ksat;  5.24;  0.1;  100
+        c;  98.5;  0.1;  120
+      lat;   -30;  -30;  -30
+        k;   2.4;  0.1;   10
+        n;   5.9;  0.1;   20
 ```
 
 ## `calib_lulc_param.txt`
@@ -574,12 +574,12 @@ Parameter;   Set;  Min;  Max;
 		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
 - **Example**:
 ```
-Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
- 1;   Forest;     1100;        15.1;         15.5;
- 2;    Urban;      180;         3.5;          0.1;
- 3;    Water;      0.0;         0.0;        103.0;
- 4;    Crops;      320;         2.8;         20.1;
- 5;  Pasture;      500;         4.4;         25.0;
+Id;     LULC; f_Canopy; f_RootDepth; f_Depression
+ 1;   Forest;     1100;        15.1;         15.5
+ 2;    Urban;      180;         3.5;          0.1
+ 3;    Water;      0.0;         0.0;        103.0
+ 4;    Crops;      320;         2.8;         20.1
+ 5;  Pasture;      500;         4.4;         25.0
 ```
 
 ---
