@@ -92,13 +92,13 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
                 lines.append(parag('- **Requirements**: ' + type_df['DataReq'].values[j]))
             # example
             example = type_df['DataEx'].values[j].strip()
-            if example == 'none' and type_df['FileType'].values[j].strip().replace('.', '') != 'raster map':
+            if example == 'none':
                 pass
             elif type_df['FileType'].values[j].strip().replace('.', '') == 'raster map':
                 lines.append(parag('- **Example**:'))
-                fig = 'dem' + '.' + 'PNG' # files[j] + '.' + 'png'
+                fig = type_df['DataEx'].values[j].strip() + '.' + 'PNG' # files[j] + '.' + 'png'
                 path = 'https://github.com/ipo-exe/plans3/blob/main/docs/figs/'
-                line = '\n\t![alt text](' + path + fig + ' "' + files[j] + '")'
+                line = '\n![alt text](' + path + fig + ' "' + files[j] + '")\n'
                 lines.append(parag(line))
             else:
                 lines.append(parag('- **Example**:'))
