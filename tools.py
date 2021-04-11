@@ -5,6 +5,24 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
 
+def dataframe_prepro(dataframe, strfields='Field1,Field2', strf=True, date=False, datefield='Date'):
+    """
+    Convenience function for pre processing dataframes
+    :param dataframe: pandas dataframe object
+    :param strfields: iterable of string fields
+    :return: pandas dataframe
+    """
+    lcl_df = dataframe.copy()
+    lcl_df.columns = lcl_df.columns.str.strip()
+    if strf:
+        fields_lst = strfields.split(',')
+        for i in range(len(fields_lst)):
+            lcl_df[fields_lst[i]] = lcl_df[fields_lst[i]].str.strip()
+    if date:
+        lcl_df[datefield] = pd.to_datetime(lcl_df[datefield])
+    return lcl_df
+
+
 def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='shru'):
     """
 
@@ -12,7 +30,7 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='
     :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
 
     Example:
-    Id;     LULC; f_Canopy; f_RootDepth; f_Depression
+    Id;    LULC; f_Canopy; f_RootDepth; f_Depression
     1;   Forest;     1100;        15.1;         15.5
     2;    Urban;      180;         3.5;          0.1
     3;    Water;      0.0;         0.0;        103.0
@@ -38,91 +56,18 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='
     # import data
     metalulc, lulc = input.asc_raster(flulc)
     metasoils, soils = input.asc_raster(fsoils)
-    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
-    soils_param_df = pd.read_csv(fsoilsparam, sep=';\s+', engine='python')
+    lulc_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
+    lulc_param_df = dataframe_prepro(lulc_param_df, 'LULC')
+    soils_param_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
+    soils_param_df = dataframe_prepro(soils_param_df, 'SoilClass')
     lulc_ids = lulc_param_df['Id'].values
     soils_ids = soils_param_df['Id'].values
     #
     # process data
     shru_map = geo.xmap(map1=lulc, map2=soils, map1ids=lulc_ids, map2ids=soils_ids, map1f=100, map2f=1)
-    plt.imshow(shru_map)
-    plt.show()
     #
     # export data
     export_file = output.asc_raster(shru_map, metalulc, folder, filename)
-    return export_file
-
-
-def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='cn'):
-    """
-    derive the CN map based on LULC and Soils groups
-    :param flulc: string file path to lulc .asc raster file
-    :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
-    Example:
-
-     Value     Name  NBS  CN-A  CN-B  CN-C  CN-D
-     1        Water    0   100   100   100   100
-     2        Urban    0    77    85    90    92
-     3       Forest    0    30    55    70    77
-     4      Pasture    0    68    79    86    89
-     5        Crops    0    72    81    88    91
-     6   Forest NBS    1    36    60    74    80
-     7  Pasture NBS    1    39    61    74    80
-     8    Crops NBS    1    62    71    78    81
-
-    :param fsoils: string path to soils.asc raster file
-    :param fsoilsparam: string path to soils parameters .txt file. Separator = ;
-
-     Value Group
-     1     A
-     2     B
-     3     C
-     4     D
-
-    Sep=';' and must have a 'Value' field enconding the raster soil values
-    :param folder: string path to destination folder
-    :param filename: string name of file
-    :return: string file path
-    """
-    #
-    # import data
-    metalulc, lulc = input.asc_raster(flulc)
-    metasoils, soils = input.asc_raster(fsoils)
-    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
-    soils_param_df = pd.read_csv(fsoilsparam, sep=';\s+', engine='python')
-    lulc_classes = lulc_param_df['Value'].values
-    soils_classes = soils_param_df['Value'].values
-    cn_a = lulc_param_df['CN-A'].values
-    cn_b = lulc_param_df['CN-B'].values
-    cn_c = lulc_param_df['CN-C'].values
-    cn_d = lulc_param_df['CN-D'].values
-    cn_values = (cn_a, cn_b, cn_c, cn_d)
-    #
-    #
-    # process data
-    cn_map = geo.cn(lulc=lulc, soils=soils, cnvalues=cn_values, lulcclasses=lulc_classes, soilclasses=soils_classes)
-    #
-    # export data
-    export_file = output.asc_raster(cn_map, metalulc, folder, filename)
-    return export_file
-
-
-def map_grad(fslope, folder='C:/bin', filename='grad'):
-    """
-    derive the topographical gradient tan(B) from the slope in degrees
-    :param fslope: string path to slope in degrees raster .asc file
-    :param folder: string path to destination folder
-    :param filename: string of file name
-    :return: string path to file
-    """
-    # import data
-    meta, slope = input.asc_raster(fslope)
-    #
-    # process data
-    grad = geo.grad(slope)
-    #
-    # export data
-    export_file = output.asc_raster(grad, meta, folder, filename)
     return export_file
 
 
@@ -146,67 +91,6 @@ def map_twi(fslope, fcatcha, folder='C:/bin', filename='twi'):
     return export_file
 
 
-def lulc_areas(flulcseries, flulcparam, faoi, folder='C:/bin', filename='lulc_areas', unit='ha'):
-    """
-    derive csv file of the classes areas of lulc raster
-    :param flulc:series  string file path to lulc series .txt file
-    :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
-    Example:
-
-     Value     Name  NBS  CN-A  CN-B  CN-C  CN-D
-     1        Water    0   100   100   100   100
-     2        Urban    0    77    85    90    92
-     3       Forest    0    30    55    70    77
-     4      Pasture    0    68    79    86    89
-     5        Crops    0    72    81    88    91
-     6   Forest NBS    1    36    60    74    80
-     7  Pasture NBS    1    39    61    74    80
-     8    Crops NBS    1    62    71    78    81
-
-    :param faoi: string path to aoi.asc raster file
-    :param folder: string path to destination folder
-    :param filename: string name of file
-    :param unit: 'ha' for hectares, 'sqkm' for squared km
-    :return: string file path
-    """
-    factor = 1
-    if unit == 'ha':
-        factor = 100
-    elif unit == 'sqkm':
-        factor = 1000
-    else:
-        factor = 1
-    #
-    # import data
-    lulc_series_df = pd.read_csv(flulcseries, sep=';\s+', engine='python')
-    dates = lulc_series_df['Date'].values
-    files = lulc_series_df['File'].values
-    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
-    lulc_classes = lulc_param_df['Value'].values
-    lulc_names = lulc_param_df['Name'].values
-    metaaoi, aoi = input.asc_raster(faoi)
-    cellsize = metaaoi['cellsize']
-    dct = dict()
-    dct['Date'] = dates
-    for i in range(len(lulc_names)):
-        dct[lulc_names[i]] = list()
-    #
-    # process data
-    for i in range(len(dates)):
-        lcl_meta, lcl_lulc = input.asc_raster(files[i])
-        lcl_lulc = lcl_lulc * aoi
-        areas = geo.areas(array=lcl_lulc, cellsize=cellsize, values=lulc_classes, factor=factor)
-        #fracs = areas / np.sum(areas)
-        for j in range(len(areas)):
-            dct[lulc_names[j]].append(areas[j])
-    # export data
-    exp_df = pd.DataFrame(dct)
-    #print(exp_df.to_string(index=False))
-    export_file = folder + '/' + filename + '.txt'
-    exp_df.to_csv(export_file, sep=';', index=False)
-    return export_file
-
-
 def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', filename='lulc_series', suff=''):
     """
     import lulc series data set
@@ -220,7 +104,8 @@ def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', file
     from shutil import copyfile
     #
     # import data
-    lulc_series_df = pd.read_csv(flulcseries, sep=';\s+', engine='python')
+    lulc_series_df = pd.read_csv(flulcseries, sep=';', engine='python')
+    lulc_series_df = dataframe_prepro(dataframe=lulc_series_df, strfields='Date,File')
     #print(lulc_series_df)
     dates = lulc_series_df['Date'].values
     files = lulc_series_df['File'].values
@@ -245,6 +130,182 @@ def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', file
     return exp_file
 
 
+def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin', folder='C:/bin',
+                       filename='shru_series', suff='', tui=False):
+    # import data
+    lulc_series_df = pd.read_csv(flulcseries, sep=';', engine='python')
+    lulc_series_df = dataframe_prepro(dataframe=lulc_series_df, strfields='Date,File')
+    #print(lulc_series_df)
+    dates = lulc_series_df['Date'].values
+    files = lulc_series_df['File'].values
+    #
+    # process data
+    new_files = list()
+    for i in range(len(dates)):
+        lcl_date = dates[i]
+        if suff == '':
+            lcl_filename = 'shru_' + str(lcl_date)
+        else:
+            lcl_filename = suff + '_' + 'shru_' + str(lcl_date)
+        if tui:
+            print('procesing file:\t{}'.format(lcl_filename))
+        # process data
+        shru_file = map_shru(flulc=files[i], flulcparam=flulcparam, fsoils=fsoils, fsoilsparam=fsoilsparam,
+                             folder=rasterfolder, filename=lcl_filename)
+        # print(lcl_expf)
+        new_files.append(shru_file)
+    #
+    # export data
+    exp_df = pd.DataFrame({'Date': dates, 'File': new_files})
+    exp_file = folder + '/' + filename + '.txt'
+    exp_df.to_csv(exp_file, sep=';', index=False)
+    return exp_file
+
+
+def shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_param'):
+    #
+    # extract data
+    lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
+    lulc_df = dataframe_prepro(lulc_df, strfields='LULC')
+    #print(lulc_df.to_string())
+    soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
+    soils_df = dataframe_prepro(soils_df, strfields='SoilClass')
+    #print(soils_df.to_string())
+    lulc_ids = lulc_df['Id'].values
+    soils_ids = soils_df['Id'].values
+    #
+    # process
+    shru_ids = list()
+    shru_nm = list()
+    shru_lulc_ids = list()
+    shru_soils_ids = list()
+    for i in range(len(lulc_ids)):
+        for j in range(len(soils_ids)):
+            lcl_shru_id = lulc_ids[i] * 100 + soils_ids[j]
+            lcl_shru_nm = lulc_df['LULC'].values[i] + '_' + soils_df['SoilClass'].values[j]
+            shru_ids.append(lcl_shru_id)
+            shru_nm.append(lcl_shru_nm)
+            shru_lulc_ids.append(lulc_ids[i])
+            shru_soils_ids.append(soils_ids[j])
+    shru_df = pd.DataFrame({'Id':shru_ids, 'SHRU': shru_nm, 'IdLULC':shru_lulc_ids, 'IdSoil':shru_soils_ids})
+    #print(shru_df.to_string())
+    shru_df = shru_df.join(lulc_df.set_index('Id'), on='IdLULC')
+    #print(shru_df.to_string())
+    shru_df = shru_df.join(soils_df.set_index('Id'), on='IdSoil')
+    #print(shru_df.to_string())
+    #
+    # export
+    exp_file = folder + '/' + filename + '.txt'
+    shru_df.to_csv(exp_file, sep=';', index=False)
+    return exp_file
+
+
+
+def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:/bin', tui=False):
+    """
+    Analyst of Observed - Simulated series
+    :param fseries: string filepath to series dataframe
+    :param fld_obs: string of field of observed series data
+    :param fld_sim: string of field of simulated series data
+    :param fld_date: string of date field
+    :param folder: string of export directory
+    :param tui: boolean to control TUI displays
+    :return: tuple of strings of exported files
+    """
+    import analyst
+    from visuals import pannel_obs_sim_analyst
+    if tui:
+        print('performing obs vs. sim analysis...')
+    #
+    # extract Dataframe
+    def_df = pd.read_csv(fseries, sep=';', engine='python')
+    def_df = dataframe_prepro(def_df, strf=False, date=True, datefield=fld_date)
+    #
+    # extract obs and sim arrays:
+    obs = def_df[fld_obs].values
+    #sim = obs - 0.1 * obs
+    sim = def_df[fld_sim].values
+    obslog = np.log10(obs)
+    simlog = np.log10(sim)
+    #
+    #
+    # **** Series Analysis ****
+    # Error series analyst
+    e = analyst.error(obs=obs, sim=sim)
+    se = analyst.sq_error(obs=obs, sim=sim)
+    elog = analyst.error(obs=obslog, sim=simlog)
+    selog = analyst.sq_error(obs=obslog, sim=simlog)
+    # built Dataframe
+    series_df = pd.DataFrame({'Date':def_df[fld_date], 'Obs':obs, 'Sim':sim, 'Obslog':obslog, 'Simlog':simlog, 'E':e,
+                              'Elog':elog, 'SE':se, 'SElog':selog})
+    # coefs analyst of series
+    pbias = analyst.pbias(obs=obs, sim=sim)
+    rmse = analyst.rmse(obs=obs, sim=sim)
+    rmselog = analyst.rmse(obs=obslog, sim=simlog)
+    nse = analyst.nse(obs=obs, sim=sim)
+    nselog = analyst.nse(obs=obslog, sim=simlog)
+    linreg = analyst.linreg(obs=obs, sim=sim)
+    kge = analyst.kge(obs=obs, sim=sim)
+    kgelog = analyst.kge(obs=obslog, sim=simlog)
+    #
+    #
+    # **** Frequency analysis ****
+    freq_obs = analyst.frequency(series=obs)
+    freq_sim = analyst.frequency(series=sim)
+    obs_freq = freq_obs['Values']
+    sim_freq = freq_sim['Values']
+    obslog_freq = np.log10(obs_freq)
+    simlog_freq = np.log10(sim_freq)
+    #
+    # Error frequency analyst
+    e_freq = analyst.error(obs=obs_freq, sim=sim_freq)
+    se_freq = analyst.sq_error(obs=obs_freq, sim=sim_freq)
+    elog_freq = analyst.error(obs=obslog_freq, sim=simlog_freq)
+    selog_freq = analyst.sq_error(obs=obslog_freq, sim=simlog_freq)
+    #
+    # built dataframe
+    freq_df = pd.DataFrame({'Percentiles': freq_obs['Percentiles'], 'Exeedance': freq_obs['Exeedance'],
+                            'ProbabObs': freq_obs['Probability'], 'ValuesObs': freq_obs['Values'],
+                            'ValuesObslog': obslog_freq, 'ProbabSim': freq_sim['Probability'],
+                            'ValuesSim': freq_sim['Values'], 'ValuesSimlog': simlog_freq,
+                            'E':e_freq, 'Elog':elog_freq,  'SE':se_freq, 'SElog':selog_freq
+                            })
+    #
+    # coefs analyst of series
+    rmse_freq = analyst.rmse(obs=obs_freq, sim=sim_freq)
+    rmselog_freq = analyst.rmse(obs=obslog_freq, sim=simlog_freq)
+    linreg_freq = analyst.linreg(obs=obs_freq, sim=sim_freq)
+    linreg_freq_log = analyst.linreg(obs=obslog_freq, sim=simlog_freq)
+    #
+    # built dataframe of parameters
+    params = ('PBias', 'RMSE', 'RMSElog', 'NSE', 'NSElog', 'KGE', 'KGElog', 'A', 'B', 'R', 'P', 'SD',
+              'RMSE-CFC', 'RMSElog-CFC', 'R-CFC', 'Rlog-CFC')
+    values = (pbias, rmse, rmselog, nse, nselog, kge, kgelog, linreg['A'], linreg['B'], linreg['R'], linreg['P'],
+              linreg['SD'], rmse_freq, rmselog_freq, linreg_freq['R'], linreg_freq_log['R'])
+    param_df = pd.DataFrame({'Parameter': params, 'Value': values})
+    if tui:
+        print('ObsSim analysis results:\n')
+        print(param_df.to_string())
+    #
+    # **** Export Data ****
+    if tui:
+        print('exporting analysis data and visuals...')
+    # 1) series data
+    exp_file1 = folder + '/' + 'analyst_series.txt'
+    series_df.to_csv(exp_file1, sep=';', index=False)
+    # 2) frequency data
+    exp_file2 = folder + '/' + 'analyst_freq.txt'
+    freq_df.to_csv(exp_file2, sep=';', index=False)
+    # 3) parameters data
+    exp_file3 = folder + '/' + 'analyst_params.txt'
+    param_df.to_csv(exp_file3, sep=';', index=False)
+    #
+    # export visual:
+    exp_file4 = pannel_obs_sim_analyst(series=series_df, freq=freq_df, params=param_df, folder=folder)
+    #
+    return (exp_file1, exp_file2, exp_file3, exp_file4)
+
+# deprecated:
 def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin', folder='C:/bin', filename='cn_series'):
     """
     derive the CN series raster and txt file
@@ -258,7 +319,7 @@ def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin
     :return: string filepath for txt file
     """
     # import data
-    lulc_series_df = pd.read_csv(flulcseries, sep=';\s+', engine='python')
+    lulc_series_df = pd.read_csv(flulcseries, sep=';', engine='python')
     # print(lulc_series_df)
     dates = lulc_series_df['Date'].values
     files = lulc_series_df['File'].values
@@ -291,7 +352,7 @@ def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin
     exp_df.to_csv(exp_file, sep=';', index=False)
     return exp_file
 
-
+# deprecated:
 def map_cn_avg(fcnseries, fseries, folder='C:/bin', filename='cn_calib'):
     """
     Derive the average CN given a time series.
@@ -320,7 +381,7 @@ def map_cn_avg(fcnseries, fseries, folder='C:/bin', filename='cn_calib'):
     exp_file = output.asc_raster(array=cn_avg, meta=meta, folder=folder, filename=filename)
     return exp_file
 
-
+# deprecated:
 def import_climpat(fclimmonth, rasterfolder='C:/bin', folder='C:/bin', filename='clim_month', alias='p'):
     """
     #### Possibly deprecated function !! ####
@@ -399,7 +460,7 @@ def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_mo
     exp_df.to_csv(exp_file, sep=';', index=False)
     return exp_file
 
-
+# deprecated:
 def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
                  tui=False, mapback=False, mapvar='R-ET-S1-S2-Qv', qobs=False):
     """
@@ -484,7 +545,8 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
     #
     if tui:
         print('loading series...')
-    lcl_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
+    lcl_df = pd.read_csv(fseries, sep=';', engine='python', parse_dates=['Date'])
+    #lcl_df = dataframe_prepro(dataframe=lcl_df, strfields=('Date',))
     #lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
     #lcl_df.query('Date > "2005-03-15" and Date <= "2010-03-15"', inplace=True)
     #
@@ -507,7 +569,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
     # import parameters
     if tui:
         print('loading parameters...')
-    df_param = pd.read_csv(fparam, sep=';\s+', engine='python', index_col='Parameter')
+    df_param = pd.read_csv(fparam, sep=';', engine='python', index_col='Parameter')
     m = df_param.loc['m'].values[0]
     ksat = df_param.loc['ksat'].values[0]
     qo = df_param.loc['qo'].values[0]
@@ -612,7 +674,7 @@ def run_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
     else:
         return (exp_file1, exp_file2, exp_file3, exp_file4)
 
-
+# deprecated:
 def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, mapback=True,
                    mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True, generations=100, popsize=200, metric='NSE'):
     from hydrology import avg_2d, topmodel_hist, topmodel_sim, topmodel_calib, map_back
@@ -636,7 +698,7 @@ def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False,
     #
     if tui:
         print('loading series...')
-    lcl_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
+    lcl_df = pd.read_csv(fseries, sep=';', engine='python', parse_dates=['Date'])
     # lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
     # lcl_df.query('Date > "2005-03-15" and Date <= "2010-03-15"', inplace=True)
     #
@@ -816,6 +878,7 @@ def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False,
     #
     return exp_file1
 
+# deprecated:
 def integrate_map(ftwi, fcn, faoi, fmaps, filename, yfield='TWI\CN', folder='C:/bin', tui=False, show=False):
     """
 
@@ -847,7 +910,7 @@ def integrate_map(ftwi, fcn, faoi, fmaps, filename, yfield='TWI\CN', folder='C:/
     meta, aoi = input.asc_raster(faoi)
     #
     # read file of maps files
-    maps_df = pd.read_csv(fmaps, sep=';\s+', engine='python')
+    maps_df = pd.read_csv(fmaps, sep=';', engine='python')
     #
     # extract the length of integral
     integral_len = len(maps_df['File'])
@@ -896,7 +959,7 @@ def integrate_map(ftwi, fcn, faoi, fmaps, filename, yfield='TWI\CN', folder='C:/
     fout = output.asc_raster(integral_map, meta=meta, filename=filename, folder=folder)
     return fout
 
-
+# deprecated:
 def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var3='D',
                        size=100, start=0, framef=0.2, watchf=0.2, folder='C:/bin'):
     """
@@ -929,7 +992,7 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
             suff = str(t)
         return suff
     # import series
-    series_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
+    series_df = pd.read_csv(fseries, sep=';', engine='python', parse_dates=['Date'])
     #
     # verify size
     if len(series_df['Date'].values) < start + size:
@@ -987,7 +1050,7 @@ def frames_topmodel_twi(fseries, ftwi, faoi, fparam, var1='Prec', var2='Qb', var
                               x1max=prec_max, x2max=base_max, x3max=defic_max, titles=ttls,
                               vline=lcl_t_index, folder=folder, suff=suff)
 
-
+# deprecated:
 def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, imtitles, ylabels, ytitles,
                      size=200, start=0, framef=0.3, watchf=0.2, folder='C:/bin', show=False):
     """
@@ -1017,7 +1080,7 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, 
     from visuals import pannel_4image_4series
     #
     # import series
-    series_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
+    series_df = pd.read_csv(fseries, sep=';', engine='python', parse_dates=['Date'])
     #
     # extract arrays
     date = series_df['Date'].values[start: start + size]
@@ -1117,7 +1180,7 @@ def frames_topmodel4(fseries, ftwi, fcn, faoi, fparam, fmaps, varseries, cmaps, 
         pannel_4image_4series(im, imax, stamp, y4, y4max, y4min, cmaps, vline=lcl_t_index,
                               imtitles=imtitles, ytitles=ytitles, ylabels=ylabels, show=show, suff=suff)
 
-
+# deprecated:
 def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftfmaps, finfmaps, frmaps, fqvmaps,
                          fetmaps, fevmaps, ftpmaps, ftpgwmaps, size=600, start=0, framef=0.25, watchf=0.2,
                          folder='C:/bin', show=False):
@@ -1151,7 +1214,7 @@ def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftf
     from visuals import pannel_topmodel_maps
     #
     # import series
-    series_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=['Date'])
+    series_df = pd.read_csv(fseries, sep=';', engine='python', parse_dates=['Date'])
     #
     # extract arrays
     date = series_df['Date'].values[start: start + size]
@@ -1226,108 +1289,139 @@ def frames_topmodel_maps(fseries, ftwi, fcn, faoi, fparam, fs1maps, fs2maps, ftf
         pannel_topmodel_maps(t=lcl_date, prec=lcl_prec, precmax=precmax, qb=lcl_qb, qbmax=qbmax, pet=lcl_pet, et=lcl_et,
                              etmax=etmax, maps=maps_lst, mapsmax=imax, vline=lcl_t_index, suff=suff, show=show)
 
-def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:/bin', tui=False):
+# deprecated:
+def map_cn(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='cn'):
     """
-    Analyst of Observed - Simulated series
-    :param fseries: string filepath to series dataframe
-    :param fld_obs: string of field of observed series data
-    :param fld_sim: string of field of simulated series data
-    :param fld_date: string of date field
-    :param folder: string of export directory
-    :param tui: boolean to control TUI displays
-    :return: tuple of strings of exported files
+    derive the CN map based on LULC and Soils groups
+    :param flulc: string file path to lulc .asc raster file
+    :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
+    Example:
+
+     Value     Name  NBS  CN-A  CN-B  CN-C  CN-D
+     1        Water    0   100   100   100   100
+     2        Urban    0    77    85    90    92
+     3       Forest    0    30    55    70    77
+     4      Pasture    0    68    79    86    89
+     5        Crops    0    72    81    88    91
+     6   Forest NBS    1    36    60    74    80
+     7  Pasture NBS    1    39    61    74    80
+     8    Crops NBS    1    62    71    78    81
+
+    :param fsoils: string path to soils.asc raster file
+    :param fsoilsparam: string path to soils parameters .txt file. Separator = ;
+
+     Value Group
+     1     A
+     2     B
+     3     C
+     4     D
+
+    Sep=';' and must have a 'Value' field enconding the raster soil values
+    :param folder: string path to destination folder
+    :param filename: string name of file
+    :return: string file path
     """
-    import analyst
-    from visuals import pannel_obs_sim_analyst
-    if tui:
-        print('performing obs vs. sim analysis...')
     #
-    # extract Dataframe
-    def_df = pd.read_csv(fseries, sep=';\s+', engine='python', parse_dates=[fld_date])
-    #
-    # extract obs and sim arrays:
-    obs = def_df[fld_obs].values
-    #sim = obs - 0.1 * obs
-    sim = def_df[fld_sim].values
-    obslog = np.log10(obs)
-    simlog = np.log10(sim)
-    #
-    #
-    # **** Series Analysis ****
-    # Error series analyst
-    e = analyst.error(obs=obs, sim=sim)
-    se = analyst.sq_error(obs=obs, sim=sim)
-    elog = analyst.error(obs=obslog, sim=simlog)
-    selog = analyst.sq_error(obs=obslog, sim=simlog)
-    # built Dataframe
-    series_df = pd.DataFrame({'Date':def_df[fld_date], 'Obs':obs, 'Sim':sim, 'Obslog':obslog, 'Simlog':simlog, 'E':e,
-                              'Elog':elog, 'SE':se, 'SElog':selog})
-    # coefs analyst of series
-    pbias = analyst.pbias(obs=obs, sim=sim)
-    rmse = analyst.rmse(obs=obs, sim=sim)
-    rmselog = analyst.rmse(obs=obslog, sim=simlog)
-    nse = analyst.nse(obs=obs, sim=sim)
-    nselog = analyst.nse(obs=obslog, sim=simlog)
-    linreg = analyst.linreg(obs=obs, sim=sim)
-    kge = analyst.kge(obs=obs, sim=sim)
-    kgelog = analyst.kge(obs=obslog, sim=simlog)
+    # import data
+    metalulc, lulc = input.asc_raster(flulc)
+    metasoils, soils = input.asc_raster(fsoils)
+    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
+    soils_param_df = pd.read_csv(fsoilsparam, sep=';\s+', engine='python')
+    lulc_classes = lulc_param_df['Value'].values
+    soils_classes = soils_param_df['Value'].values
+    cn_a = lulc_param_df['CN-A'].values
+    cn_b = lulc_param_df['CN-B'].values
+    cn_c = lulc_param_df['CN-C'].values
+    cn_d = lulc_param_df['CN-D'].values
+    cn_values = (cn_a, cn_b, cn_c, cn_d)
     #
     #
-    # **** Frequency analysis ****
-    freq_obs = analyst.frequency(series=obs)
-    freq_sim = analyst.frequency(series=sim)
-    obs_freq = freq_obs['Values']
-    sim_freq = freq_sim['Values']
-    obslog_freq = np.log10(obs_freq)
-    simlog_freq = np.log10(sim_freq)
+    # process data
+    cn_map = geo.cn(lulc=lulc, soils=soils, cnvalues=cn_values, lulcclasses=lulc_classes, soilclasses=soils_classes)
     #
-    # Error frequency analyst
-    e_freq = analyst.error(obs=obs_freq, sim=sim_freq)
-    se_freq = analyst.sq_error(obs=obs_freq, sim=sim_freq)
-    elog_freq = analyst.error(obs=obslog_freq, sim=simlog_freq)
-    selog_freq = analyst.sq_error(obs=obslog_freq, sim=simlog_freq)
+    # export data
+    export_file = output.asc_raster(cn_map, metalulc, folder, filename)
+    return export_file
+
+# deprecated:
+def map_grad(fslope, folder='C:/bin', filename='grad'):
+    """
+    derive the topographical gradient tan(B) from the slope in degrees
+    :param fslope: string path to slope in degrees raster .asc file
+    :param folder: string path to destination folder
+    :param filename: string of file name
+    :return: string path to file
+    """
+    # import data
+    meta, slope = input.asc_raster(fslope)
     #
-    # built dataframe
-    freq_df = pd.DataFrame({'Percentiles': freq_obs['Percentiles'], 'Exeedance': freq_obs['Exeedance'],
-                            'ProbabObs': freq_obs['Probability'], 'ValuesObs': freq_obs['Values'],
-                            'ValuesObslog': obslog_freq, 'ProbabSim': freq_sim['Probability'],
-                            'ValuesSim': freq_sim['Values'], 'ValuesSimlog': simlog_freq,
-                            'E':e_freq, 'Elog':elog_freq,  'SE':se_freq, 'SElog':selog_freq
-                            })
+    # process data
+    grad = geo.grad(slope)
     #
-    # coefs analyst of series
-    rmse_freq = analyst.rmse(obs=obs_freq, sim=sim_freq)
-    rmselog_freq = analyst.rmse(obs=obslog_freq, sim=simlog_freq)
-    linreg_freq = analyst.linreg(obs=obs_freq, sim=sim_freq)
-    linreg_freq_log = analyst.linreg(obs=obslog_freq, sim=simlog_freq)
+    # export data
+    export_file = output.asc_raster(grad, meta, folder, filename)
+    return export_file
+
+# deprecated:
+def lulc_areas(flulcseries, flulcparam, faoi, folder='C:/bin', filename='lulc_areas', unit='ha'):
+    """
+    derive csv file of the classes areas of lulc raster
+    :param flulc:series  string file path to lulc series .txt file
+    :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
+    Example:
+
+     Value     Name  NBS  CN-A  CN-B  CN-C  CN-D
+     1        Water    0   100   100   100   100
+     2        Urban    0    77    85    90    92
+     3       Forest    0    30    55    70    77
+     4      Pasture    0    68    79    86    89
+     5        Crops    0    72    81    88    91
+     6   Forest NBS    1    36    60    74    80
+     7  Pasture NBS    1    39    61    74    80
+     8    Crops NBS    1    62    71    78    81
+
+    :param faoi: string path to aoi.asc raster file
+    :param folder: string path to destination folder
+    :param filename: string name of file
+    :param unit: 'ha' for hectares, 'sqkm' for squared km
+    :return: string file path
+    """
+    factor = 1
+    if unit == 'ha':
+        factor = 100
+    elif unit == 'sqkm':
+        factor = 1000
+    else:
+        factor = 1
     #
-    # built dataframe of parameters
-    params = ('PBias', 'RMSE', 'RMSElog', 'NSE', 'NSElog', 'KGE', 'KGElog', 'A', 'B', 'R', 'P', 'SD',
-              'RMSE-CFC', 'RMSElog-CFC', 'R-CFC', 'Rlog-CFC')
-    values = (pbias, rmse, rmselog, nse, nselog, kge, kgelog, linreg['A'], linreg['B'], linreg['R'], linreg['P'],
-              linreg['SD'], rmse_freq, rmselog_freq, linreg_freq['R'], linreg_freq_log['R'])
-    param_df = pd.DataFrame({'Parameter': params, 'Value': values})
-    if tui:
-        print('ObsSim analysis results:\n')
-        print(param_df.to_string())
+    # import data
+    lulc_series_df = pd.read_csv(flulcseries, sep=';\s+', engine='python')
+    dates = lulc_series_df['Date'].values
+    files = lulc_series_df['File'].values
+    lulc_param_df = pd.read_csv(flulcparam, sep=';\s+', engine='python')
+    lulc_classes = lulc_param_df['Value'].values
+    lulc_names = lulc_param_df['Name'].values
+    metaaoi, aoi = input.asc_raster(faoi)
+    cellsize = metaaoi['cellsize']
+    dct = dict()
+    dct['Date'] = dates
+    for i in range(len(lulc_names)):
+        dct[lulc_names[i]] = list()
     #
-    # **** Export Data ****
-    if tui:
-        print('exporting analysis data and visuals...')
-    # 1) series data
-    exp_file1 = folder + '/' + 'analyst_series.txt'
-    series_df.to_csv(exp_file1, sep=';', index=False)
-    # 2) frequency data
-    exp_file2 = folder + '/' + 'analyst_freq.txt'
-    freq_df.to_csv(exp_file2, sep=';', index=False)
-    # 3) parameters data
-    exp_file3 = folder + '/' + 'analyst_params.txt'
-    param_df.to_csv(exp_file3, sep=';', index=False)
-    #
-    # export visual:
-    exp_file4 = pannel_obs_sim_analyst(series=series_df, freq=freq_df, params=param_df, folder=folder)
-    #
-    return (exp_file1, exp_file2, exp_file3, exp_file4)
+    # process data
+    for i in range(len(dates)):
+        lcl_meta, lcl_lulc = input.asc_raster(files[i])
+        lcl_lulc = lcl_lulc * aoi
+        areas = geo.areas(array=lcl_lulc, cellsize=cellsize, values=lulc_classes, factor=factor)
+        #fracs = areas / np.sum(areas)
+        for j in range(len(areas)):
+            dct[lulc_names[j]].append(areas[j])
+    # export data
+    exp_df = pd.DataFrame(dct)
+    #print(exp_df.to_string(index=False))
+    export_file = folder + '/' + filename + '.txt'
+    exp_df.to_csv(export_file, sep=';', index=False)
+    return export_file
 
 
 

@@ -130,6 +130,8 @@ def menu(options, title='Menu', msg='Chose key', exit=True, exitkey='e', exitmsg
     options_prime = list(options.values())[0]
     keys = np.arange(1, len(options_prime) + 1)
     keys_str = keys.astype(str)
+    keys_full = list(keys_str)
+    keys_full.append(exitkey)
     options[keylbl] = keys_str
     def_df = pd.DataFrame(options)
     if exit:
@@ -159,13 +161,14 @@ def menu(options, title='Menu', msg='Chose key', exit=True, exitkey='e', exitmsg
         elif chosen == '':
             pass
         else:
-            index = int(chosen) - 1
-            if chosen in keys_str:
+            if chosen not in set(keys_full):
+                warning(wng=wng, msg=wngmsg)
+            else:
+                index = int(chosen) - 1
                 ok()
                 print(chsn + ':\t' + options_prime[index] + '\n')
                 break
-            else:
-                warning(wng=wng, msg=wngmsg)
+
     if exit_flag:
         return exitmsg
     else:
@@ -222,10 +225,15 @@ def main():
                 while True:
                     header(lng[1])
                     projects_df = backend.get_existing_projects(wkplc=rootdir)
-                    projects_names = tuple(projects_df['Name'])
-                    project_nm = menu({lng[6]: projects_names}, exitmsg=lng[10], title=lng[23], msg=lng[5],
-                                      keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
-                    break
+                    if len(projects_df.index) == 0:
+                        warning(wng=lng[20], msg='No projects found.')
+                        project_nm = lng[10]
+                        break
+                    else:
+                        projects_names = tuple(projects_df['Name'])
+                        project_nm = menu({lng[6]: projects_names}, exitmsg=lng[10], title=lng[23], msg=lng[5],
+                                          keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                        break
                 if project_nm == lng[10]:
                     pass
                 else:
@@ -267,9 +275,10 @@ def main():
         while True:
             header(lng[12] + ': ' + project_nm)
             print(projectdirs['Project'] + '\n')
-            project_options = [lng[14], lng[15], lng[16], lng[17], lng[32]]
+            project_options = [lng[14], lng[15], lng[16], lng[17]]
             opt = menu({lng[6]:project_options}, title=lng[13], exitmsg=lng[10], msg=lng[5],
                        keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+            #
             # observed datasets
             if opt == project_options[0]:
                 while True:
@@ -280,6 +289,7 @@ def main():
                     observed_options = [lng[24], lng[25], lng[26]]
                     opt = menu({lng[6]:observed_options}, title='', exitmsg=lng[10], msg=lng[5],
                            keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                    #
                     # import datasets
                     if opt == observed_options[0]:
                         # import menu loop
@@ -306,6 +316,7 @@ def main():
                                     backend.importfile(src_filenm, dst_filenm)
                                     # update database
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
+                    #
                     # derive data
                     elif opt == observed_options[1]:
                         while True:
@@ -314,41 +325,45 @@ def main():
                             files_lst = list(derivefiles_df['File'])
                             opt = menu({lng[6]: files_lst}, title='', exitmsg=lng[10],
                                        msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                            #
                             # exit menu condition
                             if opt == lng[10]:
                                 break
+                            #
                             # derive file
                             else:
+                                #
+                                # get input needs
                                 filesderiv_df = backend.verify_input2derived(derived=opt, p0=project_nm, wkplc=rootdir)
+                                #
+                                # check missing files
                                 if backend.check_input2derived(derived=opt, p0=project_nm, wkplc=rootdir):
                                     warning(wng=lng[20], msg=lng[27])
                                     print(filesderiv_df.to_string(index=False))
                                 else:
-                                    # get paths
+                                    # get files names
                                     filesnames = list(filesderiv_df['File'].values)
                                     print(filesnames)
+                                    #
+                                    # get files paths
                                     filesp = list()
                                     for i in range(len(filesnames)):
                                         filesp.append(projectdirs['Observed'] + '/' + filesnames[i])
+                                    #
                                     # evaluate options
-                                    if opt == 'cn_series.txt':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.cn_series(filesp[0], filesp[1], filesp[2], filesp[3],
-                                                                      rasterfolder=projectdirs['CN'],
-                                                                      folder=projectdirs['Observed'])
-                                        #'File sucessfully created at'
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
-                                    elif opt == 'cn_calib.asc':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.map_cn_avg(filesp[0], filesp[1], folder=projectdirs['Observed'])
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
+                                    #
                                     # Derive TWI
-                                    elif opt == 'calib_twi.asc' or opt == 'aoi_twi.asc':
+                                    if opt == 'calib_twi.asc' or opt == 'aoi_twi.asc':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.map_twi(filesp[0], filesp[1], folder=projectdirs['Observed'],
                                                                     filename=opt.split('.')[0])
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'calib_shru.asc':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.map_shru(filesp[0], filesp[1], filesp[2], filesp[3],
+                                                                     folder=projectdirs['Observed'],
+                                                                     filename=opt.split('.')[0])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'aoi_lulc_series.txt':
@@ -356,15 +371,39 @@ def main():
                                         derivedfile = tools.import_lulc_series(filesp[0],
                                                                                rasterfolder=projectdirs['LULC'],
                                                                                folder=projectdirs['Observed'],
+                                                                               filename=opt.split('.')[0],
                                                                                suff='aoi')
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'aoi_shru_series.txt':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.import_lulc_series(filesp[0],
-                                                                               rasterfolder=projectdirs['LULC'],
+                                        derivedfile = tools.import_shru_series(filesp[0], filesp[1], filesp[2], filesp[3],
+                                                                               rasterfolder=projectdirs['SHRU'],
                                                                                folder=projectdirs['Observed'],
-                                                                               suff='aoi')
+                                                                               filename=opt.split('.')[0],
+                                                                               suff='aoi', tui=True)
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'aoi_shru_param.txt' or opt == 'calib_shru_param.txt':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.shru_param(filesp[0], filesp[1],
+                                                                       folder=projectdirs['Observed'],
+                                                                       filename=opt.split('.')[0])
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    # deprecated options:
+                                    '''
+                                    if opt == 'cn_series.txt':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.cn_series(filesp[0], filesp[1], filesp[2], filesp[3],
+                                                                      rasterfolder=projectdirs['CN'],
+                                                                      folder=projectdirs['Observed'])
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'cn_calib.asc':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.map_cn_avg(filesp[0], filesp[1],
+                                                                       folder=projectdirs['Observed'])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'lulc_areas.txt':
@@ -393,6 +432,7 @@ def main():
                                                                                folder=projectdirs['Observed'])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
+                                    '''
                     # calibrate models
                     elif opt == observed_options[2]:
                         while True:
@@ -452,42 +492,62 @@ def main():
                             elif opt == calib_options[1]:
                                 header(calib_options[1])
                                 print('missing code!')
+                    #
                     # exit
                     elif opt == lng[10]:
                         break
+            #
             # projected datasets
             elif opt == project_options[1]:
                 header(lng[15])
                 print('Projected datasets')
-            # simulate policy
+            #
+            # simulate nbs policy
             elif opt == project_options[2]:
-                header(lng[16])
-                print('Simulate policy')
-            # optimize policy
+                while True:
+                    header(lng[16])
+                    sim_options = ['Simulate observed policy', 'Simulate projected policy']
+                    opt = menu({lng[6]: sim_options}, title='Simulation menu', exitmsg=lng[10], msg=lng[5],
+                               keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                    # simulate observed policy
+                    if opt == sim_options[0]:
+                        header(opt)
+                        print('develop code')
+                        # deprecated code:
+                        '''
+                        #
+                        # simulate hydrology
+                        elif opt == project_options[4]:
+                            # checker protocol
+                            header(lng[32])
+                            if backend.check_simhydro_files(project_nm, rootdir):
+                                warning(wng=lng[20], msg=lng[27])
+                                filessim_df = backend.verify_simhydro_files(project_nm, rootdir)
+                                print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
+                            else:
+                                fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
+                                faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
+                                ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
+                                fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
+                                fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
+                                dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
+                                files = tools.run_topmodel(fseries=fseries, fparam=fparam, faoi=faoi, ftwi=ftwi,
+                                                           fcn=fcn, folder=dst_dir, tui=True, mapback=False,
+                                                           mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True)
+                                files_analyst = tools.obs_sim_analyst(fseries=files[2], fld_obs='Qobs', fld_sim='Q',
+                                                                      folder=dst_dir, tui=True)
+                        '''
+                    # simulate projected policy
+                    elif opt == sim_options[1]:
+                        header(opt)
+                        print('develop code')
+                    elif opt == lng[10]:
+                        break
+            #
+            # optimize nbs policy
             elif opt == project_options[3]:
-                header(lng[17])
-                print('Optimize policy')
-            # simulate hydrology
-            elif opt == project_options[4]:
-                # checker protocol
-                header(lng[32])
-                if backend.check_simhydro_files(project_nm, rootdir):
-                    warning(wng=lng[20], msg=lng[27])
-                    filessim_df = backend.verify_simhydro_files(project_nm, rootdir)
-                    print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
-                else:
-                    fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
-                    faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
-                    ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
-                    fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
-                    fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
-                    dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
-                    files = tools.run_topmodel(fseries=fseries, fparam=fparam, faoi=faoi, ftwi=ftwi,
-                                               fcn=fcn, folder=dst_dir, tui=True, mapback=False,
-                                               mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True)
-                    files_analyst = tools.obs_sim_analyst(fseries=files[2], fld_obs='Qobs', fld_sim='Q',
-                                                          folder=dst_dir, tui=True)
-
+                header(opt)
+                print('develop code')
             elif opt == lng[10]:
                 break
         if exit_flag:

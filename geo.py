@@ -36,7 +36,6 @@ def xmap(map1, map2, map1ids, map2ids, map1f=100, map2f=1):
     """
     map1_values = map1ids * map1f
     map2_values = map2ids * map2f
-
     xmap = map1 * 0.0
     for i in range(len(map1_values)):
         for j in range(len(map2_values)):

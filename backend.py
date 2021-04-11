@@ -255,6 +255,7 @@ def get_observed_files(infile='./docs/iofiles.txt', sep='|'):
     lcl_df = pd.read_csv(infile, sep=sep)
     # filter by data class
     lcl_df = lcl_df[lcl_df['DataClass'] == 'observed'].copy()
+    lcl_df = lcl_df[lcl_df['ioType'] != 'extracted'].copy()
     lcl_df.sort_values(by='ioType', ascending=False, inplace=True)
     # create new field of data + format
     filenames = lcl_df['FileName'].values
@@ -273,8 +274,11 @@ def get_observed_files(infile='./docs/iofiles.txt', sep='|'):
 def get_input2derived():
     dct = {'calib_twi.asc':('calib_slope.asc', 'calib_catcha.asc'),
            'aoi_twi.asc':('aoi_slope.asc', 'aoi_catcha.asc'),
-           'calib_shru.asc': ('calib_lulc.asc', 'calib_soils.asc', 'calib_lulc_param.txt', 'calib_soils_param.txt'),
-           'aoi_lulc_series.txt':('aoi_lulc_series_input.txt',)}
+           'calib_shru.asc': ('calib_lulc.asc', 'calib_lulc_param.txt', 'calib_soils.asc', 'calib_soils_param.txt'),
+           'aoi_lulc_series.txt':('aoi_lulc_series_input.txt',),
+           'aoi_shru_series.txt':('aoi_lulc_series.txt', 'aoi_lulc_param.txt', 'aoi_soils.asc', 'aoi_soils_param.txt'),
+           'aoi_shru_param.txt':('aoi_lulc_param.txt', 'aoi_soils_param.txt'),
+           'calib_shru_param.txt':('calib_lulc_param.txt', 'calib_soils_param.txt')}
     # deprecated:
     '''
     dct = {'cn_series.txt':('lulc_series.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),
