@@ -81,7 +81,7 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
                 # items loop
                 for k in range(len(items)):
                     aux_string = items[k].replace('"', '`').strip()
-                    print(aux_string)
+                    #print(aux_string)
                     if aux_string[0] == '>':
                         aux_string = aux_string.replace('>', '')
                         aux_string = '\t\t - ' + aux_string
@@ -243,7 +243,7 @@ def get_existing_projects(wkplc='C:'):
     return def_df
 
 
-def get_observed_files(infile='iofiles.txt', sep='|'):
+def get_observed_files(infile='./docs/iofiles.txt', sep='|'):
     # extract data
     lcl_df = pd.read_csv(infile, sep=sep)
     # filter by data class
@@ -264,6 +264,8 @@ def get_observed_files(infile='iofiles.txt', sep='|'):
 
 
 def get_input2derived():
+    dct = {'calib_slope.asc':()}
+    # deprecated:
     dct = {'cn_series.txt':('lulc_series.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),
            'cn_calib.asc':('cn_series.txt', 'series_calib.txt'),
            'series_calib_month.txt': ('series_calib.txt','aoi.asc'),
@@ -297,7 +299,7 @@ def get_derived_files():
     return files
 
 
-def get_input_files(infile='iofiles.txt', sep='|'):
+def get_input_files(infile='./docs/iofiles.txt', sep='|'):
     lcl_df = pd.read_csv(infile, sep=sep)  # extract
     # extract list
     filenames = lcl_df[lcl_df['ioType'] == 'input']['FileName'].values
@@ -310,15 +312,16 @@ def get_input_files(infile='iofiles.txt', sep='|'):
 
 def verify_observed_files(p0='name', wkplc='C:'):
     files_df = get_observed_files()
-    files = files_df['File']
+    files = files_df['File'].values
     existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
+    #print(existing_files)
     status = list()
     for i in range(len(files)):
         if files[i] in set(existing_files):
             status.append('OK')
         else:
             status.append('missing')
-    files_df['Status'] = status
+    files_df = pd.DataFrame({'File':files, 'Type':files_df['Type'], 'Status':status})
     return files_df
 
 

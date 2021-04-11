@@ -37,17 +37,6 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
  7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0;
 ```
 
-## `aoi_slope.asc`
-
-- **I/O**: derived.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of terrain slope for the AOI basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: degrees.
 ## `aoi_shru_series.txt`
 
 - **I/O**: derived.
@@ -93,17 +82,6 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
 	 - Cells values units: class index.
-## `calib_slope.asc`
-
-- **I/O**: derived.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of terrain slope for the calibration basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: degrees.
 ## `calib_shru_param.txt`
 
 - **I/O**: derived.
@@ -212,6 +190,21 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
  1989-01-01;   5.0;  22.8;
 ```
 
+## `aoi_slope.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of terrain slope for the AOI basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: degrees.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "aoi_slope")
+
 ## `aoi_twi.asc`
 
 - **I/O**: input.
@@ -293,44 +286,6 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/basin.PNG "aoi_basin")
 
-## `calib_soils.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of soils for the calibration basin. Each soil class receives an index number defined in the soils_calib_param file. 
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: class index.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "calib_soils")
-
-## `aoi_lulc_series_input.txt`
-
-- **I/O**: input.
-- **File type**: csv data frame.
-- **Dataset type**: observed.
-- **Dataset description**: Yearly time series of input file paths to LULC .asc raster maps of the AOI basin in the observation period. 
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record (month and day can be arbitrary).
-		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
-- **Example**:
-```
-       Date;                File;
- 2015-01-01;  C:/data/lulc01.asc;
- 2016-01-01;  C:/data/lulc02.asc;
-          …;                   …;
- 2018-01-01;  C:/data/lulc04.asc;
- 2019-01-01;  C:/data/lulc05.asc;
-```
-
 ## `aoi_soils_param.txt`
 
 - **I/O**: input.
@@ -353,6 +308,59 @@ Id; SoilClass; f_Ksat; Porosity;
  3;    Soil_C;     74;     0.08;
  4;    Soil_D;     32;     0.05;
  5;    Soil_E;      5;     0.04;
+```
+
+## `calib_soils.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of soils for the calibration basin. Each soil class receives an index number defined in the soils_calib_param file. 
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: class index.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "calib_soils")
+
+## `aoi_soils.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of soils for the AOI (Area Of Interest) basin. Each soil class receives an index number defined in the soils_calib_param file. 
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: class index.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "aoi_soils")
+
+## `aoi_lulc_series_input.txt`
+
+- **I/O**: input.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Yearly time series of input file paths to LULC .asc raster maps of the AOI basin in the observation period. 
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - Mandatory fields:
+		 -  `Date`: date of record (month and day can be arbitrary).
+		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
+- **Example**:
+```
+       Date;                File;
+ 2015-01-01;  C:/data/lulc01.asc;
+ 2016-01-01;  C:/data/lulc02.asc;
+          …;                   …;
+ 2018-01-01;  C:/data/lulc04.asc;
+ 2019-01-01;  C:/data/lulc05.asc;
 ```
 
 ## `calib_lulc.asc`
@@ -439,6 +447,21 @@ Id; SoilClass; f_Ksat; Porosity;
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/basin.PNG "calib_basin")
 
+## `calib_slope.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of terrain slope for the calibration basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: degrees.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "calib_slope")
+
 ## `calib_series.txt`
 
 - **I/O**: input.
@@ -517,21 +540,6 @@ Parameter;   Set;  Min;  Max;
         k;   2.4;  0.1;   10;
         n;   5.9;  0.1;   20;
 ```
-
-## `aoi_soils.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of soils for the AOI (Area Of Interest) basin. Each soil class receives an index number defined in the soils_calib_param file. 
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: class index.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "aoi_soils")
 
 ## `calib_lulc_param.txt`
 
