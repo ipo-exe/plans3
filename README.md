@@ -210,7 +210,8 @@ Input and output files in `plans3` are all in open source format, namely `.txt` 
 >the datum `EPSG` code so you will have to manually set it in the layer properties within QGIS (or another GIS application).
  
  
- 
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/gif_test.gif "Logo Title Text 1")
+
  
  
 
