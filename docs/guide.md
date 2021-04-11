@@ -1,17 +1,34 @@
 # Quick guide to `plans3`
 
+---
 ## Basic concepts of a `plans3` project
 
-### `AOI` and `calib`  watersheds
+Text
+
+### `aoi` - area of interest 
 
 Text
 
-### `LULC` - Land Use and Land Cover
+### `calib` - area of model calibration
 
 Text
 
-### `soils` 
 
-### `SHRU` - Surface Hydrologic Response Units
+### `lulc` - land use and land cover
 
+Text
+
+### `soils` - soils
+
+Text
+
+### `shru` - surface hydrologic response units
+
+Text
+
+### `twi` - topographic wetness index
+
+Text
+
+### `etpat` - monthly pattern of ET
 
