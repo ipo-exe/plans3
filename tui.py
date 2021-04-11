@@ -344,9 +344,11 @@ def main():
                                         derivedfile = tools.map_cn_avg(filesp[0], filesp[1], folder=projectdirs['Observed'])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'twi.asc':
+                                    # Derive TWI
+                                    elif opt == 'calib_twi.asc' or opt == 'aoi_twi.asc':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.map_twi(filesp[0], filesp[1], folder=projectdirs['Observed'])
+                                        derivedfile = tools.map_twi(filesp[0], filesp[1], folder=projectdirs['Observed'],
+                                                                    filename=opt.split('.')[0])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'lulc_series.txt':
