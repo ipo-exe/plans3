@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 
-def update_iofiles(infile='./iofiles.txt', sep='|', outfile='./iofiles.md'):
+def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles.md'):
 
     def header1(string):
         return '# ' + string + '\n\n'

@@ -77,6 +77,8 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 
  Must match the same size (rows and columns) of other related raster maps. 
 
+ CRS must be projected (coordinates in meters).  
+
  Grid cells must be squared. 
 
  Cells values units: degrees.
@@ -134,6 +136,8 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 
  Must match the same size (rows and columns) of other related raster maps. 
 
+ CRS must be projected (coordinates in meters). 
+
  Grid cells must be squared. 
 
  Cells values units: TWI units.
@@ -154,6 +158,8 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 
  Must match the same size (rows and columns) of other related raster maps. 
 
+ CRS must be projected (coordinates in meters). 
+
  Grid cells must be squared. 
 
  Cells values units: class index.
@@ -173,6 +179,8 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 
 
  Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters). 
 
  Grid cells must be squared. 
 
@@ -245,6 +253,8 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 
  Must match the same size (rows and columns) of other related raster maps. 
 
+ CRS must be projected (coordinates in meters). 
+
  Grid cells must be squared. 
 
  Cells values units: class index.
@@ -264,6 +274,8 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 
 
  Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters). 
 
  Grid cells must be squared. 
 
@@ -365,6 +377,8 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression;
 
  Must match the same size (rows and columns) of other related raster maps. 
 
+ CRS must be projected (coordinates in meters). 
+
  Grid cells must be squared. 
 
  Cells values units: TWI units.
@@ -424,7 +438,9 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 
 
 
- Must match the same size (rows and columns) of other related raster maps.  
+ Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters). 
 
  Grid cells must be squared. 
 
@@ -444,7 +460,9 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 
 
 
- Must match the same size (rows and columns) of other related raster maps.  
+ Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters).  
 
  Grid cells must be squared.
 
@@ -462,7 +480,9 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 
 
 
- Must match the same size (rows and columns) of other related raster maps.  
+ Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters). 
 
  Grid cells must be squared. 
 
@@ -485,6 +505,8 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression;
 
 
  Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters). 
 
  Grid cells must be squared. 
 
@@ -582,6 +604,8 @@ Id; SoilClass; f_Ksat; Porosity;
 
  Must match the same size (rows and columns) of other related raster maps. 
 
+ CRS must be projected (coordinates in meters). 
+
  Grid cells must be squared. 
 
  Cells values units: class index.
@@ -639,7 +663,9 @@ Id; SoilClass; f_Ksat; Porosity;
 
 
 
- Must match the same size (rows and columns) of other related raster maps.  
+ Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters).  
 
  Grid cells must be squared.
 
@@ -657,7 +683,9 @@ Id; SoilClass; f_Ksat; Porosity;
 
 
 
- Must match the same size (rows and columns) of other related raster maps.  
+ Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters).  
 
  Grid cells must be squared. 
 
@@ -677,7 +705,9 @@ Id; SoilClass; f_Ksat; Porosity;
 
 
 
- Must match the same size (rows and columns) of other related raster maps.  
+ Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters).  
 
  Grid cells must be squared. 
 
@@ -745,6 +775,8 @@ Id; SoilClass; f_Ksat; Porosity;
 
 
  Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters).  
 
  Grid cells must be squared. 
 
@@ -835,6 +867,8 @@ Parameter;   Set;  Min;  Max;
 
 
  Must match the same size (rows and columns) of other related raster maps. 
+
+ CRS must be projected (coordinates in meters). 
 
  Grid cells must be squared. 
 
