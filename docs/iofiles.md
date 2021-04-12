@@ -20,21 +20,45 @@ This document present the list of all Input / Output files of `plans3`.
 	 - Mandatory fields:
 		 - `Id`: unique integer number of SHRU class index;
 		 -  `SHRU`: one-word name of SHRU class.
-		 - `f_Ksat`:  positive real number of factor of maximal effective saturated hydraulic conductivity in any units.
-		 -  `Porosity`: positive real number of soil porosity.
-		 - `f_Canopy`:  positive real number of factor of maximal effective canopy storage capacity in any units.
-		 - `f_RootDepth`: positive real number of fator of maximal effective root zone depth in any units.
-		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
+		 - `f_Ksat`:  positive real  factor of reference effective saturated hydraulic conductivity in any units.
+		 -  `Porosity`: positive real value of soil porosity.
+		 - `f_Canopy`:  positive real factor of reference effective canopy storage capacity in any units.
+		 -  `f_Surface`: positive real factor reference effective surface storage capacity in any units.
+		 - `f_RootDepth`: positive real factor of reference root zone depth in any units.
+		 -  `f_EfRootZone`: positive real factor of reference effective root zone depth in mm, computed as `Porosity` x  `f_RootDepth`.
+	 - Optional fields:
+		 - `IdLULC`: unique integer number of LULC class.
+		 -  `IdSoil`: unique integer number of Soil class.
+		 -  `LULC`: one-word name of LULC class.
+		 -  `SoilClass`: one-word name of soil class.
 - **Example**:
 ```
-Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
- 1;   Forest_Soil_A;    110;     0.12;     1100;        15.1;         15.5
- 2;   Forest_Soil_B;     98;     0.10;     1100;        15.1;         15.5
- 3;   Forest_Soil_C;     74;     0.08;     1100;        15.1;         15.5
- 4;    Urban_Soil_B;     98;     0.10;      180;         3.5;          0.1
- 5;    Water_Soil_C;     74;     0.08;      0.0;         0.0;        103.0
- 6;    Crops_Soil_A;    110;     0.12;      320;         2.8;         20.1
- 7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0
+  Id;            SHRU; IdLULC; IdSoil;     LULC; f_Canopy; f_RootDepth; f_Surface; SoilClass; f_Ksat; Porosity; f_EfRootZone
+ 101;   Forest_Soil_A;      1;      1;   Forest;      500;        15.1;      15.5;    Soil_A;      1;     0.12;         1.81
+ 102;   Forest_Soil_B;      1;      2;   Forest;      500;        15.1;      15.5;    Soil_B;   0.98;      0.1;         1.51
+ 103;   Forest_Soil_C;      1;      3;   Forest;      500;        15.1;      15.5;    Soil_C;   0.74;     0.08;         1.21
+ 104;   Forest_Soil_D;      1;      4;   Forest;      500;        15.1;      15.5;    Soil_D;   0.32;     0.05;         0.76
+ 105;   Forest_Soil_E;      1;      5;   Forest;      500;        15.1;      15.5;    Soil_E;   0.05;     0.04;          0.6
+ 201;    Urban_Soil_A;      2;      1;    Urban;        1;           1;         1;    Soil_A;      1;     0.12;         0.12
+ 202;    Urban_Soil_B;      2;      2;    Urban;        1;           1;         1;    Soil_B;   0.98;      0.1;          0.1
+ 203;    Urban_Soil_C;      2;      3;    Urban;        1;           1;         1;    Soil_C;   0.74;     0.08;         0.08
+ 204;    Urban_Soil_D;      2;      4;    Urban;        1;           1;         1;    Soil_D;   0.32;     0.05;         0.05
+ 205;    Urban_Soil_E;      2;      5;    Urban;        1;           1;         1;    Soil_E;   0.05;     0.04;         0.04
+ 301;    Water_Soil_A;      3;      1;    Water;        0;           0;       103;    Soil_A;      1;     0.12;            0
+ 302;    Water_Soil_B;      3;      2;    Water;        0;           0;       103;    Soil_B;   0.98;      0.1;            0
+ 303;    Water_Soil_C;      3;      3;    Water;        0;           0;       103;    Soil_C;   0.74;     0.08;            0
+ 304;    Water_Soil_D;      3;      4;    Water;        0;           0;       103;    Soil_D;   0.32;     0.05;            0
+ 305;    Water_Soil_E;      3;      5;    Water;        0;           0;       103;    Soil_E;   0.05;     0.04;            0
+ 401;    Crops_Soil_A;      4;      1;    Crops;      120;         2.8;      20.1;    Soil_A;      1;     0.12;         0.34
+ 402;    Crops_Soil_B;      4;      2;    Crops;      120;         2.8;      20.1;    Soil_B;   0.98;      0.1;         0.28
+ 403;    Crops_Soil_C;      4;      3;    Crops;      120;         2.8;      20.1;    Soil_C;   0.74;     0.08;         0.22
+ 404;    Crops_Soil_D;      4;      4;    Crops;      120;         2.8;      20.1;    Soil_D;   0.32;     0.05;         0.14
+ 405;    Crops_Soil_E;      4;      5;    Crops;      120;         2.8;      20.1;    Soil_E;   0.05;     0.04;         0.11
+ 501;  Pasture_Soil_A;      5;      1;  Pasture;      230;         4.4;        25;    Soil_A;      1;     0.12;         0.53
+ 502;  Pasture_Soil_B;      5;      2;  Pasture;      230;         4.4;        25;    Soil_B;   0.98;      0.1;         0.44
+ 503;  Pasture_Soil_C;      5;      3;  Pasture;      230;         4.4;        25;    Soil_C;   0.74;     0.08;         0.35
+ 504;  Pasture_Soil_D;      5;      4;  Pasture;      230;         4.4;        25;    Soil_D;   0.32;     0.05;         0.22
+ 505;  Pasture_Soil_E;      5;      5;  Pasture;      230;         4.4;        25;    Soil_E;   0.05;     0.04;         0.18
 ```
 
 ## `aoi_shru_series.txt`
@@ -72,21 +96,45 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
 	 - Mandatory fields:
 		 - `Id`: unique integer number of SHRU class index;
 		 -  `SHRU`: one-word name of SHRU class.
-		 - `f_Ksat`:  positive real number of factor of maximal effective saturated hydraulic conductivity in any units.
-		 -  `Porosity`: positive real number of soil porosity.
-		 - `f_Canopy`:  positive real number of factor of maximal effective canopy storage capacity in any units.
-		 - `f_RootDepth`: positive real number of fator of maximal effective root zone depth in any units.
-		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
+		 - `f_Ksat`:  positive real  factor of reference effective saturated hydraulic conductivity in any units.
+		 -  `Porosity`: positive real value of soil porosity.
+		 - `f_Canopy`:  positive real factor of reference effective canopy storage capacity in any units.
+		 -  `f_Surface`: positive real factor reference effective surface storage capacity in any units.
+		 - `f_RootDepth`: positive real factor of reference root zone depth in any units.
+		 -  `f_EfRootZone`: positive real factor of reference effective root zone depth in mm, computed as `Porosity` x  `f_RootDepth`.
+	 - Optional fields:
+		 - `IdLULC`: unique integer number of LULC class.
+		 -  `IdSoil`: unique integer number of Soil class.
+		 -  `LULC`: one-word name of LULC class.
+		 -  `SoilClass`: one-word name of soil class.
 - **Example**:
 ```
-Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
- 1;   Forest_Soil_A;    110;     0.12;     1100;        15.1;         15.5
- 2;   Forest_Soil_B;     98;     0.10;     1100;        15.1;         15.5
- 3;   Forest_Soil_C;     74;     0.08;     1100;        15.1;         15.5
- 4;    Urban_Soil_B;     98;     0.10;      180;         3.5;          0.1
- 5;    Water_Soil_C;     74;     0.08;      0.0;         0.0;        103.0
- 6;    Crops_Soil_A;    110;     0.12;      320;         2.8;         20.1
- 7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0
+  Id;            SHRU; IdLULC; IdSoil;     LULC; f_Canopy; f_RootDepth; f_Surface; SoilClass; f_Ksat; Porosity; f_EfRootZone
+ 101;   Forest_Soil_A;      1;      1;   Forest;      500;        15.1;      15.5;    Soil_A;      1;     0.12;         1.81
+ 102;   Forest_Soil_B;      1;      2;   Forest;      500;        15.1;      15.5;    Soil_B;   0.98;      0.1;         1.51
+ 103;   Forest_Soil_C;      1;      3;   Forest;      500;        15.1;      15.5;    Soil_C;   0.74;     0.08;         1.21
+ 104;   Forest_Soil_D;      1;      4;   Forest;      500;        15.1;      15.5;    Soil_D;   0.32;     0.05;         0.76
+ 105;   Forest_Soil_E;      1;      5;   Forest;      500;        15.1;      15.5;    Soil_E;   0.05;     0.04;          0.6
+ 201;    Urban_Soil_A;      2;      1;    Urban;        1;           1;         1;    Soil_A;      1;     0.12;         0.12
+ 202;    Urban_Soil_B;      2;      2;    Urban;        1;           1;         1;    Soil_B;   0.98;      0.1;          0.1
+ 203;    Urban_Soil_C;      2;      3;    Urban;        1;           1;         1;    Soil_C;   0.74;     0.08;         0.08
+ 204;    Urban_Soil_D;      2;      4;    Urban;        1;           1;         1;    Soil_D;   0.32;     0.05;         0.05
+ 205;    Urban_Soil_E;      2;      5;    Urban;        1;           1;         1;    Soil_E;   0.05;     0.04;         0.04
+ 301;    Water_Soil_A;      3;      1;    Water;        0;           0;       103;    Soil_A;      1;     0.12;            0
+ 302;    Water_Soil_B;      3;      2;    Water;        0;           0;       103;    Soil_B;   0.98;      0.1;            0
+ 303;    Water_Soil_C;      3;      3;    Water;        0;           0;       103;    Soil_C;   0.74;     0.08;            0
+ 304;    Water_Soil_D;      3;      4;    Water;        0;           0;       103;    Soil_D;   0.32;     0.05;            0
+ 305;    Water_Soil_E;      3;      5;    Water;        0;           0;       103;    Soil_E;   0.05;     0.04;            0
+ 401;    Crops_Soil_A;      4;      1;    Crops;      120;         2.8;      20.1;    Soil_A;      1;     0.12;         0.34
+ 402;    Crops_Soil_B;      4;      2;    Crops;      120;         2.8;      20.1;    Soil_B;   0.98;      0.1;         0.28
+ 403;    Crops_Soil_C;      4;      3;    Crops;      120;         2.8;      20.1;    Soil_C;   0.74;     0.08;         0.22
+ 404;    Crops_Soil_D;      4;      4;    Crops;      120;         2.8;      20.1;    Soil_D;   0.32;     0.05;         0.14
+ 405;    Crops_Soil_E;      4;      5;    Crops;      120;         2.8;      20.1;    Soil_E;   0.05;     0.04;         0.11
+ 501;  Pasture_Soil_A;      5;      1;  Pasture;      230;         4.4;        25;    Soil_A;      1;     0.12;         0.53
+ 502;  Pasture_Soil_B;      5;      2;  Pasture;      230;         4.4;        25;    Soil_B;   0.98;      0.1;         0.44
+ 503;  Pasture_Soil_C;      5;      3;  Pasture;      230;         4.4;        25;    Soil_C;   0.74;     0.08;         0.35
+ 504;  Pasture_Soil_D;      5;      4;  Pasture;      230;         4.4;        25;    Soil_D;   0.32;     0.05;         0.22
+ 505;  Pasture_Soil_E;      5;      5;  Pasture;      230;         4.4;        25;    Soil_E;   0.05;     0.04;         0.18
 ```
 
 ## `aoi_lulc_series.txt`
@@ -471,17 +519,17 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
 	 - Mandatory fields:
 		 - `Id`: unique integer number of LULC class index.
 		 -  `LULC`: one-word name of LULC class.
-		 - `f_Canopy`:  positive real number of factor of maximal effective canopy storage capacity in any units.
-		 - `f_RootDepth`: positive real number of fator of maximal effective root zone depth in any units.
-		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
+		 - `f_Canopy`:  positive real factor of reference effective canopy storage capacity in any units.
+		 -  `f_Surface`: positive real factor reference effective surface storage capacity in any units.
+		 - `f_RootDepth`: positive real factor of reference root zone depth in any units.
 - **Example**:
 ```
-Id;     LULC; f_Canopy; f_RootDepth; f_Depression
- 1;   Forest;     1100;        15.1;         15.5
- 2;    Urban;      180;         3.5;          0.1
- 3;    Water;      0.0;         0.0;        103.0
- 4;    Crops;      320;         2.8;         20.1
- 5;  Pasture;      500;         4.4;         25.0
+Id;     LULC; f_Canopy; f_RootDepth; f_Surface
+ 1;   Forest;      500;        15.1;      15.5
+ 2;    Urban;        1;           1;         1
+ 3;    Water;        0;           0;       103
+ 4;    Crops;      120;         2.8;      20.1
+ 5;  Pasture;      230;         4.4;        25
 ```
 
 ## `aoi_soils_param.txt`
@@ -496,16 +544,16 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
 	 - Mandatory fields:
 		 -  `Id`: unique integer number of soil class index.
 		 -  `SoilClass`: one-word name of soil class.
-		 -  `f_Ksat`:  positive real number of factor of maximal effective saturated hydraulic conductivity in any units.
-		 -  `Porosity`: positive real number of soil porosity.
+		 - `f_Ksat`:  positive real  factor of reference effective saturated hydraulic conductivity in any units.
+		 -  `Porosity`: positive real value of soil porosity.
 - **Example**:
 ```
 Id; SoilClass; f_Ksat; Porosity
- 1;    Soil_A;    110;     0.12
- 2;    Soil_B;     98;     0.10
- 3;    Soil_C;     74;     0.08
- 4;    Soil_D;     32;     0.05
- 5;    Soil_E;      5;     0.04
+ 1;    Soil_A;    1.0;     0.12
+ 2;    Soil_B;   0.98;     0.10
+ 3;    Soil_C;   0.74;     0.08
+ 4;    Soil_D;   0.32;     0.05
+ 5;    Soil_E;   0.05;     0.04
 ```
 
 ## `aoi_lulc_series_input.txt`
@@ -542,10 +590,10 @@ Id; SoilClass; f_Ksat; Porosity
 	 Parameters are: 
 	 1) `m` - positive real value of effective transmissivity decay coefficient in mm; 
 	 2) `qo` -positive real value of maximal baseflow when D=0 in mm/d;  
-	 3) `cpmax` - positive real value of effective maximal canopy water storage capacity in mm; 
-	 4) `dpmax` - positive real value of effective maximal depression water storage capacity in mm;  
-	 5) `rtmax` - positive real value of effective maximal root zone depth in mm.  
-	 6) `ksat` - positive real value of effective maximal saturated hydraulic conductivity in mm/d; 
+	 3) `cpmax` - positive real value of effective unitary canopy water storage capacity in mm; 
+	 4) `sfmax` - positive real value of effective unitary surface water storage capacity in mm;  
+	 5) `erz` - positive real value of effective unitary root zone depth in mm.  
+	 6) `ksat` - positive real value of effective unitary saturated hydraulic conductivity in mm/d; 
 	 7) `c` - positive real value of scaling parameter for PET model in Celcius;
 	 8) `lat` - real value of latitude in degrees for PET model;
 	 9) `k` - positive real value of Nash Cascade residence time in days; 
@@ -554,7 +602,7 @@ Id; SoilClass; f_Ksat; Porosity
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period  `.`.
 	 - Mandatory fields:
-		 -  `Parameter`: parameter standard names: `m`, `qo`, `cpmax`,  `dpmax`, `rtmax`, `ksat`, `c`,`lat`, `k`, `n`.
+		 -  `Parameter`: parameter standard names: `m`, `qo`, `cpmax`,  `dpmax`, `erz`, `ksat`, `c`,`lat`, `k`, `n`.
 		 -  `Set`: positive real number of parameter set (updated by calibration).
 		 -  `Min`: positive real number of lower bound of parameter space.
 		 -  `Max`: positive real number of upper bound of parameter space.
@@ -564,8 +612,8 @@ Parameter;   Set;  Min;  Max
         m;  1.25;  0.1;   10
        qo;  6.87;  0.1;  100
     cpmax;  10.1;  0.1;  500
-    dpmax;  50.2;  0.1;  500
-    rtmax;   611;  0.1;  500
+    sfmax;  50.2;  0.1;  500
+      erz;   611;  0.1;  500
      ksat;  5.24;  0.1;  100
         c;  98.5;  0.1;  120
       lat;   -30;  -30;  -30
@@ -585,17 +633,17 @@ Parameter;   Set;  Min;  Max
 	 - Mandatory fields:
 		 - `Id`: unique integer number of LULC class index.
 		 -  `LULC`: one-word name of LULC class.
-		 - `f_Canopy`:  positive real number of factor of maximal effective canopy storage capacity in any units.
-		 - `f_RootDepth`: positive real number of fator of maximal effective root zone depth in any units.
-		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
+		 - `f_Canopy`:  positive real factor of reference effective canopy storage capacity in any units.
+		 -  `f_Surface`: positive real factor reference effective surface storage capacity in any units.
+		 - `f_RootDepth`: positive real factor of reference root zone depth in any units.
 - **Example**:
 ```
-Id;     LULC; f_Canopy; f_RootDepth; f_Depression
- 1;   Forest;     1100;        15.1;         15.5
- 2;    Urban;      180;         3.5;          0.1
- 3;    Water;      0.0;         0.0;        103.0
- 4;    Crops;      320;         2.8;         20.1
- 5;  Pasture;      500;         4.4;         25.0
+Id;     LULC; f_Canopy; f_RootDepth; f_Surface
+ 1;   Forest;      500;        15.1;      15.5
+ 2;    Urban;        1;           1;         1
+ 3;    Water;        0;           0;       103
+ 4;    Crops;      120;         2.8;      20.1
+ 5;  Pasture;      230;         4.4;        25
 ```
 
 ## `calib_soils_param.txt`
@@ -610,16 +658,16 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
 	 - Mandatory fields:
 		 -  `Id`: unique integer number of soil class index.
 		 -  `SoilClass`: one-word name of soil class.
-		 -  `f_Ksat`:  positive real number of factor of maximal effective saturated hydraulic conductivity in any units.
-		 -  `Porosity`: positive real number of soil porosity.
+		 - `f_Ksat`:  positive real  factor of reference effective saturated hydraulic conductivity in any units.
+		 -  `Porosity`: positive real value of soil porosity.
 - **Example**:
 ```
 Id; SoilClass; f_Ksat; Porosity
- 1;    Soil_A;    110;     0.12
- 2;    Soil_B;     98;     0.10
- 3;    Soil_C;     74;     0.08
- 4;    Soil_D;     32;     0.05
- 5;    Soil_E;      5;     0.04
+ 1;    Soil_A;    1.0;     0.12
+ 2;    Soil_B;   0.98;     0.10
+ 3;    Soil_C;   0.74;     0.08
+ 4;    Soil_D;   0.32;     0.05
+ 5;    Soil_E;   0.05;     0.04
 ```
 
 ## `calib_lulc.asc`

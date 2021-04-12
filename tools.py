@@ -192,7 +192,8 @@ def shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_param'):
     shru_df = shru_df.join(lulc_df.set_index('Id'), on='IdLULC')
     #print(shru_df.to_string())
     shru_df = shru_df.join(soils_df.set_index('Id'), on='IdSoil')
-    #print(shru_df.to_string())
+    shru_df['f_EfRootZone'] = shru_df['Porosity'].values * shru_df['f_RootDepth'].values
+    print(shru_df.to_string())
     #
     # export
     exp_file = folder + '/' + filename + '.txt'

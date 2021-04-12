@@ -433,6 +433,7 @@ def main():
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     '''
+                    #
                     # calibrate models
                     elif opt == observed_options[2]:
                         while True:
@@ -506,7 +507,7 @@ def main():
             elif opt == project_options[2]:
                 while True:
                     header(lng[16])
-                    sim_options = ['Simulate observed policy', 'Simulate projected policy']
+                    sim_options = ['Simulate CALIB hydrology', 'AOI observed policy', 'AOI projected policy']
                     opt = menu({lng[6]: sim_options}, title='Simulation menu', exitmsg=lng[10], msg=lng[5],
                                keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                     # simulate observed policy
@@ -537,6 +538,10 @@ def main():
                                 files_analyst = tools.obs_sim_analyst(fseries=files[2], fld_obs='Qobs', fld_sim='Q',
                                                                       folder=dst_dir, tui=True)
                         '''
+                    # simulate observed policy
+                    elif opt == sim_options[1]:
+                        header(opt)
+                        print('develop code')
                     # simulate projected policy
                     elif opt == sim_options[1]:
                         header(opt)
