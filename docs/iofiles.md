@@ -8,35 +8,12 @@ This document present the list of all Input / Output files of `plans3`.
 ---
 # derived files
 
-## `aoi_lulc_series.txt`
+## `calib_shru_param.txt`
 
 - **I/O**: derived.
 - **File type**: csv data frame.
 - **Dataset type**: observed.
-- **Dataset description**: Yearly time series of project file paths to LULC .asc raster maps of the AOI basin in the observation period. 
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record (month and day can be arbitrary).
-		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
-- **Example**:
-```
-       Date;                        File
- 2015-01-01;  C:/ … /lulc_2015-01-01.asc
- 2016-01-01;  C:/ … /lulc_2016-01-01.asc
-          …;                           …
- 2018-01-01;  C:/ … /lulc_2017-01-01.asc
- 2019-01-01;  C:/ … /lulc_2018-01-01.asc
-```
-
-## `aoi_shru_param.txt`
-
-- **I/O**: derived.
-- **File type**: csv data frame.
-- **Dataset type**: observed.
-- **Dataset description**: Data frame of Surface Hydrologic Response Units (SHRU) classes for the AOI basin.
+- **Dataset description**: Data frame of Surface Hydrologic Response Units (SHRU) classes for the calibration basin.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
@@ -83,6 +60,58 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
  2019-01-01;  C:/ … /shru_2018-01-01.asc
 ```
 
+## `aoi_shru_param.txt`
+
+- **I/O**: derived.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Data frame of Surface Hydrologic Response Units (SHRU) classes for the AOI basin.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 - `Id`: unique integer number of SHRU class index;
+		 -  `SHRU`: one-word name of SHRU class.
+		 - `f_Ksat`:  positive real number of factor of maximal effective saturated hydraulic conductivity in any units.
+		 -  `Porosity`: positive real number of soil porosity.
+		 - `f_Canopy`:  positive real number of factor of maximal effective canopy storage capacity in any units.
+		 - `f_RootDepth`: positive real number of fator of maximal effective root zone depth in any units.
+		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
+- **Example**:
+```
+Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
+ 1;   Forest_Soil_A;    110;     0.12;     1100;        15.1;         15.5
+ 2;   Forest_Soil_B;     98;     0.10;     1100;        15.1;         15.5
+ 3;   Forest_Soil_C;     74;     0.08;     1100;        15.1;         15.5
+ 4;    Urban_Soil_B;     98;     0.10;      180;         3.5;          0.1
+ 5;    Water_Soil_C;     74;     0.08;      0.0;         0.0;        103.0
+ 6;    Crops_Soil_A;    110;     0.12;      320;         2.8;         20.1
+ 7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0
+```
+
+## `aoi_lulc_series.txt`
+
+- **I/O**: derived.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Yearly time series of project file paths to LULC .asc raster maps of the AOI basin in the observation period. 
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - Mandatory fields:
+		 -  `Date`: date of record (month and day can be arbitrary).
+		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
+- **Example**:
+```
+       Date;                        File
+ 2015-01-01;  C:/ … /lulc_2015-01-01.asc
+ 2016-01-01;  C:/ … /lulc_2016-01-01.asc
+          …;                           …
+ 2018-01-01;  C:/ … /lulc_2017-01-01.asc
+ 2019-01-01;  C:/ … /lulc_2018-01-01.asc
+```
+
 ## `calib_twi.asc`
 
 - **I/O**: derived.
@@ -113,6 +142,30 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "calib_shru")
 
+## `calib_etpat_series.txt`
+
+- **I/O**: derived.
+- **File type**: csv time series.
+- **Dataset type**: observed.
+- **Dataset description**: Monthly time series of ET-proxy pattern maps for the calibration basin. 
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record (day can be arbitrary).
+		 -  `File`: file path to input etpat .asc raster map. Ex: `C:/..../etpat/calib_etpat_2019-01-01.asc`
+- **Example**:
+```
+       Date;                               File
+ 2015-01-01;  C:/ … /calib_etpat_2015-01-01.asc
+ 2016-01-01;  C:/ … /calib_etpat_2016-01-01.asc
+          …;                                  …
+ 2018-01-01;  C:/ … /calib_etpat_2017-01-01.asc
+ 2019-01-01;  C:/ … /calib_etpat_2018-01-01.asc
+```
+
 ## `aoi_twi.asc`
 
 - **I/O**: derived.
@@ -128,39 +181,10 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "aoi_twi")
 
-## `calib_shru_param.txt`
-
-- **I/O**: derived.
-- **File type**: csv data frame.
-- **Dataset type**: observed.
-- **Dataset description**: Data frame of Surface Hydrologic Response Units (SHRU) classes for the calibration basin.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Mandatory fields:
-		 - `Id`: unique integer number of SHRU class index;
-		 -  `SHRU`: one-word name of SHRU class.
-		 - `f_Ksat`:  positive real number of factor of maximal effective saturated hydraulic conductivity in any units.
-		 -  `Porosity`: positive real number of soil porosity.
-		 - `f_Canopy`:  positive real number of factor of maximal effective canopy storage capacity in any units.
-		 - `f_RootDepth`: positive real number of fator of maximal effective root zone depth in any units.
-		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
-- **Example**:
-```
-Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
- 1;   Forest_Soil_A;    110;     0.12;     1100;        15.1;         15.5
- 2;   Forest_Soil_B;     98;     0.10;     1100;        15.1;         15.5
- 3;   Forest_Soil_C;     74;     0.08;     1100;        15.1;         15.5
- 4;    Urban_Soil_B;     98;     0.10;      180;         3.5;          0.1
- 5;    Water_Soil_C;     74;     0.08;      0.0;         0.0;        103.0
- 6;    Crops_Soil_A;    110;     0.12;      320;         2.8;         20.1
- 7;  Pasture_Soil_D;     32;     0.05;      500;         4.4;         25.0
-```
-
 ---
 # extracted files
 
-## `aoi_shru_YYYY.asc`
+## `aoi_shru_YYYY-MM-DD.asc`
 
 - **I/O**: extracted.
 - **File type**: raster map.
@@ -173,9 +197,24 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
 	 - Cells values units: class index.
 - **Example**:
 
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "aoi_shru_YYYY")
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "aoi_shru_YYYY-MM-DD")
 
-## `aoi_lulc_YYYY.asc`
+## `calib_etpat_YYYY-MM-DD.asc`
+
+- **I/O**: extracted.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of ET pattern of calibration basin in month YYYY-MM.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: any units.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/etpat.PNG "calib_etpat_YYYY-MM-DD")
+
+## `aoi_lulc_YYYY-MM-DD.asc`
 
 - **I/O**: extracted.
 - **File type**: raster map.
@@ -188,34 +227,10 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
 	 - Cells values units: class index.
 - **Example**:
 
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/lulc.PNG "aoi_lulc_YYYY")
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/lulc.PNG "aoi_lulc_YYYY-MM-DD")
 
 ---
 # input files
-
-## `aoi_series.txt`
-
-- **I/O**: input.
-- **File type**: csv time series.
-- **Dataset type**: observed.
-- **Dataset description**: Long term daily time series of climatic data for the AOI basin.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `Prec`: daily accumulated precipitation in mm.
-		 -  `Temp`: mean daily temperature in Celsius.
-- **Example**:
-```
-       Date;  Prec;  Temp
- 1985-01-01;   0.0;  25.2
- 1986-01-01;  12.1;  23.0
-          …;     …;     …
- 1988-01-01;   0.0;  21.0
- 1989-01-01;   5.0;  22.8
-```
 
 ## `aoi_slope.asc`
 
@@ -231,46 +246,6 @@ Id;            SHRU; f_Ksat; Porosity; f_Canopy; f_RootDepth; f_Depression
 - **Example**:
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "aoi_slope")
-
-## `aoi_lulc_param.txt`
-
-- **I/O**: input.
-- **File type**: csv data frame.
-- **Dataset type**: observed.
-- **Dataset description**: Data frame of LULC classes for the AOI basin.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Mandatory fields:
-		 - `Id`: unique integer number of LULC class index.
-		 -  `LULC`: one-word name of LULC class.
-		 - `f_Canopy`:  positive real number of factor of maximal effective canopy storage capacity in any units.
-		 - `f_RootDepth`: positive real number of fator of maximal effective root zone depth in any units.
-		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
-- **Example**:
-```
-Id;     LULC; f_Canopy; f_RootDepth; f_Depression
- 1;   Forest;     1100;        15.1;         15.5
- 2;    Urban;      180;         3.5;          0.1
- 3;    Water;      0.0;         0.0;        103.0
- 4;    Crops;      320;         2.8;         20.1
- 5;  Pasture;      500;         4.4;         25.0
-```
-
-## `aoi_catcha.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of catchment area (also known as flow accumulation) of the AOI basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: squared meters.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/catcha.PNG "aoi_catcha")
 
 ## `aoi_dem.asc`
 
@@ -302,6 +277,213 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/basin.PNG "aoi_basin")
 
+## `aoi_soils.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of soils for the AOI (Area Of Interest) basin. Each soil class receives an index number defined in the soils_calib_param file. 
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: class index.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "aoi_soils")
+
+## `calib_etpat_series_input.txt`
+
+- **I/O**: input.
+- **File type**: csv time series.
+- **Dataset type**: observed.
+- **Dataset description**: Monthly time series of ET-proxy pattern maps for the calibration basin. 
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record (day can be arbitrary).
+		 -  `File`: file path to input etpat .asc raster map. Ex: `C:/mydata/calib_etpat_01.asc`
+- **Example**:
+```
+       Date;                               File
+ 2015-01-01;  C:/ … /calib_etpat_2015-01-01.asc
+ 2016-01-01;  C:/ … /calib_etpat_2016-01-01.asc
+          …;                                  …
+ 2018-01-01;  C:/ … /calib_etpat_2017-01-01.asc
+ 2019-01-01;  C:/ … /calib_etpat_2018-01-01.asc
+```
+
+## `calib_slope.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of terrain slope for the calibration basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: degrees.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "calib_slope")
+
+## `calib_catcha.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of catchment area (also known as flow accumulation) of the calibration basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: squared meters.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/catcha.PNG "calib_catcha")
+
+## `calib_dem.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of Digital Elevation Model (DEM) of the calibration basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_dem")
+
+## `calib_basin.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Boolean raster map of the area of calibration basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: boolean (1.0 and 0.0).
+	 - Cells must be 1.0 where the the area is TRUE and 0.0 where the area is FALSE.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/basin.PNG "calib_basin")
+
+## `aoi_catcha.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of catchment area (also known as flow accumulation) of the AOI basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: squared meters.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/catcha.PNG "aoi_catcha")
+
+## `calib_soils.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of soils for the calibration basin. Each soil class receives an index number defined in the soils_calib_param file. 
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: class index.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "calib_soils")
+
+## `aoi_series.txt`
+
+- **I/O**: input.
+- **File type**: csv time series.
+- **Dataset type**: observed.
+- **Dataset description**: Long term daily time series of climatic data for the AOI basin.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 -  `Prec`: daily accumulated precipitation in mm.
+		 -  `Temp`: mean daily temperature in Celsius.
+- **Example**:
+```
+       Date;  Prec;  Temp
+ 1985-01-01;   0.0;  25.2
+ 1986-01-01;  12.1;  23.0
+          …;     …;     …
+ 1988-01-01;   0.0;  21.0
+ 1989-01-01;   5.0;  22.8
+```
+
+## `calib_series.txt`
+
+- **I/O**: input.
+- **File type**: csv time series.
+- **Dataset type**: observed.
+- **Dataset description**: Daily time series of climatic and hydrologic data for the calibration basin in the calibration period.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 -  `Prec`: daily accumulated precipitation in mm.
+		 -  `Temp`: mean daily temperature in Celsius.
+		 -  `Q`: mean daily specific flow in mm/day (Note: Q = 86400 [s/day] * Flow [m3/s] / BasinArea [m2]).
+	 - Optional fields:
+		 -  `Flow`: mean daily flow in m3/s.
+- **Example**:
+```
+       Date;  Prec;  Temp;      Q;  Flow
+ 1985-01-01;   0.0;  25.2;  0.051;  2.43
+ 1986-01-01;  12.1;  23.0;  0.050;  2.38
+          …;     …;     …;      …;     …
+ 1988-01-01;   0.0;  21.0;  0.047;  2.21
+ 1989-01-01;   5.0;  22.8;  0.046;  2.17
+```
+
+## `aoi_lulc_param.txt`
+
+- **I/O**: input.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Data frame of LULC classes for the AOI basin.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 - `Id`: unique integer number of LULC class index.
+		 -  `LULC`: one-word name of LULC class.
+		 - `f_Canopy`:  positive real number of factor of maximal effective canopy storage capacity in any units.
+		 - `f_RootDepth`: positive real number of fator of maximal effective root zone depth in any units.
+		 -  `f_Depression`: positive real number of maximal effective surface depression storage capacity in any units.
+- **Example**:
+```
+Id;     LULC; f_Canopy; f_RootDepth; f_Depression
+ 1;   Forest;     1100;        15.1;         15.5
+ 2;    Urban;      180;         3.5;          0.1
+ 3;    Water;      0.0;         0.0;        103.0
+ 4;    Crops;      320;         2.8;         20.1
+ 5;  Pasture;      500;         4.4;         25.0
+```
+
 ## `aoi_soils_param.txt`
 
 - **I/O**: input.
@@ -326,36 +508,6 @@ Id; SoilClass; f_Ksat; Porosity
  5;    Soil_E;      5;     0.04
 ```
 
-## `calib_soils.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of soils for the calibration basin. Each soil class receives an index number defined in the soils_calib_param file. 
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: class index.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "calib_soils")
-
-## `aoi_soils.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of soils for the AOI (Area Of Interest) basin. Each soil class receives an index number defined in the soils_calib_param file. 
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: class index.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "aoi_soils")
-
 ## `aoi_lulc_series_input.txt`
 
 - **I/O**: input.
@@ -366,6 +518,7 @@ Id; SoilClass; f_Ksat; Porosity
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
 	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
 		 -  `Date`: date of record (month and day can be arbitrary).
 		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
@@ -379,143 +532,6 @@ Id; SoilClass; f_Ksat; Porosity
  2019-01-01;  C:/data/lulc05.asc
 ```
 
-## `calib_lulc.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of LULC (land use and land cover) for the calibration basin and calibration period. Each LULC class receives an index number defined in the lulc_calib_param file 
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: class index.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/lulc.PNG "calib_lulc")
-
-## `calib_soils_param.txt`
-
-- **I/O**: input.
-- **File type**: csv data frame.
-- **Dataset type**: observed.
-- **Dataset description**: Data frame of soil classes for the calibration basin.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period  `.`.
-	 - Mandatory fields:
-		 -  `Id`: unique integer number of soil class index.
-		 -  `SoilClass`: one-word name of soil class.
-		 -  `f_Ksat`:  positive real number of factor of maximal effective saturated hydraulic conductivity in any units.
-		 -  `Porosity`: positive real number of soil porosity.
-- **Example**:
-```
-Id; SoilClass; f_Ksat; Porosity
- 1;    Soil_A;    110;     0.12
- 2;    Soil_B;     98;     0.10
- 3;    Soil_C;     74;     0.08
- 4;    Soil_D;     32;     0.05
- 5;    Soil_E;      5;     0.04
-```
-
-## `calib_dem.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of Digital Elevation Model (DEM) of the calibration basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_dem")
-
-## `calib_catcha.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of catchment area (also known as flow accumulation) of the calibration basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: squared meters.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/catcha.PNG "calib_catcha")
-
-## `calib_basin.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Boolean raster map of the area of calibration basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: boolean (1.0 and 0.0).
-	 - Cells must be 1.0 where the the area is TRUE and 0.0 where the area is FALSE.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/basin.PNG "calib_basin")
-
-## `calib_slope.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of terrain slope for the calibration basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: degrees.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "calib_slope")
-
-## `calib_series.txt`
-
-- **I/O**: input.
-- **File type**: csv time series.
-- **Dataset type**: observed.
-- **Dataset description**: Daily time series of climatic and hydrologic data for the calibration basin in the calibration period.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `Prec`: daily accumulated precipitation in mm.
-		 -  `Temp`: mean daily temperature in Celsius.
-		 -  `Q`: mean daily specific flow in mm/day (Note: Q = 86400 [s/day] * Flow [m3/s] / BasinArea [m2]).
-	 - Optional fields:
-		 -  `Flow`: mean daily flow in m3/s.
-- **Example**:
-```
-       Date;  Prec;  Temp;      Q;  Flow
- 1985-01-01;   0.0;  25.2;  0.051;  2.43
- 1986-01-01;  12.1;  23.0;  0.050;  2.38
-          …;     …;     …;      …;     …
- 1988-01-01;   0.0;  21.0;  0.047;  2.21
- 1989-01-01;   5.0;  22.8;  0.046;  2.17
-```
-
-## `calib_etpat.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of ET-proxy pattern for the calibratio basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: any units.
 ## `hydro_param.txt`
 
 - **I/O**: input.
@@ -582,93 +598,241 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
  5;  Pasture;      500;         4.4;         25.0
 ```
 
+## `calib_soils_param.txt`
+
+- **I/O**: input.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Data frame of soil classes for the calibration basin.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period  `.`.
+	 - Mandatory fields:
+		 -  `Id`: unique integer number of soil class index.
+		 -  `SoilClass`: one-word name of soil class.
+		 -  `f_Ksat`:  positive real number of factor of maximal effective saturated hydraulic conductivity in any units.
+		 -  `Porosity`: positive real number of soil porosity.
+- **Example**:
+```
+Id; SoilClass; f_Ksat; Porosity
+ 1;    Soil_A;    110;     0.12
+ 2;    Soil_B;     98;     0.10
+ 3;    Soil_C;     74;     0.08
+ 4;    Soil_D;     32;     0.05
+ 5;    Soil_E;      5;     0.04
+```
+
+## `calib_lulc.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of LULC (land use and land cover) for the calibration basin and calibration period. Each LULC class receives an index number defined in the lulc_calib_param file 
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: class index.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/lulc.PNG "calib_lulc")
+
 ---
 # output files
 
-## `map_Dps_YYYY-MM-DD.txt`
+## `sim_maps_Qv.txt`
 
 - **I/O**: output.
-- **File type**: csv data frame.
+- **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Data frame of Dps values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Qv.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `map_Qv_YYYY-MM-DD.txt`
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_R.txt`
 
 - **I/O**: output.
-- **File type**: csv data frame.
+- **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Data frame of Qv values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of R.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `map_R_YYYY-MM-DD.txt`
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_Cpy.txt`
 
 - **I/O**: output.
-- **File type**: csv data frame.
+- **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Data frame of R values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Cpy.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `map_Cpy_YYYY-MM-DD.txt`
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_Dps.txt`
 
 - **I/O**: output.
-- **File type**: csv data frame.
+- **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Data frame of Cpy values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Dps.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `map_Unz_YYYY-MM-DD.txt`
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_Unz.txt`
 
 - **I/O**: output.
-- **File type**: csv data frame.
+- **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Data frame of Unz values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Unz.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `map_Tpun_YYYY-MM-DD.txt`
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_Evd.txt`
 
 - **I/O**: output.
-- **File type**: csv data frame.
+- **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Data frame of Tpun values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Evd.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `map_TF_YYYY-MM-DD.txt`
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_TF.txt`
+
+- **I/O**: output.
+- **File type**: csv time series.
+- **Dataset type**: computed.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of TF.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_Evc.txt`
+
+- **I/O**: output.
+- **File type**: csv time series.
+- **Dataset type**: computed.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Evc.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_series.txt`
+
+- **I/O**: output.
+- **File type**: csv time series.
+- **Dataset type**: computed.
+- **Dataset description**: Simulated daily time series of output hydrologic global variables.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 -  `Prec`: daily accumulated precipitation in mm (from input).
+		 -  `Temp`: mean daily temperature in Celsius (from input).
+		 -  `PET`: Potential evapotranspiration water storage in mm.
+		 -  `D`: Soil water storage deficit for full saturation by water table in mm.
+		 -  `Cpy`: Canopy water storage in mm.
+		 -  `TF`: Throughfall water flow in mm/d.
+		 -  `Dps`: Surface depression water storage in mm.
+		 -  `R`: Runoff water flow in mm/d.
+		 -  `Inf`: Infiltration water flow in mm/d.
+		 -  `Unz`: Unsaturated zone water storage in mm.
+		 -  `Qv`: Recharge water flow in mm/d.
+		 -  `Evc`: Evaporation from canopy water flow in mm/d.
+		 -  `Evd`: Evaporation from surface depression water flow in mm/d.
+		 -  `Tpun`: Plant transpiration from unsaturated zone water flow in mm/d.
+		 -  `Tpgw`: Plant transpiration from groundwater water flow in mm/d.
+		 - `ET`: Evapotranspiartion water flow in mm/d.
+		 - `Qb`: basin baseflow in mm/d.
+		 -  `Qs`: basin stormflow in mm/d.
+		 -  `Q`: basin water flow in mm/d.
+		 -  `Flow`: basin water flow in m3/s (note: Flow [m3/s]= Q [mm/d] * BasinArea [m2] / (86400 [s/d] * 1000 [mm/m])).
+## `sim_maps_Tpun.txt`
+
+- **I/O**: output.
+- **File type**: csv time series.
+- **Dataset type**: computed.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Tpun.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_Tpgw.txt`
+
+- **I/O**: output.
+- **File type**: csv time series.
+- **Dataset type**: computed.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Tpgw.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `sim_maps_D.txt`
+
+- **I/O**: output.
+- **File type**: csv time series.
+- **Dataset type**: computed.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Dps.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 -  `File`: file path to output Z-map .txt file.
+## `map_Inf_YYYY-MM-DD.txt`
 
 - **I/O**: output.
 - **File type**: csv data frame.
 - **Dataset type**: computed.
-- **Dataset description**: Data frame of TF values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Dataset description**: Data frame of Inf values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
@@ -689,6 +853,32 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
 		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
 	 - The `TWI\SHRU` field must be the first field.
 	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
+## `map_Tpgw_YYYY-MM-DD.txt`
+
+- **I/O**: output.
+- **File type**: csv data frame.
+- **Dataset type**: computed.
+- **Dataset description**: Data frame of Tpgw values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
+## `map_Tpun_YYYY-MM-DD.txt`
+
+- **I/O**: output.
+- **File type**: csv data frame.
+- **Dataset type**: computed.
+- **Dataset description**: Data frame of Tpun values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
 ## `map_Evd_YYYY-MM-DD.txt`
 
 - **I/O**: output.
@@ -702,25 +892,12 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
 		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
 	 - The `TWI\SHRU` field must be the first field.
 	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `sim_maps_Inf.txt`
-
-- **I/O**: output.
-- **File type**: csv time series.
-- **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of 
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `map_Tpgw_YYYY-MM-DD.txt`
+## `map_TF_YYYY-MM-DD.txt`
 
 - **I/O**: output.
 - **File type**: csv data frame.
 - **Dataset type**: computed.
-- **Dataset description**: Data frame of Tpgw values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
+- **Dataset description**: Data frame of TF values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
@@ -741,149 +918,71 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
 		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
 	 - The `TWI\SHRU` field must be the first field.
 	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `sim_maps_ET.txt`
+## `map_Unz_YYYY-MM-DD.txt`
 
 - **I/O**: output.
-- **File type**: csv time series.
+- **File type**: csv data frame.
 - **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of ET.
+- **Dataset description**: Data frame of Unz values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
 	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_D.txt`
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
+## `map_Dps_YYYY-MM-DD.txt`
 
 - **I/O**: output.
-- **File type**: csv time series.
+- **File type**: csv data frame.
 - **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Dps.
+- **Dataset description**: Data frame of Dps values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
 	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_Tpun.txt`
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
+## `map_Cpy_YYYY-MM-DD.txt`
 
 - **I/O**: output.
-- **File type**: csv time series.
+- **File type**: csv data frame.
 - **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Tpun.
+- **Dataset description**: Data frame of Cpy values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
 	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_Evd.txt`
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
+## `map_R_YYYY-MM-DD.txt`
 
 - **I/O**: output.
-- **File type**: csv time series.
+- **File type**: csv data frame.
 - **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Evd.
+- **Dataset description**: Data frame of R values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
 	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_Evc.txt`
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
+## `map_Qv_YYYY-MM-DD.txt`
 
 - **I/O**: output.
-- **File type**: csv time series.
+- **File type**: csv data frame.
 - **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Evc.
+- **Dataset description**: Data frame of Qv values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
 	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_TF.txt`
-
-- **I/O**: output.
-- **File type**: csv time series.
-- **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of TF.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_Unz.txt`
-
-- **I/O**: output.
-- **File type**: csv time series.
-- **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Unz.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_Dps.txt`
-
-- **I/O**: output.
-- **File type**: csv time series.
-- **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Dps.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_Cpy.txt`
-
-- **I/O**: output.
-- **File type**: csv time series.
-- **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Cpy.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_R.txt`
-
-- **I/O**: output.
-- **File type**: csv time series.
-- **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of R.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_Qv.txt`
-
-- **I/O**: output.
-- **File type**: csv time series.
-- **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Qv.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - Mandatory fields:
-		 -  `Date`: date of record.
-		 -  `File`: file path to output Z-map .txt file.
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
 ## `sim_histograms.txt`
 
 - **I/O**: output.
@@ -911,38 +1010,20 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
 		 -  `Set`: positive real number of parameter set (updated by calibration).
 		 -  `Min`: positive real number of lower bound of parameter space.
 		 -  `Max`: positive real number of upper bound of parameter space.
-## `sim_series.txt`
+## `sim_maps_ET.txt`
 
 - **I/O**: output.
 - **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Simulated daily time series of output hydrologic global variables.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of ET.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
 	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
 		 -  `Date`: date of record.
-		 -  `Prec`: daily accumulated precipitation in mm (from input).
-		 -  `Temp`: mean daily temperature in Celsius (from input).
-		 -  `PET`: Potential evapotranspiration water storage in mm.
-		 -  `D`: Soil water storage deficit for full saturation by water table in mm.
-		 -  `Cpy`: Canopy water storage in mm.
-		 -  `TF`: Throughfall water flow in mm/d.
-		 -  `Dps`: Surface depression water storage in mm.
-		 -  `R`: Runoff water flow in mm/d.
-		 -  `Inf`: Infiltration water flow in mm/d.
-		 -  `Unz`: Unsaturated zone water storage in mm.
-		 -  `Qv`: Recharge water flow in mm/d.
-		 -  `Evc`: Evaporation from canopy water flow in mm/d.
-		 -  `Evd`: Evaporation from surface depression water flow in mm/d.
-		 -  `Tpun`: Plant transpiration from unsaturated zone water flow in mm/d.
-		 -  `Tpgw`: Plant transpiration from groundwater water flow in mm/d.
-		 - `ET`: Evapotranspiartion water flow in mm/d.
-		 - `Qb`: basin baseflow in mm/d.
-		 -  `Qs`: basin stormflow in mm/d.
-		 -  `Q`: basin water flow in mm/d.
-		 -  `Flow`: basin water flow in m3/s (note: Flow [m3/s]= Q [mm/d] * BasinArea [m2] / (86400 [s/d] * 1000 [mm/m])).
+		 -  `File`: file path to output Z-map .txt file.
 ## `map_ET_YYYY-MM-DD.txt`
 
 - **I/O**: output.
@@ -956,29 +1037,17 @@ Id;     LULC; f_Canopy; f_RootDepth; f_Depression
 		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
 	 - The `TWI\SHRU` field must be the first field.
 	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
-## `sim_maps_Tpgw.txt`
+## `sim_maps_Inf.txt`
 
 - **I/O**: output.
 - **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Tpgw.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of 
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
 	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
 		 -  `Date`: date of record.
 		 -  `File`: file path to output Z-map .txt file.
-## `map_Inf_YYYY-MM-DD.txt`
-
-- **I/O**: output.
-- **File type**: csv data frame.
-- **Dataset type**: computed.
-- **Dataset description**: Data frame of Inf values given TWI (rows) and SHRU index (columns) - the Zmap of the variable.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store the values of the mapped values in positive real numbers.
