@@ -730,12 +730,12 @@ Id; SoilClass; f_Ksat; Porosity
 	 - Mandatory fields:
 		 -  `Date`: date of record.
 		 -  `File`: file path to output Z-map .txt file.
-## `sim_maps_Dps.txt`
+## `sim_maps_Sfs.txt`
 
 - **I/O**: output.
 - **File type**: csv time series.
 - **Dataset type**: computed.
-- **Dataset description**: Daily time series of output file paths to the Z-maps of Dps.
+- **Dataset description**: Daily time series of output file paths to the Z-maps of Sfs.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
@@ -819,7 +819,7 @@ Id; SoilClass; f_Ksat; Porosity
 		 -  `D`: Soil water storage deficit for full saturation by water table in mm.
 		 -  `Cpy`: Canopy water storage in mm.
 		 -  `TF`: Throughfall water flow in mm/d.
-		 -  `Dps`: Surface depression water storage in mm.
+		 -  `Sfs`: Surface water storage in mm.
 		 -  `R`: Runoff water flow in mm/d.
 		 -  `Inf`: Infiltration water flow in mm/d.
 		 -  `Unz`: Unsaturated zone water storage in mm.
