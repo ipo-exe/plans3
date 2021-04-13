@@ -34,31 +34,31 @@ This document present the list of all Input / Output files of `plans3`.
 - **Example**:
 ```
   Id;            SHRU; IdLULC; IdSoil;     LULC; f_Canopy; f_RootDepth; f_Surface; SoilClass; f_Ksat; Porosity; f_EfRootZone
- 101;   Forest_Soil_A;      1;      1;   Forest;      500;        15.1;      15.5;    Soil_A;      1;     0.12;         1.81
- 102;   Forest_Soil_B;      1;      2;   Forest;      500;        15.1;      15.5;    Soil_B;   0.98;      0.1;         1.51
- 103;   Forest_Soil_C;      1;      3;   Forest;      500;        15.1;      15.5;    Soil_C;   0.74;     0.08;         1.21
- 104;   Forest_Soil_D;      1;      4;   Forest;      500;        15.1;      15.5;    Soil_D;   0.32;     0.05;         0.76
- 105;   Forest_Soil_E;      1;      5;   Forest;      500;        15.1;      15.5;    Soil_E;   0.05;     0.04;          0.6
+ 101;    Water_Soil_A;      1;      1;    Water;        0;           0;       103;    Soil_A;      1;     0.12;            0
+ 102;    Water_Soil_B;      1;      2;    Water;        0;           0;       103;    Soil_B;   0.98;      0.1;            0
+ 103;    Water_Soil_C;      1;      3;    Water;        0;           0;       103;    Soil_C;   0.74;     0.08;            0
+ 104;    Water_Soil_D;      1;      4;    Water;        0;           0;       103;    Soil_D;   0.32;     0.05;            0
+ 105;    Water_Soil_E;      1;      5;    Water;        0;           0;       103;    Soil_E;   0.05;     0.04;            0
  201;    Urban_Soil_A;      2;      1;    Urban;        1;           1;         1;    Soil_A;      1;     0.12;         0.12
  202;    Urban_Soil_B;      2;      2;    Urban;        1;           1;         1;    Soil_B;   0.98;      0.1;          0.1
  203;    Urban_Soil_C;      2;      3;    Urban;        1;           1;         1;    Soil_C;   0.74;     0.08;         0.08
  204;    Urban_Soil_D;      2;      4;    Urban;        1;           1;         1;    Soil_D;   0.32;     0.05;         0.05
  205;    Urban_Soil_E;      2;      5;    Urban;        1;           1;         1;    Soil_E;   0.05;     0.04;         0.04
- 301;    Water_Soil_A;      3;      1;    Water;        0;           0;       103;    Soil_A;      1;     0.12;            0
- 302;    Water_Soil_B;      3;      2;    Water;        0;           0;       103;    Soil_B;   0.98;      0.1;            0
- 303;    Water_Soil_C;      3;      3;    Water;        0;           0;       103;    Soil_C;   0.74;     0.08;            0
- 304;    Water_Soil_D;      3;      4;    Water;        0;           0;       103;    Soil_D;   0.32;     0.05;            0
- 305;    Water_Soil_E;      3;      5;    Water;        0;           0;       103;    Soil_E;   0.05;     0.04;            0
- 401;    Crops_Soil_A;      4;      1;    Crops;      120;         2.8;      20.1;    Soil_A;      1;     0.12;         0.34
- 402;    Crops_Soil_B;      4;      2;    Crops;      120;         2.8;      20.1;    Soil_B;   0.98;      0.1;         0.28
- 403;    Crops_Soil_C;      4;      3;    Crops;      120;         2.8;      20.1;    Soil_C;   0.74;     0.08;         0.22
- 404;    Crops_Soil_D;      4;      4;    Crops;      120;         2.8;      20.1;    Soil_D;   0.32;     0.05;         0.14
- 405;    Crops_Soil_E;      4;      5;    Crops;      120;         2.8;      20.1;    Soil_E;   0.05;     0.04;         0.11
- 501;  Pasture_Soil_A;      5;      1;  Pasture;      230;         4.4;        25;    Soil_A;      1;     0.12;         0.53
- 502;  Pasture_Soil_B;      5;      2;  Pasture;      230;         4.4;        25;    Soil_B;   0.98;      0.1;         0.44
- 503;  Pasture_Soil_C;      5;      3;  Pasture;      230;         4.4;        25;    Soil_C;   0.74;     0.08;         0.35
- 504;  Pasture_Soil_D;      5;      4;  Pasture;      230;         4.4;        25;    Soil_D;   0.32;     0.05;         0.22
- 505;  Pasture_Soil_E;      5;      5;  Pasture;      230;         4.4;        25;    Soil_E;   0.05;     0.04;         0.18
+ 301;   Forest_Soil_A;      3;      1;   Forest;      500;        15.1;      15.5;    Soil_A;      1;     0.12;         1.81
+ 302;   Forest_Soil_B;      3;      2;   Forest;      500;        15.1;      15.5;    Soil_B;   0.98;      0.1;         1.51
+ 303;   Forest_Soil_C;      3;      3;   Forest;      500;        15.1;      15.5;    Soil_C;   0.74;     0.08;         1.21
+ 304;   Forest_Soil_D;      3;      4;   Forest;      500;        15.1;      15.5;    Soil_D;   0.32;     0.05;         0.76
+ 305;   Forest_Soil_E;      3;      5;   Forest;      500;        15.1;      15.5;    Soil_E;   0.05;     0.04;          0.6
+ 401;  Pasture_Soil_A;      4;      1;  Pasture;      230;         4.4;        25;    Soil_A;      1;     0.12;         0.53
+ 402;  Pasture_Soil_B;      4;      2;  Pasture;      230;         4.4;        25;    Soil_B;   0.98;      0.1;         0.44
+ 403;  Pasture_Soil_C;      4;      3;  Pasture;      230;         4.4;        25;    Soil_C;   0.74;     0.08;         0.35
+ 404;  Pasture_Soil_D;      4;      4;  Pasture;      230;         4.4;        25;    Soil_D;   0.32;     0.05;         0.22
+ 405;  Pasture_Soil_E;      4;      5;  Pasture;      230;         4.4;        25;    Soil_E;   0.05;     0.04;         0.18
+ 501;    Crops_Soil_A;      5;      1;    Crops;      120;         2.8;      20.1;    Soil_A;      1;     0.12;         0.34
+ 502;    Crops_Soil_B;      5;      2;    Crops;      120;         2.8;      20.1;    Soil_B;   0.98;      0.1;         0.28
+ 503;    Crops_Soil_C;      5;      3;    Crops;      120;         2.8;      20.1;    Soil_C;   0.74;     0.08;         0.22
+ 504;    Crops_Soil_D;      5;      4;    Crops;      120;         2.8;      20.1;    Soil_D;   0.32;     0.05;         0.14
+ 505;    Crops_Soil_E;      5;      5;    Crops;      120;         2.8;      20.1;    Soil_E;   0.05;     0.04;         0.11
 ```
 
 ## `aoi_shru_series.txt`
@@ -110,31 +110,31 @@ This document present the list of all Input / Output files of `plans3`.
 - **Example**:
 ```
   Id;            SHRU; IdLULC; IdSoil;     LULC; f_Canopy; f_RootDepth; f_Surface; SoilClass; f_Ksat; Porosity; f_EfRootZone
- 101;   Forest_Soil_A;      1;      1;   Forest;      500;        15.1;      15.5;    Soil_A;      1;     0.12;         1.81
- 102;   Forest_Soil_B;      1;      2;   Forest;      500;        15.1;      15.5;    Soil_B;   0.98;      0.1;         1.51
- 103;   Forest_Soil_C;      1;      3;   Forest;      500;        15.1;      15.5;    Soil_C;   0.74;     0.08;         1.21
- 104;   Forest_Soil_D;      1;      4;   Forest;      500;        15.1;      15.5;    Soil_D;   0.32;     0.05;         0.76
- 105;   Forest_Soil_E;      1;      5;   Forest;      500;        15.1;      15.5;    Soil_E;   0.05;     0.04;          0.6
+ 101;    Water_Soil_A;      1;      1;    Water;        0;           0;       103;    Soil_A;      1;     0.12;            0
+ 102;    Water_Soil_B;      1;      2;    Water;        0;           0;       103;    Soil_B;   0.98;      0.1;            0
+ 103;    Water_Soil_C;      1;      3;    Water;        0;           0;       103;    Soil_C;   0.74;     0.08;            0
+ 104;    Water_Soil_D;      1;      4;    Water;        0;           0;       103;    Soil_D;   0.32;     0.05;            0
+ 105;    Water_Soil_E;      1;      5;    Water;        0;           0;       103;    Soil_E;   0.05;     0.04;            0
  201;    Urban_Soil_A;      2;      1;    Urban;        1;           1;         1;    Soil_A;      1;     0.12;         0.12
  202;    Urban_Soil_B;      2;      2;    Urban;        1;           1;         1;    Soil_B;   0.98;      0.1;          0.1
  203;    Urban_Soil_C;      2;      3;    Urban;        1;           1;         1;    Soil_C;   0.74;     0.08;         0.08
  204;    Urban_Soil_D;      2;      4;    Urban;        1;           1;         1;    Soil_D;   0.32;     0.05;         0.05
  205;    Urban_Soil_E;      2;      5;    Urban;        1;           1;         1;    Soil_E;   0.05;     0.04;         0.04
- 301;    Water_Soil_A;      3;      1;    Water;        0;           0;       103;    Soil_A;      1;     0.12;            0
- 302;    Water_Soil_B;      3;      2;    Water;        0;           0;       103;    Soil_B;   0.98;      0.1;            0
- 303;    Water_Soil_C;      3;      3;    Water;        0;           0;       103;    Soil_C;   0.74;     0.08;            0
- 304;    Water_Soil_D;      3;      4;    Water;        0;           0;       103;    Soil_D;   0.32;     0.05;            0
- 305;    Water_Soil_E;      3;      5;    Water;        0;           0;       103;    Soil_E;   0.05;     0.04;            0
- 401;    Crops_Soil_A;      4;      1;    Crops;      120;         2.8;      20.1;    Soil_A;      1;     0.12;         0.34
- 402;    Crops_Soil_B;      4;      2;    Crops;      120;         2.8;      20.1;    Soil_B;   0.98;      0.1;         0.28
- 403;    Crops_Soil_C;      4;      3;    Crops;      120;         2.8;      20.1;    Soil_C;   0.74;     0.08;         0.22
- 404;    Crops_Soil_D;      4;      4;    Crops;      120;         2.8;      20.1;    Soil_D;   0.32;     0.05;         0.14
- 405;    Crops_Soil_E;      4;      5;    Crops;      120;         2.8;      20.1;    Soil_E;   0.05;     0.04;         0.11
- 501;  Pasture_Soil_A;      5;      1;  Pasture;      230;         4.4;        25;    Soil_A;      1;     0.12;         0.53
- 502;  Pasture_Soil_B;      5;      2;  Pasture;      230;         4.4;        25;    Soil_B;   0.98;      0.1;         0.44
- 503;  Pasture_Soil_C;      5;      3;  Pasture;      230;         4.4;        25;    Soil_C;   0.74;     0.08;         0.35
- 504;  Pasture_Soil_D;      5;      4;  Pasture;      230;         4.4;        25;    Soil_D;   0.32;     0.05;         0.22
- 505;  Pasture_Soil_E;      5;      5;  Pasture;      230;         4.4;        25;    Soil_E;   0.05;     0.04;         0.18
+ 301;   Forest_Soil_A;      3;      1;   Forest;      500;        15.1;      15.5;    Soil_A;      1;     0.12;         1.81
+ 302;   Forest_Soil_B;      3;      2;   Forest;      500;        15.1;      15.5;    Soil_B;   0.98;      0.1;         1.51
+ 303;   Forest_Soil_C;      3;      3;   Forest;      500;        15.1;      15.5;    Soil_C;   0.74;     0.08;         1.21
+ 304;   Forest_Soil_D;      3;      4;   Forest;      500;        15.1;      15.5;    Soil_D;   0.32;     0.05;         0.76
+ 305;   Forest_Soil_E;      3;      5;   Forest;      500;        15.1;      15.5;    Soil_E;   0.05;     0.04;          0.6
+ 401;  Pasture_Soil_A;      4;      1;  Pasture;      230;         4.4;        25;    Soil_A;      1;     0.12;         0.53
+ 402;  Pasture_Soil_B;      4;      2;  Pasture;      230;         4.4;        25;    Soil_B;   0.98;      0.1;         0.44
+ 403;  Pasture_Soil_C;      4;      3;  Pasture;      230;         4.4;        25;    Soil_C;   0.74;     0.08;         0.35
+ 404;  Pasture_Soil_D;      4;      4;  Pasture;      230;         4.4;        25;    Soil_D;   0.32;     0.05;         0.22
+ 405;  Pasture_Soil_E;      4;      5;  Pasture;      230;         4.4;        25;    Soil_E;   0.05;     0.04;         0.18
+ 501;    Crops_Soil_A;      5;      1;    Crops;      120;         2.8;      20.1;    Soil_A;      1;     0.12;         0.34
+ 502;    Crops_Soil_B;      5;      2;    Crops;      120;         2.8;      20.1;    Soil_B;   0.98;      0.1;         0.28
+ 503;    Crops_Soil_C;      5;      3;    Crops;      120;         2.8;      20.1;    Soil_C;   0.74;     0.08;         0.22
+ 504;    Crops_Soil_D;      5;      4;    Crops;      120;         2.8;      20.1;    Soil_D;   0.32;     0.05;         0.14
+ 505;    Crops_Soil_E;      5;      5;    Crops;      120;         2.8;      20.1;    Soil_E;   0.05;     0.04;         0.11
 ```
 
 ## `aoi_lulc_series.txt`
@@ -525,11 +525,11 @@ This document present the list of all Input / Output files of `plans3`.
 - **Example**:
 ```
 Id;     LULC; f_Canopy; f_RootDepth; f_Surface
- 1;   Forest;      500;        15.1;      15.5
+ 1;    Water;        0;           0;       103
  2;    Urban;        1;           1;         1
- 3;    Water;        0;           0;       103
- 4;    Crops;      120;         2.8;      20.1
- 5;  Pasture;      230;         4.4;        25
+ 3;   Forest;      500;        15.1;      15.5
+ 4;  Pasture;      230;         4.4;        25
+ 5;    Crops;      120;         2.8;      20.1
 ```
 
 ## `aoi_soils_param.txt`
@@ -639,11 +639,11 @@ Parameter;   Set;  Min;  Max
 - **Example**:
 ```
 Id;     LULC; f_Canopy; f_RootDepth; f_Surface
- 1;   Forest;      500;        15.1;      15.5
+ 1;    Water;        0;           0;       103
  2;    Urban;        1;           1;         1
- 3;    Water;        0;           0;       103
- 4;    Crops;      120;         2.8;      20.1
- 5;  Pasture;      230;         4.4;        25
+ 3;   Forest;      500;        15.1;      15.5
+ 4;  Pasture;      230;         4.4;        25
+ 5;    Crops;      120;         2.8;      20.1
 ```
 
 ## `calib_soils_param.txt`
