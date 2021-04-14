@@ -308,7 +308,8 @@ def get_input2derived():
            'aoi_slope.asc':('aoi_dem.asc',),
            'calib_slope.asc':('calib_dem.asc',),
            'aoi_fto.asc': ('aoi_soils.asc', 'aoi_soils_param.txt'),
-           'calib_fto.asc': ('calib_soils.asc', 'calib_soils_param.txt')}
+           'calib_fto.asc': ('calib_soils.asc', 'calib_soils_param.txt'),
+           'calib_etpat_series.txt':('calib_etpat_series_input.txt',)}
     # deprecated:
     '''
     dct = {'cn_series.txt':('lulc_series.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),

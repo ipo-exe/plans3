@@ -262,7 +262,17 @@ IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
 		 -  `File`: file path to input etpat .asc raster map. Ex: `C:/mydata/calib_etpat_01.asc`
 - **Example**:
 ```
-sample file
+       Date;                                             File
+ 2013-03-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-04-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-05-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-06-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-07-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-08-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-09-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-10-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-11-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
+ 2013-12-01;   C:/Plans3/demo/datasets/observed/calib_twi.asc
 ```
 
 ## `calib_lulc.asc`
@@ -331,9 +341,11 @@ IdLULC;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P
 		 -  `Date`: date of record.
 		 -  `Prec`: daily accumulated precipitation in mm.
 		 -  `Temp`: mean daily temperature in Celsius.
-		 -  `Q`: mean daily specific flow in mm/day (Note: Q = 86400 [s/day] * Flow [m3/s] / BasinArea [m2]).
+		 -  `IRA`: mean daily flow of irrigation intercepted by the canopy in mm/day.
+		 -  `IRI`: mean daily flow of irrigation not intercepted by the canopy in mm/day.
+		 -  `Q`: mean daily specific flow at basin outlet in mm/day.
 	 - Optional fields:
-		 -  `Flow`: mean daily flow in m3/s.
+		 -  `Flow`: mean daily flow at the basin outlet in m3/seconds (Note: Flow [m3/s] = Q [mm/day] * BasinArea [m2]/ (86400 [s/day] * 1000 [mm/m]) ).
 - **Example**:
 ```
        Date;  Prec;   Temp;    Flow;         Q

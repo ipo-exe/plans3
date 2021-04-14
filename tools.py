@@ -108,10 +108,10 @@ def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     return export_file
 
 
-def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', filename='lulc_series', suff=''):
+def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filename='map_series', rasterfilename='map'):
     """
-    import lulc series data set
-    :param flulcseries: string for the input files.
+    import map series data set
+    :param fmapseries: string for the input time series data frame. Must have 'Date' and 'File" as fields
     :param rasterfolder: string path to raster dataset folder
     :param folder: string path to file folder
     :param filename: string file name
@@ -121,20 +121,17 @@ def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', file
     from shutil import copyfile
     #
     # import data
-    lulc_series_df = pd.read_csv(flulcseries, sep=';', engine='python')
-    lulc_series_df = dataframe_prepro(dataframe=lulc_series_df, strfields='Date,File')
-    #print(lulc_series_df)
-    dates = lulc_series_df['Date'].values
-    files = lulc_series_df['File'].values
+    map_series_df = pd.read_csv(fmapseries, sep=';', engine='python')
+    map_series_df = dataframe_prepro(dataframe=map_series_df, strfields='Date,File')
+    dates = map_series_df['Date'].values
+    files = map_series_df['File'].values
     #
     # process data
     new_files = list()
     for i in range(len(dates)):
         src = files[i]
         lcl_date = dates[i]
-        lcl_filenm = 'lulc_' + str(lcl_date) + '.asc'
-        if suff != '':
-            lcl_filenm = suff + '_' + 'lulc_' + str(lcl_date) + '.asc'
+        lcl_filenm = rasterfilename + '_' + str(lcl_date) + '.asc'
         dst = rasterfolder + '/' + lcl_filenm
         copyfile(src=src, dst=dst)
         #print(lcl_expf)

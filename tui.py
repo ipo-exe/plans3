@@ -375,11 +375,20 @@ def main(root='default', importing=True):
                                         ok()
                                     elif opt == 'aoi_lulc_series.txt':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.import_lulc_series(filesp[0],
+                                        derivedfile = tools.import_map_series(filesp[0],
                                                                                rasterfolder=projectdirs['LULC'],
                                                                                folder=projectdirs['Observed'],
                                                                                filename=opt.split('.')[0],
-                                                                               suff='aoi')
+                                                                               rasterfilename='aoi_lulc')
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'calib_etpat_series.txt':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.import_map_series(filesp[0],
+                                                                              rasterfolder=projectdirs['ETpat'],
+                                                                              folder=projectdirs['Observed'],
+                                                                              filename=opt.split('.')[0],
+                                                                              rasterfilename='calib_etpat')
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'aoi_shru_series.txt':
