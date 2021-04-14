@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 
-def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles.md'):
+def update_iofiles(infile='iofiles.txt', sep='|', outfile='iofiles.md'):
 
     def header1(string):
         return '# ' + string + '\n\n'
@@ -16,37 +16,45 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
     def parag(string):
         return string + '\n'
 
-    def extract_example(string):
-        lcl_items = string.split('>>')[1:]
-        #print(lcl_items)
-        fields_names = list()
-        for e in range(len(lcl_items)):
-            if e == len(lcl_items) - 1:
-                fields_names.append(lcl_items[e].split('>')[0].strip())
+    def table_list(dataframe):
+        def_df = dataframe.copy()
+        table = list()
+        oldfields = def_df.columns.values
+        newfields_str = ' | '.join(oldfields)
+        table.append(newfields_str)
+        head = list()
+        for i in range(len(oldfields)):
+            head.append(' :--- ')
+        header = ' | '.join(head)
+        table.append(header)
+        for i in range(len(def_df.values)):
+            table.append(' | '.join(def_df.values[i].astype('str')))
+        return table
+
+    def example_str(dataframe):
+        def_df = dataframe.copy()
+        oldfields = def_df.columns.values
+        newfields = list()
+        for i in range(len(oldfields)):
+            if i < len(oldfields) - 1:
+                newfields.append(oldfields[i] + ';')
             else:
-                fields_names.append(lcl_items[e].split('>')[0].strip() + ';')
-        #print(fields_names)
-        data_lst = list()
-        for e in range(len(lcl_items)):
-            lcl_data_str = lcl_items[e].split('>')[1].strip()
-            lcl_data_lst = lcl_data_str.split(';')
-            if e == len(lcl_items) - 1:
-                for c in range(len(lcl_data_lst)):
-                    lcl_data_lst[c] = lcl_data_lst[c].strip()
-            else:
-                for c in range(len(lcl_data_lst)):
-                    lcl_data_lst[c] = lcl_data_lst[c].strip() + ';'
-            data_lst.append(lcl_data_lst)
-        ex_dct = dict()
-        for c in range(len(lcl_items)):
-            ex_dct[fields_names[c]] = data_lst[c]
-        ex_df = pd.DataFrame(ex_dct)
-        #print(ex_df.to_string(index=False))
-        return ex_df.to_string(index=False)
+                newfields.append(oldfields[i])
+        concat = list()
+        for i in range(len(def_df.index)):
+            concat.append(';')
+        for i in range(len(oldfields)):
+            if i < len(oldfields) - 1:
+                if def_df.dtypes[i] == 'float64':
+                    def_df[oldfields[i]] = def_df[oldfields[i]].round(4)
+                def_df[oldfields[i]] = def_df[oldfields[i]].astype(str)
+                def_df[oldfields[i]] = def_df[oldfields[i]].str.cat(concat)
+        def_df.columns = newfields
+        return def_df
 
     lcl_df = pd.read_csv(infile, sep='|')
     lcl_df.sort_values(by='ioType', ascending=True, inplace=True)
-    iotypes = lcl_df['ioType'].unique()
+    iotypes = ('input', 'derived', 'extracted', 'output') #lcl_df['ioType'].unique()
     lines = list()
     lines.append(header1('I/O files of `plans3`'))
     lines.append(parag('This document present the list of all Input / Output files of `plans3`.'))
@@ -60,8 +68,14 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
         lines.append(parag('---'))
         lines.append(header1(iotypes[i] + ' files'))
         type_df = lcl_df[lcl_df['ioType'] == iotypes[i]].copy()
+        type_df.sort_values(by='FileName', inplace=True)
         files = type_df['FileName'].values
         formats = type_df['FileFormat'].values
+        table_df = type_df[['ioType', 'FileName', 'FileFormat', 'FileType']]
+        table_lst = table_list(table_df)
+        for i in range(len(table_lst)):
+            lines.append(table_lst[i] + '\n')
+
         # files loop
         for j in range(len(files)):
             lines.append(header2_code(files[j] + '.' + formats[j]))
@@ -98,33 +112,46 @@ def update_iofiles(infile='./docs/iofiles.txt', sep='|', outfile='./docs/iofiles
             else:
                 lines.append(parag('- **Requirements**: ' + type_df['DataReq'].values[j]))
             # example
-            example = type_df['DataEx'].values[j].strip()
+            example = type_df['DataEx'].values[j].strip().replace('.', '')
+            example_filetype = type_df['FileType'].values[j].strip().replace('.', '')
             if example == 'none':
                 pass
-            elif type_df['FileType'].values[j].strip().replace('.', '') == 'raster map':
+            elif example_filetype == 'raster map':
                 lines.append(parag('- **Example**:'))
                 fig = type_df['DataEx'].values[j].strip() + '.' + 'PNG' # files[j] + '.' + 'png'
                 path = 'https://github.com/ipo-exe/plans3/blob/main/docs/figs/'
                 line = '\n![alt text](' + path + fig + ' "' + files[j] + '")\n'
                 lines.append(parag(line))
+            elif files[j] + '.' + formats[j] in set(os.listdir('./samples')) and example == 'sample file':
+                lines.append(parag('- **Example**:'))
+                file = './samples/' + files[j] + '.txt'
+                examp_df = pd.read_csv(file, sep=';')
+                examp_df = example_str(examp_df)
+                lines.append('```\n')
+                if example_filetype == 'csv data frame':
+                    lines.append(examp_df.to_string(index=False))
+                    lines.append('\n```\n\n')
+                elif example_filetype == 'csv time series':
+                    lines.append(examp_df.tail(10).to_string(index=False))
+                    lines.append('\n```\n\n')
             else:
                 lines.append(parag('- **Example**:'))
-                example_df_str = extract_example(example)
                 lines.append('```\n')
-                lines.append(example_df_str)
+                lines.append(example)
                 lines.append('\n```\n\n')
+
     # export to file
     expfile = open(outfile, 'w')
     expfile.writelines(lines)
     expfile.close()
 
 
-def get_root_dir():
+def get_root_dir(root='C:/Plans3'):
     """
     function to get the root directory
     :return: root dir string
     """
-    root_dir_nm = 'C:/Plans3'  # name of root dir
+    root_dir_nm = root  # name of root dir
     # check if the main dir is already in disk
     if os.path.exists(root_dir_nm):  # existing condition
         pass
@@ -132,7 +159,7 @@ def get_root_dir():
         os.mkdir(root_dir_nm)
     return root_dir_nm
 
-
+# deprecated
 def get_prj_dirs_deprec():
     dct = {'Datasets':'datasets', 'Observed':'observed', 'Projected':'projected',
            'Runbin':'runbin', 'Simulation':'simulation', 'Optimization':'optimization',
@@ -145,7 +172,6 @@ def get_prj_dirs():
            'Runbin':'runbin', 'Simulation':'simulation', 'Optimization':'optimization',
            'LULC':'lulc', 'SHRU':'shru', 'ETpat':'etpat'}
     return dct
-
 
 
 def get_prj_dirs_paths(p0='name', wkplc='C:'):
@@ -250,7 +276,7 @@ def get_existing_projects(wkplc='C:'):
     return def_df
 
 
-def get_observed_files(infile='./docs/iofiles.txt', sep='|'):
+def get_observed_files(infile='iofiles.txt', sep='|'):
     # extract data
     lcl_df = pd.read_csv(infile, sep=sep)
     # filter by data class
@@ -272,13 +298,17 @@ def get_observed_files(infile='./docs/iofiles.txt', sep='|'):
 
 
 def get_input2derived():
-    dct = {'calib_twi.asc':('calib_slope.asc', 'calib_catcha.asc'),
-           'aoi_twi.asc':('aoi_slope.asc', 'aoi_catcha.asc'),
+    dct = {'calib_twi.asc':('calib_slope.asc', 'calib_catcha.asc', 'calib_fto.asc'),
+           'aoi_twi.asc':('aoi_slope.asc', 'aoi_catcha.asc', 'aoi_fto.asc'),
            'calib_shru.asc': ('calib_lulc.asc', 'calib_lulc_param.txt', 'calib_soils.asc', 'calib_soils_param.txt'),
            'aoi_lulc_series.txt':('aoi_lulc_series_input.txt',),
            'aoi_shru_series.txt':('aoi_lulc_series.txt', 'aoi_lulc_param.txt', 'aoi_soils.asc', 'aoi_soils_param.txt'),
            'aoi_shru_param.txt':('aoi_lulc_param.txt', 'aoi_soils_param.txt'),
-           'calib_shru_param.txt':('calib_lulc_param.txt', 'calib_soils_param.txt')}
+           'calib_shru_param.txt':('calib_lulc_param.txt', 'calib_soils_param.txt'),
+           'aoi_slope.asc':('aoi_dem.asc',),
+           'calib_slope.asc':('calib_dem.asc',),
+           'aoi_fto.asc': ('aoi_soils.asc', 'aoi_soils_param.txt'),
+           'calib_fto.asc': ('calib_soils.asc', 'calib_soils_param.txt')}
     # deprecated:
     '''
     dct = {'cn_series.txt':('lulc_series.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),
@@ -316,7 +346,7 @@ def get_derived_files():
     return files
 
 
-def get_input_files(infile='./docs/iofiles.txt', sep='|'):
+def get_input_files(infile='iofiles.txt', sep='|'):
     lcl_df = pd.read_csv(infile, sep=sep)  # extract
     # extract list
     filenames = lcl_df[lcl_df['ioType'] == 'input']['FileName'].values

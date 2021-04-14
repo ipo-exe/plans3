@@ -1,26 +1,9 @@
 import numpy as np
 import pandas as pd
 import input, output, geo
+from input import dataframe_prepro
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
-
-
-def dataframe_prepro(dataframe, strfields='Field1,Field2', strf=True, date=False, datefield='Date'):
-    """
-    Convenience function for pre processing dataframes
-    :param dataframe: pandas dataframe object
-    :param strfields: iterable of string fields
-    :return: pandas dataframe
-    """
-    lcl_df = dataframe.copy()
-    lcl_df.columns = lcl_df.columns.str.strip()
-    if strf:
-        fields_lst = strfields.split(',')
-        for i in range(len(fields_lst)):
-            lcl_df[fields_lst[i]] = lcl_df[fields_lst[i]].str.strip()
-    if date:
-        lcl_df[datefield] = pd.to_datetime(lcl_df[datefield])
-    return lcl_df
 
 
 def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='shru'):
@@ -29,24 +12,8 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='
     :param flulc: string file path to lulc .asc raster file
     :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
 
-    Example:
-    Id;    LULC; f_Canopy; f_RootDepth; f_Depression
-    1;   Forest;     1100;        15.1;         15.5
-    2;    Urban;      180;         3.5;          0.1
-    3;    Water;      0.0;         0.0;        103.0
-    4;    Crops;      320;         2.8;         20.1
-    5;  Pasture;      500;         4.4;         25.0
-
     :param fsoils: string path to soils.asc raster file
     :param fsoilsparam: string path to soils parameters .txt file. Separator = ;
-
-    Example:
-    Id; SoilClass; f_Ksat; Porosity
-    1;    Soil_A;    110;     0.12
-    2;    Soil_B;     98;     0.10
-    3;    Soil_C;     74;     0.08
-    4;    Soil_D;     32;     0.05
-    5;    Soil_E;      5;     0.04
 
     :param folder: string path to destination folder
     :param filename: string name of file
@@ -57,25 +24,72 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='
     metalulc, lulc = input.asc_raster(flulc)
     metasoils, soils = input.asc_raster(fsoils)
     lulc_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_param_df = dataframe_prepro(lulc_param_df, 'LULC')
+    lulc_param_df = dataframe_prepro(lulc_param_df, 'LULCName,ConvertTo,ColorLULC')
     soils_param_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_param_df = dataframe_prepro(soils_param_df, 'SoilClass')
-    lulc_ids = lulc_param_df['Id'].values
-    soils_ids = soils_param_df['Id'].values
+    soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
+    lulc_ids = lulc_param_df['IdLULC'].values
+    soils_ids = soils_param_df['IdSoil'].values
     #
     # process data
     shru_map = geo.xmap(map1=lulc, map2=soils, map1ids=lulc_ids, map2ids=soils_ids, map1f=100, map2f=1)
+    #plt.imshow(shru_map)
+    #plt.show()
     #
     # export data
     export_file = output.asc_raster(shru_map, metalulc, folder, filename)
     return export_file
 
 
-def map_twi(fslope, fcatcha, folder='C:/bin', filename='twi'):
+def map_fto(fsoils, fsoilsparam, folder='C:/bin', filename='fto'):
+    """
+    Derive the f_To map from soils map and soils parameters
+    :param fsoils: string path to soils raster .asc file
+    :param fsoilsparam: string path to soils parameters .txt file. Separator = ;
+    :param folder: string path to destination folder
+    :param filename: string name of file
+    :return: string file path
+    """
+    # import data
+    meta, soils = input.asc_raster(fsoils)
+    soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
+    soils_df = dataframe_prepro(soils_df, strfields='SoilName,ColorSoil')
+    # process data
+    fto = geo.reclassify(soils, upvalues=soils_df['IdSoil'].values, classes=soils_df['f_To'].values)
+    #plt.imshow(fto)
+    #plt.show()
+    # export data
+    export_file = output.asc_raster(fto, meta, folder, filename)
+    return export_file
+
+
+def map_slope(fdem, folder='C:/bin', filename='slope'):
+    """
+    Derive slope of terrain in degrees
+    :param fdem: string path to DEM (digital elevation model) raster .asc file
+    :param folder: string path to destination folder
+    :param filename: string of file name
+    :return: string path to file
+    """
+    # import data
+    meta, dem = input.asc_raster(fdem)
+    #plt.imshow(dem)
+    #plt.show()
+    # process data
+    slp = geo.slope(dem, meta['cellsize'], degree=True)
+    #plt.imshow(slp)
+    #plt.show()
+    #
+    # export
+    export_file = output.asc_raster(slp, meta, folder, filename)
+    return export_file
+
+
+def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     """
     Derive the Topographical Wetness Index of TOPMODEL (Beven & Kirkby, 1979)
     :param fslope: string path to slope in degrees raster .asc file
     :param fcatcha: string path to catchment area in squared meters raster .asc file
+    :param ffto: string path to transmissivity factor (f_To) raster .asc file
     :param folder: string path to destination folder
     :param filename: string of file name
     :return: string path to file
@@ -83,9 +97,12 @@ def map_twi(fslope, fcatcha, folder='C:/bin', filename='twi'):
     # import data
     meta, slope = input.asc_raster(fslope)
     meta, catcha = input.asc_raster(fcatcha)
+    meta, fto = input.asc_raster(ffto)
     # process data
     grad = geo.grad(slope)
-    twi = geo.twi(catcha, grad, cellsize=meta['cellsize'])
+    twi = geo.twi(catcha, grad, fto, cellsize=meta['cellsize'])
+    #plt.imshow(twi)
+    #plt.show()
     # export data
     export_file = output.asc_raster(twi, meta, folder, filename)
     return export_file
@@ -132,6 +149,7 @@ def import_lulc_series(flulcseries, rasterfolder='C:/bin', folder='C:/bin', file
 
 def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin', folder='C:/bin',
                        filename='shru_series', suff='', tui=False):
+    # todo docstring
     # import data
     lulc_series_df = pd.read_csv(flulcseries, sep=';', engine='python')
     lulc_series_df = dataframe_prepro(dataframe=lulc_series_df, strfields='Date,File')
@@ -163,16 +181,16 @@ def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolde
 
 
 def shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_param'):
-    #
+    # todo docstring
     # extract data
     lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_df = dataframe_prepro(lulc_df, strfields='LULC')
+    lulc_df = dataframe_prepro(lulc_df, strfields='LULCName,ConvertTo,ColorLULC')
     #print(lulc_df.to_string())
     soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_df = dataframe_prepro(soils_df, strfields='SoilClass')
+    soils_df = dataframe_prepro(soils_df, strfields='SoilName,ColorSoil')
     #print(soils_df.to_string())
-    lulc_ids = lulc_df['Id'].values
-    soils_ids = soils_df['Id'].values
+    lulc_ids = lulc_df['IdLULC'].values
+    soils_ids = soils_df['IdSoil'].values
     #
     # process
     shru_ids = list()
@@ -182,16 +200,16 @@ def shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_param'):
     for i in range(len(lulc_ids)):
         for j in range(len(soils_ids)):
             lcl_shru_id = lulc_ids[i] * 100 + soils_ids[j]
-            lcl_shru_nm = lulc_df['LULC'].values[i] + '_' + soils_df['SoilClass'].values[j]
+            lcl_shru_nm = lulc_df['LULCName'].values[i] + '_' + soils_df['SoilName'].values[j]
             shru_ids.append(lcl_shru_id)
             shru_nm.append(lcl_shru_nm)
             shru_lulc_ids.append(lulc_ids[i])
             shru_soils_ids.append(soils_ids[j])
-    shru_df = pd.DataFrame({'Id':shru_ids, 'SHRU': shru_nm, 'IdLULC':shru_lulc_ids, 'IdSoil':shru_soils_ids})
+    shru_df = pd.DataFrame({'IdSHRU':shru_ids, 'SHRUName': shru_nm, 'IdLULC':shru_lulc_ids, 'IdSoil':shru_soils_ids})
     #print(shru_df.to_string())
-    shru_df = shru_df.join(lulc_df.set_index('Id'), on='IdLULC')
+    shru_df = shru_df.join(lulc_df.set_index('IdLULC'), on='IdLULC')
     #print(shru_df.to_string())
-    shru_df = shru_df.join(soils_df.set_index('Id'), on='IdSoil')
+    shru_df = shru_df.join(soils_df.set_index('IdSoil'), on='IdSoil')
     shru_df['f_EfRootZone'] = shru_df['Porosity'].values * shru_df['f_RootDepth'].values
     print(shru_df.to_string())
     #
@@ -199,7 +217,6 @@ def shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_param'):
     exp_file = folder + '/' + filename + '.txt'
     shru_df.to_csv(exp_file, sep=';', index=False)
     return exp_file
-
 
 
 def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:/bin', tui=False):

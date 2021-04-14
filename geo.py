@@ -697,7 +697,7 @@ def mask(array, mask):
 def reclassify(array, upvalues, classes):
     """
     utility function -
-    Reclassify array based on list of upper values and list of classes
+    Reclassify array based on list of upper values and list of classes values
 
     :param array: 2d numpy array to reclassify
     :param upvalues: 1d numpy array of upper values
@@ -821,17 +821,20 @@ def stdmask():
     return dct, np.array(lst)
 
 
-def twi(catcha, grad, cellsize, gradmin=0.0001):
+def twi(catcha, grad, fto, cellsize, gradmin=0.0001):
     """
     Derive the Topographical Wetness Index of TOPMODEL (Beven & Kirkby, 1979)
 
-    :param catcha: cathment area 2d array in meters
-    :param grad: gradient of terrain 2d array (tangent of slope)
+    TWI =  ln ( a / To tanB )
+
+    :param catcha: 2d array - cathment area in m2
+    :param grad: 2d array - gradient of terrain (tangent of slope) unitless
+    :param fto: 2d array - local transmissivity factor of basin average - unitless
     :param cellsize: cell size in meters
     :param gradmin: minimun gradient threshold
     :return: Topographical Wetness Index 2d array
     """
-    return np.log(catcha / (cellsize * (grad + gradmin)))
+    return np.log(catcha / (cellsize * fto * (grad + gradmin)))
 
 
 def usle_l(slope, cellsize):

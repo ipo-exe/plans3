@@ -1,6 +1,25 @@
 import numpy as np
 import pandas as pd
 
+
+def dataframe_prepro(dataframe, strfields='Field1,Field2', strf=True, date=False, datefield='Date'):
+    """
+    Convenience function for pre processing dataframes
+    :param dataframe: pandas dataframe object
+    :param strfields: iterable of string fields
+    :return: pandas dataframe
+    """
+    lcl_df = dataframe.copy()
+    lcl_df.columns = lcl_df.columns.str.strip()
+    if strf:
+        fields_lst = strfields.split(',')
+        for i in range(len(fields_lst)):
+            lcl_df[fields_lst[i]] = lcl_df[fields_lst[i]].str.strip()
+    if date:
+        lcl_df[datefield] = pd.to_datetime(lcl_df[datefield])
+    return lcl_df
+
+
 def asc_raster(file):
     """
     A function to import .ASC raster files

@@ -133,6 +133,27 @@ def nash_cascade(q, k, n):
     return qs
 
 
+def count_matrix_twi_shru(twi, shru, aoi, shruids, ntwibins=10):
+    # flat and clear:
+    twi_flat_clear = flatten_clear(twi, aoi)
+    # extract histogram of TWI
+    twi_hist, twi_bins = np.histogram(twi_flat_clear, bins=ntwibins)
+    twi_bins = twi_bins[1:]
+    #
+    countmatrix = np.zeros(shape=(ntwibins, len(shruids)), dtype='int32')
+    for i in range(len(countmatrix)):
+        for j in range(len(countmatrix[i])):
+            #print('{}\t{}'.format(twi_bins[i], shruids[j]))
+            if i == 0:
+                lcl_mask =  (shru == shruids[j]) * (twi < twi_bins[i]) * aoi
+            elif i == len(countmatrix) - 1:
+                lcl_mask = (shru == shruids[j]) * (twi >= twi_bins[i - 1]) * aoi
+            else:
+                lcl_mask = (shru == shruids[j]) * (twi >= twi_bins[i - 1]) * (twi < twi_bins[i])  * aoi #* (shru == shruids[j]) * aoi
+            countmatrix[i][j] = np.sum(lcl_mask)
+    return countmatrix, twi_bins, shruids
+
+
 def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
     """
     2D histogram computing of 2 raster layers
@@ -314,6 +335,7 @@ def pet_oudin(temperature, day, latitude, k1=100, k2=5):
     return pet
 
 # topmodel functions
+# deprecated:
 def topmodel_s0max(cn, a):
     """
     Plans 3 Model of S0max as a function of CN
@@ -350,6 +372,18 @@ def topmodel_qb(d, qo, m):
     return qo * np.exp(-d/m)
 
 
+def topmodel_qv(d, unz, ksat):
+    """
+    Global and local vertical recharge rate function (Beven and Woods.. )
+
+    :param d: deficit in mm
+    :param unz: usaturated zone water in mm
+    :param ksat: velocity parameter in mm/d
+    :return: vertical recharge rate
+    """
+    return ksat * (unz / (d + 0.001)) * (d > 0)  # + 0.001 to avoid division by zero
+
+
 def topmodel_di(d, twi, m, lamb):
     """
     local deficit di
@@ -374,7 +408,244 @@ def topmodel_vsai(di):
     """
     return ((di == 0) * 1)
 
+# todo function
+def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c, lat, k, n,
+                      area, mapback=False, mapvar='all', qobs=False, tui=False):
+    if tui:
+        from time import sleep
+    #
+    # extract data input
+    ts_prec = series['Prec'].values
+    ts_temp = series['Temp'].values
+    size = len(ts_prec)
+    #
+    # compute PET
+    days = series['Date'].dt.dayofyear
+    ts_days = days.values
+    lat = lat * np.pi / 180  # convet lat from degrees to radians
+    ts_pet = pet_oudin(temperature=ts_temp, day=ts_days, latitude=lat, k1=c)  # Oudin model
+    #
+    # get zmap shape
+    shape = np.shape(countmatrix)
+    rows = shape[0]
+    cols = shape[1]
+    #
+    # get local Lambda (TWI)
+    lamb_i = np.reshape(twibins, (rows, 1)) * np.ones(shape=shape, dtype='float32')
+    #
+    #
+    # get local surface parameters
+    #shru_ids = shruparam['Id'].values
+    # local cpmax
+    cpmax_i = cpmax * shruparam['f_Canopy'].values * np.ones(shape=shape, dtype='float32')
+    #plt.imshow(cpmax_i)
+    #plt.show()
+    # local sfmax
+    sfmax_i = sfmax * shruparam['f_Surface'].values * np.ones(shape=shape, dtype='float32')
+    #plt.imshow(sfmax_i)
+    #plt.show()
+    # local erz
+    erz_i = erz * shruparam['f_EfRootZone'].values * np.ones(shape=shape, dtype='float32')
+    # local ksat
+    ksat_i = ksat * shruparam['f_Ksat'].values * np.ones(shape=shape, dtype='float32')
+    #
+    #
+    # set global deficit initial conditions
+    d0 = topmodel_d0(qt0=qt0, qo=qo, m=m)
+    #
+    #
+    # set local variables initial conditions:
+    # local stock variables:
+    d_i = topmodel_di(d=d0, twi=lamb_i, m=m, lamb=lamb)  # use topmodel equation to derive initial d
+    cpy_i = np.zeros(shape=shape)
+    sfs_i = np.zeros(shape=shape)
+    unz_i = np.zeros(shape=shape)
 
+    vsa_i = topmodel_vsai(di=d_i)  # variable source area map
+    # local flow variables:
+    prec_i = ts_prec[0] * np.ones(shape=shape)
+    pet_i = ts_pet[0] * np.ones(shape=shape)
+    tf_i = np.zeros(shape=shape)
+    r_i = np.zeros(shape=shape)
+    inf_i = np.zeros(shape=shape)
+    qv_i = np.zeros(shape=shape)
+    evc_i = np.zeros(shape=shape)
+    evs_i = np.zeros(shape=shape)
+    tpun_i = np.zeros(shape=shape)
+    tpgw_i = np.zeros(shape=shape)
+    et_i = np.zeros(shape=shape)
+    #
+    # set global time series arrays:
+    # stock variables time series:
+    ts_cpy = np.zeros(shape=size, dtype='float32')
+    ts_sfs = np.zeros(shape=size, dtype='float32')
+    ts_unz = np.zeros(shape=size, dtype='float32')
+    ts_d = np.zeros(shape=size, dtype='float32')
+    ts_d[0] = d0
+    # flow variables time series:
+    ts_tf = np.zeros(shape=size, dtype='float32')
+    ts_inf = np.zeros(shape=size, dtype='float32')
+    ts_r = np.zeros(shape=size, dtype='float32')
+    ts_qv = np.zeros(shape=size, dtype='float32')
+    ts_evc = np.zeros(shape=size, dtype='float32')
+    ts_evs = np.zeros(shape=size, dtype='float32')
+    ts_tpun = np.zeros(shape=size, dtype='float32')
+    ts_tpgw = np.zeros(shape=size, dtype='float32')
+    ts_et = np.zeros(shape=size, dtype='float32')
+    ts_qb = np.zeros(shape=size, dtype='float32')
+    ts_qb[0] = qt0
+    ts_qs = np.zeros(shape=size, dtype='float32')
+    ts_q = np.zeros(shape=size, dtype='float32')
+    ts_vsa = np.zeros(shape=size, dtype='float32')
+    ts_vsa[0] = np.sum(vsa_i * countmatrix) / np.sum(countmatrix)
+    #
+    # Trace setup
+    if mapback:
+        if mapvar == 'all':
+            mapvar = 'D-Cpy-TF-Sfs-R-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+        mapvar_lst = mapvar.split('-')
+        # load to dict object a time series of empty zmaps for each variable
+        map_dct = dict()
+        for e in mapvar_lst:
+            map_dct[e] = np.zeros(shape=(size, rows, cols), dtype='float32')
+    # simulation print
+    if tui:
+        print('Soil moisture accounting simulation...')
+    #
+    # ESMA loop by finite differences
+    for t in range(1, size):
+        #
+        # ****** UPDATE local water balance ******
+        #
+        # update Canopy water stock
+        cpy_i = cpy_i + prec_i - tf_i - evc_i
+        ts_cpy[t] = avg_2d(var2d=cpy_i, weight=countmatrix)  # compute average
+        #
+        # update Surface water stock
+        sfs_i = sfs_i + tf_i - r_i - inf_i - evs_i
+        ts_sfs[t] = avg_2d(var2d=sfs_i, weight=countmatrix)  # compute average
+        #
+        # update Unsaturated water stock
+        unz_i = unz_i - qv_i - tpun_i + inf_i
+        ts_unz[t] = avg_2d(var2d=unz_i, weight=countmatrix)  # compute average
+        #
+        #
+        # ****** COMPUTE Flows for usage in next time step ******
+        #
+        # --- Canopy
+        # compute current TF - Throughfall (or "effective precipitation")
+        prec_i = ts_prec[t] * np.ones(shape=shape)  # update PREC
+        tf_i = ((prec_i - (cpmax_i - cpy_i)) * (prec_i > (cpmax_i - cpy_i))) #+ (0.0 * (prec_i <= (cpmax_i - cpy_i)))
+        ts_tf[t] = avg_2d(var2d=tf_i, weight=countmatrix)
+        #
+        # compute current Evc from canopy:
+        pet_i = ts_pet[t] * np.ones(shape=shape)  # update PET
+        icp_i = cpy_i + prec_i - tf_i
+        evc_i = (pet_i * (icp_i > pet_i)) + (icp_i * (icp_i <= pet_i))
+        ts_evc[t] = avg_2d(var2d=evc_i, weight=countmatrix)  # compute average
+        #
+        # --- Surface
+        # compute current runoff
+        r_i = ((sfs_i + tf_i) - sfmax_i) * ((sfs_i + tf_i) > sfmax_i)
+        ts_r[t] = avg_2d(var2d=r_i, weight=countmatrix)  # compute average
+        #
+        # compute surface depletion
+        pet_i = pet_i - evc_i  # update pet
+        #
+        # compute potential separate flows
+        p_evs_i = sfs_i * (pet_i / (ksat_i + pet_i + 1)) * ((ksat_i + pet_i) > 0)  # propotional to overall rate
+        p_sfs_inf_i = sfs_i * (ksat_i / (ksat_i + pet_i + 1)) * ((ksat_i + pet_i) > 0)  # proportional to overall rate
+        #plt.imshow(p_sfs_inf_i)
+        #plt.show()
+        #
+        evs_i = (pet_i * (p_evs_i >= pet_i)) + (p_evs_i * (p_evs_i < pet_i))
+        ts_evs[t] = avg_2d(var2d=evs_i, weight=countmatrix)  # compute average
+        #
+        p_unz_inf_i = (d_i - unz_i) * ((d_i - unz_i) > 0)
+        inf_i = (p_sfs_inf_i * (p_sfs_inf_i < p_unz_inf_i)) + (p_unz_inf_i * (p_sfs_inf_i >= p_unz_inf_i))
+        # inf_i = ((p_inf_i * (p_inf_i < (d_i - unz_i))) + ((d_i - unz_i) * (d_i > 0) * (p_inf_i >= (d_i - unz_i))))
+        #plt.imshow(inf_i)
+        #plt.show()
+        ts_inf[t] = avg_2d(var2d=inf_i, weight=countmatrix)  # compute average
+        #
+        # update PET
+        pet_i = pet_i - evs_i
+        #
+        # --- Unsaturated zone
+        # compute QV
+        p_qv_i = topmodel_qv(d=d_i, unz=unz_i, ksat=ksat_i)
+        qv_i = unz_i * (p_qv_i/ (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
+        ts_qv[t] = avg_2d(var2d=qv_i, weight=countmatrix)  # compute average
+        #
+        # compute tpun: # todo fix negative values
+        p_tpun_i = unz_i * (pet_i / (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
+        #plt.imshow(p_tpun_i * (countmatrix > 0))
+        #plt.show()
+        tpun_i = (pet_i * (p_tpun_i >= pet_i)) + (p_tpun_i * (p_tpun_i < pet_i))
+
+        ts_tpun[t] = avg_2d(var2d=tpun_i, weight=countmatrix)  # compute average
+        #
+        # update PET
+        pet_i = pet_i - tpun_i
+        #
+        # --- Saturated Root zone
+        # compute tpgw:
+        p_tpgw_i = (erz_i - d_i) * ((erz_i - d_i) > 0)  # potential tpgw
+        tpgw_i = (pet_i * (p_tpgw_i >= pet_i)) + (p_tpgw_i * (p_tpgw_i < pet_i))
+        ts_tpgw[t] = avg_2d(var2d=tpgw_i, weight=countmatrix)  # compute average
+        #
+        # --- ET
+        # compute ET
+        et_i = evc_i + evs_i + tpun_i + tpgw_i
+        ts_et[t] = avg_2d(var2d=et_i, weight=countmatrix)  # compute average
+        #
+        #
+        # ****** UPDATE Global Water balance ******
+        # global water balance
+        ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1] + ts_tpgw[t - 1]
+        #
+        # compute Qb - Baseflow
+        ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
+        #
+        # Update Di
+        d_i = topmodel_di(d=ts_d[t], twi=lamb_i, m=m, lamb=lamb)
+        #
+        # compute VSA
+        vsa_i = topmodel_vsai(di=d_i)
+        ts_vsa[t] = np.sum(vsa_i * countmatrix) / np.sum(countmatrix)
+        #
+        # trace section
+        if mapback:
+            dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
+                   'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs':evs_i, 'VSA':vsa_i}
+            for e in mapvar_lst:
+                map_dct[e][t] = dct[e]
+    #
+    # RUNOFF ROUTING by Nash Cascade of linear reservoirs
+    if tui:
+        print('Runoff routing...')
+    ts_qs = nash_cascade(ts_r, k=k, n=n)
+    #
+    # compute full discharge Q = Qb + Qs
+    ts_q = ts_qb + ts_qs
+    ts_flow = convert_sq2q(sq=ts_q, area=area)
+    #
+    # export data
+    exp_df = pd.DataFrame({'Date':series['Date'].values,
+                           'Prec':series['Prec'].values,
+                           'Temp':series['Temp'].values, 'PET':ts_pet, 'D':ts_d, 'Cpy':ts_cpy, 'TF':ts_tf,
+                           'Sfs':ts_sfs, 'R':ts_r, 'Inf':ts_inf, 'Unz':ts_unz, 'Qv':ts_qv, 'Evc':ts_evc,
+                           'Evs':ts_evs, 'Tpun':ts_tpun, 'Tpgw':ts_tpgw, 'ET':ts_et, 'Qb':ts_qb,'Qs':ts_qs, 'Q':ts_q,
+                           'Flow':ts_flow})
+    if qobs:
+        exp_df['Qobs'] = series['Q'].values
+    #
+    if mapback:
+        return exp_df, map_dct
+    else:
+        return exp_df
+
+# deprecated:
 def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
     """
     2D histogram for TOPMODEL in PLANS 3. Crossed variables: TWI and CN
@@ -391,7 +662,7 @@ def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
     countmatrix, twi_hist, cn_hist = count_matrix(array2d1=twi, array2d2=cn, bins1=twibins, bins2=cnbins, aoi=aoi)
     return countmatrix, twi_hist, cn_hist
 
-
+# deprecated:
 def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, lat, qt0, k, n,
                  mapback=False, mapvar='R-ET-S1-S2', tui=False, qobs=False):
     """
@@ -628,7 +899,7 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
     else:
         return exp_df
 
-
+# deprecated:
 def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_range, m_range, qo_range, a_range,
                    c_range, k_range, n_range, mapback=False, mapvar='R-ET-S1-S2', tui=True, grid=100,
                    generations=100, popsize=200, offsfrac=1, mutrate=0.4, puremutrate=0.1, cutfrac=0.33,

@@ -196,7 +196,7 @@ def pick_file(p0="txt", p1=".txt file", p2="select file"):
         return def_filename.name
 
 
-def main():
+def main(root='default', importing=True):
     # print header
     print(header_warp())  # warp header credentials
     sleep(0.3)
@@ -204,7 +204,10 @@ def main():
     sleep(0.3)
     #
     # get root directory
-    rootdir = backend.get_root_dir()  # project standard directory on local machine
+    if root == 'default':
+        rootdir = backend.get_root_dir()  # project standard directory on local machine
+    else:
+        rootdir = backend.get_root_dir(root=root)
     #
     # load dictionary
     dicionary = pd.read_csv('./dictionary.txt', sep=';', engine='python', encoding='utf-8')
@@ -286,15 +289,18 @@ def main():
                     files_df = backend.verify_observed_files(project_nm, rootdir)
                     print(files_df.to_string(index=False))
                     print('\n')
-                    observed_options = [lng[24], lng[25], lng[26]]
+                    if importing:
+                        observed_options = [lng[24], lng[25], lng[26]]
+                    else:
+                        observed_options = [lng[25], lng[26]]
                     opt = menu({lng[6]:observed_options}, title='', exitmsg=lng[10], msg=lng[5],
                            keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                     #
                     # import datasets
-                    if opt == observed_options[0]:
+                    if opt == lng[24]:
                         # import menu loop
                         while True:
-                            header(observed_options[0])
+                            header(lng[24])
                             inputfiles_df = files_df[files_df['Type'] == 'input']  #
                             files_lst = list(inputfiles_df['File'])
                             status_lst = list(inputfiles_df['Status'])
@@ -318,9 +324,9 @@ def main():
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
                     #
                     # derive data
-                    elif opt == observed_options[1]:
+                    elif opt == lng[25]:
                         while True:
-                            header(observed_options[1])
+                            header(lng[25])
                             derivefiles_df = files_df[files_df['Type'] == 'derived']
                             files_lst = list(derivefiles_df['File'])
                             opt = menu({lng[6]: files_lst}, title='', exitmsg=lng[10],
@@ -343,7 +349,8 @@ def main():
                                 else:
                                     # get files names
                                     filesnames = list(filesderiv_df['File'].values)
-                                    print(filesnames)
+                                    files_used_df = pd.DataFrame({'Files used':filesnames})
+                                    print(files_used_df.to_string(index=False))
                                     #
                                     # get files paths
                                     filesp = list()
@@ -355,7 +362,7 @@ def main():
                                     # Derive TWI
                                     if opt == 'calib_twi.asc' or opt == 'aoi_twi.asc':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.map_twi(filesp[0], filesp[1], folder=projectdirs['Observed'],
+                                        derivedfile = tools.map_twi(filesp[0], filesp[1], filesp[2], folder=projectdirs['Observed'],
                                                                     filename=opt.split('.')[0])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
@@ -389,6 +396,19 @@ def main():
                                         derivedfile = tools.shru_param(filesp[0], filesp[1],
                                                                        folder=projectdirs['Observed'],
                                                                        filename=opt.split('.')[0])
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'aoi_slope.asc' or opt == 'calib_slope.asc':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.map_slope(filesp[0], folder=projectdirs['Observed'],
+                                                                      filename=opt.split('.')[0])
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'aoi_fto.asc' or opt == 'calib_fto.asc':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.map_fto(filesp[0], filesp[1],
+                                                                    folder=projectdirs['Observed'],
+                                                                    filename=opt.split('.')[0])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     # deprecated options:
@@ -435,9 +455,9 @@ def main():
                                     '''
                     #
                     # calibrate models
-                    elif opt == observed_options[2]:
+                    elif opt == lng[26]:
                         while True:
-                            header(observed_options[2])
+                            header(lng[26])
                             calib_options = ('Calibrate Hydrology', 'Calibrate Population')
                             opt = menu({'Model':calib_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7], wng=lng[20],
                                        wngmsg=lng[8], chsn=lng[9])
@@ -462,6 +482,9 @@ def main():
                                         if metric == lng[10]:
                                             break
                                         else:
+                                            print('develop code!')
+                                            # deprecated code # todo new calib procedure
+                                            '''
                                             aux_str = 'CalibHydro' + '_' + metric
                                             dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
                                             fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
@@ -490,6 +513,7 @@ def main():
                                             # overwrite file
                                             aux_df = pd.read_csv(pset, sep=';')
                                             aux_df.to_csv(fparam, sep=';', index=False)
+                                            '''
                             elif opt == calib_options[1]:
                                 header(calib_options[1])
                                 print('missing code!')

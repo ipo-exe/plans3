@@ -473,9 +473,9 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
     :return: string file path
     """
     #
-    fig = plt.figure(figsize=(16, 12))  # Width, Height
-    gs = mpl.gridspec.GridSpec(7, 8, wspace=0.8, hspace=0.6)
-    #
+    fig = plt.figure(figsize=(16, 25))  # Width, Height
+    gs = mpl.gridspec.GridSpec(10, 8, wspace=0.8, hspace=0.6)  # nrows, ncols
+    # 1
     ind = 0
     ax = fig.add_subplot(gs[ind, 0:])
     plt.plot(dataframe['Date'], dataframe['Prec'])
@@ -484,42 +484,67 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
     plt.plot(dataframe['Date'], dataframe['Temp'], 'tab:orange')
     plt.ylabel('Temp °C')
     plt.grid(grid)
-    #
+    # 2
     ind = ind + 1
     ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
     plt.plot(dataframe['Date'], dataframe['PET'], 'k', label='PET')
     plt.plot(dataframe['Date'], dataframe['ET'], 'tab:red', label='ET')
-    plt.plot(dataframe['Date'], dataframe['Tp'], 'r', label='Tp')
-    plt.ylabel('PET & ET\nmm')
+    plt.plot(dataframe['Date'], dataframe['Tpun'] + dataframe['Tpgw'] , 'r', label='Tp')
+    plt.ylabel('PET, ET\nmm')
     plt.grid(grid)
-    #plt.legend()
-    #
+    plt.legend(loc='upper right', ncol=3)
+    # 3
     ind = ind + 1
     ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['S1'])
-    plt.ylabel('S1\nmm')
+    plt.plot(dataframe['Date'], dataframe['PET'], 'k', label='PET')
+    plt.plot(dataframe['Date'], dataframe['Evc'], 'tab:red', label='Evc')
+    plt.plot(dataframe['Date'], dataframe['Evs'], 'r', label='Evs')
+    plt.ylabel('PET & Ev\nmm')
     plt.grid(grid)
-    #
+    plt.legend(loc='upper right', ncol=3)
+    # 4
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['PET'], 'k', label='PET')
+    plt.plot(dataframe['Date'], dataframe['Tpun'], 'tab:red', label='Tpun')
+    plt.plot(dataframe['Date'], dataframe['Tpgw'], 'r', label='Tpgw')
+    plt.ylabel('PET & Tp\nmm')
+    plt.grid(grid)
+    plt.legend(loc='upper right', ncol=3)
+    # 5
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
+    #plt.plot(dataframe['Date'], dataframe['Cpy'])
+    plt.plot(dataframe['Date'], dataframe['TF'])
+    plt.ylabel('Cpy&TF\nmm')
+    plt.grid(grid)
+    # 6
     ind = ind + 1
     ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
     plt.plot(dataframe['Date'], dataframe['R'], 'tab:orange')
     plt.plot(dataframe['Date'], dataframe['Inf'], 'k')
     plt.ylabel('R & Inf\nmm')
     plt.grid(grid)
-    #
+    # 7
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['Sfs'])
+    plt.ylabel('Sfs\nmm')
+    plt.grid(grid)
+    # 8
     ind = ind + 1
     ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
     plt.plot(dataframe['Date'], dataframe['D'], 'k')
-    plt.plot(dataframe['Date'], dataframe['S2'])
-    plt.ylabel('S2 & D\nmm')
+    plt.plot(dataframe['Date'], dataframe['Unz'])
+    plt.ylabel('Unz & D\nmm')
     plt.grid(grid)
-    #
+    # 9
     ind = ind + 1
     ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
     plt.plot(dataframe['Date'], dataframe['Qv'])
     plt.ylabel('Qv\nmm')
     plt.grid(grid)
-    #
+    # 10
     ind = ind + 1
     ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
     if qobs:
@@ -643,3 +668,22 @@ def pannel_topmodel_maps(t, prec, precmax, qb, qbmax, pet, et, etmax, maps, maps
         plt.savefig(filepath)
         plt.close(fig)
         return filepath
+
+
+def plot_zmap3d(zmap, x, y):
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    X = np.arange(0, len(x), 1)
+    Y = np.arange(0, len(y), 1)
+    X, Y = np.meshgrid(Y, X)
+    Z = np.sin(R)
+    ax.plot_surface(X, Y, np.log10(count + 1), cmap='viridis', edgecolor='none')
+    ax.set_title('Surface plot')
+    plt.show()
+
+
+def plot_qualmap_view(map, colors, meta):
+    from matplotlib.colors import ListedColormap
+    cmap = ListedColormap(colors)
+    plt.imshow(map, cmap=cmap)
+    plt.axis('off')
+    plt.show()

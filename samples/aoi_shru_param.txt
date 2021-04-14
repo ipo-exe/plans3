@@ -1,0 +1,46 @@
+IdSHRU;SHRUName;IdLULC;IdSoil;LULCName;f_Canopy;f_RootDepth;f_Surface;f_IRA;f_IRI;C_USLE;P_USLE;ConvertTo;ColorLULC;SoilName;f_To;f_Ksat;Porosity;K_USLE;ColorSoil;f_EfRootZone
+101;Water_Alluvial;1;1;Water;0.364;0.75;103.62799999999999;0.0;0;1.0;1.0;none;blue;Alluvial;1.0;1.0;0.12;0.0021;tan;0.09
+102;Water_Colluvial;1;2;Water;0.364;0.75;103.62799999999999;0.0;0;1.0;1.0;none;blue;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;0.07500000000000001
+103;Water_Residual;1;3;Water;0.364;0.75;103.62799999999999;0.0;0;1.0;1.0;none;blue;Residual;1.0;0.74;0.08;0.0042;brown;0.06
+104;Water_Hydrosol;1;4;Water;0.364;0.75;103.62799999999999;0.0;0;1.0;1.0;none;blue;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.037500000000000006
+105;Water_Neosols;1;5;Water;0.364;0.75;103.62799999999999;0.0;0;1.0;1.0;none;blue;Neosols;0.5;0.05;0.04;0.0013;coral;0.03
+201;Urban_Alluvial;2;1;Urban;1.0;1.0;1.0;0.0;0;0.1;1.0;none;grey;Alluvial;1.0;1.0;0.12;0.0021;tan;0.12
+202;Urban_Colluvial;2;2;Urban;1.0;1.0;1.0;0.0;0;0.1;1.0;none;grey;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;0.1
+203;Urban_Residual;2;3;Urban;1.0;1.0;1.0;0.0;0;0.1;1.0;none;grey;Residual;1.0;0.74;0.08;0.0042;brown;0.08
+204;Urban_Hydrosol;2;4;Urban;1.0;1.0;1.0;0.0;0;0.1;1.0;none;grey;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.05
+205;Urban_Neosols;2;5;Urban;1.0;1.0;1.0;0.0;0;0.1;1.0;none;grey;Neosols;0.5;0.05;0.04;0.0013;coral;0.04
+301;Forest_Alluvial;3;1;Forest;90.471;16.032;25.391;0.0;0;0.0001;1.0;none;darkgreen;Alluvial;1.0;1.0;0.12;0.0021;tan;1.92384
+302;Forest_Colluvial;3;2;Forest;90.471;16.032;25.391;0.0;0;0.0001;1.0;none;darkgreen;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;1.6032000000000002
+303;Forest_Residual;3;3;Forest;90.471;16.032;25.391;0.0;0;0.0001;1.0;none;darkgreen;Residual;1.0;0.74;0.08;0.0042;brown;1.28256
+304;Forest_Hydrosol;3;4;Forest;90.471;16.032;25.391;0.0;0;0.0001;1.0;none;darkgreen;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.8016000000000001
+305;Forest_Neosols;3;5;Forest;90.471;16.032;25.391;0.0;0;0.0001;1.0;none;darkgreen;Neosols;0.5;0.05;0.04;0.0013;coral;0.64128
+401;Pasture_Alluvial;4;1;Pasture;42.683;4.573;14.932;1.0;0;0.06;1.0;7 & 8 & 9;goldenrod;Alluvial;1.0;1.0;0.12;0.0021;tan;0.54876
+402;Pasture_Colluvial;4;2;Pasture;42.683;4.573;14.932;1.0;0;0.06;1.0;7 & 8 & 9;goldenrod;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;0.45730000000000004
+403;Pasture_Residual;4;3;Pasture;42.683;4.573;14.932;1.0;0;0.06;1.0;7 & 8 & 9;goldenrod;Residual;1.0;0.74;0.08;0.0042;brown;0.36584000000000005
+404;Pasture_Hydrosol;4;4;Pasture;42.683;4.573;14.932;1.0;0;0.06;1.0;7 & 8 & 9;goldenrod;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.22865000000000002
+405;Pasture_Neosols;4;5;Pasture;42.683;4.573;14.932;1.0;0;0.06;1.0;7 & 8 & 9;goldenrod;Neosols;0.5;0.05;0.04;0.0013;coral;0.18292000000000003
+501;Crops_Alluvial;5;1;Crops;25.680999999999997;2.9219999999999997;12.908;1.0;1;0.4;1.0;7 & 8 & 9;orange;Alluvial;1.0;1.0;0.12;0.0021;tan;0.35063999999999995
+502;Crops_Colluvial;5;2;Crops;25.680999999999997;2.9219999999999997;12.908;1.0;1;0.4;1.0;7 & 8 & 9;orange;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;0.29219999999999996
+503;Crops_Residual;5;3;Crops;25.680999999999997;2.9219999999999997;12.908;1.0;1;0.4;1.0;7 & 8 & 9;orange;Residual;1.0;0.74;0.08;0.0042;brown;0.23375999999999997
+504;Crops_Hydrosol;5;4;Crops;25.680999999999997;2.9219999999999997;12.908;1.0;1;0.4;1.0;7 & 8 & 9;orange;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.14609999999999998
+505;Crops_Neosols;5;5;Crops;25.680999999999997;2.9219999999999997;12.908;1.0;1;0.4;1.0;7 & 8 & 9;orange;Neosols;0.5;0.05;0.04;0.0013;coral;0.11687999999999998
+601;Wetland_Alluvial;6;1;Wetland;65.763;12.669;80.708;0.0;0;0.001;1.0;none;teal;Alluvial;1.0;1.0;0.12;0.0021;tan;1.52028
+602;Wetland_Colluvial;6;2;Wetland;65.763;12.669;80.708;0.0;0;0.001;1.0;none;teal;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;1.2669000000000001
+603;Wetland_Residual;6;3;Wetland;65.763;12.669;80.708;0.0;0;0.001;1.0;none;teal;Residual;1.0;0.74;0.08;0.0042;brown;1.01352
+604;Wetland_Hydrosol;6;4;Wetland;65.763;12.669;80.708;0.0;0;0.001;1.0;none;teal;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.6334500000000001
+605;Wetland_Neosols;6;5;Wetland;65.763;12.669;80.708;0.0;0;0.001;1.0;none;teal;Neosols;0.5;0.05;0.04;0.0013;coral;0.50676
+701;NBS-Forest_Alluvial;7;1;NBS-Forest;52.38399999999999;8.955;18.820999999999998;0.0;0;0.003;1.0;none;limegreen;Alluvial;1.0;1.0;0.12;0.0021;tan;1.0746
+702;NBS-Forest_Colluvial;7;2;NBS-Forest;52.38399999999999;8.955;18.820999999999998;0.0;0;0.003;1.0;none;limegreen;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;0.8955000000000001
+703;NBS-Forest_Residual;7;3;NBS-Forest;52.38399999999999;8.955;18.820999999999998;0.0;0;0.003;1.0;none;limegreen;Residual;1.0;0.74;0.08;0.0042;brown;0.7164
+704;NBS-Forest_Hydrosol;7;4;NBS-Forest;52.38399999999999;8.955;18.820999999999998;0.0;0;0.003;1.0;none;limegreen;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.44775000000000004
+705;NBS-Forest_Neosols;7;5;NBS-Forest;52.38399999999999;8.955;18.820999999999998;0.0;0;0.003;1.0;none;limegreen;Neosols;0.5;0.05;0.04;0.0013;coral;0.3582
+801;NBS-Pasture_Alluvial;8;1;NBS-Pasture;48.608000000000004;5.688;30.379;0.0;0;0.06;0.3;none;olive;Alluvial;1.0;1.0;0.12;0.0021;tan;0.68256
+802;NBS-Pasture_Colluvial;8;2;NBS-Pasture;48.608000000000004;5.688;30.379;0.0;0;0.06;0.3;none;olive;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;0.5688
+803;NBS-Pasture_Residual;8;3;NBS-Pasture;48.608000000000004;5.688;30.379;0.0;0;0.06;0.3;none;olive;Residual;1.0;0.74;0.08;0.0042;brown;0.45504
+804;NBS-Pasture_Hydrosol;8;4;NBS-Pasture;48.608000000000004;5.688;30.379;0.0;0;0.06;0.3;none;olive;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.2844
+805;NBS-Pasture_Neosols;8;5;NBS-Pasture;48.608000000000004;5.688;30.379;0.0;0;0.06;0.3;none;olive;Neosols;0.5;0.05;0.04;0.0013;coral;0.22752
+901;NBS-Crops_Alluvial;9;1;NBS-Crops;40.580999999999996;4.178999999999999;28.671;0.5;0;0.4;0.6;none;gold;Alluvial;1.0;1.0;0.12;0.0021;tan;0.5014799999999999
+902;NBS-Crops_Colluvial;9;2;NBS-Crops;40.580999999999996;4.178999999999999;28.671;0.5;0;0.4;0.6;none;gold;Colluvial;1.0;0.98;0.1;0.009000000000000001;sienna;0.41789999999999994
+903;NBS-Crops_Residual;9;3;NBS-Crops;40.580999999999996;4.178999999999999;28.671;0.5;0;0.4;0.6;none;gold;Residual;1.0;0.74;0.08;0.0042;brown;0.33431999999999995
+904;NBS-Crops_Hydrosol;9;4;NBS-Crops;40.580999999999996;4.178999999999999;28.671;0.5;0;0.4;0.6;none;gold;Hydrosol;1.0;0.32;0.05;0.0021;slategray;0.20894999999999997
+905;NBS-Crops_Neosols;9;5;NBS-Crops;40.580999999999996;4.178999999999999;28.671;0.5;0;0.4;0.6;none;gold;Neosols;0.5;0.05;0.04;0.0013;coral;0.16715999999999998
