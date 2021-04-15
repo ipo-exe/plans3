@@ -15,7 +15,7 @@ Text
 If you are lucky, your `aoi` is the same of `calib`. But most of cases they may differ.
 Warning: make sure your `calib` basin is **reasonably similar in terms of geology** of your `aoi` basin. 
 
-figure
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/aoi_calib.PNG "aoi_calib")
 
 
 ### `lulc` - land use and land cover
