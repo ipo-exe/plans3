@@ -23,7 +23,8 @@ Warning: make sure your `calib` basin is **reasonably similar in terms of geolog
 `lulc` is the set of classes of land use and land cover. 
 Classes may have attributes of management practices. For instance, you may want to separate _conventional croplands_
  and _conservation croplands_ in different `lulc` classes. One important feature of `lulc` is that
- **it can be changed by human action** (which means that you will need many maps of `lulc`!).
+ **it can be changed by human action** (which means that you will need many maps of `lulc`!). 
+ 
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/lulc.PNG "calib_lulc")
 
@@ -47,42 +48,63 @@ You do not have to worry about these classes since `plans3` do the job of creati
  
  ![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "calib_shru")
 
+### `etpat` - daily pattern of ET
+
+`etpat` is the daily spatial pattern of actual evapotranspiration `ET` used for model pattern calibration.
+The map units does not matter but must be positively correlated with `ET`. 
+You may use remote-sense data sets, such as:
+* Thermal band;
+* Surface Temperature;
+* ET (SEBAL);
+
+![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/etpat.PNG "calib_shru")
 
 ### `dem` - digital elevation model
 
-Text
+`dem` stands for Digital Elevation Model. It is a grid map of surface elevation.
 
-![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_dem")
+![DEM](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_dem")
 
 
 ### `slope` - local terrain slope
 
-Text
+`slope` is the estimated terrain angle in degrees. `plans3` can derive it from the `dem` map.
 
 ![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "calib_slope")
 
 
 ### `catcha` - local catchment area
 
-Text
+`catcha` is a map of local catchment area, also known as `flow accumulation`. 
+It is expressed in squared meters. 
+> Tip: You may derive this map from `dem` processing in a GIS Desktop 
+Application, such as QGIS. If so, do not forget to conditionate the `dem` for hydrology analysis (i.e., remove sinks).
 
 ![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/catcha.PNG "calib_catcha")
 
-### `fto` - local factor of soil transmissivity
+### `fto` - local factor of soil water transmissivity
 
-Text
+`fto` is a map of local factor of soil water transmissivity `to`. By factor we mean no units, it is just a value of how much 
+the transmissivity of a patch of soil if proportional to the basin-wide effective soil transmissivity.
 
 ![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/fto.PNG "calib_fto")
 
 ### `twi` - topographic wetness index
 
-Text
+`twi` stands for topographical wetness index. It just is a unit-less value of the propensity of soil get saturated by 
+the water table. The higher the value, the more is the saturation propensity.
+
+The local `twi` of Beven and Kirkby (1979) is defined by :
+> twi = ln(catcha / (fto * tan(slope)))
+
+But you may change that, as you please. Just make sure the highest values are related to more saturation 
+so the local deficit `di` of water is mapped by the following equation:
+
+> di = d_g + m * (twi_g - twi)
+
+Where `d_g` is the basin-wide (global) water deficit, `twi_g` is average global `twi` and `m` is a scaling parameter. 
 
 ![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twi")
 
-### `etpat` - monthly pattern of ET
 
-Text
-
-![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/etpat.PNG "calib_shru")
 
