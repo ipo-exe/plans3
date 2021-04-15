@@ -102,8 +102,8 @@ IdLULC;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P
      1;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue
      2;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey
      3;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen
-     4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod
-     5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange
+     4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;      khaki
+     5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;  goldenrod
      6;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal
      7;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen
      8;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive
@@ -196,10 +196,10 @@ sample file
 ```
 IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
      1;   Alluvial;  1.0;     1.0;      0.12;  0.0021;        tan
-     2;  Colluvial;  1.0;    0.98;       0.1;   0.009;     sienna
-     3;   Residual;  1.0;    0.74;      0.08;  0.0042;      brown
-     4;   Hydrosol;  1.0;    0.32;      0.05;  0.0021;  slategray
-     5;    Neosols;  0.5;    0.05;      0.04;  0.0013;      coral
+     2;  Colluvial;  1.0;    0.98;       0.1;   0.009;  goldenrod
+     3;   Residual;  1.0;    0.74;      0.08;  0.0042;     sienna
+     4;   Hydrosol;  1.0;    0.32;      0.05;  0.0021;      brown
+     5;    Neosols;  0.5;    0.05;      0.04;  0.0013;     maroon
 ```
 
 ## `calib_basin.asc`
@@ -319,8 +319,8 @@ IdLULC;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P
      1;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue
      2;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey
      3;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen
-     4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod
-     5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange
+     4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;      khaki
+     5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;  goldenrod
      6;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal
      7;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen
      8;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive
@@ -399,10 +399,10 @@ IdLULC;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P
 ```
 IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
      1;   Alluvial;  1.0;     1.0;      0.12;  0.0021;        tan
-     2;  Colluvial;  1.0;    0.98;       0.1;   0.009;     sienna
-     3;   Residual;  1.0;    0.74;      0.08;  0.0042;      brown
-     4;   Hydrosol;  1.0;    0.32;      0.05;  0.0021;  slategray
-     5;    Neosols;  0.5;    0.05;      0.04;  0.0013;      coral
+     2;  Colluvial;  1.0;    0.98;       0.1;   0.009;  goldenrod
+     3;   Residual;  1.0;    0.74;      0.08;  0.0042;     sienna
+     4;   Hydrosol;  1.0;    0.32;      0.05;  0.0021;      brown
+     5;    Neosols;  0.5;    0.05;      0.04;  0.0013;     maroon
 ```
 
 ## `hydro_param.txt`
@@ -527,50 +527,50 @@ derived | calib_twi | asc | raster map
 ```
 IdSHRU;               SHRUName; IdLULC; IdSoil;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P_USLE;  ConvertTo;  ColorLULC;   SoilName; f_To; f_Ksat; Porosity;  K_USLE;  ColorSoil;  f_EfRootZone
    101;         Water_Alluvial;      1;      1;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.09000
-   102;        Water_Colluvial;      1;      2;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.07500
-   103;         Water_Residual;      1;      3;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.06000
-   104;         Water_Hydrosol;      1;      4;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.03750
-   105;          Water_Neosols;      1;      5;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.03000
+   102;        Water_Colluvial;      1;      2;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.07500
+   103;         Water_Residual;      1;      3;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.06000
+   104;         Water_Hydrosol;      1;      4;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.03750
+   105;          Water_Neosols;      1;      5;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.03000
    201;         Urban_Alluvial;      2;      1;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.12000
-   202;        Urban_Colluvial;      2;      2;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.10000
-   203;         Urban_Residual;      2;      3;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.08000
-   204;         Urban_Hydrosol;      2;      4;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.05000
-   205;          Urban_Neosols;      2;      5;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.04000
+   202;        Urban_Colluvial;      2;      2;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.10000
+   203;         Urban_Residual;      2;      3;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.08000
+   204;         Urban_Hydrosol;      2;      4;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.05000
+   205;          Urban_Neosols;      2;      5;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.04000
    301;        Forest_Alluvial;      3;      1;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       1.92384
-   302;       Forest_Colluvial;      3;      2;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       1.60320
-   303;        Forest_Residual;      3;      3;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       1.28256
-   304;        Forest_Hydrosol;      3;      4;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.80160
-   305;         Forest_Neosols;      3;      5;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.64128
+   302;       Forest_Colluvial;      3;      2;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       1.60320
+   303;        Forest_Residual;      3;      3;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       1.28256
+   304;        Forest_Hydrosol;      3;      4;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.80160
+   305;         Forest_Neosols;      3;      5;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.64128
    401;       Pasture_Alluvial;      4;      1;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.54876
-   402;      Pasture_Colluvial;      4;      2;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.45730
-   403;       Pasture_Residual;      4;      3;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.36584
-   404;       Pasture_Hydrosol;      4;      4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.22865
-   405;        Pasture_Neosols;      4;      5;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.18292
+   402;      Pasture_Colluvial;      4;      2;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.45730
+   403;       Pasture_Residual;      4;      3;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.36584
+   404;       Pasture_Hydrosol;      4;      4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.22865
+   405;        Pasture_Neosols;      4;      5;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.18292
    501;         Crops_Alluvial;      5;      1;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.35064
-   502;        Crops_Colluvial;      5;      2;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.29220
-   503;         Crops_Residual;      5;      3;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.23376
-   504;         Crops_Hydrosol;      5;      4;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.14610
-   505;          Crops_Neosols;      5;      5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.11688
+   502;        Crops_Colluvial;      5;      2;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.29220
+   503;         Crops_Residual;      5;      3;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.23376
+   504;         Crops_Hydrosol;      5;      4;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.14610
+   505;          Crops_Neosols;      5;      5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.11688
    601;       Wetland_Alluvial;      6;      1;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       1.52028
-   602;      Wetland_Colluvial;      6;      2;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       1.26690
-   603;       Wetland_Residual;      6;      3;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       1.01352
-   604;       Wetland_Hydrosol;      6;      4;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.63345
-   605;        Wetland_Neosols;      6;      5;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.50676
+   602;      Wetland_Colluvial;      6;      2;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       1.26690
+   603;       Wetland_Residual;      6;      3;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       1.01352
+   604;       Wetland_Hydrosol;      6;      4;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.63345
+   605;        Wetland_Neosols;      6;      5;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.50676
    701;    NBS-Forest_Alluvial;      7;      1;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       1.07460
-   702;   NBS-Forest_Colluvial;      7;      2;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.89550
-   703;    NBS-Forest_Residual;      7;      3;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.71640
-   704;    NBS-Forest_Hydrosol;      7;      4;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.44775
-   705;     NBS-Forest_Neosols;      7;      5;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.35820
+   702;   NBS-Forest_Colluvial;      7;      2;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.89550
+   703;    NBS-Forest_Residual;      7;      3;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.71640
+   704;    NBS-Forest_Hydrosol;      7;      4;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.44775
+   705;     NBS-Forest_Neosols;      7;      5;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.35820
    801;   NBS-Pasture_Alluvial;      8;      1;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.68256
-   802;  NBS-Pasture_Colluvial;      8;      2;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.56880
-   803;   NBS-Pasture_Residual;      8;      3;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.45504
-   804;   NBS-Pasture_Hydrosol;      8;      4;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.28440
-   805;    NBS-Pasture_Neosols;      8;      5;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.22752
+   802;  NBS-Pasture_Colluvial;      8;      2;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.56880
+   803;   NBS-Pasture_Residual;      8;      3;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.45504
+   804;   NBS-Pasture_Hydrosol;      8;      4;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.28440
+   805;    NBS-Pasture_Neosols;      8;      5;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.22752
    901;     NBS-Crops_Alluvial;      9;      1;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.50148
-   902;    NBS-Crops_Colluvial;      9;      2;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.41790
-   903;     NBS-Crops_Residual;      9;      3;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.33432
-   904;     NBS-Crops_Hydrosol;      9;      4;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.20895
-   905;      NBS-Crops_Neosols;      9;      5;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.16716
+   902;    NBS-Crops_Colluvial;      9;      2;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.41790
+   903;     NBS-Crops_Residual;      9;      3;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.33432
+   904;     NBS-Crops_Hydrosol;      9;      4;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.20895
+   905;      NBS-Crops_Neosols;      9;      5;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.16716
 ```
 
 ## `aoi_shru_series.txt`
@@ -700,50 +700,50 @@ sample file
 ```
 IdSHRU;               SHRUName; IdLULC; IdSoil;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P_USLE;  ConvertTo;  ColorLULC;   SoilName; f_To; f_Ksat; Porosity;  K_USLE;  ColorSoil;  f_EfRootZone
    101;         Water_Alluvial;      1;      1;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.09000
-   102;        Water_Colluvial;      1;      2;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.07500
-   103;         Water_Residual;      1;      3;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.06000
-   104;         Water_Hydrosol;      1;      4;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.03750
-   105;          Water_Neosols;      1;      5;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.03000
+   102;        Water_Colluvial;      1;      2;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.07500
+   103;         Water_Residual;      1;      3;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.06000
+   104;         Water_Hydrosol;      1;      4;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.03750
+   105;          Water_Neosols;      1;      5;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.03000
    201;         Urban_Alluvial;      2;      1;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.12000
-   202;        Urban_Colluvial;      2;      2;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.10000
-   203;         Urban_Residual;      2;      3;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.08000
-   204;         Urban_Hydrosol;      2;      4;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.05000
-   205;          Urban_Neosols;      2;      5;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.04000
+   202;        Urban_Colluvial;      2;      2;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.10000
+   203;         Urban_Residual;      2;      3;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.08000
+   204;         Urban_Hydrosol;      2;      4;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.05000
+   205;          Urban_Neosols;      2;      5;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.04000
    301;        Forest_Alluvial;      3;      1;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       1.92384
-   302;       Forest_Colluvial;      3;      2;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       1.60320
-   303;        Forest_Residual;      3;      3;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       1.28256
-   304;        Forest_Hydrosol;      3;      4;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.80160
-   305;         Forest_Neosols;      3;      5;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.64128
+   302;       Forest_Colluvial;      3;      2;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       1.60320
+   303;        Forest_Residual;      3;      3;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       1.28256
+   304;        Forest_Hydrosol;      3;      4;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.80160
+   305;         Forest_Neosols;      3;      5;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.64128
    401;       Pasture_Alluvial;      4;      1;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.54876
-   402;      Pasture_Colluvial;      4;      2;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.45730
-   403;       Pasture_Residual;      4;      3;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.36584
-   404;       Pasture_Hydrosol;      4;      4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.22865
-   405;        Pasture_Neosols;      4;      5;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.18292
+   402;      Pasture_Colluvial;      4;      2;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.45730
+   403;       Pasture_Residual;      4;      3;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.36584
+   404;       Pasture_Hydrosol;      4;      4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.22865
+   405;        Pasture_Neosols;      4;      5;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;  goldenrod;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.18292
    501;         Crops_Alluvial;      5;      1;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.35064
-   502;        Crops_Colluvial;      5;      2;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.29220
-   503;         Crops_Residual;      5;      3;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.23376
-   504;         Crops_Hydrosol;      5;      4;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.14610
-   505;          Crops_Neosols;      5;      5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.11688
+   502;        Crops_Colluvial;      5;      2;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.29220
+   503;         Crops_Residual;      5;      3;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.23376
+   504;         Crops_Hydrosol;      5;      4;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.14610
+   505;          Crops_Neosols;      5;      5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;     orange;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.11688
    601;       Wetland_Alluvial;      6;      1;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       1.52028
-   602;      Wetland_Colluvial;      6;      2;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       1.26690
-   603;       Wetland_Residual;      6;      3;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       1.01352
-   604;       Wetland_Hydrosol;      6;      4;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.63345
-   605;        Wetland_Neosols;      6;      5;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.50676
+   602;      Wetland_Colluvial;      6;      2;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       1.26690
+   603;       Wetland_Residual;      6;      3;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       1.01352
+   604;       Wetland_Hydrosol;      6;      4;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.63345
+   605;        Wetland_Neosols;      6;      5;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.50676
    701;    NBS-Forest_Alluvial;      7;      1;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       1.07460
-   702;   NBS-Forest_Colluvial;      7;      2;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.89550
-   703;    NBS-Forest_Residual;      7;      3;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.71640
-   704;    NBS-Forest_Hydrosol;      7;      4;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.44775
-   705;     NBS-Forest_Neosols;      7;      5;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.35820
+   702;   NBS-Forest_Colluvial;      7;      2;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.89550
+   703;    NBS-Forest_Residual;      7;      3;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.71640
+   704;    NBS-Forest_Hydrosol;      7;      4;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.44775
+   705;     NBS-Forest_Neosols;      7;      5;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.35820
    801;   NBS-Pasture_Alluvial;      8;      1;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.68256
-   802;  NBS-Pasture_Colluvial;      8;      2;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.56880
-   803;   NBS-Pasture_Residual;      8;      3;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.45504
-   804;   NBS-Pasture_Hydrosol;      8;      4;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.28440
-   805;    NBS-Pasture_Neosols;      8;      5;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.22752
+   802;  NBS-Pasture_Colluvial;      8;      2;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.56880
+   803;   NBS-Pasture_Residual;      8;      3;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.45504
+   804;   NBS-Pasture_Hydrosol;      8;      4;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.28440
+   805;    NBS-Pasture_Neosols;      8;      5;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.22752
    901;     NBS-Crops_Alluvial;      9;      1;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Alluvial;  1.0;    1.0;     0.12;  0.0021;        tan;       0.50148
-   902;    NBS-Crops_Colluvial;      9;      2;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;  Colluvial;  1.0;   0.98;      0.1;   0.009;     sienna;       0.41790
-   903;     NBS-Crops_Residual;      9;      3;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Residual;  1.0;   0.74;     0.08;  0.0042;      brown;       0.33432
-   904;     NBS-Crops_Hydrosol;      9;      4;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;  slategray;       0.20895
-   905;      NBS-Crops_Neosols;      9;      5;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;    Neosols;  0.5;   0.05;     0.04;  0.0013;      coral;       0.16716
+   902;    NBS-Crops_Colluvial;      9;      2;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;  Colluvial;  1.0;   0.98;      0.1;   0.009;  goldenrod;       0.41790
+   903;     NBS-Crops_Residual;      9;      3;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Residual;  1.0;   0.74;     0.08;  0.0042;     sienna;       0.33432
+   904;     NBS-Crops_Hydrosol;      9;      4;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;   Hydrosol;  1.0;   0.32;     0.05;  0.0021;      brown;       0.20895
+   905;      NBS-Crops_Neosols;      9;      5;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold;    Neosols;  0.5;   0.05;     0.04;  0.0013;     maroon;       0.16716
 ```
 
 ## `calib_slope.asc`

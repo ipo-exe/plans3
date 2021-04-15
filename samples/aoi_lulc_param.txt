@@ -2,8 +2,8 @@ IdLULC;LULCName;f_Canopy;f_RootDepth;f_Surface;f_IRA;f_IRI;C_USLE;P_USLE;Convert
 1;Water;0.364;0.75;103.628;0;0;1;1;none;blue
 2;Urban;1;1;1;0;0;0.1;1;none;grey
 3;Forest;90.471;16.032;25.391;0;0;0.0001;1;none;darkgreen
-4;Pasture;42.683;4.573;14.932;1;0;0.06;1;7 & 8 & 9;goldenrod
-5;Crops;25.681;2.922;12.908;1;1;0.4;1;7 & 8 & 9;orange
+4;Pasture;42.683;4.573;14.932;1;0;0.06;1;7 & 8 & 9;khaki
+5;Crops;25.681;2.922;12.908;1;1;0.4;1;7 & 8 & 9;goldenrod
 6;Wetland;65.763;12.669;80.708;0;0;0.001;1;none;teal
 7;NBS-Forest;52.384;8.955;18.821;0;0;0.003;1;none;limegreen
 8;NBS-Pasture;48.608;5.688;30.379;0;0;0.06;0.3;none;olive

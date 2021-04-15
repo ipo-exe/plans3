@@ -548,29 +548,31 @@ def main(root='default', importing=True):
                         header(opt)
                         print('develop code')
                         # deprecated code:
-                        '''
                         #
                         # simulate hydrology
-                        elif opt == project_options[4]:
+                        if opt == 'Simulate CALIB hydrology':
                             # checker protocol
                             header(lng[32])
-                            if backend.check_simhydro_files(project_nm, rootdir):
+                            if backend.check_simhydro_files(project_nm, rootdir, aoi=False):
                                 warning(wng=lng[20], msg=lng[27])
-                                filessim_df = backend.verify_simhydro_files(project_nm, rootdir)
+                                filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=False)
                                 print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
                             else:
-                                fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
-                                faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
-                                ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
-                                fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
-                                fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
+                                files_input = backend.get_input2simbhydro(aoi=False)
+                                folder = projectdirs['Observed']
+                                fseries = folder + '/' + files_input[0]
+                                ftwi = folder + '/' + files_input[1]
+                                fshru = folder + '/' + files_input[2]
+                                fbasin = folder + '/' + files_input[3]
+                                fshruparam = folder + '/' + files_input[4]
+                                fhydroparam = folder + '/' + files_input[5]
                                 dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
-                                files = tools.run_topmodel(fseries=fseries, fparam=fparam, faoi=faoi, ftwi=ftwi,
-                                                           fcn=fcn, folder=dst_dir, tui=True, mapback=False,
-                                                           mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True)
-                                files_analyst = tools.obs_sim_analyst(fseries=files[2], fld_obs='Qobs', fld_sim='Q',
+                                files = tools.run_short_hydrology(fseries=fseries, fhydroparam=fhydroparam,
+                                                                  mapvar='D-Inf-R', qobs=True,
+                                                                  fshruparam=fshruparam, fbasin=fbasin, fshru=fshru,
+                                                                  ftwi=ftwi, folder=dst_dir, tui=True, mapback=True)
+                                files_analyst = tools.obs_sim_analyst(fseries=files[0], fld_obs='Qobs', fld_sim='Q',
                                                                       folder=dst_dir, tui=True)
-                        '''
                     # simulate observed policy
                     elif opt == sim_options[1]:
                         header(opt)

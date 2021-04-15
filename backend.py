@@ -159,13 +159,6 @@ def get_root_dir(root='C:/Plans3'):
         os.mkdir(root_dir_nm)
     return root_dir_nm
 
-# deprecated
-def get_prj_dirs_deprec():
-    dct = {'Datasets':'datasets', 'Observed':'observed', 'Projected':'projected',
-           'Runbin':'runbin', 'Simulation':'simulation', 'Optimization':'optimization',
-           'LULC':'lulc', 'CN':'cn', 'PPat':'ppat', 'TPat':'tpat'}
-    return dct
-
 
 def get_prj_dirs():
     dct = {'Datasets':'datasets', 'Observed':'observed', 'Projected':'projected',
@@ -310,19 +303,11 @@ def get_input2derived():
            'aoi_fto.asc': ('aoi_soils.asc', 'aoi_soils_param.txt'),
            'calib_fto.asc': ('calib_soils.asc', 'calib_soils_param.txt'),
            'calib_etpat_series.txt':('calib_etpat_series_input.txt',)}
-    # deprecated:
-    '''
-    dct = {'cn_series.txt':('lulc_series.txt', 'lulc_param.txt', 'soil.asc', 'soil_param.txt'),
-           'cn_calib.asc':('cn_series.txt', 'series_calib.txt'),
-           'series_calib_month.txt': ('series_calib.txt','aoi.asc'),
-           'twi.asc':('slope.asc', 'catcha.asc'),
-           'lulc_series.txt':('lulc_input.txt',),
-           'lulc_areas.txt': ('lulc_series.txt', 'lulc_param.txt', 'aoi.asc'),
-           'ppat_month.txt':('ppat_input.txt',),
-           'tpat_month.txt':('tpat_input.txt',)}
-    
-    '''
     return dct
+
+
+def get_mapid_byfile(filename):
+    return filename.split('.')[0].split('_')[1]
 
 
 def get_input2calibhydro():
@@ -330,8 +315,13 @@ def get_input2calibhydro():
     return files
 
 
-def get_input2simbhydro():
-    files = ('cn_calib.asc', 'twi.asc',  'aoi.asc', 'series_calib.txt', 'hydro_param.txt')
+def get_input2simbhydro(aoi=True):
+    if aoi:
+        files = ('aoi_series.txt', 'aoi_twi.asc', 'aoi_shru_series.txt', 'aoi_basin.asc',
+                 'aoi_shru_param.txt', 'hydro_param.txt')
+    else:
+        files = ('calib_series.txt', 'calib_twi.asc', 'calib_shru.asc', 'calib_basin.asc',
+                 'calib_shru_param.txt', 'hydro_param.txt')
     return files
 
 
@@ -387,9 +377,9 @@ def verify_calibhydro_files(p0='name', wkplc='C:'):
     return files_df
 
 
-def verify_simhydro_files(p0='name', wkplc='C:'):
+def verify_simhydro_files(p0='name', wkplc='C:', aoi=True):
     files_df = get_observed_files()
-    files = get_input2simbhydro()
+    files = get_input2simbhydro(aoi=aoi)
     existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
     status = list()
     for i in range(len(files)):
@@ -441,8 +431,8 @@ def check_calibhydro_files(p0='name', wkplc='C:'):
         return False
 
 
-def check_simhydro_files(p0='name', wkplc='C:'):
-    files_df = verify_simhydro_files(p0=p0, wkplc=wkplc)
+def check_simhydro_files(p0='name', wkplc='C:', aoi=True):
+    files_df = verify_simhydro_files(p0=p0, wkplc=wkplc, aoi=aoi)
     if 'missing' in set(files_df['Status'].values):
         return True
     else:

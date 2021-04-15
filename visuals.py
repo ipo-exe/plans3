@@ -683,9 +683,73 @@ def plot_zmap3d(zmap, x, y):
     plt.show()
 
 
-def plot_qualmap_view(map, colors, meta):
+def plot_qmap_view(map, meta, colors, names, ranges, mapid='dem', filename='mapview', folder='C:/bin', metadata=True):
     from matplotlib.colors import ListedColormap
     cmap = ListedColormap(colors)
-    plt.imshow(map, cmap=cmap)
+    #
+    fig = plt.figure(figsize=(6, 4.5))  # Width, Height
+    gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
+    #
+    ax = fig.add_subplot(gs[:, :3])
+    im = plt.imshow(map, cmap=cmap, vmin=ranges[0], vmax=ranges[1])
+    plt.title(mapid)
+    plt.axis('off')
+    #
+    # legend
+    ax = fig.add_subplot(gs[:, 3:])
+    plt.plot([0, 1], [0, 1], '.', alpha=0.0)
+    plt.text(x=0.0, y=1.0, s='Classes')
+    hei = 0.95
+    for i in range(len(names)):
+        plt.plot(0.0, hei, 's', color=colors[i])
+        plt.text(x=0.15, y=hei-0.015, s=names[i])
+        hei = hei - 0.05
+    if metadata:
+        plt.text(x=0.0, y=0.3, s='Metadata:')
+        plt.text(x=0.0, y=0.25, s='Rows: {}'.format(meta['nrows']))
+        plt.text(x=0.0, y=0.2, s='Columns: {}'.format(meta['ncols']))
+        plt.text(x=0.0, y=0.15, s='Cell size: {:.1f} m'.format(meta['cellsize']))
+        plt.text(x=0.0, y=0.1, s='xll: {:.2f} m'.format(meta['xllcorner']))
+        plt.text(x=0.0, y=0.05, s='yll: {:.2f} m'.format(meta['xllcorner']))
     plt.axis('off')
     plt.show()
+    expfile = folder + '/' + filename + '.png'
+
+
+
+
+def plot_map_view(map, meta, ranges, mapid='dem', filename='mapview', folder='C:/bin', metadata=True):
+    map_dct = {'dem': ['BrBG_r', 'Elevation'],
+               'slope': ['OrRd', 'Degrees'],
+               'twi': ['YlGnBu', 'Index units'],
+               'fto': ['Blues', 'Index units'],
+               'etpat': ['Blues', 'Index units'],
+               'catcha': ['Blues', 'Sq. Meters (log10)']}
+    #
+    fig = plt.figure(figsize=(6, 4.5))  # Width, Height
+    gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
+    #
+    ax = fig.add_subplot(gs[:, :3])
+    if mapid == 'catcha':
+        map = np.log10(map)
+        ranges = np.log10(ranges)
+    im = plt.imshow(map, cmap=map_dct[mapid][0], vmin=ranges[0], vmax=ranges[1])
+    plt.title(mapid)
+    plt.axis('off')
+    plt.colorbar(im, shrink=0.4)
+    #
+    #
+    ax = fig.add_subplot(gs[:, 3:])
+    plt.text(x=-0.45, y=0.75, s=map_dct[mapid][1])
+    if metadata:
+        plt.text(x=0.0, y=0.3, s='Metadata:')
+        plt.text(x=0.0, y=0.25, s='Rows: {}'.format(meta['nrows']))
+        plt.text(x=0.0, y=0.2, s='Columns: {}'.format(meta['ncols']))
+        plt.text(x=0.0, y=0.15, s='Cell size: {:.1f} m'.format(meta['cellsize']))
+        plt.text(x=0.0, y=0.1, s='xll: {:.2f} m'.format(meta['xllcorner']))
+        plt.text(x=0.0, y=0.05, s='yll: {:.2f} m'.format(meta['xllcorner']))
+    plt.axis('off')
+    plt.show()
+    expfile = folder + '/' + filename + '.png'
+    #plt.savefig(expfile)
+    #plt.close(fig)
