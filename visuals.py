@@ -551,7 +551,9 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
         plt.plot(dataframe['Date'], dataframe['Qobs'], 'tab:orange')
     plt.plot(dataframe['Date'], dataframe['Q'])
     plt.plot(dataframe['Date'], dataframe['Qb'], 'navy')
-    plt.ylim(0.9 * np.min((dataframe['Q'].values, dataframe['Qobs'].values)), 1.1 * np.max((dataframe['Q'].values, dataframe['Qobs'].values)))
+    if qobs:
+        plt.ylim(0.9 * np.min((dataframe['Q'].values, dataframe['Qobs'].values)),
+                 1.1 * np.max((dataframe['Q'].values, dataframe['Qobs'].values)))
     plt.ylabel('Q mm')
     plt.yscale('log')
     plt.grid(grid)

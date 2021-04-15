@@ -5,30 +5,84 @@
 
 Text
 
-### `aoi` - area of interest 
+### `aoi` - basin area of interest 
 
-Text
+`aoi` is the basin area that you want to do the modelling.  
 
-### `calib` - area of model calibration
+### `calib` - basin area of model calibration
 
-Text
+`calib` is the gauged basin area where **flow data is available** for model calibration. 
+If you are lucky, your `aoi` is the same of `calib`. But most of cases they may differ.
+Warning: make sure your `calib` basin is **reasonably similar in terms of geology** of your `aoi` basin. 
+
+figure
 
 
 ### `lulc` - land use and land cover
 
-Text
+`lulc` is the set of classes of land use and land cover. 
+Classes may have attributes of management practices. For instance, you may want to separate _conventional croplands_
+ and _conservation croplands_ in different `lulc` classes. One important feature of `lulc` is that
+ **it can be changed by human action** (which means that you will need many maps of `lulc`!).
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/lulc.PNG "calib_lulc")
 
 ### `soils` - soils
 
-Text
+`soils` is the set of classes of soils. These are considered static in human time scales. 
+Note: `soils` classes not include the organic superficial horizon of soil, which actually is related to `lulc`.   
+
+![Soils](https://github.com/ipo-exe/plans3/blob/main/docs/figs/soils.PNG "calib_soils")
 
 ### `shru` - surface hydrologic response units
 
+`shru` stands for Surface Hydrologic Response Units. Those are patches in the landscape 
+that behave similarly in terms of surface hydrology. By surface hydrology we refer to processes such as
+canopy interceptation, surface pounding, infiltration and transpiration from the root zone.
+   
+You do not have to worry about these classes since `plans3` do the job of creating `shru` maps based
+ on `soils` and `lulc`. But one thing is important: the number of possible `shru` is precisely the number of 
+ `lulc` classes plus the number of `soil` classes - so 10 `lulc` classes and 10 `soils` classes would yield 100 `shru` 
+ classes (10 x 10 = 100)!   
+ 
+ ![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "calib_shru")
+
+
+### `dem` - digital elevation model
+
 Text
+
+![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "calib_dem")
+
+
+### `slope` - local terrain slope
+
+Text
+
+![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "calib_slope")
+
+
+### `catcha` - local catchment area
+
+Text
+
+![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/catcha.PNG "calib_catcha")
+
+### `fto` - local factor of soil transmissivity
+
+Text
+
+![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/fto.PNG "calib_fto")
 
 ### `twi` - topographic wetness index
 
 Text
 
+![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twi")
+
 ### `etpat` - monthly pattern of ET
+
+Text
+
+![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/etpat.PNG "calib_shru")
 

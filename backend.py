@@ -75,7 +75,7 @@ def update_iofiles(infile='iofiles.txt', sep='|', outfile='iofiles.md'):
         table_lst = table_list(table_df)
         for i in range(len(table_lst)):
             lines.append(table_lst[i] + '\n')
-
+        lines.append('\n')
         # files loop
         for j in range(len(files)):
             lines.append(header2_code(files[j] + '.' + formats[j]))

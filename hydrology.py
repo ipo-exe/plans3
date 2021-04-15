@@ -408,15 +408,17 @@ def topmodel_vsai(di):
     """
     return ((di == 0) * 1)
 
-# todo function
-def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c, lat, k, n,
-                      area, mapback=False, mapvar='all', qobs=False, tui=False):
+
+def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c, lat, k, n,
+                 area, mapback=False, mapvar='all', qobs=False, tui=False):
     if tui:
         from time import sleep
     #
     # extract data input
     ts_prec = series['Prec'].values
     ts_temp = series['Temp'].values
+    ts_ira = series['IRA'].values
+    ts_iri = series['IRI'].values
     size = len(ts_prec)
     #
     # compute PET
@@ -438,17 +440,16 @@ def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo,
     #shru_ids = shruparam['Id'].values
     # local cpmax
     cpmax_i = cpmax * shruparam['f_Canopy'].values * np.ones(shape=shape, dtype='float32')
-    #plt.imshow(cpmax_i)
-    #plt.show()
     # local sfmax
     sfmax_i = sfmax * shruparam['f_Surface'].values * np.ones(shape=shape, dtype='float32')
-    #plt.imshow(sfmax_i)
-    #plt.show()
     # local erz
     erz_i = erz * shruparam['f_EfRootZone'].values * np.ones(shape=shape, dtype='float32')
     # local ksat
     ksat_i = ksat * shruparam['f_Ksat'].values * np.ones(shape=shape, dtype='float32')
-    #
+    # local ira factor
+    fira_i = shruparam['f_IRA'].values * np.ones(shape=shape, dtype='float32')
+    # local iri factor
+    firi_i = shruparam['f_IRI'].values * np.ones(shape=shape, dtype='float32')
     #
     # set global deficit initial conditions
     d0 = topmodel_d0(qt0=qt0, qo=qo, m=m)
@@ -460,10 +461,14 @@ def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo,
     cpy_i = np.zeros(shape=shape)
     sfs_i = np.zeros(shape=shape)
     unz_i = np.zeros(shape=shape)
-
     vsa_i = topmodel_vsai(di=d_i)  # variable source area map
+    temp_i = ts_temp[0] * np.ones(shape=shape)
     # local flow variables:
     prec_i = ts_prec[0] * np.ones(shape=shape)
+    ira_i = ts_ira[0] * fira_i
+    iri_i = ts_iri[0] * firi_i
+    cpyin_i = np.zeros(shape=shape)
+    sfsin_i = np.zeros(shape=shape)
     pet_i = ts_pet[0] * np.ones(shape=shape)
     tf_i = np.zeros(shape=shape)
     r_i = np.zeros(shape=shape)
@@ -502,27 +507,36 @@ def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo,
     # Trace setup
     if mapback:
         if mapvar == 'all':
-            mapvar = 'D-Cpy-TF-Sfs-R-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+            mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
         mapvar_lst = mapvar.split('-')
         # load to dict object a time series of empty zmaps for each variable
-        map_dct = dict()
+        mapkeys_dct = dict()
         for e in mapvar_lst:
-            map_dct[e] = np.zeros(shape=(size, rows, cols), dtype='float32')
+            mapkeys_dct[e] = np.zeros(shape=(size, rows, cols), dtype='float32')
+        # store timestep maps in dict
+        mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
+                       'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i,
+                       'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i, 'PET': pet_i, 'D':d_i, 'Unz':unz_i}
+        # append it to map
+        for e in mapvar_lst:
+            mapkeys_dct[e][0] = mapback_dct[e]
+    #
+    #
     # simulation print
     if tui:
         print('Soil moisture accounting simulation...')
     #
-    # ESMA loop by finite differences
+    # ***** ESMA loop by finite differences *****
     for t in range(1, size):
         #
         # ****** UPDATE local water balance ******
         #
         # update Canopy water stock
-        cpy_i = cpy_i + prec_i - tf_i - evc_i
+        cpy_i = cpy_i + cpyin_i - tf_i - evc_i
         ts_cpy[t] = avg_2d(var2d=cpy_i, weight=countmatrix)  # compute average
         #
         # update Surface water stock
-        sfs_i = sfs_i + tf_i - r_i - inf_i - evs_i
+        sfs_i = sfs_i + sfsin_i - r_i - inf_i - evs_i
         ts_sfs[t] = avg_2d(var2d=sfs_i, weight=countmatrix)  # compute average
         #
         # update Unsaturated water stock
@@ -534,19 +548,29 @@ def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo,
         #
         # --- Canopy
         # compute current TF - Throughfall (or "effective precipitation")
-        prec_i = ts_prec[t] * np.ones(shape=shape)  # update PREC
-        tf_i = ((prec_i - (cpmax_i - cpy_i)) * (prec_i > (cpmax_i - cpy_i))) #+ (0.0 * (prec_i <= (cpmax_i - cpy_i)))
+        prec_i = ts_prec[t] * np.ones(shape=shape) # update PREC
+        ira_i = ts_ira[t] * fira_i # update IRA
+        cpyin_i = prec_i + ira_i  # canopy total input
+        #plt.imshow(cpyin_i)
+        #plt.title('Total input canopy')
+        #plt.show()
+        tf_i = ((cpyin_i - (cpmax_i - cpy_i)) * (cpyin_i > (cpmax_i - cpy_i)))
         ts_tf[t] = avg_2d(var2d=tf_i, weight=countmatrix)
         #
         # compute current Evc from canopy:
         pet_i = ts_pet[t] * np.ones(shape=shape)  # update PET
-        icp_i = cpy_i + prec_i - tf_i
+        petfull_i = ts_pet[t] * np.ones(shape=shape)  # reserve PET for mapping
+        icp_i = cpy_i + cpyin_i - tf_i
         evc_i = (pet_i * (icp_i > pet_i)) + (icp_i * (icp_i <= pet_i))
         ts_evc[t] = avg_2d(var2d=evc_i, weight=countmatrix)  # compute average
         #
         # --- Surface
         # compute current runoff
-        r_i = ((sfs_i + tf_i) - sfmax_i) * ((sfs_i + tf_i) > sfmax_i)
+        iri_i = ts_iri[t] * firi_i  # update IRI
+        sfsin_i = tf_i + iri_i  # surface total input
+        #plt.title('Total input surface')
+
+        r_i = ((sfs_i + sfsin_i) - sfmax_i) * ((sfs_i + sfsin_i) > sfmax_i)
         ts_r[t] = avg_2d(var2d=r_i, weight=countmatrix)  # compute average
         #
         # compute surface depletion
@@ -577,7 +601,7 @@ def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo,
         qv_i = unz_i * (p_qv_i/ (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
         ts_qv[t] = avg_2d(var2d=qv_i, weight=countmatrix)  # compute average
         #
-        # compute tpun: # todo fix negative values
+        # compute tpun:
         p_tpun_i = unz_i * (pet_i / (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
         #plt.imshow(p_tpun_i * (countmatrix > 0))
         #plt.show()
@@ -609,17 +633,25 @@ def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo,
         #
         # Update Di
         d_i = topmodel_di(d=ts_d[t], twi=lamb_i, m=m, lamb=lamb)
+        #plt.imshow(d_i, cmap='jet')
+        #plt.show()
         #
         # compute VSA
         vsa_i = topmodel_vsai(di=d_i)
         ts_vsa[t] = np.sum(vsa_i * countmatrix) / np.sum(countmatrix)
         #
+        # get temperature map:
+        temp_i = ts_temp[t] * np.ones(shape=shape)
+        #
         # trace section
         if mapback:
-            dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
-                   'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs':evs_i, 'VSA':vsa_i}
+            # store timestep maps in dict
+            mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
+                           'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i,
+                           'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i, 'PET': petfull_i, 'D':d_i, 'Unz':unz_i}
+            # append it to map
             for e in mapvar_lst:
-                map_dct[e][t] = dct[e]
+                mapkeys_dct[e][t] = mapback_dct[e]
     #
     # RUNOFF ROUTING by Nash Cascade of linear reservoirs
     if tui:
@@ -641,7 +673,7 @@ def topmodel_shru_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo,
         exp_df['Qobs'] = series['Q'].values
     #
     if mapback:
-        return exp_df, map_dct
+        return exp_df, mapkeys_dct
     else:
         return exp_df
 
@@ -663,7 +695,7 @@ def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
     return countmatrix, twi_hist, cn_hist
 
 # deprecated:
-def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, lat, qt0, k, n,
+def topmodel_sim_deprec(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, lat, qt0, k, n,
                  mapback=False, mapvar='R-ET-S1-S2', tui=False, qobs=False):
     """
 
@@ -871,7 +903,8 @@ def topmodel_sim(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, 
         #
         # trace section
         if mapback:
-            dct = {'TF':tfi, 'Qv':qvi, 'R': ri, 'ET':eti, 'S1':s1i, 'S2':s2i, 'Inf':infi, 'Tp':tpi, 'Ev':evi, 'Tpgw':tpgwi}
+            dct = {'TF':tfi, 'Qv':qvi, 'R': ri, 'ET':eti, 'S1':s1i, 'S2':s2i, 'Inf':infi, 'Tp':tpi, 'Ev':evi,
+                   'Tpgw':tpgwi}
             for e in mapvar_lst:
                 map_dct[e][t] = dct[e]
     #

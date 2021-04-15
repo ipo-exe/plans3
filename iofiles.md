@@ -28,6 +28,7 @@ input | calib_series | txt | csv time series
 input | calib_soils | asc | raster map
 input | calib_soils_param | txt | csv data frame
 input | hydro_param | txt | csv data frame
+
 ## `aoi_basin.asc`
 
 - **I/O**: input.
@@ -432,15 +433,17 @@ IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
 		 -  `Max`: positive real number of upper bound of parameter space.
 - **Example**:
 ```
-Parameter;    Set;    Min;    Max
-        m;    3.0;    1.0;   30.0
-     ksat;    2.0;    0.1;   10.0
-       qo;    5.0;    0.1;   20.0
-        a;   0.35;    0.1;    5.0
-        c;  100.0;   80.0;  120.0
-      lat;  -30.0;  -30.0;  -30.0
-        k;    1.1;    1.0;    6.0
-        n;    2.1;    1.0;   10.0
+Parameter;    Set;    Min;     Max
+        m;   20.0;    1.0;    30.0
+       qo;    5.0;    0.1;    20.0
+    cpmax;   0.05;    0.1;    20.0
+    sfmax;   0.81;    0.1;    20.0
+      erz;   50.0;    0.1;  1000.0
+     ksat;   50.0;    0.1;    10.0
+        c;   50.0;   20.0;   120.0
+      lat;  -30.0;  -30.0;   -30.0
+        k;    0.5;    0.1;     6.0
+        n;    1.1;    1.0;    10.0
 ```
 
 ---
@@ -460,6 +463,7 @@ derived | calib_shru | asc | raster map
 derived | calib_shru_param | txt | csv data frame
 derived | calib_slope | asc | raster map
 derived | calib_twi | asc | raster map
+
 ## `aoi_fto.asc`
 
 - **I/O**: derived.
@@ -780,6 +784,7 @@ ioType | FileName | FileFormat | FileType
 extracted | aoi_lulc_YYYY-MM-DD | asc | raster map
 extracted | aoi_shru_YYYY-MM-DD | asc | raster map
 extracted | calib_etpat_YYYY-MM-DD | asc | raster map
+
 ## `aoi_lulc_YYYY-MM-DD.asc`
 
 - **I/O**: extracted.
@@ -859,6 +864,7 @@ output | sim_maps_Tpun | txt | csv time series
 output | sim_maps_Unz | txt | csv time series
 output | sim_parameters | txt | csv data frame
 output | sim_series | txt | csv time series
+
 ## `map_Cpy_YYYY-MM-DD.txt`
 
 - **I/O**: output.
