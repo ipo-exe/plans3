@@ -683,7 +683,63 @@ def plot_zmap3d(zmap, x, y):
     plt.show()
 
 
-def plot_qmap_view(map, meta, colors, names, ranges, mapid='dem', filename='mapview', folder='C:/bin', metadata=True):
+def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='C:/bin', metadata=True, show=False):
+    from matplotlib.colors import ListedColormap
+    cmap_lulc = ListedColormap(shruparam['ColorLULC'].values)
+    cmap_soil = ListedColormap(shruparam['ColorSoil'].values)
+    ranges_lulc = (np.min(shruparam['IdLULC'].values), np.max(shruparam['IdLULC'].values))
+    ranges_soil = (np.min(shruparam['IdSoil'].values), np.max(shruparam['IdSoil'].values))
+    #
+    fig = plt.figure(figsize=(6, 4.5))  # Width, Height
+    gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
+    #
+    ax = fig.add_subplot(gs[:, :3])
+    im = plt.imshow(lulc, cmap=cmap_lulc, vmin=ranges_lulc[0], vmax=ranges_lulc[1])
+    im = plt.imshow(soils, cmap=cmap_soil, vmin=ranges_soil[0], vmax=ranges_soil[1], alpha=0.5)
+    plt.title('shru')
+    plt.axis('off')
+    #
+    # lengend
+    ax = fig.add_subplot(gs[:, 3:])
+    plt.text(x=0.1, y=1.0, s='LULC x Soils')
+    plt.plot([0, 1], [0, 1], '.', alpha=0.0)
+    hei = 0.95
+    step = 0.3
+    wid = len(shruparam['IdSoil'].unique())
+    count = 0
+    while count < len(shruparam['IdLULC'].values):
+        xp = 0.1
+        for i in range(wid):
+            plt.plot(xp, hei, 's', color=shruparam['ColorLULC'].values[count])
+            plt.plot(xp, hei, 's', color=shruparam['ColorSoil'].values[count], alpha=0.5)
+            #plt.text(x=xp + 0.05, y=hei - 0.015, s=shruparam['IdSHRU'].values[count])
+            xp = xp + step
+            count = count + 1
+        hei = hei - 0.07
+    plt.ylim((0, 1))
+    plt.xlim((0, 1.5))
+    #
+    if metadata:
+        plt.text(x=0.0, y=0.3, s='Metadata:')
+        plt.text(x=0.0, y=0.25, s='Rows: {}'.format(meta['nrows']))
+        plt.text(x=0.0, y=0.2, s='Columns: {}'.format(meta['ncols']))
+        plt.text(x=0.0, y=0.15, s='Cell size: {:.1f} m'.format(meta['cellsize']))
+        plt.text(x=0.0, y=0.1, s='xll: {:.2f} m'.format(meta['xllcorner']))
+        plt.text(x=0.0, y=0.05, s='yll: {:.2f} m'.format(meta['xllcorner']))
+    plt.axis('off')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+
+
+def plot_qmap_view(map, meta, colors, names, ranges, mapid='dem', filename='mapview', folder='C:/bin',
+                   metadata=True, show=False):
     from matplotlib.colors import ListedColormap
     cmap = ListedColormap(colors)
     #
@@ -712,13 +768,18 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='dem', filename='mapv
         plt.text(x=0.0, y=0.1, s='xll: {:.2f} m'.format(meta['xllcorner']))
         plt.text(x=0.0, y=0.05, s='yll: {:.2f} m'.format(meta['xllcorner']))
     plt.axis('off')
-    plt.show()
-    expfile = folder + '/' + filename + '.png'
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
 
 
-
-
-def plot_map_view(map, meta, ranges, mapid='dem', filename='mapview', folder='C:/bin', metadata=True):
+def plot_map_view(map, meta, ranges, mapid='dem', filename='mapview', folder='C:/bin', metadata=True, show=False):
     map_dct = {'dem': ['BrBG_r', 'Elevation'],
                'slope': ['OrRd', 'Degrees'],
                'twi': ['YlGnBu', 'Index units'],
@@ -749,7 +810,12 @@ def plot_map_view(map, meta, ranges, mapid='dem', filename='mapview', folder='C:
         plt.text(x=0.0, y=0.1, s='xll: {:.2f} m'.format(meta['xllcorner']))
         plt.text(x=0.0, y=0.05, s='yll: {:.2f} m'.format(meta['xllcorner']))
     plt.axis('off')
-    plt.show()
-    expfile = folder + '/' + filename + '.png'
-    #plt.savefig(expfile)
-    #plt.close(fig)
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
