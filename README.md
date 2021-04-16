@@ -15,10 +15,10 @@ expansion of nature-based solutions in watersheds. The built-in models includes:
 
 ![plans3](https://github.com/ipo-exe/plans3/blob/main/docs/figs/framework.PNG "Logo Title Text 1")
 
-#### Why the "3" on `plans3`?
-`plans` was born in 2018 within the scope of a master's degree research project. 
-While `plans1` was just a handful of python scripts, `plans2` has an application-like structure. 
-Now, `plans3` has deep changes in hydrology modelling.
+>##### Why the "3" on `plans3`?
+>`plans` was born in 2018 within the scope of a master's degree research project. 
+>While `plans1` was just a handful of python scripts, `plans2` has an application-like structure. 
+>Now, `plans3` has deep changes in hydrology modelling.
 
 ## What is included in this repository
 
@@ -38,12 +38,33 @@ Now, `plans3` has deep changes in hydrology modelling.
 * [matplotlib](https://matplotlib.org/)
 * [scipy](https://www.scipy.org/)
 
-## Installing `plans3` on a local machine
+## Running `plans3` in the cloud in 5 steps
 
-### Step 1: install python 3.8+
+* Step 1: make a google account.
+* Step 2: go to [google colab](https://colab.research.google.com) and create a notebook;
+* Step 3: download a clone of this repository;
+* Step 4: upload the colab workplace to all `plans3` files (incluing non-python files);
+* Step 5: write and execute the following code:
+
+```python
+from tui import main  # this imports the main function of the TUI interface
+
+main(root='projects', importing=False)  # 'projects' is the name of the root directory - but you can change that! 
+
+```
+
+> Tip: you will need to upload many input files to run a `plans3` project in the cloud. 
+>So you may want to mount `google drive` to the `colab` platform. 
+>Pro tip: sync the root folder to your machine and then no need to upload input files!
+
+## Running `plans3` on desktop
+
+### Installing `plans3` on a local machine
+
+##### Step 1: install python 3.8+
 Go to https://www.python.org/downloads/ and download it. Make sure you add Python to PATH (checkbox on the installation wizard).
 
-### Step 2: install the packages
+##### Step 2: install the packages
 To run `plans3` you need `numpy`, `pandas`, `matplotlib` and `scipy`. If you do not have it already installed, you can do that by using terminal or an IDE, like PyCharm.
 
 On Windows terminal (you may find on the web similar installation procedures for Mac and Ubuntu):
@@ -62,10 +83,8 @@ then:
 and then:
 `C:\Windows\System32\python -m pip install scipy`
 
-### Step 3: download a clone of this repository
+##### Step 3: download a clone of this repository
 Download the ZIP file for the entire repository. Extract the files on any diretory of your machine.
-
-## Running `plans3` as a desktop application
 
 ### The terminal-based user interface `TUI`
 After installing `plans3` on your machine, double-click on `run_tui.py` and it will run the terminal-based application. 
