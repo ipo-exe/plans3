@@ -6,8 +6,14 @@
 > `plans3` is still under development. This `README.md` file is a pilot document.
 
 #### What is `plans3`?
-**Planning Nature-based Solutions** (`plans3`) is a modelling framework for planning the 
-expansion of nature-based solutions in watersheds.
+**Planning Nature-based Solutions** (`plans3`) is an integrated modelling framework for planning the 
+expansion of nature-based solutions in watersheds. The built-in models includes:
+* `Processes modelling`: representation of spatially distributed hydrological processes;
+* `Planning modelling`: optimization of land use policy and sequential decision making ;
+* `Natural Capital` modelling: assessment and valuation of natural capital;
+* `Future modelling`: forecasting tools and synthetic data generation.
+
+![plans3](https://github.com/ipo-exe/plans3/blob/main/docs/figs/framework.PNG "Logo Title Text 1")
 
 #### Why the "3" on `plans3`?
 `plans` was born in 2018 within the scope of a master's degree research project. 
@@ -18,9 +24,9 @@ Now, `plans3` has deep changes in hydrology modelling.
 
 - [x] All files required to run `plans3`;
 - [x] A directory called `./samples` with examples of input files;
-- [x] A directory called `./docs` with documentation files;
-- [x] In `./docs`: a markdown file called `iofiles.md` of I/O file documentation;
-- [ ] In `./docs`: a markdown file called `guide.md` for a quick guide of `plans3` applications;
+- [x] A directory called `./docs` with some documentation files;
+- [x] A markdown file called [`iofiles.md`](https://github.com/ipo-exe/plans3/blob/main/iofiles.md) of I/O file documentation;
+- [x] A markdown file called [`guide.md`](https://github.com/ipo-exe/plans3/blob/main/guide.md) for a quick guide of `plans3` applications;
 - [ ] A comprehensive `plans3_handbook.pdf` document.
 
 ## `python` and packages required
