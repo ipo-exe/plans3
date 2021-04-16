@@ -10,8 +10,8 @@
 expansion of nature-based solutions in watersheds. The built-in models includes:
 * `Processes modelling`: representation of spatially distributed hydrological processes;
 * `Planning modelling`: optimization of land use policy and sequential decision making ;
-* `Natural Capital` modelling: assessment and valuation of natural capital;
-* `Future modelling`: forecasting tools and synthetic data generation.
+* `Natural Capital modelling`: assessment and valuation of natural capital;
+* `Future modelling`: forecasting tools and synthetic data generation for future scenario assesment.
 
 ![plans3](https://github.com/ipo-exe/plans3/blob/main/docs/figs/framework.PNG "Logo Title Text 1")
 
@@ -43,7 +43,7 @@ expansion of nature-based solutions in watersheds. The built-in models includes:
 * Step 1: make a google account.
 * Step 2: go to [google colab](https://colab.research.google.com) and create a notebook;
 * Step 3: download a clone of this repository;
-* Step 4: upload the colab workplace to all `plans3` files (incluing non-python files);
+* Step 4: upload to the colab workplace all `plans3` files (incluing non-python files);
 * Step 5: write and execute the following code:
 
 ```python
@@ -61,10 +61,10 @@ main(root='projects', importing=False)  # 'projects' is the name of the root dir
 
 ### Installing `plans3` on a local machine
 
-##### Step 1: install python 3.8+
+#### Step 1: install python 3.8+
 Go to https://www.python.org/downloads/ and download it. Make sure you add Python to PATH (checkbox on the installation wizard).
 
-##### Step 2: install the packages
+#### Step 2: install the packages
 To run `plans3` you need `numpy`, `pandas`, `matplotlib` and `scipy`. If you do not have it already installed, you can do that by using terminal or an IDE, like PyCharm.
 
 On Windows terminal (you may find on the web similar installation procedures for Mac and Ubuntu):
@@ -83,7 +83,7 @@ then:
 and then:
 `C:\Windows\System32\python -m pip install scipy`
 
-##### Step 3: download a clone of this repository
+#### Step 3: download a clone of this repository
 Download the ZIP file for the entire repository. Extract the files on any diretory of your machine.
 
 ### The terminal-based user interface `TUI`
