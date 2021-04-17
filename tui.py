@@ -478,19 +478,19 @@ def main(root='default', importing=True):
                                             aux_str = 'calib_hydro' + '_' + metric
                                             dst_dir = backend.create_rundir(label=aux_str,
                                                                             wkplc=projectdirs['Optimization'])
-                                            size_opts = ('Small - Size:20 Gens:5', 'Medium - Size:100 Gens:50',
-                                                             'Large - Size:500 Gens:200')
+                                            size_opts = ('Small - Size:25 Gens:5', 'Medium - Size:50 Gens:50',
+                                                             'Large - Size:100 Gens:200')
                                             scale = menu({'Scale': size_opts}, exitkey='d',
                                                          exitmsg='Use default (Small)', msg=lng[5],
                                                         keylbl=lng[7],wng=lng[20], wngmsg=lng[8], chsn=lng[9])
-                                            popsize = 20
-                                            generations = 20
+                                            popsize = 25
+                                            generations = 5
                                             if scale == size_opts[0]:
                                                 popsize = 20
-                                                generations = 20
+                                                generations = 5
                                             elif scale == size_opts[1]:
                                                 popsize = 100
-                                                generations = 20
+                                                generations = 50
                                             elif scale == size_opts[2]:
                                                 popsize = 500
                                                 generations = 200

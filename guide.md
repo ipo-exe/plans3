@@ -1,3 +1,4 @@
+mathjax: true
 # Quick guide to `plans3`
 
 ---
@@ -103,6 +104,12 @@ so the local deficit `di` of water is mapped by the following equation:
 > di = d_g + m * (twi_g - twi)
 
 Where `d_g` is the basin-wide (global) water deficit, `twi_g` is average global `twi` and `m` is a scaling parameter. 
+
+$$
+   f(x,y) = \sin(x+y)
+$$
+
+
 
 ![SHRU](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twi")
 
