@@ -1,4 +1,3 @@
-mathjax: true
 # Quick guide to `plans3`
 
 ---
@@ -105,9 +104,7 @@ so the local deficit `di` of water is mapped by the following equation:
 
 Where `d_g` is the basin-wide (global) water deficit, `twi_g` is average global `twi` and `m` is a scaling parameter. 
 
-$$
-   f(x,y) = \sin(x+y)
-$$
+![\Large x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}](https://latex.codecogs.com/svg.latex?\Large&space;x=\frac{-b\pm\sqrt{b^2-4ac}}{2a})
 
 
 
