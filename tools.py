@@ -365,7 +365,7 @@ def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_mo
 
 
 def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, ntwibins=10, folder='C:/bin', tui=False,
-                        mapback=False, mapvar='all', qobs=False):
+                        mapback=False, mapvar='D-R-ET', qobs=False):
     import time
     from hydrology import avg_2d, count_matrix_twi_shru, topmodel_sim,  map_back
     from visuals import pannel_topmodel
@@ -434,6 +434,8 @@ def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, n
     if tui:
         end = time.time()
         print('\nloading enlapsed time: {:.3f} seconds'.format(end - init))
+    #
+    #
     #
     # simulation
     if tui:
@@ -527,7 +529,262 @@ def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, n
     else:
         return (exp_file1, exp_file2, exp_file3, exp_file4)
 
+def calib_hydro(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, ntwibins=10, folder='C:/bin', tui=False,
+                mapback=True, mapvar='D-R-ET', qobs=True, generations=100, popsize=200, metric='NSE'):
+    # todo docstring
+    from hydrology import avg_2d, count_matrix_twi_shru, topmodel_sim,  map_back, topmodel_calib
+    from visuals import pannel_topmodel
+    import time
+    from os import mkdir
 
+    def stamped(g):
+        if g < 10:
+            stamp = '0000' + str(g)
+        elif g >= 10 and g < 100:
+            stamp = '000' + str(g)
+        elif g >= 100 and g < 1000:
+            stamp = '00' + str(g)
+        elif g >= 1000 and g < 10000:
+            stamp = '0' + str(g)
+        else:
+            stamp = str(g)
+        return stamp
+
+    #
+    t0 = time.time()
+    if tui:
+        init = time.time()
+        print('\n\t**** Load Data Protocol ****\n')
+        print(' >>> loading time series...')
+    series_df =  pd.read_csv(fseries, sep=';')
+    series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
+    #
+    if tui:
+        print(' >>> loading hydrology parameters...')
+    hydroparam_df = pd.read_csv(fhydroparam, sep=';')
+    hydroparam_df = dataframe_prepro(hydroparam_df, 'Parameter')
+    #
+    # extract set values
+    m_min = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Min'].values[0]
+    qo_min = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Min'].values[0]
+    cpmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Min'].values[0]
+    sfmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Min'].values[0]
+    erz_min = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Min'].values[0]
+    ksat_min = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Min'].values[0]
+    c_min = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Min'].values[0]
+    k_min = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Min'].values[0]
+    n_min = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Min'].values[0]
+    #
+    #
+    m_max = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Max'].values[0]
+    qo_max = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Max'].values[0]
+    cpmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Max'].values[0]
+    sfmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Max'].values[0]
+    erz_max = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Max'].values[0]
+    ksat_max = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Max'].values[0]
+    c_max = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Max'].values[0]
+    k_max = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Max'].values[0]
+    n_max = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Max'].values[0]
+    lat = hydroparam_df[hydroparam_df['Parameter'] == 'lat']['Max'].values[0]
+    #
+    m_rng = (m_min, m_max)
+    qo_rng = (qo_min, qo_max)
+    cpmax_rng = (cpmax_min, cpmax_max)
+    sfmax_rng = (sfmax_min, sfmax_max)
+    erz_rng = (erz_min, erz_max)
+    ksat_rng = (ksat_min, ksat_max)
+    c_rng = (c_min, c_max)
+    k_rng = (k_min, k_max)
+    n_rng = (n_min, n_max)
+    #
+    if tui:
+        print(' >>> loading SHRU parameters...')
+    shru_df = pd.read_csv(fshruparam, sep=';')
+    shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
+    shruids = shru_df['IdSHRU'].values
+    #
+    # import basin raster
+    if tui:
+        print(' >>> loading basin raster...')
+    meta, basin = input.asc_raster(fbasin)
+    #
+    # import twi raster
+    if tui:
+        print(' >>> loading shru raster...')
+    meta, shru = input.asc_raster(fshru)
+    #
+    # import twi raster
+    if tui:
+        print(' >>> loading twi raster...')
+    meta, twi = input.asc_raster(ftwi)
+    #
+    # get boundary conditions
+    # import twi raster
+    if tui:
+        print(' >>> loading boundary conditions...')
+    area = np.sum(basin) * meta['cellsize'] * meta['cellsize']
+    qt0 = 0.01
+    if qobs:
+        qt0 = series_df['Q'].values[0]
+    lamb = avg_2d(twi, basin)
+    #
+    #
+    # compute count matrix
+    if tui:
+        print(' >>> computing histograms...')
+    count, twibins, shrubins = count_matrix_twi_shru(twi, shru, basin, shruids, ntwibins=ntwibins)
+    if tui:
+        end = time.time()
+        print('\nloading enlapsed time: {:.3f} seconds'.format(end - init))
+    #
+    #
+    #
+    # run topmodel calibration
+    if tui:
+        init = time.time()
+        print('\n\t**** Calibration Protocol ****\n')
+        print(' >>> running calibration...')
+    pset, traced, tracedpop = topmodel_calib(series=series_df, shruparam=shru_df, twibins=twibins, countmatrix=count,
+                                             lamb=lamb, qt0=qt0, lat=lat, area=area, m_range=m_rng, qo_range=qo_rng,
+                                             cpmax_range=cpmax_rng, sfmax_range=sfmax_rng, erz_range=erz_rng,
+                                             ksat_range=ksat_rng, c_range=c_rng, k_range=ksat_rng, n_range=n_rng,
+                                             mapback=True, mapvar='D-R-ET', tui=True, generations=generations,
+                                             popsize=popsize, metric=metric, tracefrac=1, tracepop=True)
+    end = time.time()
+    if tui:
+        print('\nCalibration enlapsed time: {:.3f} seconds'.format(end - init))
+    #'''
+    #
+    #
+    # simulation
+    if tui:
+        init = time.time()
+        print('\n\t**** Best Set Simulation Protocol ****\n')
+        print(' >>> running simulation...')
+    if mapback:
+        sim_df, mapped = topmodel_sim(series=series_df, shruparam=shru_df, twibins=twibins, countmatrix=count, lamb=lamb,
+                                      qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
+                                      ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8], area=area, tui=False,
+                                      qobs=qobs, mapback=mapback, mapvar=mapvar)
+    else:
+        sim_df = topmodel_sim(series=series_df, shruparam=shru_df, twibins=twibins, countmatrix=count, lamb=lamb,
+                              qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
+                              ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8], area=area, tui=False,
+                              qobs=qobs, mapback=False, mapvar=mapvar)
+    if tui:
+        end = time.time()
+        print('\nsimulation enlapsed time: {:.3f} seconds'.format(end - init))
+    #    #
+    # **** export files *****
+    #
+    # exporting section
+    if tui:
+        print('\n\t**** Export Data Protocol ****\n')
+        print(' >>> exporting best set simulated time series...')
+    # time series
+    exp_file1 = folder + '/' + 'calib_series.txt'
+    sim_df.to_csv(exp_file1, sep=';', index=False)
+    #
+    # histograms
+    if tui:
+        print(' >>> exporting best set histograms...')
+    exp_df = pd.DataFrame(count, index=twibins, columns=shrubins)
+    exp_file2 = folder + '/' + 'calib_histograms.txt'
+    exp_df.to_csv(exp_file2, sep=';', index_label='TWI\SHRU')
+    #
+    # parameters
+    if tui:
+        print(' >>> exporting best set run parameters...')
+    exp_file3 = folder + '/' + 'calib_parameters.txt'
+    hydroparam_df['Set'] = [pset[0], pset[1], pset[2], pset[3], pset[4], pset[5], pset[6], lat, pset[7], pset[8]]
+    hydroparam_df.to_csv(exp_file3, sep=';', index=False)
+    #
+    # export visual pannel
+    if tui:
+        print(' >>> exporting visual results...')
+    exp_file4 = pannel_topmodel(sim_df, grid=False, show=False, qobs=qobs, folder=folder)
+    #
+    #
+    # run analyst
+    obs_sim_analyst(fseries=exp_file1, folder=folder, tui=True)
+    #
+    #
+    # generations export
+    if tui:
+        init = time.time()
+        print('\n\t**** Export Generations Data Protocol ****\n')
+        print(' >>> exporting generations dataframes...')
+    # export generations
+    lcl_folder = folder + '/generations'
+    mkdir(lcl_folder)  # make diretory
+    lcl_folder1 = lcl_folder + '/parents'
+    mkdir(lcl_folder1)  # make diretory
+    lcl_folder2 = lcl_folder + '/population'
+    mkdir(lcl_folder2)  # make diretory
+    #
+    # export parents
+    lcl_files = list()
+    lcl_gen_ids = list()
+    for g in range(len(traced)):
+        stamp = stamped(g=g)
+        lcl_filepath = lcl_folder1 + '/gen_' + stamp + '.txt'
+        traced[g].to_csv(lcl_filepath, sep=';', index=False)
+        lcl_gen_ids.append(g)
+        lcl_files.append(lcl_filepath)
+    traced_df = pd.DataFrame({'Gen':lcl_gen_ids, 'File':lcl_files})
+    exp_file5 = folder + '/' + 'generations_parents.txt'
+    traced_df.to_csv(exp_file5, sep=';', index=False)
+    #
+    # export full population
+    lcl_files = list()
+    lcl_gen_ids = list()
+    for g in range(len(tracedpop)):
+        stamp = stamped(g=g)
+        lcl_filepath = lcl_folder2 + '/gen_' + stamp + '.txt'
+        tracedpop[g].to_csv(lcl_filepath, sep=';', index=False)
+        lcl_gen_ids.append(g)
+        lcl_files.append(lcl_filepath)
+    traced_df = pd.DataFrame({'Gen': lcl_gen_ids, 'File': lcl_files})
+    exp_file6 = folder + '/' + 'generations_population.txt'
+    traced_df.to_csv(exp_file6, sep=';', index=False)
+    #
+    #
+    # export maps
+    if mapback:
+        if tui:
+            print('exporting variable maps...', end='\t\t')
+        init = time.time()
+        #
+        mapvar_lst = mapvar.split('-')  # load string variables alias to list
+        mapfiles_lst = list()
+        stamp = pd.to_datetime(sim_df['Date'], format='%y-%m-%d')
+        for var in mapvar_lst:  # loop across all variables
+            lcl_folder = folder + '/' + var
+            mkdir(lcl_folder)  # make diretory
+            lcl_files = list()
+            for t in range(len(stamp)):  # loop across all timesteps
+                lcl_filename = var + '_' + str(stamp[t]).split(sep=' ')[0] + '.txt'
+                lcl_file = lcl_folder + '/' + lcl_filename
+                lcl_files.append(lcl_file)
+                # export local dataframe to text file in local folder
+                lcl_exp_df = pd.DataFrame(mapped[var][t], index=twibins, columns=shrubins)
+                lcl_exp_df.to_csv(lcl_file, sep=';', index_label='TWI\CN')
+                # map = map_back(zmatrix=mapped[var][t], a1=twi, a2=cn, bins1=twihist[0], bins2=cnhist[0])
+                # plt.imshow(map[550:1020, 600:950], cmap='jet_r')
+                # plt.show()
+            # export map list file to main folder:
+            lcl_exp_df = pd.DataFrame({'Date': sim_df['Date'], 'File': lcl_files})
+            lcl_file = folder + '/' + var + '_maps' + '.txt'
+            lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
+            mapfiles_lst.append(lcl_file)
+        #
+        mapfiles_lst = tuple(mapfiles_lst)
+        end = time.time()
+        if tui:
+            print('Enlapsed time: {:.3f} seconds'.format(end - init))
+    #
+    #
+    return exp_file3
 
 # deprecated:
 def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin', folder='C:/bin', filename='cn_series'):
@@ -642,7 +899,7 @@ def import_climpat(fclimmonth, rasterfolder='C:/bin', folder='C:/bin', filename=
     return exp_file
 
 
-# deprecated:
+# deprecated
 def run_topmodel_deprec(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
                         tui=False, mapback=False, mapvar='R-ET-S1-S2-Qv', qobs=False):
     """
@@ -855,210 +1112,6 @@ def run_topmodel_deprec(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
         return (exp_file1, exp_file2, exp_file3, exp_file4, mapfiles_lst)
     else:
         return (exp_file1, exp_file2, exp_file3, exp_file4)
-
-# deprecated:
-def calib_topmodel(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin', tui=False, mapback=True,
-                   mapvar='TF-Qv-R-ET-S1-S2-Inf-Tp-Ev-Tpgw', qobs=True, generations=100, popsize=200, metric='NSE'):
-    from hydrology import avg_2d, topmodel_hist, topmodel_sim, topmodel_calib, map_back
-    from visuals import pannel_topmodel
-    import time
-    from os import mkdir
-
-    def stamped(g):
-        if g < 10:
-            stamp = '0000' + str(g)
-        elif g >= 10 and g < 100:
-            stamp = '000' + str(g)
-        elif g >= 100 and g < 1000:
-            stamp = '00' + str(g)
-        elif g >= 1000 and g < 10000:
-            stamp = '0' + str(g)
-        else:
-            stamp = str(g)
-        return stamp
-
-    #
-    if tui:
-        print('loading series...')
-    lcl_df = pd.read_csv(fseries, sep=';', engine='python', parse_dates=['Date'])
-    # lcl_df.query('Date > "2005-03-15" and Date <= "2005-07-15"', inplace=True)
-    # lcl_df.query('Date > "2005-03-15" and Date <= "2010-03-15"', inplace=True)
-    #
-    # import aoi raster
-    if tui:
-        print('loading aoi...')
-    meta, aoi = input.asc_raster(faoi)
-    cell = meta['cellsize']
-    #
-    # import twi raster
-    if tui:
-        print('loading twi...')
-    meta, twi = input.asc_raster(ftwi)
-    #
-    # import CN raster
-    if tui:
-        print('loading cn...')
-    meta, cn = input.asc_raster(fcn)
-    #
-    # import parameters ranges
-    if tui:
-        print('loading parameters ranges...')
-    df_param = pd.read_csv(fparam, sep=';\s+', engine='python', index_col='Parameter')
-    mins = df_param[df_param.columns[1]].values
-    maxs = df_param[df_param.columns[2]].values
-    ksat_rng = (df_param.loc['ksat'].values[1], df_param.loc['ksat'].values[2])
-    m_rng = (df_param.loc['m'].values[1], df_param.loc['m'].values[2])
-    qo_rng = (df_param.loc['qo'].values[1], df_param.loc['qo'].values[2])
-    a_rng = (df_param.loc['a'].values[1], df_param.loc['a'].values[2])
-    c_rng = (df_param.loc['c'].values[1], df_param.loc['c'].values[2])
-    k_rng = (df_param.loc['k'].values[1], df_param.loc['k'].values[2])
-    n_rng = (df_param.loc['n'].values[1], df_param.loc['n'].values[2])
-    lat = df_param.loc['lat'].values[0]
-    qt0 = lcl_df['Q'].values[0]
-    lamb = avg_2d(var2d=twi, weight=aoi)
-    #
-    # compute histograms
-    if tui:
-        print('computing histograms...', end='\t\t')
-    init = time.time()
-    countmatrix, twihist, cnhist = topmodel_hist(twi=twi, cn=cn, aoi=aoi)
-    end = time.time()
-    if tui:
-        print('Enlapsed time: {:.3f} seconds'.format(end - init))
-    #
-    #
-    #
-    # run topmodel calibration
-    if tui:
-        print('running calibration...')
-    init = time.time()
-    pset, traced, tracedpop = topmodel_calib(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, lat=lat, qt0=qt0,
-                                             ksat_range=ksat_rng, m_range=m_rng, qo_range=qo_rng, a_range=a_rng,
-                                             c_range=c_rng, k_range=k_rng, n_range=n_rng, generations=generations,
-                                             popsize=popsize, metric=metric, tracefrac=1, tracepop=True)
-    end = time.time()
-    if tui:
-        print('Enlapsed time: {:.3f} seconds'.format(end - init))
-    #
-    #
-    #
-    # run topmodel simulation
-    if tui:
-        print('running best set...', end='\t\t')
-    init = time.time()
-    sim_df, mapped = topmodel_sim(series=lcl_df, twihist=twihist, cnhist=cnhist, countmatrix=countmatrix, lamb=lamb,
-                                  ksat=pset[0], m=pset[1], qo=pset[2], a=pset[3], c=pset[4], lat=lat, k=pset[5],
-                                  n=pset[6], qt0=qt0, mapback=True, mapvar=mapvar, qobs=True)
-    end = time.time()
-    if tui:
-        print('enlapsed time: {:.3f} seconds'.format(end - init))
-    #
-    #
-    # **** export files *****
-    #
-    # export calibrated parameters
-    if tui:
-        print('exporting run parameters...')
-    exp_df = pd.DataFrame({'Parameter': ('m', 'ksat', 'qo', 'a', 'c', 'lat', 'k', 'n'),
-                           'Set': (pset[1], pset[0], pset[2], pset[3], pset[4], lat, pset[5], pset[6]),
-                           'Min':mins, 'Max':maxs})
-    exp_file1 = folder + '/' + 'parameters.txt'
-    exp_df.to_csv(exp_file1, sep=';', index=False)
-    #
-    # export histograms
-    if tui:
-        print('exporting histograms...')
-    exp_df = pd.DataFrame(countmatrix, index=twihist[0], columns=cnhist[0])
-    exp_file2 = folder + '/' + 'histograms.txt'
-    exp_df.to_csv(exp_file2, sep=';', index_label='TWI\CN')
-    #
-    # export simulation
-    if tui:
-        print('exporting simulation results...')
-    exp_file3 = folder + '/' + 'simseries.txt'
-    sim_df.to_csv(exp_file3, sep=';', index=False)
-    #
-    # export visual pannel
-    if tui:
-        print('exporting visual results...')
-    sim_df['Qobs'] = lcl_df['Q']
-    exp_file4 = pannel_topmodel(sim_df, grid=False, show=False, qobs=True, folder=folder)
-    #
-    # run analyst
-    obs_sim_analyst(fseries=exp_file3, folder=folder, tui=True)
-    #
-    if tui:
-        print('exporting generations dataframes...')
-    # export generations
-    lcl_folder = folder + '/generations'
-    mkdir(lcl_folder)  # make diretory
-    lcl_folder1 = lcl_folder + '/parents'
-    mkdir(lcl_folder1)  # make diretory
-    lcl_folder2 = lcl_folder + '/population'
-    mkdir(lcl_folder2)  # make diretory
-    #
-    # export parents
-    lcl_files = list()
-    lcl_gen_ids = list()
-    for g in range(len(traced)):
-        stamp = stamped(g=g)
-        lcl_filepath = lcl_folder1 + '/gen_' + stamp + '.txt'
-        traced[g].to_csv(lcl_filepath, sep=';', index=False)
-        lcl_gen_ids.append(g)
-        lcl_files.append(lcl_filepath)
-    traced_df = pd.DataFrame({'Gen':lcl_gen_ids, 'File':lcl_files})
-    exp_file5 = folder + '/' + 'generations_parents.txt'
-    traced_df.to_csv(exp_file5, sep=';', index=False)
-    #
-    # export full population
-    lcl_files = list()
-    lcl_gen_ids = list()
-    for g in range(len(tracedpop)):
-        stamp = stamped(g=g)
-        lcl_filepath = lcl_folder2 + '/gen_' + stamp + '.txt'
-        tracedpop[g].to_csv(lcl_filepath, sep=';', index=False)
-        lcl_gen_ids.append(g)
-        lcl_files.append(lcl_filepath)
-    traced_df = pd.DataFrame({'Gen': lcl_gen_ids, 'File': lcl_files})
-    exp_file6 = folder + '/' + 'generations_population.txt'
-    traced_df.to_csv(exp_file6, sep=';', index=False)
-    #
-    # export maps
-    if mapback:
-        if tui:
-            print('exporting variable maps...', end='\t\t')
-        init = time.time()
-        #
-        mapvar_lst = mapvar.split('-')  # load string variables alias to list
-        mapfiles_lst = list()
-        stamp = pd.to_datetime(sim_df['Date'], format='%y-%m-%d')
-        for var in mapvar_lst:  # loop across all variables
-            lcl_folder = folder + '/' + var
-            mkdir(lcl_folder)  # make diretory
-            lcl_files = list()
-            for t in range(len(stamp)):  # loop across all timesteps
-                lcl_filename = var + '_' + str(stamp[t]).split(sep=' ')[0] + '.txt'
-                lcl_file = lcl_folder + '/' + lcl_filename
-                lcl_files.append(lcl_file)
-                # export local dataframe to text file in local folder
-                lcl_exp_df = pd.DataFrame(mapped[var][t], index=twihist[0], columns=cnhist[0])
-                lcl_exp_df.to_csv(lcl_file, sep=';', index_label='TWI\CN')
-                # map = map_back(zmatrix=mapped[var][t], a1=twi, a2=cn, bins1=twihist[0], bins2=cnhist[0])
-                # plt.imshow(map[550:1020, 600:950], cmap='jet_r')
-                # plt.show()
-            # export map list file to main folder:
-            lcl_exp_df = pd.DataFrame({'Date': sim_df['Date'], 'File': lcl_files})
-            lcl_file = folder + '/' + var + '_maps' + '.txt'
-            lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
-            mapfiles_lst.append(lcl_file)
-        #
-        mapfiles_lst = tuple(mapfiles_lst)
-        end = time.time()
-        if tui:
-            print('Enlapsed time: {:.3f} seconds'.format(end - init))
-    #
-    #
-    return exp_file1
 
 # deprecated:
 def integrate_map(ftwi, fcn, faoi, fmaps, filename, yfield='TWI\CN', folder='C:/bin', tui=False, show=False):

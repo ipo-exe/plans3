@@ -683,6 +683,111 @@ def plot_zmap3d(zmap, x, y):
     plt.show()
 
 
+def plot_lulc_view(lulc, lulc_df, basin, meta, mapttl='lulc', filename='mapview', folder='C:/bin', metadata=False, show=False):
+    from geo import reclassify, mask
+    from matplotlib.colors import ListedColormap
+    colors = lulc_df['ColorLULC'].values
+    names = lulc_df['LULCName'].values
+    ids = lulc_df['IdLULC'].values
+    ranges = [np.min(ids), np.max(ids)]
+    cmap = ListedColormap(colors)
+    #
+    fig = plt.figure(figsize=(14, 9))  # Width, Height
+    gs = mpl.gridspec.GridSpec(6, 10, wspace=0.5, hspace=0.5)
+    #
+    ax = fig.add_subplot(gs[:4, :4])
+    fmap = mask(lulc, basin)
+    im = plt.imshow(fmap, cmap=cmap, vmin=ranges[0], vmax=ranges[1])
+    plt.title(mapttl)
+    plt.axis('off')
+    #
+    #
+    # canopy
+    fmap = reclassify(lulc, upvalues=ids, classes=lulc_df['f_Canopy'].values)
+    fmap = mask(fmap, basin)
+    ax = fig.add_subplot(gs[:2, 4:6])
+    im = plt.imshow(fmap, cmap='viridis_r')
+    plt.title('Canopy factor')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # Surface
+    fmap = reclassify(lulc, upvalues=ids, classes=lulc_df['f_Surface'].values)
+    fmap = mask(fmap, basin)
+    ax = fig.add_subplot(gs[:2, 6:8])
+    im = plt.imshow(fmap, cmap='viridis_r', vmin=0)
+    plt.title('Surface factor')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # RD
+    fmap = reclassify(lulc, upvalues=ids, classes=lulc_df['f_RootDepth'].values)
+    fmap = mask(fmap, basin)
+    ax = fig.add_subplot(gs[:2, 8:10])
+    im = plt.imshow(fmap, cmap='viridis_r', vmin=0)
+    plt.title('RootDepth factor')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # RD
+    fmap = reclassify(lulc, upvalues=ids, classes=lulc_df['f_IRA'].values)
+    fmap = mask(fmap, basin)
+    ax = fig.add_subplot(gs[2:4, 6:8])
+    im = plt.imshow(fmap, cmap='YlGnBu', vmin=0)
+    plt.title('IRA factor')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # RD
+    fmap = reclassify(lulc, upvalues=ids, classes=lulc_df['f_IRI'].values)
+    fmap = mask(fmap, basin)
+    ax = fig.add_subplot(gs[2:4, 8:10])
+    im = plt.imshow(fmap, cmap='YlGnBu', vmin=0)
+    plt.title('IRI factor')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # RD
+    fmap = reclassify(lulc, upvalues=ids, classes=lulc_df['C_USLE'].values)
+    fmap = mask(fmap, basin)
+    ax = fig.add_subplot(gs[4:, 6:8])
+    im = plt.imshow(fmap, cmap='BrBG_r', vmin=0)
+    plt.title('USLE C factor')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # RD
+    fmap = reclassify(lulc, upvalues=ids, classes=lulc_df['P_USLE'].values)
+    fmap = mask(fmap, basin)
+    ax = fig.add_subplot(gs[4:, 8:10])
+    im = plt.imshow(fmap, cmap='BrBG_r', vmin=0)
+    plt.title('USLE P factor')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    #
+    ax = fig.add_subplot(gs[4:, 1:3])
+    labels = lulc_df['LULCName']
+    y_pos = np.arange(len(labels))
+    areas = lulc_df['f_Canopy']
+    ax.barh(y_pos, areas, align='center', color=colors)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('% area')
+    ax.set_title('lulc distribution')
+
+
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+
+
 def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='C:/bin', metadata=True, show=False):
     from matplotlib.colors import ListedColormap
     cmap_lulc = ListedColormap(shruparam['ColorLULC'].values)
@@ -701,10 +806,10 @@ def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='
     #
     # lengend
     ax = fig.add_subplot(gs[:, 3:])
-    plt.text(x=0.1, y=1.0, s='LULC x Soils')
+    plt.text(x=0.0, y=1.0, s='LULC x Soils')
     plt.plot([0, 1], [0, 1], '.', alpha=0.0)
     hei = 0.95
-    step = 0.3
+    step = 0.2
     wid = len(shruparam['IdSoil'].unique())
     count = 0
     while count < len(shruparam['IdLULC'].values):
@@ -715,7 +820,7 @@ def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='
             #plt.text(x=xp + 0.05, y=hei - 0.015, s=shruparam['IdSHRU'].values[count])
             xp = xp + step
             count = count + 1
-        hei = hei - 0.07
+        hei = hei - 0.05
     plt.ylim((0, 1))
     plt.xlim((0, 1.5))
     #

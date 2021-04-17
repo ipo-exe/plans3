@@ -290,9 +290,9 @@ def main(root='default', importing=True):
                     print(files_df.to_string(index=False))
                     print('\n')
                     if importing:
-                        observed_options = [lng[24], lng[25], lng[26]]
+                        observed_options = [lng[24], lng[25], 'Analyse data', lng[26]]
                     else:
-                        observed_options = [lng[25], lng[26]]
+                        observed_options = [lng[25], 'Analyse data', lng[26]]
                     opt = menu({lng[6]:observed_options}, title='', exitmsg=lng[10], msg=lng[5],
                            keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                     #
@@ -322,6 +322,8 @@ def main(root='default', importing=True):
                                     backend.importfile(src_filenm, dst_filenm)
                                     # update database
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
+                                    print('\n{}:\n{}\n'.format(lng[30], dst_filenm))
+                                    ok()
                     #
                     # derive data
                     elif opt == lng[25]:
@@ -420,49 +422,22 @@ def main(root='default', importing=True):
                                                                     filename=opt.split('.')[0])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    # deprecated options:
-                                    '''
-                                    if opt == 'cn_series.txt':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.cn_series(filesp[0], filesp[1], filesp[2], filesp[3],
-                                                                      rasterfolder=projectdirs['CN'],
-                                                                      folder=projectdirs['Observed'])
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
-                                    elif opt == 'cn_calib.asc':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.map_cn_avg(filesp[0], filesp[1],
-                                                                       folder=projectdirs['Observed'])
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
-                                    elif opt == 'lulc_areas.txt':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.lulc_areas(filesp[0], filesp[1], filesp[2],
-                                                                       folder=projectdirs['Observed'])
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
-                                    elif opt == 'ppat_month.txt':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.import_climpat(filesp[0], rasterfolder=projectdirs['PPat'],
-                                                                           folder=projectdirs['Observed'],
-                                                                           filename='ppat_month', alias='p')
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
-                                    elif opt == 'tpat_month.txt':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.import_climpat(filesp[0], rasterfolder=projectdirs['TPat'],
-                                                                           folder=projectdirs['Observed'],
-                                                                           filename='tpat_month', alias='t')
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
-                                    elif opt == 'series_calib_month.txt':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.series_calib_month(filesp[0], filesp[1],
-                                                                               folder=projectdirs['Observed'])
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
-                                    '''
                     #
+                    # analyse data
+                    elif opt == 'Analyse data':
+                        while True:
+                            header('Analyse data')
+                            analysis = ('LULC Analysis | AOI', 'Soil Analysis | AOI', 'SHRU Analysis | AOI',
+                                        'DEM Analysis | AOI', 'Series Analysis | AOI', 'LULC Analysis | CALIB',
+                                        'Soil Analysis | CALIB', 'SHRU Analysis | CALIB', 'DEM Analysis | CALIB',
+                                        'Series Analysis | CALIB')
+                            opt = menu({lng[6]: analysis}, title='Analysis options', exitmsg=lng[10],
+                                       msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                            if opt == lng[10]:
+                                break
+                            # lulc AOI
+                            elif opt == analysis[0]:
+                                print('Develop code!')
                     # calibrate models
                     elif opt == lng[26]:
                         while True:
@@ -485,26 +460,29 @@ def main(root='default', importing=True):
                                         header(calib_options[0])
                                         metrics_options = ('NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias',
                                                            'RMSE-CFC', 'RMSElog-CFC')
-                                        metric = menu({'Metric':metrics_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7],
+                                        metric = menu({'Metric':metrics_options}, exitmsg=lng[10], msg=lng[5],
+                                                      keylbl=lng[7],
                                                    wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                                         # exit menu condition
                                         if metric == lng[10]:
                                             break
                                         else:
-                                            print('develop code!')
-                                            # deprecated code # todo new calib procedure
-                                            '''
-                                            aux_str = 'CalibHydro' + '_' + metric
-                                            dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
-                                            fseries = projectdirs['Observed'] + '/' + 'series_calib.txt'
-                                            faoi = projectdirs['Observed'] + '/' + 'aoi.asc'
-                                            ftwi = projectdirs['Observed'] + '/' + 'twi.asc'
-                                            fparam = projectdirs['Observed'] + '/' + 'hydro_param.txt'
-                                            fcn = projectdirs['Observed'] + '/' + 'cn_calib.asc'
+                                            files_input = backend.get_input2calibhydro()
+                                            folder = projectdirs['Observed']
+                                            fseries = folder + '/' + files_input[0]
+                                            ftwi = folder + '/' + files_input[1]
+                                            fshru = folder + '/' + files_input[2]
+                                            fbasin = folder + '/' + files_input[3]
+                                            fshruparam = folder + '/' + files_input[4]
+                                            fhydroparam = folder + '/' + files_input[5]
+                                            aux_str = 'calib_hydro' + '_' + metric
+                                            dst_dir = backend.create_rundir(label=aux_str,
+                                                                            wkplc=projectdirs['Optimization'])
                                             size_opts = ('Small - Size:20 Gens:5', 'Medium - Size:100 Gens:50',
                                                              'Large - Size:500 Gens:200')
-                                            scale = menu({'Scale': size_opts}, exitkey='d', exitmsg='Use default (Small)', msg=lng[5],
-                                                           keylbl=lng[7],wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                                            scale = menu({'Scale': size_opts}, exitkey='d',
+                                                         exitmsg='Use default (Small)', msg=lng[5],
+                                                        keylbl=lng[7],wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                                             popsize = 20
                                             generations = 20
                                             if scale == size_opts[0]:
@@ -516,13 +494,14 @@ def main(root='default', importing=True):
                                             elif scale == size_opts[2]:
                                                 popsize = 500
                                                 generations = 200
-                                            pset = tools.calib_topmodel(fseries=fseries, fparam=fparam, faoi=faoi,ftwi=ftwi,
-                                                                        fcn=fcn, folder=dst_dir, generations=generations,
-                                                                        popsize=popsize, metric=metric, tui=True)
-                                            # overwrite file
-                                            aux_df = pd.read_csv(pset, sep=';')
-                                            aux_df.to_csv(fparam, sep=';', index=False)
-                                            '''
+                                            print('stop here')
+                                            calibparam = tools.calib_hydro(fseries=fseries, fhydroparam=fhydroparam,
+                                                                              fshruparam=fshruparam, fbasin=fbasin,
+                                                                              fshru=fshru, ftwi=ftwi, folder=dst_dir,
+                                                                              generations=generations, popsize=popsize,
+                                                                              metric=metric, tui=True)
+                                            print('\n{}:\n{}\n'.format(lng[30], calibparam))
+                                            ok()
                             elif opt == calib_options[1]:
                                 header(calib_options[1])
                                 print('missing code!')
@@ -566,7 +545,7 @@ def main(root='default', importing=True):
                                 fbasin = folder + '/' + files_input[3]
                                 fshruparam = folder + '/' + files_input[4]
                                 fhydroparam = folder + '/' + files_input[5]
-                                dst_dir = backend.create_rundir(label='SimHydro', wkplc=projectdirs['Simulation'])
+                                dst_dir = backend.create_rundir(label='sim_hydro', wkplc=projectdirs['Simulation'])
                                 files = tools.run_short_hydrology(fseries=fseries, fhydroparam=fhydroparam,
                                                                   mapvar='D-Inf-R', qobs=True,
                                                                   fshruparam=fshruparam, fbasin=fbasin, fshru=fshru,

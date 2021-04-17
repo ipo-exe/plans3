@@ -411,8 +411,6 @@ def topmodel_vsai(di):
 
 def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c, lat, k, n,
                  area, mapback=False, mapvar='all', qobs=False, tui=False):
-    if tui:
-        from time import sleep
     #
     # extract data input
     ts_prec = series['Prec'].values
@@ -522,9 +520,6 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
             mapkeys_dct[e][0] = mapback_dct[e]
     #
     #
-    # simulation print
-    if tui:
-        print('Soil moisture accounting simulation...')
     #
     # ***** ESMA loop by finite differences *****
     for t in range(1, size):
@@ -654,8 +649,6 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
                 mapkeys_dct[e][t] = mapback_dct[e]
     #
     # RUNOFF ROUTING by Nash Cascade of linear reservoirs
-    if tui:
-        print('Runoff routing...')
     ts_qs = nash_cascade(ts_r, k=k, n=n)
     #
     # compute full discharge Q = Qb + Qs
@@ -932,11 +925,11 @@ def topmodel_sim_deprec(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo,
     else:
         return exp_df
 
-# deprecated:
-def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_range, m_range, qo_range, a_range,
-                   c_range, k_range, n_range, mapback=False, mapvar='R-ET-S1-S2', tui=True, grid=100,
-                   generations=100, popsize=200, offsfrac=1, mutrate=0.4, puremutrate=0.1, cutfrac=0.33,
-                   tracefrac=0.1, tracepop=True, metric='NSE'):
+# todo docstring (redo)
+def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, m_range, qo_range, cpmax_range,
+                   sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, mapback=False, mapvar='D-R-ET',
+                   tui=True, grid=200, generations=100, popsize=200, offsfrac=1,
+                   mutrate=0.4, puremutrate=0.1, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
     """
     PLANS 3 TOPMODEL calibration procedure
 
@@ -1004,10 +997,12 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
         df_lst = list()
         # generation loop:
         for g in range(len(traced)):
-            ksat_lst = list()
             m_lst = list()
             qo_lst = list()
-            a_lst = list()
+            cpmax_lst = list()
+            sfmax_lst = list()
+            erz_lst = list()
+            ksat_lst = list()
             c_lst = list()
             k_lst = list()
             n_lst = list()
@@ -1017,15 +1012,18 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
                 #print(lcl_dna[0], end='\t\t')
                 lcl_pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerb, ranges=ranges)
                 #print(lcl_pset)
-                ksat_lst.append(lcl_pset[0])
-                m_lst.append(lcl_pset[1])
-                qo_lst.append(lcl_pset[2])
-                a_lst.append(lcl_pset[3])
-                c_lst.append(lcl_pset[4])
-                k_lst.append(lcl_pset[5])
-                n_lst.append(lcl_pset[6])
-            lcl_df = pd.DataFrame({'Id':traced[g]['Ids'], 'Score':traced[g]['Scores'], 'ksat':ksat_lst, 'm':m_lst,
-                                   'qo':qo_lst, 'a':a_lst, 'c':c_lst, 'k':k_lst, 'n':n_lst})
+                m_lst.append(lcl_pset[0])
+                qo_lst.append(lcl_pset[1])
+                cpmax_lst.append(lcl_pset[2])
+                sfmax_lst.append(lcl_pset[3])
+                erz_lst.append(lcl_pset[4])
+                ksat_lst.append(lcl_pset[5])
+                c_lst.append(lcl_pset[6])
+                k_lst.append(lcl_pset[7])
+                n_lst.append(lcl_pset[8])
+            lcl_df = pd.DataFrame({'Id':traced[g]['Ids'], 'Score':traced[g]['Scores'],
+                                    'm':m_lst, 'qo':qo_lst, 'cpmax':cpmax_lst, 'sfmax':sfmax_lst, 'erz':erz_lst,
+                                   'ksat':ksat_lst, 'c':c_lst, 'k':k_lst, 'n':n_lst})
             #print(lcl_df.to_string())
             df_lst.append(lcl_df.copy())
         return df_lst
@@ -1051,17 +1049,17 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
         print('Random Seed: {}'.format(seed))
     #
     #
-    # bounds setup
-    lowerbound = np.array((np.min(ksat_range), np.min(m_range), np.min(qo_range), np.min(a_range), np.min(c_range),
-                           np.min(k_range), np.min(n_range)))
-    upperbound = np.array((np.max(ksat_range), np.max(m_range), np.max(qo_range), np.max(a_range), np.max(c_range),
-                           np.max(k_range), np.max(n_range)))
+    # bounds setup  # todo improve function of scales
+    lowerbound = np.array((np.min(m_range), np.min(qo_range), np.min(cpmax_range), np.min(sfmax_range),
+                           np.min(erz_range), np.min(ksat_range), np.min(c_range), np.min(k_range), np.min(n_range)))
+    upperbound = np.array((np.max(m_range), np.max(qo_range), np.max(cpmax_range), np.max(sfmax_range),
+                           np.max(erz_range), np.max(ksat_range), np.max(c_range), np.max(k_range), np.max(n_range)))
     ranges = upperbound - lowerbound
     #
     #
     # Evolution setup
     nucleotides = tuple(np.arange(0, grid + 1))
-    parents = generate_population(nucleotides=(nucleotides,), genesizes=(7,), popsize=popsize)
+    parents = generate_population(nucleotides=(nucleotides,), genesizes=(9,), popsize=popsize)
     #for e in parents:
     #    print(e[0])
     trace = list()  # list to append best solutions
@@ -1080,7 +1078,13 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
         # recruit new population
         population = recruitment(parents, offspring)
         if tui:
-            print('Population: {} KB'.format(getsizeof(population)))
+            print('Population: {} KB       '.format(getsizeof(population)))
+            print('                   | Set  ', end='\t  ')
+            print('{:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7}'.format('m', 'qo',
+                                                                                                   'cpmax', 'sfmax',
+                                                                                                   'erz', 'ksat',
+                                                                                                   'c', 'k',
+                                                                                                   'n'))
         # fit new population
         ids_lst = list()
         scores_lst = list()
@@ -1099,42 +1103,54 @@ def topmodel_calib(series, twihist, cnhist, countmatrix, lamb, lat, qt0, ksat_ra
             #
             # express parameter set
             pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerbound, ranges=ranges)  # express the parameter set
+            #
+            #
             # run topmodel
-            sim_df = topmodel_sim(series=series, twihist=twihist, cnhist=cnhist, countmatrix=countmatrix, lamb=lamb,
-                                  ksat=pset[0], m=pset[1], qo=pset[2], a=pset[3], c=pset[4], lat=lat, k=pset[5],
-                                  n=pset[6], qt0=qt0, mapback=False, qobs=True)
+            sim_df = topmodel_sim(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
+                                  lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
+                                  ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8], area=area, tui=False,
+                                  qobs=True, mapback=False)
+            #
+            #
             # Get fitness score:
+            loglim = 0.000001
+            sobs = series['Q'].values
+            ssim = sim_df['Q'].values
+            sobs_log = np.log10(sobs + (loglim * (sobs <= 0)))
+            ssim_log = np.log10(ssim + (loglim * (ssim <= 0)))
             if metric == 'NSE':
-                lcl_dna_score = nse(obs=series['Q'].values, sim=sim_df['Q'].values)
+                lcl_dna_score = nse(obs=sobs, sim=ssim)
             elif metric == 'NSElog':
-                lcl_dna_score = nse(obs=np.log10(series['Q'].values), sim=np.log10(sim_df['Q'].values))
+                lcl_dna_score = nse(obs=sobs_log, sim=ssim_log)
             elif metric == 'KGE':
-                lcl_dna_score = kge(obs=series['Q'].values, sim=sim_df['Q'].values)
+                lcl_dna_score = kge(obs=sobs, sim=ssim)
             elif metric == 'KGElog':
-                lcl_dna_score = kge(obs=np.log10(series['Q'].values), sim=np.log10(sim_df['Q'].values))
+                lcl_dna_score = kge(obs=sobs_log, sim=ssim_log)
             elif metric == 'RMSE':
-                lcl_dna_score = rmse(obs=series['Q'].values, sim=sim_df['Q'].values) * -1
+                lcl_dna_score = rmse(obs=sobs, sim=ssim) * -1
             elif metric == 'RMSElog':
-                lcl_dna_score = rmse(obs=np.log10(series['Q'].values), sim=np.log10(sim_df['Q'].values)) * -1
+                lcl_dna_score = rmse(obs=sobs_log, sim=ssim_log) * -1
             elif metric == 'PBias':
-                lcl_dna_score = 1 / np.abs(pbias(obs=series['Q'].values, sim=sim_df['Q'].values))
+                lcl_dna_score = 1 / (np.abs(pbias(obs=sobs, sim=ssim)) + loglim)
             elif metric == 'RMSE-CFC':
-                cfc_obs = frequency(series=series['Q'].values)['Values']
-                cfc_sim = frequency(series=sim_df['Q'].values)['Values']
+                cfc_obs = frequency(series=sobs)['Values']
+                cfc_sim = frequency(series=ssim)['Values']
                 lcl_dna_score = rmse(obs=cfc_obs, sim=cfc_sim) * -1
             elif metric == 'RMSElog-CFC':
-                cfc_obs = frequency(series=series['Q'].values)['Values']
-                cfc_sim = frequency(series=sim_df['Q'].values)['Values']
+                cfc_obs = frequency(series=sobs)['Values']
+                cfc_sim = frequency(series=ssim)['Values']
                 lcl_dna_score = rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim)) * -1
             else:
-                lcl_dna_score = nse(obs=series['Q'].values, sim=sim_df['Q'].values)
+                lcl_dna_score = nse(obs=sobs, sim=ssim)
             # printing
             if tui:
                 print('Status: {:8.4f} % | Set '.format(runstatus), end='\t')
-                print('{:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f}'.format(pset[0], pset[1], pset[2],
-                                                                                       pset[3],pset[4], pset[5],
-                                                                                       pset[6]), end='\t\t')
-                print('Score = {:.3f}'.format(lcl_dna_score))
+                print('{:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f}'.format(pset[0], pset[1],
+                                                                                                       pset[2], pset[3],
+                                                                                                       pset[4], pset[5],
+                                                                                                       pset[6], pset[7],
+                                                                                                       pset[8]), end='   ')
+                print(' | Score = {:.3f}'.format(lcl_dna_score))
             #
             #
             lcl_dna_id = 'G' + str(g + 1) + '-' + str(i)

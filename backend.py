@@ -163,7 +163,7 @@ def get_root_dir(root='C:/Plans3'):
 def get_prj_dirs():
     dct = {'Datasets':'datasets', 'Observed':'observed', 'Projected':'projected',
            'Runbin':'runbin', 'Simulation':'simulation', 'Optimization':'optimization',
-           'LULC':'lulc', 'SHRU':'shru', 'ETpat':'etpat'}
+           'LULC':'lulc', 'SHRU':'shru', 'ETpat':'etpat', 'Assessment':'assessment'}
     return dct
 
 
@@ -183,15 +183,13 @@ def get_prj_dirs_paths(p0='name', wkplc='C:'):
     dir012 = dir01 + '/' + dirs['Projected']
     dir021 = dir02 + '/' + dirs['Simulation']
     dir022 = dir02 + '/' + dirs['Optimization']
+    dir023 = dir02 + '/' + dirs['Assessment']
     dir0111 = dir011 + '/' + dirs['LULC']
     dir0112 = dir011 + '/' + dirs['SHRU']
     dir0113 = dir011 + '/' + dirs['ETpat']
-    #dir0112 = dir011 + '/' + dirs['PPat'] # deprecated
-    #dir0113 = dir011 + '/' + dirs['TPat'] # deprecated
-    #dir0114 = dir011 + '/' + dirs['CN'] # deprecated
     def_dct = {'Project': dir0, 'Datasets': dir01, 'Observed': dir011, 'Projected': dir012,
                'Runbin': dir02, 'Simulation': dir021, 'Optimization': dir022,
-               'LULC':dir0111, 'SHRU':dir0112, 'ETpat':dir0113}
+               'LULC':dir0111, 'SHRU':dir0112, 'ETpat':dir0113, 'Assessment': dir023}
     return def_dct
 
 
@@ -257,7 +255,8 @@ def get_existing_projects(wkplc='C:'):
             lcl_items = os.listdir(wkplc_dirs[i] + '/' + dct_prj_dirs['Datasets'])
             if dct_prj_dirs['Observed'] in set(lcl_items) and dct_prj_dirs['Projected'] in set(lcl_items):
                 lcl_items = os.listdir(wkplc_dirs[i] + '/' + dct_prj_dirs['Runbin'])
-                if dct_prj_dirs['Simulation'] in set(lcl_items) and dct_prj_dirs['Optimization'] in set(lcl_items):
+                if dct_prj_dirs['Simulation'] in set(lcl_items) and dct_prj_dirs['Optimization'] in set(lcl_items) \
+                        and dct_prj_dirs['Assessment'] in set(lcl_items):
                     wkplc_projects_paths.append(wkplc_dirs[i])
         else:
             pass
@@ -311,7 +310,8 @@ def get_mapid_byfile(filename):
 
 
 def get_input2calibhydro():
-    files = ('cn_calib.asc', 'twi.asc',  'gaug.asc', 'series_calib.txt', 'hydro_param.txt')
+    files = ('calib_series.txt', 'calib_twi.asc', 'calib_shru.asc', 'calib_basin.asc', 'calib_shru_param.txt',
+             'hydro_param.txt', 'calib_etpat_series.txt')
     return files
 
 
@@ -443,6 +443,7 @@ def check_simhydro_files(p0='name', wkplc='C:', aoi=True):
 def importfile(src, dst):
     from shutil import copyfile
     copyfile(src=src, dst=dst)
+
 
 
 def nowsep(p0='-'):
