@@ -323,6 +323,7 @@ def main(root='default', importing=True):
                                     # update database
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
                                     print('\n{}:\n{}\n'.format(lng[30], dst_filenm))
+                                    tools.view_imported(opt, folder=projectdirs['Observed'])
                                     ok()
                     #
                     # derive data
@@ -364,15 +365,24 @@ def main(root='default', importing=True):
                                     # Derive TWI
                                     if opt == 'calib_twi.asc' or opt == 'aoi_twi.asc':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.map_twi(filesp[0], filesp[1], filesp[2], folder=projectdirs['Observed'],
+                                        derivedfile = tools.map_twi(filesp[0], filesp[1], filesp[2],
+                                                                    folder=projectdirs['Observed'],
                                                                     filename=opt.split('.')[0])
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'calib_shru.asc':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.map_shru(filesp[0], filesp[1], filesp[2], filesp[3],
+                                        derivedfile = tools.map_shru(filesp[0], filesp[1], filesp[2],
+                                                                     filesp[3], filesp[4],
                                                                      folder=projectdirs['Observed'],
                                                                      filename=opt.split('.')[0])
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'calib_histograms.txt':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2],
+                                                                               filesp[3], folder=projectdirs['Observed'],
+                                                                               filename=opt.split('.')[0], tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'aoi_lulc_series.txt':
@@ -395,7 +405,8 @@ def main(root='default', importing=True):
                                         ok()
                                     elif opt == 'aoi_shru_series.txt':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.import_shru_series(filesp[0], filesp[1], filesp[2], filesp[3],
+                                        derivedfile = tools.import_shru_series(filesp[0], filesp[1], filesp[2],
+                                                                               filesp[3], filesp[4],
                                                                                rasterfolder=projectdirs['SHRU'],
                                                                                folder=projectdirs['Observed'],
                                                                                filename=opt.split('.')[0],

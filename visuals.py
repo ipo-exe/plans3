@@ -571,7 +571,7 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
         plt.close(fig)
         return filepath
 
-
+# deprecated
 def pannel_topmodel_maps(t, prec, precmax, qb, qbmax, pet, et, etmax, maps, mapsmax, vline=20,
                          folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
     """
@@ -681,6 +681,50 @@ def plot_zmap3d(zmap, x, y):
     ax.plot_surface(X, Y, np.log10(count + 1), cmap='viridis', edgecolor='none')
     ax.set_title('Surface plot')
     plt.show()
+
+
+def plot_calib_series(dataframe, grid=True, filename='calib_series', folder='C:/bin', show=True):
+    # todo docstring
+    fig = plt.figure(figsize=(16, 8))  # Width, Height
+    gs = mpl.gridspec.GridSpec(3, 8, wspace=0.8, hspace=0.2)  # nrows, ncols
+    # 1
+    ind = 0
+    ax = fig.add_subplot(gs[ind, 0:])
+    plt.plot(dataframe['Date'], dataframe['Prec'])
+    plt.ylabel('Prec mm')
+    ax2 = ax.twinx()
+    plt.plot(dataframe['Date'], dataframe['Temp'], 'tab:orange')
+    plt.ylabel('Temp °C')
+    plt.grid(grid)
+    # 2
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['Q'])
+    plt.ylabel('Q mm')
+    plt.yscale('log')
+    plt.grid(grid)
+    #
+    # 3
+    ind = ind + 1
+    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
+    plt.plot(dataframe['Date'], dataframe['IRI'], label='IRI')
+    plt.plot(dataframe['Date'], dataframe['IRA'], label='IRA')
+    plt.legend(loc='upper right', ncol=2)
+    plt.ylabel('Irrigation mm')
+    plt.grid(grid)
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        if suff != '':
+            filepath = folder + '/' + filename + '_' + suff + '.png'
+        else:
+            filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
 
 
 def plot_lulc_view(lulc, lulc_df, basin, meta, mapttl='lulc', filename='mapview', folder='C:/bin', metadata=False, show=False):
@@ -890,7 +934,8 @@ def plot_map_view(map, meta, ranges, mapid='dem', filename='mapview', folder='C:
                'twi': ['YlGnBu', 'Index units'],
                'fto': ['Blues', 'Index units'],
                'etpat': ['Blues', 'Index units'],
-               'catcha': ['Blues', 'Sq. Meters (log10)']}
+               'catcha': ['Blues', 'Sq. Meters (log10)'],
+               'basin': ['Greys', 'Boolean']}
     #
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
@@ -915,6 +960,46 @@ def plot_map_view(map, meta, ranges, mapid='dem', filename='mapview', folder='C:
         plt.text(x=0.0, y=0.1, s='xll: {:.2f} m'.format(meta['xllcorner']))
         plt.text(x=0.0, y=0.05, s='yll: {:.2f} m'.format(meta['xllcorner']))
     plt.axis('off')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+
+
+def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', filename='histograms', suff=''):
+    #
+    s1 = len(countmatrix)
+    s3 = len(countmatrix[0])
+    s2 = int(s1/2)
+    fig = plt.figure(figsize=(16, 8))  # Width, Height
+    gs = mpl.gridspec.GridSpec(s1 + s2, s1 + s3, wspace=0.0, hspace=0.0)
+    #
+    ax = fig.add_subplot(gs[:s2+2, :s3])
+    x = np.arange(0, len(ys))
+    plt.plot(x, ys)
+    plt.xticks([])
+    plt.xlim((0, len(ys)-1))
+    plt.ylabel('% Frequency')
+    plt.title('SHRU Histogram')
+    #plt.axis('off')
+    ax = fig.add_subplot(gs[s2:, :s3])
+    im = plt.imshow(np.log10(countmatrix + 0.01), cmap='viridis', vmin=0)
+    plt.title('')
+    plt.ylabel('TWI values')
+    plt.xlabel('SHRU Ids')
+    plt.xticks(x, xs)
+    ax.tick_params(axis='both', which='major', labelsize=6)
+    ax = fig.add_subplot(gs[s2 + 2: s1 + s2 - 2, s3:])
+    plt.yticks([])
+    plt.plot(yt, xt)
+    plt.xlabel('% Frequency')
+    plt.title('TWI Histogram')
+    plt.gca().invert_yaxis()
     #
     if show:
         plt.show()

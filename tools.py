@@ -6,7 +6,25 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
 
-def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='shru'):
+def view_imported(filename, folder):
+    from visuals import plot_map_view, plot_calib_series
+    file = folder + '/' + filename
+    quantmaps = ('aoi_dem.asc', 'aoi_catcha.asc', 'aoi_basin.asc',
+                 'calib_dem.asc', 'calib_catcha.asc', 'calib_basin.asc')
+    if filename == 'calib_lulc.asc':
+        print()
+    elif filename in set(quantmaps):
+        mapid = filename.split('.')[0].split('_')[1]
+        meta, rmap = input.asc_raster(file)
+        ranges = (np.min(rmap), np.max(rmap))
+        plot_map_view(rmap, meta, ranges, mapid=mapid, filename=filename.split('.')[0], folder=folder, metadata=True)
+    elif filename == 'calib_series.txt':
+        series_df = pd.read_csv(file, sep=';')
+        series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
+        plot_calib_series(series_df, filename=filename, folder=folder, show=False)
+
+
+def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin', filename='shru'):
     """
 
     :param flulc: string file path to lulc .asc raster file
@@ -19,6 +37,7 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='
     :param filename: string name of file
     :return: string file path
     """
+    from visuals import plot_shrumap_view
     #
     # import data
     metalulc, lulc = input.asc_raster(flulc)
@@ -29,12 +48,14 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, folder='C:/bin', filename='
     soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
     lulc_ids = lulc_param_df['IdLULC'].values
     soils_ids = soils_param_df['IdSoil'].values
+    shru_df = pd.read_csv(fshruparam, sep=';')
+    shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName,ColorLULC,ColorSoil')
     #
     # process data
     shru_map = geo.xmap(map1=lulc, map2=soils, map1ids=lulc_ids, map2ids=soils_ids, map1f=100, map2f=1)
     #plt.imshow(shru_map)
     #plt.show()
-    #
+    plot_shrumap_view(lulc, soils, metalulc, shru_df, filename=filename, folder=folder, metadata=True)
     # export data
     export_file = output.asc_raster(shru_map, metalulc, folder, filename)
     return export_file
@@ -49,6 +70,7 @@ def map_fto(fsoils, fsoilsparam, folder='C:/bin', filename='fto'):
     :param filename: string name of file
     :return: string file path
     """
+    from visuals import plot_map_view
     # import data
     meta, soils = input.asc_raster(fsoils)
     soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
@@ -59,6 +81,8 @@ def map_fto(fsoils, fsoilsparam, folder='C:/bin', filename='fto'):
     #plt.show()
     # export data
     export_file = output.asc_raster(fto, meta, folder, filename)
+    ranges = (np.min(fto), np.max(fto))
+    plot_map_view(fto, meta, ranges, mapid='fto', filename=filename, folder=folder, metadata=True)
     return export_file
 
 
@@ -70,6 +94,7 @@ def map_slope(fdem, folder='C:/bin', filename='slope'):
     :param filename: string of file name
     :return: string path to file
     """
+    from visuals import plot_map_view
     # import data
     meta, dem = input.asc_raster(fdem)
     #plt.imshow(dem)
@@ -81,6 +106,8 @@ def map_slope(fdem, folder='C:/bin', filename='slope'):
     #
     # export
     export_file = output.asc_raster(slp, meta, folder, filename)
+    ranges = (np.min(slp), np.max(slp))
+    plot_map_view(slp, meta, ranges, mapid='slope', filename=filename, folder=folder, metadata=True)
     return export_file
 
 
@@ -94,6 +121,7 @@ def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     :param filename: string of file name
     :return: string path to file
     """
+    from visuals import plot_map_view
     # import data
     meta, slope = input.asc_raster(fslope)
     meta, catcha = input.asc_raster(fcatcha)
@@ -105,7 +133,71 @@ def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     #plt.show()
     # export data
     export_file = output.asc_raster(twi, meta, folder, filename)
+    ranges = (np.min(twi), np.max(twi))
+    plot_map_view(twi, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
     return export_file
+
+
+def compute_histograms(fshruparam, fshru, ftwi, fbasin, ntwibins=15, folder='C:/bin', filename='histograms', tui=False):
+    import time
+    from hydrology import count_matrix_twi_shru
+    from visuals import plot_histograms
+    if tui:
+        init = time.time()
+        print(' >>> loading SHRU parameters...')
+    shru_df = pd.read_csv(fshruparam, sep=';')
+    shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
+    shruids = shru_df['IdSHRU'].values
+    # import basin raster
+    if tui:
+        print(' >>> loading basin raster...')
+    meta, basin = input.asc_raster(fbasin)
+    #
+    # import twi raster
+    if tui:
+        print(' >>> loading shru raster...')
+    meta, shru = input.asc_raster(fshru)
+    #
+    # import twi raster
+    if tui:
+        print(' >>> loading twi raster...')
+    meta, twi = input.asc_raster(ftwi)
+    if tui:
+        end = time.time()
+        print('\nloading enlapsed time: {:.3f} seconds\n'.format(end - init))
+    #
+    # compute count matrix
+    if tui:
+        init = time.time()
+        print(' >>> computing histograms...')
+    count, twibins, shrubins = count_matrix_twi_shru(twi, shru, basin, shruids, ntwibins=ntwibins)
+    if tui:
+        end = time.time()
+        print('\nProcessing enlapsed time: {:.3f} seconds\n'.format(end - init))
+    # histograms
+    if tui:
+        print(' >>> exporting histograms...\n')
+    exp_df = pd.DataFrame(count, index=twibins, columns=shrubins)
+    if tui:
+        print(exp_df.to_string())
+    exp_file = folder + '/' + filename + '.txt'
+    exp_df.to_csv(exp_file, sep=';', index_label='TWI\SHRU')
+    #
+    # plot histogram view
+    matrix = count
+    matrix_t = np.transpose(count)
+    x_twi = twibins
+    y_twi = np.zeros(len(matrix))
+    for i in range(0, len(matrix)):
+        y_twi[i] = np.sum(matrix[i])
+    y_twi = 100 * y_twi / np.sum(matrix)
+    y_shru = np.zeros(shape=len(matrix_t))
+    for i in range(0, len(matrix_t)):
+        y_shru[i] = np.sum(matrix_t[i])
+    y_shru = 100 * y_shru / np.sum(matrix_t)
+    x_shru = exp_df.columns
+    plot_histograms(matrix, x_shru, y_shru, x_twi, y_twi, filename=filename, folder=folder)
+    return exp_file
 
 
 def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filename='map_series', rasterfilename='map'):
@@ -144,7 +236,7 @@ def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filena
     return exp_file
 
 
-def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin', folder='C:/bin',
+def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, fshruparam, rasterfolder='C:/bin', folder='C:/bin',
                        filename='shru_series', suff='', tui=False):
     # todo docstring
     # import data
@@ -166,7 +258,7 @@ def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolde
             print('procesing file:\t{}'.format(lcl_filename))
         # process data
         shru_file = map_shru(flulc=files[i], flulcparam=flulcparam, fsoils=fsoils, fsoilsparam=fsoilsparam,
-                             folder=rasterfolder, filename=lcl_filename)
+                             fshruparam=fshruparam, folder=rasterfolder, filename=lcl_filename)
         # print(lcl_expf)
         new_files.append(shru_file)
     #

@@ -153,7 +153,7 @@ def count_matrix_twi_shru(twi, shru, aoi, shruids, ntwibins=10):
             countmatrix[i][j] = np.sum(lcl_mask)
     return countmatrix, twi_bins, shruids
 
-
+# deprecated
 def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
     """
     2D histogram computing of 2 raster layers

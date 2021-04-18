@@ -98,16 +98,16 @@ input | hydro_param | txt | csv data frame
 		 -  `ColorLULC`: CSS color name available in Matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdLULC;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P_USLE;  ConvertTo;  ColorLULC
-     1;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue
-     2;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey
-     3;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen
-     4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;      khaki
-     5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;  goldenrod
-     6;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal
-     7;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen
-     8;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive
-     9;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold
+IdLULC;       LULCName;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;   C_USLE;  P_USLE;    ConvertTo;    ColorLULC
+     1;          Water;       0.0;          0.0;        1.6;    0.0;      0;      1.0;     1.0;         none;         blue
+     2;          Urban;       0.1;          1.0;        1.0;    0.0;      0;      0.1;     1.0;         none;         grey
+     3;         Forest;       1.0;          1.0;        1.0;    0.0;      0;   0.0001;     1.0;         none;    darkgreen
+     4;        Pasture;       0.5;          0.2;        0.7;    1.0;      0;     0.06;     1.0;    7 & 8 & 9;        khaki
+     5;          Crops;       0.4;          0.1;        0.4;    1.0;      1;      0.4;     1.0;    7 & 8 & 9;    goldenrod
+     6;        Wetland;       0.8;          0.6;        1.8;    0.0;      0;    0.001;     1.0;         none;         teal
+     7;     NBS-Forest;       0.9;          0.7;        0.9;    0.0;      0;    0.003;     1.0;         none;    limegreen
+     8;    NBS-Pasture;       0.6;         0.25;       0.75;    0.0;      0;     0.06;     0.3;         none;        olive
+     9;      NBS-Crops;       0.6;         0.15;        0.8;    0.5;      0;      0.4;     0.6;         none;         gold
 ```
 
 ## `aoi_lulc_series_input.txt`
@@ -194,12 +194,12 @@ sample file
 		 -  `ColoSoil`: CSS color name available in matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
-     1;   Alluvial;  1.0;     1.0;      0.12;  0.0021;        tan
-     2;  Colluvial;  1.0;    0.98;       0.1;   0.009;  goldenrod
-     3;   Residual;  1.0;    0.74;      0.08;  0.0042;     sienna
-     4;   Hydrosol;  1.0;    0.32;      0.05;  0.0021;      brown
-     5;    Neosols;  0.5;    0.05;      0.04;  0.0013;     maroon
+IdSoil;     SoilName;  f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
+     1;     Alluvial;   1.0;      1.0;        0.3;   0.0021;          tan
+     2;    Colluvial;   1.0;      1.0;        0.3;    0.009;    goldenrod
+     3;     Residual;   1.0;      1.0;        0.3;   0.0042;       sienna
+     4;     Hydrosol;   1.0;     0.32;        0.3;   0.0021;        brown
+     5;      Neosols;   0.5;      1.0;        0.4;   0.0013;       maroon
 ```
 
 ## `calib_basin.asc`
@@ -315,16 +315,16 @@ IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
 		 -  `ColorLULC`: CSS color name available in Matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdLULC;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P_USLE;  ConvertTo;  ColorLULC
-     1;        Water;    0.364;        0.75;   103.628;   0.0;     0;     1.0;    1.0;       none;       blue
-     2;        Urban;      1.0;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey
-     3;       Forest;   90.471;      16.032;    25.391;   0.0;     0;  0.0001;    1.0;       none;  darkgreen
-     4;      Pasture;   42.683;       4.573;    14.932;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;      khaki
-     5;        Crops;   25.681;       2.922;    12.908;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;  goldenrod
-     6;      Wetland;   65.763;      12.669;    80.708;   0.0;     0;   0.001;    1.0;       none;       teal
-     7;   NBS-Forest;   52.384;       8.955;    18.821;   0.0;     0;   0.003;    1.0;       none;  limegreen
-     8;  NBS-Pasture;   48.608;       5.688;    30.379;   0.0;     0;    0.06;    0.3;       none;      olive
-     9;    NBS-Crops;   40.581;       4.179;    28.671;   0.5;     0;     0.4;    0.6;       none;       gold
+IdLULC;       LULCName;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;   C_USLE;  P_USLE;    ConvertTo;    ColorLULC
+     1;          Water;       0.0;          0.0;        1.6;    0.0;      0;      1.0;     1.0;         none;         blue
+     2;          Urban;       0.1;          1.0;        1.0;    0.0;      0;      0.1;     1.0;         none;         grey
+     3;         Forest;       1.0;          1.0;        1.0;    0.0;      0;   0.0001;     1.0;         none;    darkgreen
+     4;        Pasture;       0.5;          0.2;        0.7;    1.0;      0;     0.06;     1.0;    7 & 8 & 9;        khaki
+     5;          Crops;       0.4;          0.1;        0.4;    1.0;      1;      0.4;     1.0;    7 & 8 & 9;    goldenrod
+     6;        Wetland;       0.8;          0.6;        1.8;    0.0;      0;    0.001;     1.0;         none;         teal
+     7;     NBS-Forest;       0.9;          0.7;        0.9;    0.0;      0;    0.003;     1.0;         none;    limegreen
+     8;    NBS-Pasture;       0.6;         0.25;       0.75;    0.0;      0;     0.06;     0.3;         none;        olive
+     9;      NBS-Crops;       0.6;         0.15;        0.8;    0.5;      0;      0.4;     0.6;         none;         gold
 ```
 
 ## `calib_series.txt`
@@ -397,12 +397,12 @@ IdLULC;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P
 		 -  `ColoSoil`: CSS color name available in matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
-     1;   Alluvial;  1.0;     1.0;      0.12;  0.0021;        tan
-     2;  Colluvial;  1.0;    0.98;       0.1;   0.009;  goldenrod
-     3;   Residual;  1.0;    0.74;      0.08;  0.0042;     sienna
-     4;   Hydrosol;  1.0;    0.32;      0.05;  0.0021;      brown
-     5;    Neosols;  0.5;    0.05;      0.04;  0.0013;     maroon
+IdSoil;     SoilName;  f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
+     1;     Alluvial;   1.0;      1.0;        0.3;   0.0021;          tan
+     2;    Colluvial;   1.0;      1.0;        0.3;    0.009;    goldenrod
+     3;     Residual;   1.0;      1.0;        0.3;   0.0042;       sienna
+     4;     Hydrosol;   1.0;     0.32;        0.3;   0.0021;        brown
+     5;      Neosols;   0.5;      1.0;        0.4;   0.0013;       maroon
 ```
 
 ## `hydro_param.txt`
@@ -433,17 +433,17 @@ IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
 		 -  `Max`: positive real number of upper bound of parameter space.
 - **Example**:
 ```
-Parameter;    Set;    Min;     Max
-        m;   20.0;    1.0;    30.0
-       qo;    5.0;    0.1;    20.0
-    cpmax;   0.05;    0.1;    20.0
-    sfmax;   0.81;    0.1;    20.0
-      erz;   50.0;    0.1;  1000.0
-     ksat;   50.0;    0.1;    10.0
-        c;   50.0;   20.0;   120.0
-      lat;  -30.0;  -30.0;   -30.0
-        k;    0.5;    0.1;     6.0
-        n;    1.1;    1.0;    10.0
+Parameter;    Set;    Min;    Max
+        m;   20.0;    1.0;   30.0
+       qo;    5.0;    0.1;   20.0
+    cpmax;   0.05;    0.1;   20.0
+    sfmax;   0.81;    0.1;   20.0
+      erz;   20.0;    0.1;   30.0
+     ksat;    5.0;    0.1;   10.0
+        c;   50.0;   20.0;  120.0
+      lat;  -30.0;  -30.0;  -30.0
+        k;    0.5;    0.1;    6.0
+        n;    1.1;    1.0;   10.0
 ```
 
 ---
@@ -459,6 +459,7 @@ derived | aoi_slope | asc | raster map
 derived | aoi_twi | asc | raster map
 derived | calib_etpat_series | txt | csv time series
 derived | calib_fto | asc | raster map
+derived | calib_histograms | txt | csv data frame
 derived | calib_shru | asc | raster map
 derived | calib_shru_param | txt | csv data frame
 derived | calib_slope | asc | raster map
@@ -666,6 +667,34 @@ sample file
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/fto.PNG "calib_fto")
 
+## `calib_histograms.txt`
+
+- **I/O**: derived.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of CALIB basin. Values are in counted cells.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
+- **Example**:
+```
+TWI\SHRU; 101; 102; 103; 104; 105; 201; 202; 203; 204; 205;  301;   302;  303; 304;  305; 401; 402; 403; 404; 405; 501;  502;  503;  504; 505; 601; 602; 603; 604; 605; 701; 702; 703; 704; 705; 801; 802; 803; 804; 805; 901; 902; 903; 904;  905
+  5.2092;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;  153;   386;  472;   0;   11;   0;   5;   0;   0;   0;  10;   91;   67;    0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+  6.8357;   0;   4;   0;   1;   0;   0;   0;   0;   0;   0;  267;  1617;  736;  85;  159;   0;  99;  53;  13;   4;  20;  799;  213;  129;  19;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+  8.4622;   0;   0;   0;   5;   0;   0;   0;   0;   0;   0;  121;   465;  133;  57;   28;   0;  17;   8;  12;   3;   6;  335;   40;  127;   4;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+ 10.0886;   0;   0;   0;   4;   0;   0;   0;   0;   0;   0;   39;   146;   14;  23;    0;   0;   1;   4;   4;   0;   4;   94;    8;   28;   2;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+ 11.7151;   0;   1;   0;   1;   0;   0;   0;   0;   0;   0;   48;    90;    8;  29;    0;   0;   3;   0;   8;   0;   7;   37;    7;   57;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+ 13.3416;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   60;    44;    1;  11;    0;   0;   1;   0;   0;   0;   3;   18;    0;   14;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+ 14.9681;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   54;     9;    1;   7;    0;   0;   0;   0;   0;   0;   7;    3;    0;   19;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+ 16.5946;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   12;    10;    0;   8;    0;   0;   0;   0;   0;   0;   0;    6;    0;   21;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+ 18.2211;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    5;     1;    0;   0;    0;   0;   0;   0;   0;   0;   0;    0;    0;   12;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+ 19.8476;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    7;     0;    0;   0;    0;   0;   0;   0;   0;   0;   2;    0;    0;    0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+```
+
 ## `calib_shru.asc`
 
 - **I/O**: derived.
@@ -781,9 +810,28 @@ IdSHRU;               SHRUName; IdLULC; IdSoil;     LULCName; f_Canopy; f_RootDe
 
 ioType | FileName | FileFormat | FileType
  :---  |  :---  |  :---  |  :--- 
+extracted | aoi_histograms_YYYY-MM-DD | txt | csv data frame
 extracted | aoi_lulc_YYYY-MM-DD | asc | raster map
 extracted | aoi_shru_YYYY-MM-DD | asc | raster map
 extracted | calib_etpat_YYYY-MM-DD | asc | raster map
+
+## `aoi_histograms_YYYY-MM-DD.txt`
+
+- **I/O**: extracted.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of AOI basin  in year YYYY. Values are in counted cells.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
+- **Example**:
+```
+sample file
+```
 
 ## `aoi_lulc_YYYY-MM-DD.asc`
 
