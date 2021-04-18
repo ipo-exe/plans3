@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import backend, tools
+from backend import center, header_warp, header_plans
 from time import sleep
 from tkinter import filedialog
 from tkinter import *
@@ -44,56 +45,6 @@ def header(p0='title', p1=70, p2='*', p3=True):
         title_s = '\n\n\n' + title_s + '\n\n'
     print(title_s)
     sleep(0.2)
-
-
-def center(p0='text', p1=8):
-    """
-    return a centered string
-    :param p0: text to centralize
-    :param p1: full length to center
-    :return: centered string
-    """
-    if len(p0) > p1:  # in case the text is longer than the length param
-        s = ' ' + p0 + ' '
-    else:
-        # symmetry:
-        if (p1 - len(p0)) % 2 == 0:
-            aux_i1 = int((p1 - len(p0))/2)
-            s = (' '*aux_i1) + p0 + (' '*aux_i1)
-        #
-        else:
-            aux_i1 = int(round((p1 - len(p0))/2))
-            aux_i2 = int((p1 - len(p0)) - aux_i1)
-            s = (' '*aux_i2) + p0 + (' '*aux_i1)
-    return s
-
-
-def header_warp():
-    """
-    function to built the WARP header message
-    :return: string with warp header message
-    """
-    def_int = 70
-    def_str1 = center('UFRGS - Universidade Federal do Rio Grande do Sul', def_int)
-    def_str2 = center('IPH - Instituto de Pesquisas Hidráulicas', def_int)
-    def_str3 = center('WARP - Research Group in Water Resources Management and Planning', def_int)
-    def_str4 = center('https://www.ufrgs.br/warp', def_int)
-    def_str5 = center('Porto Alegre, Rio Grande do Sul, Brazil', def_int)
-    def_str = '\n\n' + def_str1 + '\n' + def_str2 + '\n' + def_str3 + '\n' + def_str4 + '\n' + def_str5 + '\n\n'
-    return def_str
-
-
-def header_plans():
-    """
-    built plans 2 header message
-    :return: string with plans header msg
-    """
-    def_str0 = 'plans - planning nature-based solutions'.upper()
-    def_str1 = 'Version: 3.0'
-    def_str3 = 'This software is under the GNU GPL3.0 license'
-    def_str4 = 'Source code repository: https://github.com/ipo-exe/plans3/'
-    def_str = def_str0 + '\n' + def_str1 + '\n' + def_str3 + '\n' + def_str4 + '\n\n'
-    return def_str
 
 
 def validade_project_name(msg='Enter project name', wng='Warning!',
@@ -481,11 +432,10 @@ def main(root='default', importing=True):
                                             files_input = backend.get_input2calibhydro()
                                             folder = projectdirs['Observed']
                                             fseries = folder + '/' + files_input[0]
-                                            ftwi = folder + '/' + files_input[1]
-                                            fshru = folder + '/' + files_input[2]
-                                            fbasin = folder + '/' + files_input[3]
-                                            fshruparam = folder + '/' + files_input[4]
-                                            fhydroparam = folder + '/' + files_input[5]
+                                            fhydroparam = folder + '/' + files_input[1]
+                                            fshruparam = folder + '/' + files_input[2]
+                                            fhistograms = folder + '/' + files_input[3]
+                                            fbasin = folder + '/' + files_input[4]
                                             aux_str = 'calib_hydro' + '_' + metric
                                             dst_dir = backend.create_rundir(label=aux_str,
                                                                             wkplc=projectdirs['Optimization'])
@@ -507,10 +457,11 @@ def main(root='default', importing=True):
                                                 generations = 200
                                             print('stop here')
                                             calibparam = tools.calib_hydro(fseries=fseries, fhydroparam=fhydroparam,
-                                                                              fshruparam=fshruparam, fbasin=fbasin,
-                                                                              fshru=fshru, ftwi=ftwi, folder=dst_dir,
-                                                                              generations=generations, popsize=popsize,
-                                                                              metric=metric, tui=True)
+                                                                           fshruparam=fshruparam,
+                                                                           fhistograms=fhistograms, fbasin=fbasin,
+                                                                           folder=dst_dir,
+                                                                           generations=generations, popsize=popsize,
+                                                                           metric=metric, tui=True)
                                             print('\n{}:\n{}\n'.format(lng[30], calibparam))
                                             ok()
                             elif opt == calib_options[1]:
@@ -536,9 +487,6 @@ def main(root='default', importing=True):
                     # simulate observed policy
                     if opt == sim_options[0]:
                         header(opt)
-                        print('develop code')
-                        # deprecated code:
-                        #
                         # simulate hydrology
                         if opt == 'Simulate CALIB hydrology':
                             # checker protocol
@@ -551,16 +499,15 @@ def main(root='default', importing=True):
                                 files_input = backend.get_input2simbhydro(aoi=False)
                                 folder = projectdirs['Observed']
                                 fseries = folder + '/' + files_input[0]
-                                ftwi = folder + '/' + files_input[1]
-                                fshru = folder + '/' + files_input[2]
-                                fbasin = folder + '/' + files_input[3]
-                                fshruparam = folder + '/' + files_input[4]
-                                fhydroparam = folder + '/' + files_input[5]
+                                fhydroparam = folder + '/' + files_input[1]
+                                fshruparam = folder + '/' + files_input[2]
+                                fhistograms = folder + '/' + files_input[3]
+                                fbasin = folder + '/' + files_input[4]
                                 dst_dir = backend.create_rundir(label='sim_hydro', wkplc=projectdirs['Simulation'])
-                                files = tools.run_short_hydrology(fseries=fseries, fhydroparam=fhydroparam,
-                                                                  mapvar='D-Inf-R', qobs=True,
-                                                                  fshruparam=fshruparam, fbasin=fbasin, fshru=fshru,
-                                                                  ftwi=ftwi, folder=dst_dir, tui=True, mapback=True)
+                                files = tools.stable_lulc_hydro(fseries=fseries, fhydroparam=fhydroparam,
+                                                                fshruparam=fshruparam, fhistograms=fhistograms,
+                                                                fbasin=fbasin,mapvar='D-Inf-R', qobs=True,
+                                                                folder=dst_dir, tui=True, mapback=True)
                                 files_analyst = tools.obs_sim_analyst(fseries=files[0], fld_obs='Qobs', fld_sim='Q',
                                                                       folder=dst_dir, tui=True)
                     # simulate observed policy

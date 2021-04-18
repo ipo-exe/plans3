@@ -6,6 +6,21 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
 
+def export_report(report_lst, filename='report', folder='C:/bin', tui=False):
+    from backend import header_plans, header
+    filepath = folder + '/' + filename + '.txt'
+    fle = open(filepath, 'w+')
+    header = header('output report')
+    report_lst.insert(0, header)
+    header = header_plans()
+    report_lst.insert(0, header)
+    fle.writelines(report_lst[:])
+    fle.close()
+    if tui:
+        for e in report_lst[1:]:
+            print(e)
+
+
 def view_imported(filename, folder):
     from visuals import plot_map_view, plot_calib_series
     file = folder + '/' + filename
@@ -319,8 +334,18 @@ def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folde
     :param tui: boolean to control TUI displays
     :return: tuple of strings of exported files
     """
+    import time, datetime
     import analyst
     from visuals import pannel_obs_sim_analyst
+    #
+    # report setup
+    t0 = time.time()
+    report_lst = list()
+    report_lst.append('Execution timestamp: {}\n'.format(datetime.datetime.now()))
+    report_lst.append('Process: OBS-SIM DATA ANALYST\n')
+    input_files_df = pd.DataFrame({'Input files': (fseries,)})
+    report_lst.append(input_files_df.to_string(index=False))
+    #
     if tui:
         print('performing obs vs. sim analysis...')
     #
@@ -390,9 +415,9 @@ def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folde
     values = (pbias, rmse, rmselog, nse, nselog, kge, kgelog, linreg['A'], linreg['B'], linreg['R'], linreg['P'],
               linreg['SD'], rmse_freq, rmselog_freq, linreg_freq['R'], linreg_freq_log['R'])
     param_df = pd.DataFrame({'Parameter': params, 'Value': values})
-    if tui:
-        print('ObsSim analysis results:\n')
-        print(param_df.to_string())
+    #
+    report_lst.append('\n\nAnalyst Parameter Results:\n\n')
+    report_lst.append(param_df.to_string(index=False))
     #
     # **** Export Data ****
     if tui:
@@ -410,61 +435,54 @@ def obs_sim_analyst(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folde
     # export visual:
     exp_file4 = pannel_obs_sim_analyst(series=series_df, freq=freq_df, params=param_df, folder=folder)
     #
+    #
+    if tui:
+        print('\n\n\n')
+    tf = time.time()
+    output_df = pd.DataFrame({'Output files': (exp_file1, exp_file2, exp_file3, exp_file4)})
+    report_lst.append(output_df.to_string(index=False))
+    report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
+    export_report(report_lst, filename='REPORT__analyst', folder=folder, tui=tui)
+    #
     return (exp_file1, exp_file2, exp_file3, exp_file4)
 
 
-def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_month'):
-    """
-    Derive the monthly series of calibration file and ET and C variables (monthly)
-    Variables must be: Date, Prec, Flow, Temp. Units: mm, m3/s, celsius
-
-    output variables: Date, Temp, Prec, ET, Flow, C. Units: mm, mm, mm, mm/mm
-
-    :param fseries: string filepath to txt file of daily timeseries
-    :param faoi: string filepatht o aoi.asc raster file (watershed area in boolean image)
-    :param folder: string filepath to folder
-    :param filename: string filename
-    :return: string filepath to monthtly series
-    """
-    import resample, hydrology
-    # import data
-    series_df = pd.read_csv(fseries, sep=';\s+', engine='python')
-    meta, aoi = input.asc_raster(faoi)
-    cell = meta['cellsize']
-    # process data
-    area = np.sum(aoi) * cell * cell
-    #print('Area {}'.format(area))
-    series_temp = resample.d2m_clim(series_df, var_field='Temp')
-    series_flow = resample.d2m_flow(series_df, var_field='Flow')
-    series_prec = resample.d2m_prec(series_df, var_field='Prec')
-    #
-    prec = series_prec['Sum'].values
-    # convert flow to mm
-    flow = series_flow['Sum'].values
-    spflow = 1000 * flow / area
-    #
-    # monthly C and evap
-    c_month = spflow/prec
-    evap_month = prec - spflow
-    #
-    # export data
-    exp_df = pd.DataFrame({'Date':series_temp['Date'], 'Temp':series_temp['Mean'],
-                           'Prec':prec, 'ET':evap_month, 'Flow':spflow, 'C':c_month})
-    print(exp_df.head())
-    exp_file = folder + '/' + filename + '.txt'
-    exp_df.to_csv(exp_file, sep=';', index=False)
-    return exp_file
-
-
-def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, ntwibins=10, folder='C:/bin', tui=False,
-                        mapback=False, mapvar='D-R-ET', qobs=False):
-    import time
-    from hydrology import avg_2d, count_matrix_twi_shru, topmodel_sim,  map_back
+def stable_lulc_hydro(fseries, fhydroparam, fshruparam, fhistograms, fbasin, folder='C:/bin', tui=False,
+                      mapback=False, mapvar='all', mapdates='all', qobs=False):
+    # todo 1) docstring 2) new feature to set at which date to mapback
+    import time, datetime
+    from shutil import copyfile
+    from hydrology import topmodel_sim, map_back
     from visuals import pannel_topmodel
+
+    def extract_histdata(fhistograms):
+        dataframe = pd.read_csv(fhistograms, sep=';')
+        dataframe = dataframe_prepro(dataframe, strf=False)
+        dataframe = dataframe.set_index(dataframe.columns[0])
+        shru_ids = dataframe.columns.astype('int')
+        twi_bins = dataframe.index.values
+        count_matrix = dataframe.values
+        return count_matrix, twi_bins, shru_ids
+
+    def extract_twi_avg(twibins, count):
+        twi_sum = 0
+        for i in range(len(twibins)):
+            twi_sum = twi_sum + (twibins[i] * np.sum(count[i]))
+        return twi_sum / np.sum(count)
     #
+    #
+    # time and report setup
     t0 = time.time()
+    report_lst = list()
+    report_lst.append('Execution timestamp: {}\n'.format(datetime.datetime.now()))
+    report_lst.append('Process: STABLE LULC HYDROLOGY\n')
+    input_files_df = pd.DataFrame({'Input files': (fseries, fhydroparam, fshruparam, fhistograms, fbasin)})
+    report_lst.append(input_files_df.to_string(index=False))
+    #
+    #
+    # Importing section
+    init = time.time()
     if tui:
-        init = time.time()
         print('\n\t**** Load Data Protocol ****\n')
         print(' >>> loading time series...')
     series_df =  pd.read_csv(fseries, sep=';')
@@ -486,52 +504,37 @@ def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, n
     k = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Set'].values[0]
     n = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Set'].values[0]
     #
-    #
     if tui:
         print(' >>> loading SHRU parameters...')
     shru_df = pd.read_csv(fshruparam, sep=';')
     shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
-    shruids = shru_df['IdSHRU'].values
-    #
-    # import basin raster
-    if tui:
-        print(' >>> loading basin raster...')
-    meta, basin = input.asc_raster(fbasin)
-    #
-    # import twi raster
-    if tui:
-        print(' >>> loading shru raster...')
-    meta, shru = input.asc_raster(fshru)
-    #
-    # import twi raster
-    if tui:
-        print(' >>> loading twi raster...')
-    meta, twi = input.asc_raster(ftwi)
-    #
-    # get boundary conditions
-    # import twi raster
-    if tui:
-        print(' >>> loading boundary conditions...')
-    area = np.sum(basin) * meta['cellsize'] * meta['cellsize']
-    qt0 = 0.01
-    if qobs:
-        qt0 = series_df['Q'].values[0]
-    lamb = avg_2d(twi, basin)
-    #
     #
     # compute count matrix
     if tui:
-        print(' >>> computing histograms...')
-    count, twibins, shrubins = count_matrix_twi_shru(twi, shru, basin, shruids, ntwibins=ntwibins)
+        print(' >>> loading histograms...')
+    count, twibins, shrubins = extract_histdata(fhistograms=fhistograms)
+    #
+    #
+    # get boundary conditions
     if tui:
-        end = time.time()
+        print(' >>> loading boundary conditions...')
+    meta = input.asc_raster_meta(fbasin)
+    area = np.sum(count) * meta['cellsize'] * meta['cellsize']
+    qt0 = 0.01  # fixed
+    if qobs:
+        qt0 = series_df['Q'].values[0]
+    lamb = extract_twi_avg(twibins, count)
+    print(lamb)
+    #
+    end = time.time()
+    report_lst.append('\n\nLoading enlapsed time: {:.3f} seconds\n'.format(end - init))
+    if tui:
         print('\nloading enlapsed time: {:.3f} seconds'.format(end - init))
     #
     #
-    #
-    # simulation
+    # simulation section
+    init = time.time()
     if tui:
-        init = time.time()
         print('\n\t**** Simulation Protocol ****\n')
         print(' >>> running simulation...')
     if mapback:
@@ -542,31 +545,33 @@ def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, n
         sim_df = topmodel_sim(series=series_df, shruparam=shru_df, twibins=twibins, countmatrix=count, lamb=lamb,
                               qt0=qt0, m=m, qo=qo, cpmax=cpmax, sfmax=sfmax, erz=erz, ksat=ksat, c=c, lat=lat,
                               k=k, n=n, area=area, tui=False, qobs=qobs, mapback=mapback, mapvar=mapvar)
+    end = time.time()
+    report_lst.append('Simulation enlapsed time: {:.3f} seconds\n'.format(end - init))
     if tui:
-        end = time.time()
         print('\nsimulation enlapsed time: {:.3f} seconds'.format(end - init))
     #
+    #
+    #
     # exporting section
+    init = time.time()
     if tui:
-        init = time.time()
         print('\n\t**** Export Data Protocol ****\n')
         print(' >>> exporting simulated time series...')
     # time series
     exp_file1 = folder + '/' + 'sim_series.txt'
     sim_df.to_csv(exp_file1, sep=';', index=False)
-    #
     # histograms
     if tui:
         print(' >>> exporting histograms...')
-    exp_df = pd.DataFrame(count, index=twibins, columns=shrubins)
     exp_file2 = folder + '/' + 'sim_histograms.txt'
-    exp_df.to_csv(exp_file2, sep=';', index_label='TWI\SHRU')
+    copyfile(src=fhistograms, dst=exp_file2)
     #
     # parameters
     if tui:
         print(' >>> exporting run parameters...')
     exp_file3 = folder + '/' + 'sim_parameters.txt'
-    hydroparam_df.to_csv(exp_file3, sep=';', index=False)
+    copyfile(src=fhydroparam, dst=exp_file3)
+    ## hydroparam_df.to_csv(exp_file3, sep=';', index=False)
     #
     # export visual pannel
     if tui:
@@ -577,7 +582,6 @@ def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, n
     if mapback:
         if tui:
             print(' >>> exporting variable maps...')
-        init = time.time()
         from os import mkdir
         if mapvar == 'all':
             mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
@@ -598,7 +602,7 @@ def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, n
                 # export local dataframe to text file in local folder
                 lcl_exp_df = pd.DataFrame(mapped[var][t], index=twibins, columns=shrubins)
                 lcl_exp_df.to_csv(lcl_file, sep=';', index_label='TWI\SHRU')
-                map = map_back(zmatrix=mapped[var][t], a1=twi, a2=shru, bins1=twibins, bins2=shrubins)
+                #map = map_back(zmatrix=mapped[var][t], a1=twi, a2=shru, bins1=twibins, bins2=shrubins)
                 #plt.imshow(map, cmap='jet')
                 #plt.show()
             #
@@ -607,27 +611,58 @@ def run_short_hydrology(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, n
             lcl_file = folder + '/' + 'sim_maps_' + var + '.txt'
             lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
             mapfiles_lst.append(lcl_file)
-        #
         mapfiles_lst = tuple(mapfiles_lst)
-        end = time.time()
-        if tui:
-            print('mapping enlapsed time: {:.3f} seconds'.format(end - init))
+    #
+    #
+    end = time.time()
+    report_lst.append('Exporting enlapsed time: {:.3f} seconds\n'.format(end - init))
     if tui:
-        tf = time.time()
-        print('\ntotal run enlapsed time: {:.3f} seconds'.format(tf - t0))
+        print('Exporting enlapsed time: {:.3f} seconds'.format(end - init))
+    #
+    tf = time.time()
+    if tui:
+        print('\nExecution enlapsed time: {:.3f} seconds'.format(tf - t0))
+        print('\n\n\n')
+    #
+    report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
+    if mapback:
+        outfiles = [exp_file1, exp_file2, exp_file3, exp_file4]
+        for e in mapfiles_lst:
+            outfiles.append(e)
+        output_df = pd.DataFrame({'Output files': outfiles})
+    else:
+        output_df = pd.DataFrame({'Output files': (exp_file1, exp_file2, exp_file3, exp_file4)})
+    report_lst.append(output_df.to_string(index=False))
+    export_report(report_lst, filename='REPORT__simulation', folder=folder, tui=tui)
     #
     if mapback:
         return (exp_file1, exp_file2, exp_file3, exp_file4, mapfiles_lst)
     else:
         return (exp_file1, exp_file2, exp_file3, exp_file4)
 
-def calib_hydro(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, ntwibins=10, folder='C:/bin', tui=False,
+
+def calib_hydro(fseries, fhydroparam, fshruparam, fhistograms, fbasin, folder='C:/bin', tui=False,
                 mapback=True, mapvar='D-R-ET', qobs=True, generations=100, popsize=200, metric='NSE'):
     # todo docstring
     from hydrology import avg_2d, count_matrix_twi_shru, topmodel_sim,  map_back, topmodel_calib
     from visuals import pannel_topmodel
     import time
     from os import mkdir
+
+    def extract_histdata(fhistograms):
+        dataframe = pd.read_csv(fhistograms, sep=';')
+        dataframe = dataframe_prepro(dataframe, strf=False)
+        dataframe = dataframe.set_index(dataframe.columns[0])
+        shru_ids = dataframe.columns.astype('int')
+        twi_bins = dataframe.index.values
+        count_matrix = dataframe.values
+        return count_matrix, twi_bins, shru_ids
+
+    def extract_twi_avg(twibins, count):
+        twi_sum = 0
+        for i in range(len(twibins)):
+            twi_sum = twi_sum + (twibins[i] * np.sum(count[i]))
+        return twi_sum / np.sum(count)
 
     def stamped(g):
         if g < 10:
@@ -693,42 +728,28 @@ def calib_hydro(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, ntwibins=
         print(' >>> loading SHRU parameters...')
     shru_df = pd.read_csv(fshruparam, sep=';')
     shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
-    shruids = shru_df['IdSHRU'].values
-    #
-    # import basin raster
+    # compute count matrix
     if tui:
-        print(' >>> loading basin raster...')
-    meta, basin = input.asc_raster(fbasin)
+        print(' >>> loading histograms...')
+    count, twibins, shrubins = extract_histdata(fhistograms=fhistograms)
     #
-    # import twi raster
-    if tui:
-        print(' >>> loading shru raster...')
-    meta, shru = input.asc_raster(fshru)
-    #
-    # import twi raster
-    if tui:
-        print(' >>> loading twi raster...')
-    meta, twi = input.asc_raster(ftwi)
     #
     # get boundary conditions
-    # import twi raster
     if tui:
         print(' >>> loading boundary conditions...')
-    area = np.sum(basin) * meta['cellsize'] * meta['cellsize']
+    meta = input.asc_raster_meta(fbasin)
+    area = np.sum(count) * meta['cellsize'] * meta['cellsize']
+    print('>> Area {} m2'.format(area))
+    print('>> Area {} km2'.format(area / (1000 * 1000)))
     qt0 = 0.01
     if qobs:
         qt0 = series_df['Q'].values[0]
-    lamb = avg_2d(twi, basin)
+    lamb = extract_twi_avg(twibins, count)
     #
     #
-    # compute count matrix
+    end = time.time()
     if tui:
-        print(' >>> computing histograms...')
-    count, twibins, shrubins = count_matrix_twi_shru(twi, shru, basin, shruids, ntwibins=ntwibins)
-    if tui:
-        end = time.time()
         print('\nloading enlapsed time: {:.3f} seconds'.format(end - init))
-    #
     #
     #
     # run topmodel calibration
@@ -878,6 +899,48 @@ def calib_hydro(fseries, fhydroparam, fshruparam, fbasin, fshru, ftwi, ntwibins=
     #
     return exp_file3
 
+def series_calib_month(fseries, faoi, folder='C:/bin', filename='series_calib_month'):
+    """
+    Derive the monthly series of calibration file and ET and C variables (monthly)
+    Variables must be: Date, Prec, Flow, Temp. Units: mm, m3/s, celsius
+
+    output variables: Date, Temp, Prec, ET, Flow, C. Units: mm, mm, mm, mm/mm
+
+    :param fseries: string filepath to txt file of daily timeseries
+    :param faoi: string filepatht o aoi.asc raster file (watershed area in boolean image)
+    :param folder: string filepath to folder
+    :param filename: string filename
+    :return: string filepath to monthtly series
+    """
+    import resample, hydrology
+    # import data
+    series_df = pd.read_csv(fseries, sep=';\s+', engine='python')
+    meta, aoi = input.asc_raster(faoi)
+    cell = meta['cellsize']
+    # process data
+    area = np.sum(aoi) * cell * cell
+    #print('Area {}'.format(area))
+    series_temp = resample.d2m_clim(series_df, var_field='Temp')
+    series_flow = resample.d2m_flow(series_df, var_field='Flow')
+    series_prec = resample.d2m_prec(series_df, var_field='Prec')
+    #
+    prec = series_prec['Sum'].values
+    # convert flow to mm
+    flow = series_flow['Sum'].values
+    spflow = 1000 * flow / area
+    #
+    # monthly C and evap
+    c_month = spflow/prec
+    evap_month = prec - spflow
+    #
+    # export data
+    exp_df = pd.DataFrame({'Date':series_temp['Date'], 'Temp':series_temp['Mean'],
+                           'Prec':prec, 'ET':evap_month, 'Flow':spflow, 'C':c_month})
+    print(exp_df.head())
+    exp_file = folder + '/' + filename + '.txt'
+    exp_df.to_csv(exp_file, sep=';', index=False)
+    return exp_file
+
 # deprecated:
 def cn_series(flulcseries, flulcparam, fsoils, fsoilsparam, rasterfolder='C:/bin', folder='C:/bin', filename='cn_series'):
     """
@@ -989,7 +1052,6 @@ def import_climpat(fclimmonth, rasterfolder='C:/bin', folder='C:/bin', filename=
     exp_file = folder + '/' + filename + '.txt'
     exp_df.to_csv(exp_file, sep=';', index=False)
     return exp_file
-
 
 # deprecated
 def run_topmodel_deprec(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
@@ -1205,7 +1267,6 @@ def run_topmodel_deprec(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',
     else:
         return (exp_file1, exp_file2, exp_file3, exp_file4)
 
-# deprecated:
 def integrate_map(ftwi, fcn, faoi, fmaps, filename, yfield='TWI\CN', folder='C:/bin', tui=False, show=False):
     """
 

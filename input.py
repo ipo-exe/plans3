@@ -61,6 +61,30 @@ def asc_raster(file):
     return meta_dct, def_array
 
 
+def asc_raster_meta(file):
+    """
+    A function to import .ASC raster files
+    :param file: string of file path with the '.asc' extension
+    :return: metadata dictionary
+        """
+    def_f = open(file)
+    def_lst = def_f.readlines()
+    def_f.close()
+    #
+    # get metadata constructor loop
+    meta_lbls = ('ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'NODATA_value')
+    meta_format = ('int', 'int', 'float', 'float', 'float', 'float')
+    meta_dct = dict()
+    for i in range(6):
+        lcl_lst = def_lst[i].split(' ')
+        lcl_meta_str = lcl_lst[len(lcl_lst) - 1].split('\n')[0]
+        if meta_format[i] == 'int':
+            meta_dct[meta_lbls[i]] = int(lcl_meta_str)
+        else:
+            meta_dct[meta_lbls[i]] = float(lcl_meta_str)
+    return meta_dct
+
+
 def asc_raster_list(file, filefield='File', sep=';'):
     """
     batch imput of asc raster

@@ -1,8 +1,81 @@
 import os
 import pandas as pd
 
+def header(p0='title', p1=70, p2='*', p3=True):
+    """
+    Returns a title string like:
 
-def update_iofiles(infile='iofiles.txt', sep='|', outfile='iofiles.md'):
+
+    ********************** TITLE **********************
+
+
+    :param p0: body of text
+    :param p1: size of title
+    :param p2: character of decorations
+    :param p3: spaces boolean
+    :return: a string
+    """
+    if len(p0) > p1:
+        title_aux0 = ''
+    else:
+        title_aux0 = str(p2 * int((p1 - (len(p0))) / 2))
+    title_s = title_aux0 + ' ' + p0.upper() + ' ' + title_aux0
+    if p3:
+        title_s = '\n\n\n' + title_s + '\n\n'
+    return title_s
+
+
+def center(p0='text', p1=8):
+    """
+    return a centered string
+    :param p0: text to centralize
+    :param p1: full length to center
+    :return: centered string
+    """
+    if len(p0) > p1:  # in case the text is longer than the length param
+        s = ' ' + p0 + ' '
+    else:
+        # symmetry:
+        if (p1 - len(p0)) % 2 == 0:
+            aux_i1 = int((p1 - len(p0))/2)
+            s = (' '*aux_i1) + p0 + (' '*aux_i1)
+        #
+        else:
+            aux_i1 = int(round((p1 - len(p0))/2))
+            aux_i2 = int((p1 - len(p0)) - aux_i1)
+            s = (' '*aux_i2) + p0 + (' '*aux_i1)
+    return s
+
+
+def header_warp():
+    """
+    function to built the WARP header message
+    :return: string with warp header message
+    """
+    def_int = 70
+    def_str1 = center('UFRGS - Universidade Federal do Rio Grande do Sul', def_int)
+    def_str2 = center('IPH - Instituto de Pesquisas Hidráulicas', def_int)
+    def_str3 = center('WARP - Research Group in Water Resources Management and Planning', def_int)
+    def_str4 = center('https://www.ufrgs.br/warp', def_int)
+    def_str5 = center('Porto Alegre, Rio Grande do Sul, Brazil', def_int)
+    def_str = '\n\n' + def_str1 + '\n' + def_str2 + '\n' + def_str3 + '\n' + def_str4 + '\n' + def_str5 + '\n\n'
+    return def_str
+
+
+def header_plans():
+    """
+    built plans 3 header message
+    :return: string with plans header msg
+    """
+    def_str0 = 'plans - planning nature-based solutions'.upper()
+    def_str1 = 'Version: 3.0'
+    def_str3 = 'This software is under the GNU GPL3.0 license'
+    def_str4 = 'Source code repository: https://github.com/ipo-exe/plans3/'
+    def_str = def_str0 + '\n' + def_str1 + '\n' + def_str3 + '\n' + def_str4 + '\n\n'
+    return def_str
+
+
+def update_iofiles(infile='iofiles.txt', sep='|', outfile='./docs/iofiles.md'):
 
     def header1(string):
         return '# ' + string + '\n\n'
@@ -311,18 +384,16 @@ def get_mapid_byfile(filename):
 
 
 def get_input2calibhydro():
-    files = ('calib_series.txt', 'calib_twi.asc', 'calib_shru.asc', 'calib_basin.asc', 'calib_shru_param.txt',
-             'hydro_param.txt', 'calib_etpat_series.txt')
+    files = ('calib_series.txt','hydro_param.txt', 'calib_shru_param.txt', 'calib_histograms.txt', 'calib_basin.asc',
+             'calib_etpat_series.txt')
     return files
 
 
 def get_input2simbhydro(aoi=True):
     if aoi:
-        files = ('aoi_series.txt', 'aoi_twi.asc', 'aoi_shru_series.txt', 'aoi_basin.asc',
-                 'aoi_shru_param.txt', 'hydro_param.txt')
+        files = ('aoi_series.txt', 'hydro_param.txt', 'aoi_shru_param.txt',  'aoi_basin.asc', 'aoi_shru_series.txt')
     else:
-        files = ('calib_series.txt', 'calib_twi.asc', 'calib_shru.asc', 'calib_basin.asc',
-                 'calib_shru_param.txt', 'hydro_param.txt')
+        files = ('calib_series.txt','hydro_param.txt', 'calib_shru_param.txt', 'calib_histograms.txt', 'calib_basin.asc')
     return files
 
 
