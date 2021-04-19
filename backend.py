@@ -375,7 +375,9 @@ def get_input2derived():
            'calib_slope.asc':('calib_dem.asc',),
            'aoi_fto.asc': ('aoi_soils.asc', 'aoi_soils_param.txt'),
            'calib_fto.asc': ('calib_soils.asc', 'calib_soils_param.txt'),
-           'calib_etpat_series.txt':('calib_etpat_series_input.txt',)}
+           'calib_etpat_series.txt':('calib_etpat_series_input.txt',),
+           'calib_etpat_zmaps.txt':('calib_etpat_series.txt', 'calib_twi.asc', 'calib_shru.asc', 'calib_basin.asc', 'calib_histograms.txt')}
+
     return dct
 
 
@@ -385,7 +387,7 @@ def get_mapid_byfile(filename):
 
 def get_input2calibhydro():
     files = ('calib_series.txt','hydro_param.txt', 'calib_shru_param.txt', 'calib_histograms.txt', 'calib_basin.asc',
-             'calib_etpat_series.txt')
+             'calib_etpat_zmaps.txt')
     return files
 
 

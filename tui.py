@@ -336,6 +336,14 @@ def main(root='default', importing=True):
                                                                                filename=opt.split('.')[0], tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
+                                    elif opt == 'calib_etpat_zmaps.txt':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.compute_zmap_series(filesp[0], filesp[1], filesp[2],
+                                                                                filesp[3], filesp[4],
+                                                                                folder=projectdirs['Observed'],
+                                                                                filename=opt.split('.')[0], tui=True)
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
                                     elif opt == 'aoi_lulc_series.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.import_map_series(filesp[0],
@@ -436,30 +444,33 @@ def main(root='default', importing=True):
                                             fshruparam = folder + '/' + files_input[2]
                                             fhistograms = folder + '/' + files_input[3]
                                             fbasin = folder + '/' + files_input[4]
+                                            fetpatzmaps = folder + '/' + files_input[5]
                                             aux_str = 'calib_hydro' + '_' + metric
                                             dst_dir = backend.create_rundir(label=aux_str,
                                                                             wkplc=projectdirs['Optimization'])
-                                            size_opts = ('Small - Size:25 Gens:5', 'Medium - Size:50 Gens:50',
+                                            size_opts = ( 'Very Small - Size:12 Gens:2', 'Small - Size:25 Gens:5', 'Medium - Size:50 Gens:50',
                                                              'Large - Size:100 Gens:200')
                                             scale = menu({'Scale': size_opts}, exitkey='d',
                                                          exitmsg='Use default (Small)', msg=lng[5],
                                                         keylbl=lng[7],wng=lng[20], wngmsg=lng[8], chsn=lng[9])
-                                            popsize = 25
-                                            generations = 5
+                                            popsize = 12
+                                            generations = 3
                                             if scale == size_opts[0]:
-                                                popsize = 20
-                                                generations = 5
+                                                popsize = 12
+                                                generations = 3
                                             elif scale == size_opts[1]:
+                                                popsize = 25
+                                                generations = 5
+                                            elif scale == size_opts[2]:
                                                 popsize = 100
                                                 generations = 50
-                                            elif scale == size_opts[2]:
+                                            elif scale == size_opts[3]:
                                                 popsize = 500
                                                 generations = 200
-                                            print('stop here')
                                             calibparam = tools.calib_hydro(fseries=fseries, fhydroparam=fhydroparam,
                                                                            fshruparam=fshruparam,
                                                                            fhistograms=fhistograms, fbasin=fbasin,
-                                                                           folder=dst_dir,
+                                                                           fetpatzmaps=fetpatzmaps , folder=dst_dir,
                                                                            generations=generations, popsize=popsize,
                                                                            metric=metric, tui=True)
                                             print('\n{}:\n{}\n'.format(lng[30], calibparam))
@@ -506,7 +517,7 @@ def main(root='default', importing=True):
                                 dst_dir = backend.create_rundir(label='sim_hydro', wkplc=projectdirs['Simulation'])
                                 files = tools.stable_lulc_hydro(fseries=fseries, fhydroparam=fhydroparam,
                                                                 fshruparam=fshruparam, fhistograms=fhistograms,
-                                                                fbasin=fbasin,mapvar='D-Inf-R', qobs=True,
+                                                                fbasin=fbasin,mapvar='D-ET-R-Inf-Tpun-Tpgw', qobs=True,
                                                                 folder=dst_dir, tui=True, mapback=True)
                                 files_analyst = tools.obs_sim_analyst(fseries=files[0], fld_obs='Qobs', fld_sim='Q',
                                                                       folder=dst_dir, tui=True)

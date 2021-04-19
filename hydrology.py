@@ -153,6 +153,23 @@ def count_matrix_twi_shru(twi, shru, aoi, shruids, ntwibins=10):
             countmatrix[i][j] = np.sum(lcl_mask)
     return countmatrix, twi_bins, shruids
 
+
+def built_zmap(varmap, twi, shru, aoi, twibins, shrubins):
+    zmap = np.zeros(shape=(len(twibins), len(shrubins)))
+    for i in range(len(zmap)):
+        for j in range(len(zmap[i])):
+            if i == 0:
+                lcl_mask =  (shru == shrubins[j]) * (twi < twibins[i]) * aoi
+            elif i == len(varmap) - 1:
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * aoi
+            else:
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i])  * aoi
+            if np.sum(lcl_mask) == 0.0:
+                zmap[i][j] = 0.0
+            else:
+                zmap[i][j] = np.sum(varmap * lcl_mask) / np.sum(lcl_mask)  # mean variable value at the local mask
+    return zmap
+
 # deprecated
 def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
     """
@@ -410,8 +427,8 @@ def topmodel_vsai(di):
 
 
 def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c, lat, k, n,
-                 area, mapback=False, mapvar='all', qobs=False, tui=False):
-    #
+                 area, mapback=False, mapvar='all', mapdates='all', qobs=False, tui=False):
+    # todo docstring
     # extract data input
     ts_prec = series['Prec'].values
     ts_temp = series['Temp'].values
@@ -502,20 +519,41 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     ts_vsa = np.zeros(shape=size, dtype='float32')
     ts_vsa[0] = np.sum(vsa_i * countmatrix) / np.sum(countmatrix)
     #
-    # Trace setup
+    #
+    # Z-Map Trace setup
     if mapback:
         if mapvar == 'all':
             mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
         mapvar_lst = mapvar.split('-')
+        # map dates protocol
+        if mapdates == 'all':
+            mapsize = size
+        else:
+            # extract map dates to array
+            mapid = 0
+            mapdates_df = pd.DataFrame({'Date': mapdates.split('&')})
+            mapdates_df['Date'] = mapdates_df['Date'].str.strip()
+            mapdates_df['Date'] = pd.to_datetime(mapdates_df['Date'])
+            lookup_dates = mapdates_df['Date'].values  # it is coming as datetime!
+            mapsize = len(lookup_dates)
+            # get series dates
+            dates_series = series['Date'].values
+            # built the array of timestep dates to map
+            map_timesteps = list()
+            for i in range(len(lookup_dates)):
+                lcl_series_df = series.query('Date == "{}"'.format(lookup_dates[i]))
+                if len(lcl_series_df) == 1:
+                    map_timesteps.append(lcl_series_df.index[0])  # append to list
+        #
         # load to dict object a time series of empty zmaps for each variable
         mapkeys_dct = dict()
         for e in mapvar_lst:
-            mapkeys_dct[e] = np.zeros(shape=(size, rows, cols), dtype='float32')
-        # store timestep maps in dict
+            mapkeys_dct[e] = np.zeros(shape=(mapsize, rows, cols), dtype='float32')
+        # store initial zmaps in dict
         mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
                        'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i,
                        'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i, 'PET': pet_i, 'D':d_i, 'Unz':unz_i}
-        # append it to map
+        # append it to map the first record in the map time series
         for e in mapvar_lst:
             mapkeys_dct[e][0] = mapback_dct[e]
     #
@@ -640,13 +678,25 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         #
         # trace section
         if mapback:
-            # store timestep maps in dict
-            mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
-                           'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i,
-                           'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i, 'PET': petfull_i, 'D':d_i, 'Unz':unz_i}
-            # append it to map
-            for e in mapvar_lst:
-                mapkeys_dct[e][t] = mapback_dct[e]
+            if mapdates == 'all':
+                # store timestep maps in dict
+                mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
+                               'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i,
+                               'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i, 'PET': petfull_i, 'D':d_i, 'Unz':unz_i}
+                # append it to map
+                for e in mapvar_lst:
+                    mapkeys_dct[e][t] = mapback_dct[e]
+            else:
+                if t in set(map_timesteps):
+                    # store timestep maps in dict
+                    mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i,
+                                   'Inf': inf_i, 'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i,
+                                   'VSA': vsa_i, 'P': prec_i, 'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i,
+                                   'PET': petfull_i, 'D': d_i, 'Unz': unz_i}
+                    # append it to map
+                    for e in mapvar_lst:
+                        mapkeys_dct[e][mapid] = mapback_dct[e]
+                    mapid = mapid + 1
     #
     # RUNOFF ROUTING by Nash Cascade of linear reservoirs
     ts_qs = nash_cascade(ts_r, k=k, n=n)
@@ -669,6 +719,267 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         return exp_df, mapkeys_dct
     else:
         return exp_df
+
+
+def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, m_range, qo_range, cpmax_range,
+                   sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps,
+                   tui=True, grid=200, generations=100, popsize=200, offsfrac=1,
+                   mutrate=0.4, puremutrate=0.1, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
+    # todo docstring (redo)
+    from evolution import generate_population, generate_offspring, recruitment
+    from analyst import nse, kge, rmse, pbias, frequency
+    from sys import getsizeof
+    from datetime import datetime
+
+    def wrapper(traced, lowerb, ranges):
+        """
+        Wrapper function to return list of dataframes with expressed genes
+        :param traced: list of dictionaries with encoded generations
+        :param lowerb: numpy array of lowerbound values
+        :param ranges: numpy array of range values
+        :return: list of dataframes of each generation
+        """
+        df_lst = list()
+        # generation loop:
+        for g in range(len(traced)):
+            m_lst = list()
+            qo_lst = list()
+            cpmax_lst = list()
+            sfmax_lst = list()
+            erz_lst = list()
+            ksat_lst = list()
+            c_lst = list()
+            k_lst = list()
+            n_lst = list()
+            # individual loop:
+            for i in range(len(traced[g]['DNAs'])):
+                lcl_dna = traced[g]['DNAs'][i]
+                #print(lcl_dna[0], end='\t\t')
+                lcl_pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerb, ranges=ranges)
+                #print(lcl_pset)
+                m_lst.append(lcl_pset[0])
+                qo_lst.append(lcl_pset[1])
+                cpmax_lst.append(lcl_pset[2])
+                sfmax_lst.append(lcl_pset[3])
+                erz_lst.append(lcl_pset[4])
+                ksat_lst.append(lcl_pset[5])
+                c_lst.append(lcl_pset[6])
+                k_lst.append(lcl_pset[7])
+                n_lst.append(lcl_pset[8])
+            lcl_df = pd.DataFrame({'Id':traced[g]['Ids'], 'Score':traced[g]['Scores'],
+                                    'm':m_lst, 'qo':qo_lst, 'cpmax':cpmax_lst, 'sfmax':sfmax_lst, 'erz':erz_lst,
+                                   'ksat':ksat_lst, 'c':c_lst, 'k':k_lst, 'n':n_lst})
+            #print(lcl_df.to_string())
+            df_lst.append(lcl_df.copy())
+        return df_lst
+
+    def express_parameter_set(gene, lowerb, ranges):
+        """
+        Expression of parameter set
+        :param gene: gene tuple
+        :param lowerb: numpy array of lowerbound values
+        :param ranges: numpy array of range values
+        :return: numpy array of parameter set
+        """
+        return (np.array(gene) * ranges / 100) + lowerb
+    #
+    # run setup
+    runsize = generations * popsize * 2
+    #
+    # extract observed data
+    loglim = 0.000001
+    sobs = series['Q'].values
+    sobs_log = np.log10(sobs + (loglim * (sobs <= 0)))
+    etpat_zmaps_nd = np.array(etpatzmaps)
+    sobs_etpat = etpat_zmaps_nd.flatten()
+    sobs_etpat = sobs_etpat / np.max(sobs_etpat)  # normalize pattern by max value
+    print('SIZE: {}'.format(len(sobs_etpat)))
+    # reset random state using time
+    seed = int(str(datetime.now())[-6:])
+    np.random.seed(seed)
+    if tui:
+        print('Random Seed: {}'.format(seed))
+    #
+    #
+    # bounds setup  # todo improve function of scales
+    lowerbound = np.array((np.min(m_range), np.min(qo_range), np.min(cpmax_range), np.min(sfmax_range),
+                           np.min(erz_range), np.min(ksat_range), np.min(c_range), np.min(k_range), np.min(n_range)))
+    upperbound = np.array((np.max(m_range), np.max(qo_range), np.max(cpmax_range), np.max(sfmax_range),
+                           np.max(erz_range), np.max(ksat_range), np.max(c_range), np.max(k_range), np.max(n_range)))
+    ranges = upperbound - lowerbound
+    #
+    #
+    # Evolution setup
+    nucleotides = tuple(np.arange(0, grid + 1))
+    parents = generate_population(nucleotides=(nucleotides,), genesizes=(9,), popsize=popsize)
+    #for e in parents:
+    #    print(e[0])
+    trace = list()  # list to append best solutions
+    if tracepop:
+        trace_pop = list()
+    #
+    #
+    # generation loop:
+    counter = 0
+    for g in range(generations):
+        if tui:
+            print('\n\nGeneration {}\n'.format(g + 1))
+        # get offstring
+        offspring = generate_offspring(parents, offsfrac=offsfrac, nucleotides=(nucleotides,), mutrate=mutrate,
+                                       puremutrate=puremutrate, cutfrac=cutfrac)
+        # recruit new population
+        population = recruitment(parents, offspring)
+        if tui:
+            print('Population: {} KB       '.format(getsizeof(population)))
+            print('                   | Set  ', end='\t  ')
+            print('{:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7}'.format('m', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n'))
+        # fit new population
+        ids_lst = list()
+        scores_lst = list()
+        scores_flow_lst = list()
+        scores_etpat_lst = list()
+        pop_dct = dict()
+        if tracepop:
+            dnas_lst = list()
+        # loop in individuals
+        for i in range(len(population)):
+            runstatus = 100 * counter / runsize
+            counter = counter + 1
+            #
+            # get local score and id:
+            lcl_dna = population[i]  # local dna
+            #
+            #
+            #
+            # express parameter set
+            pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerbound, ranges=ranges)  # express the parameter set
+            #
+            #
+            # run topmodel
+            sim_df, etmaps = topmodel_sim(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
+                                          lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
+                                          ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8], area=area, tui=False,
+                                          qobs=True, mapback=True, mapvar='ET', mapdates=etpatdates)
+            # compute Flow sim data
+            ssim = sim_df['Q'].values
+            ssim_log = np.log10(ssim + (loglim * (ssim <= 0)))
+            #
+            # Get fitness score for Flow:
+            if metric == 'NSE':
+                lcl_flow_score = nse(obs=sobs, sim=ssim)
+            elif metric == 'NSElog':
+                lcl_flow_score = nse(obs=sobs_log, sim=ssim_log)
+            elif metric == 'KGE':
+                lcl_flow_score = kge(obs=sobs, sim=ssim)
+            elif metric == 'KGElog':
+                lcl_flow_score = kge(obs=sobs_log, sim=ssim_log)
+            elif metric == 'RMSE':
+                lcl_flow_score = 1 - (1 / (rmse(obs=sobs, sim=ssim) + loglim))
+            elif metric == 'RMSElog':
+                lcl_flow_score = 1 - (1 / (rmse(obs=sobs_log, sim=ssim_log) + loglim))
+            elif metric == 'PBias':
+                lcl_flow_score = 1 / (np.abs(pbias(obs=sobs, sim=ssim)) + loglim)
+            elif metric == 'RMSE-CFC':
+                cfc_obs = frequency(series=sobs)['Values']
+                cfc_sim = frequency(series=ssim)['Values']
+                lcl_flow_score = 1 - (1 / (rmse(obs=cfc_obs, sim=cfc_sim) + loglim))
+            elif metric == 'RMSElog-CFC':
+                cfc_obs = frequency(series=sobs)['Values']
+                cfc_sim = frequency(series=ssim)['Values']
+                lcl_flow_score = 1 - (1 / (rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim)) + loglim))
+            else:
+                lcl_flow_score = nse(obs=sobs, sim=ssim)
+            #
+            # extract ETpat array:
+            ssim_etmaps = etmaps['ET'].flatten()
+            ssim_etpat = ssim_etmaps / np.max(ssim_etmaps)
+            # get fitness score for the ET pattern:
+            lcl_etpat_score = kge(obs=sobs_etpat, sim=ssim_etpat)
+            #
+            #
+            #
+            # COMPUTE GLOBAL SCORE:
+            w_flow = len(sobs)
+            w_etpat = len(etpatzmaps)
+            dx = (1 - lcl_flow_score)
+            dy = (1 - lcl_etpat_score) * (w_etpat / w_flow)
+            euclid_d = np.sqrt(np.power(dx, 2) + np.power(dy, 2))  # euclidean distance
+            lcl_dna_score = 1 - euclid_d
+            #
+            #
+            #
+            #
+            # printing
+            if tui:
+                print('Status: {:8.4f} % | Set '.format(runstatus), end='\t')
+                print('{:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f}'.format(pset[0], pset[1],
+                                                                                                       pset[2], pset[3],
+                                                                                                       pset[4], pset[5],
+                                                                                                       pset[6], pset[7],
+                                                                                                       pset[8]), end='   ')
+                print(' | Score = {:.3f}  | Flow Score = {:.3f} | ETpat Score = {:.3f}'.format(lcl_dna_score, lcl_flow_score, lcl_etpat_score))
+            #
+            #
+            lcl_dna_id = 'G' + str(g + 1) + '-' + str(i)
+            #
+            # store in retrieval system:
+            pop_dct[lcl_dna_id] = lcl_dna
+            ids_lst.append(lcl_dna_id)
+            scores_lst.append(lcl_dna_score)
+            scores_flow_lst.append(lcl_flow_score)
+            scores_etpat_lst.append(lcl_etpat_score)
+            if tracepop:
+                dnas_lst.append(lcl_dna)
+        #
+        # trace full population
+        if tracepop:
+            trace_pop.append({'DNAs': dnas_lst[:], 'Ids': ids_lst[:], 'Scores': scores_lst[:],
+                              'FlowScores':scores_flow_lst[:], 'EtpatScores':scores_etpat_lst[:]})
+        #
+        # rank new population (Survival)
+        df_population_rank = pd.DataFrame({'Id': ids_lst, 'Score': scores_lst,
+                                           'FlowScores':scores_flow_lst[:], 'EtpatScores':scores_etpat_lst[:]})
+        df_population_rank.sort_values(by='Score', ascending=False, inplace=True)
+        #
+        # Selection of mating pool
+        df_parents_rank = df_population_rank.nlargest(len(parents), columns=['Score'])
+        #
+        parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
+        parents_scores = df_parents_rank['Score'].values  # numpy array of float scores
+        parents_scores_flow = df_parents_rank['FlowScores'].values
+        parents_scores_etpat = df_parents_rank['EtpatScores'].values
+        #
+        parents_lst = list()
+        for i in range(len(parents_ids)):
+            parents_lst.append(pop_dct[parents_ids[i]])
+        parents = tuple(parents_lst)  # update parents DNAs
+        #
+        # tracing
+        tr_len = int(len(parents) * tracefrac)
+        # printing
+        '''if tui:
+            for i in range(tr_len):
+                print('{}\t\t\tScore: {}'.format(parents[i], round(parents_scores[i], 3)))'''
+        #
+        # trace best parents
+        trace.append({'DNAs': parents[:tr_len], 'Ids': parents_ids[:tr_len], 'Scores': parents_scores[:tr_len],
+                      'FlowScores': parents_scores_flow[:tr_len], 'EtpatScores':parents_scores_etpat[:tr_len]})
+    #
+    # retrieve last best solution
+    last = trace[len(trace) - 1]
+    last_dna = last['DNAs'][0]
+    last_score = last['Scores'][0]
+    pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges)
+    if tui:
+        print('\n\nBEST solution:')
+        print(pset)
+        print('Score = {}'.format(last_score))
+    wtrace = wrapper(traced=trace, lowerb=lowerbound, ranges=ranges)
+    wtrace_pop = wrapper(traced=trace_pop, lowerb=lowerbound, ranges=ranges)
+    if tracepop:
+        return pset, wtrace, wtrace_pop
+    else:
+        return pset, wtrace
 
 # deprecated:
 def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
@@ -924,285 +1235,3 @@ def topmodel_sim_deprec(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo,
         return exp_df, map_dct
     else:
         return exp_df
-
-# todo docstring (redo)
-def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, m_range, qo_range, cpmax_range,
-                   sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, mapback=False, mapvar='D-R-ET',
-                   tui=True, grid=200, generations=100, popsize=200, offsfrac=1,
-                   mutrate=0.4, puremutrate=0.1, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
-    """
-    PLANS 3 TOPMODEL calibration procedure
-
-    :param series: Pandas DataFrame of input series.
-    Required fields: 'Date', 'Prec', 'Temp', 'Q' (Observed Q, in mm)
-    :param twihist: tuple of histogram of TWI
-    :param cnhist: tuple of histogram of CN
-    :param countmatrix: 2D histogram of TWI and CN
-    :param lamb: positive float - average TWI value of the AOI
-    :param lat: float - latitude in degrees for PET model
-    :param qt0: positive float - baseflow at t=0 in mm/d
-    :param ksat_range: tuple with min and max floats - search range of effective saturated hydraulic conductivity in mm/d
-    :param m_range: tuple with min and max floats - search range of effective transmissivity decay coefficient in mm
-    :param qo_range: tuple with min and max floats - search range of max baseflow when d=0 in mm/d
-    :param a_range: tuple with min and max floats - search range of scaling parameter for S0max model
-    :param c_range: tuple with min and max floats - search range of scaling parameter for PET model in Celcius
-    :param k_range: tuple with min and max floats - search range of Nash Cascade residence time in days
-    :param n_range: tuple with min and max floats - search range of equivalent number of reservoirs in Nash Cascade
-    :param mapback: boolean control to map back variables (best of last generation)
-    :param mapvar: string code of variables to map back. Available variables:
-    'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw' (see docstrig in topmodel_sim())
-    :param tui: boolean to control terminal messages
-    :param generations: int - number of generations
-    :param popsize: int - number of initial population
-    :param grid: int - grid mesh to partitionate the ranges
-    :param offsfrac: positive float - offspring fraction to initial population
-    :param mutrate: float (0 to 1) - rate of mutation
-    :param puremutrate: float (0 to 1) - internal rate of pure mutations
-    :param cutfrac: float (0 to 0.5) - fraction of cutsize in crossover
-    :param tracefrac: float (0 to 1) - fraction of parents tracing
-    :param tracepop: boolean to control full population tracing
-    :param metric: string code to metric. Available codes:
-
-    'NSE' - NSE of series values
-    'NSElog' - NSE of log10 of series values
-    'KGE' - KGE of series values
-    'KGElog' - KGE of log10 of series values
-    'PBias' - Pbias of series values
-    'RMSE' - RMSE of series values
-    'RMSElog' - RMSE of log10 of series values
-    'RMSE-CFC' - RMSE of CFCs values
-    'RMSElog-CFC' - RMSE of log10 of CFCs values
-
-    :return: Pandas DataFrame of simulated variables: see topmodel_sim() docstring.
-    And
-    if mapback=True:
-    Dictionary of encoded 2d numpy arrays maps
-    Keys to access maps: 'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw'
-    Each key stores an array of 2d numpy arrays (i.e., 3d array) in the ascending order of the time series.
-
-    """
-    from evolution import generate_population, generate_offspring, recruitment
-    from analyst import nse, kge, rmse, pbias, frequency
-    from sys import getsizeof
-    from datetime import datetime
-
-    def wrapper(traced, lowerb, ranges):
-        """
-        Wrapper function to return list of dataframes with expressed genes
-        :param traced: list of dictionaries with encoded generations
-        :param lowerb: numpy array of lowerbound values
-        :param ranges: numpy array of range values
-        :return: list of dataframes of each generation
-        """
-        df_lst = list()
-        # generation loop:
-        for g in range(len(traced)):
-            m_lst = list()
-            qo_lst = list()
-            cpmax_lst = list()
-            sfmax_lst = list()
-            erz_lst = list()
-            ksat_lst = list()
-            c_lst = list()
-            k_lst = list()
-            n_lst = list()
-            # individual loop:
-            for i in range(len(traced[g]['DNAs'])):
-                lcl_dna = traced[g]['DNAs'][i]
-                #print(lcl_dna[0], end='\t\t')
-                lcl_pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerb, ranges=ranges)
-                #print(lcl_pset)
-                m_lst.append(lcl_pset[0])
-                qo_lst.append(lcl_pset[1])
-                cpmax_lst.append(lcl_pset[2])
-                sfmax_lst.append(lcl_pset[3])
-                erz_lst.append(lcl_pset[4])
-                ksat_lst.append(lcl_pset[5])
-                c_lst.append(lcl_pset[6])
-                k_lst.append(lcl_pset[7])
-                n_lst.append(lcl_pset[8])
-            lcl_df = pd.DataFrame({'Id':traced[g]['Ids'], 'Score':traced[g]['Scores'],
-                                    'm':m_lst, 'qo':qo_lst, 'cpmax':cpmax_lst, 'sfmax':sfmax_lst, 'erz':erz_lst,
-                                   'ksat':ksat_lst, 'c':c_lst, 'k':k_lst, 'n':n_lst})
-            #print(lcl_df.to_string())
-            df_lst.append(lcl_df.copy())
-        return df_lst
-
-    def express_parameter_set(gene, lowerb, ranges):
-        """
-        Expression of parameter set
-        :param gene: gene tuple
-        :param lowerb: numpy array of lowerbound values
-        :param ranges: numpy array of range values
-        :return: numpy array of parameter set
-        """
-        return (np.array(gene) * ranges / 100) + lowerb
-
-    # run setup
-    runsize = generations * popsize * 2
-    #
-    #
-    # reset random state using time
-    seed = int(str(datetime.now())[-6:])
-    np.random.seed(seed)
-    if tui:
-        print('Random Seed: {}'.format(seed))
-    #
-    #
-    # bounds setup  # todo improve function of scales
-    lowerbound = np.array((np.min(m_range), np.min(qo_range), np.min(cpmax_range), np.min(sfmax_range),
-                           np.min(erz_range), np.min(ksat_range), np.min(c_range), np.min(k_range), np.min(n_range)))
-    upperbound = np.array((np.max(m_range), np.max(qo_range), np.max(cpmax_range), np.max(sfmax_range),
-                           np.max(erz_range), np.max(ksat_range), np.max(c_range), np.max(k_range), np.max(n_range)))
-    ranges = upperbound - lowerbound
-    #
-    #
-    # Evolution setup
-    nucleotides = tuple(np.arange(0, grid + 1))
-    parents = generate_population(nucleotides=(nucleotides,), genesizes=(9,), popsize=popsize)
-    #for e in parents:
-    #    print(e[0])
-    trace = list()  # list to append best solutions
-    if tracepop:
-        trace_pop = list()
-    #
-    #
-    # generation loop:
-    counter = 0
-    for g in range(generations):
-        if tui:
-            print('\n\nGeneration {}\n'.format(g + 1))
-        # get offstring
-        offspring = generate_offspring(parents, offsfrac=offsfrac, nucleotides=(nucleotides,), mutrate=mutrate,
-                                       puremutrate=puremutrate, cutfrac=cutfrac)
-        # recruit new population
-        population = recruitment(parents, offspring)
-        if tui:
-            print('Population: {} KB       '.format(getsizeof(population)))
-            print('                   | Set  ', end='\t  ')
-            print('{:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7}'.format('m', 'qo',
-                                                                                                   'cpmax', 'sfmax',
-                                                                                                   'erz', 'ksat',
-                                                                                                   'c', 'k',
-                                                                                                   'n'))
-        # fit new population
-        ids_lst = list()
-        scores_lst = list()
-        pop_dct = dict()
-        if tracepop:
-            dnas_lst = list()
-        # loop in individuals
-        for i in range(len(population)):
-            runstatus = 100 * counter / runsize
-            counter = counter + 1
-            #
-            # get local score and id:
-            lcl_dna = population[i]  # local dna
-            #
-            #
-            #
-            # express parameter set
-            pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerbound, ranges=ranges)  # express the parameter set
-            #
-            #
-            # run topmodel
-            sim_df = topmodel_sim(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
-                                  lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
-                                  ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8], area=area, tui=False,
-                                  qobs=True, mapback=False)
-            #
-            #
-            # Get fitness score:
-            loglim = 0.000001
-            sobs = series['Q'].values
-            ssim = sim_df['Q'].values
-            sobs_log = np.log10(sobs + (loglim * (sobs <= 0)))
-            ssim_log = np.log10(ssim + (loglim * (ssim <= 0)))
-            if metric == 'NSE':
-                lcl_dna_score = nse(obs=sobs, sim=ssim)
-            elif metric == 'NSElog':
-                lcl_dna_score = nse(obs=sobs_log, sim=ssim_log)
-            elif metric == 'KGE':
-                lcl_dna_score = kge(obs=sobs, sim=ssim)
-            elif metric == 'KGElog':
-                lcl_dna_score = kge(obs=sobs_log, sim=ssim_log)
-            elif metric == 'RMSE':
-                lcl_dna_score = rmse(obs=sobs, sim=ssim) * -1
-            elif metric == 'RMSElog':
-                lcl_dna_score = rmse(obs=sobs_log, sim=ssim_log) * -1
-            elif metric == 'PBias':
-                lcl_dna_score = 1 / (np.abs(pbias(obs=sobs, sim=ssim)) + loglim)
-            elif metric == 'RMSE-CFC':
-                cfc_obs = frequency(series=sobs)['Values']
-                cfc_sim = frequency(series=ssim)['Values']
-                lcl_dna_score = rmse(obs=cfc_obs, sim=cfc_sim) * -1
-            elif metric == 'RMSElog-CFC':
-                cfc_obs = frequency(series=sobs)['Values']
-                cfc_sim = frequency(series=ssim)['Values']
-                lcl_dna_score = rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim)) * -1
-            else:
-                lcl_dna_score = nse(obs=sobs, sim=ssim)
-            # printing
-            if tui:
-                print('Status: {:8.4f} % | Set '.format(runstatus), end='\t')
-                print('{:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f}'.format(pset[0], pset[1],
-                                                                                                       pset[2], pset[3],
-                                                                                                       pset[4], pset[5],
-                                                                                                       pset[6], pset[7],
-                                                                                                       pset[8]), end='   ')
-                print(' | Score = {:.3f}'.format(lcl_dna_score))
-            #
-            #
-            lcl_dna_id = 'G' + str(g + 1) + '-' + str(i)
-            #
-            # store in retrieval system:
-            pop_dct[lcl_dna_id] = lcl_dna
-            ids_lst.append(lcl_dna_id)
-            scores_lst.append(lcl_dna_score)
-            if tracepop:
-                dnas_lst.append(lcl_dna)
-        #
-        # trace full population
-        if tracepop:
-            trace_pop.append({'DNAs': dnas_lst[:], 'Ids': ids_lst[:], 'Scores': scores_lst[:]})
-        #
-        # rank new population (Survival)
-        df_population_rank = pd.DataFrame({'Id': ids_lst, 'Score': scores_lst})
-        df_population_rank.sort_values(by='Score', ascending=False, inplace=True)
-        #
-        # Selection of mating pool
-        df_parents_rank = df_population_rank.nlargest(len(parents), columns=['Score'])
-        #
-        parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
-        parents_scores = df_parents_rank['Score'].values  # numpy array of float scores
-        #
-        parents_lst = list()
-        for i in range(len(parents_ids)):
-            parents_lst.append(pop_dct[parents_ids[i]])
-        parents = tuple(parents_lst)  # update parents DNAs
-        #
-        # tracing
-        tr_len = int(len(parents) * tracefrac)
-        # printing
-        '''if tui:
-            for i in range(tr_len):
-                print('{}\t\t\tScore: {}'.format(parents[i], round(parents_scores[i], 3)))'''
-        #
-        # trace best parents
-        trace.append({'DNAs': parents[:tr_len], 'Ids': parents_ids[:tr_len], 'Scores': parents_scores[:tr_len]})
-    #
-    # retrieve last best solution
-    last = trace[len(trace) - 1]
-    last_dna = last['DNAs'][0]
-    last_score = last['Scores'][0]
-    pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges)
-    if tui:
-        print('\n\nBEST solution:')
-        print(pset)
-        print('Score = {}'.format(last_score))
-    wtrace = wrapper(traced=trace, lowerb=lowerbound, ranges=ranges)
-    wtrace_pop = wrapper(traced=trace_pop, lowerb=lowerbound, ranges=ranges)
-    if tracepop:
-        return pset, wtrace, wtrace_pop
-    else:
-        return pset, wtrace

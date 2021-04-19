@@ -1,5 +1,5 @@
 import numpy as np
-
+import pandas as pd
 
 def asc_raster(array, meta, folder, filename):
     """
@@ -43,3 +43,10 @@ def asc_raster(array, meta, folder, filename):
     fle.writelines(exp_lst)
     fle.close()
     return flenm
+
+
+def zmap(zmap, twibins, shrubins, index_lbl='TWI\SHRU', folder='C:/bin', filename='zmap'):
+    exp_file = folder + '/' + filename + '.txt'
+    lcl_exp_df = pd.DataFrame(zmap, index=twibins, columns=shrubins)
+    lcl_exp_df.to_csv(exp_file, sep=';', index_label=index_lbl)
+    return exp_file

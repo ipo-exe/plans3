@@ -101,11 +101,12 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.text(x=0, y=0.4,  s='RMSE : {:.2f} mm'.format(float(params[params['Parameter'] == 'RMSE']['Value'])))
     plt.text(x=0, y=0.2,  s='NSE : {:.2f}'.format(float(params[params['Parameter'] == 'NSE']['Value'])))
     plt.text(x=0, y=0.0,  s='KGE : {:.2f}'.format(float(params[params['Parameter'] == 'KGE']['Value'])))
-    plt.text(x=0, y=-0.2, s='RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog']['Value'])))
-    plt.text(x=0, y=-0.4, s='NSElog : {:.2f}'.format(float(params[params['Parameter'] == 'NSElog']['Value'])))
-    plt.text(x=0, y=-0.8, s='CFC-R : {:.2f}'.format(float(params[params['Parameter'] == 'R-CFC']['Value'])))
-    plt.text(x=0, y=-1.0, s='CFC-RMSE : {:.2f}'.format(float(params[params['Parameter'] == 'RMSE-CFC']['Value'])))
-    plt.text(x=0, y=-1.2, s='CFC-RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog-CFC']['Value'])))
+    plt.text(x=0, y=-0.2, s='KGElog : {:.2f}'.format(float(params[params['Parameter'] == 'KGElog']['Value'])))
+    plt.text(x=0, y=-0.4, s='RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog']['Value'])))
+    plt.text(x=0, y=-0.6, s='NSElog : {:.2f}'.format(float(params[params['Parameter'] == 'NSElog']['Value'])))
+    plt.text(x=0, y=-1.0, s='CFC-R : {:.2f}'.format(float(params[params['Parameter'] == 'R-CFC']['Value'])))
+    plt.text(x=0, y=-1.2, s='CFC-RMSE : {:.2f}'.format(float(params[params['Parameter'] == 'RMSE-CFC']['Value'])))
+    plt.text(x=0, y=-1.4, s='CFC-RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog-CFC']['Value'])))
     plt.axis('off')
     #
     # plot
@@ -928,14 +929,21 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='dem', filename='mapv
         return expfile
 
 
-def plot_map_view(map, meta, ranges, mapid='dem', filename='mapview', folder='C:/bin', metadata=True, show=False):
+def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview', folder='C:/bin', metadata=True, show=False):
+    from matplotlib import cm
+    from matplotlib.colors import ListedColormap
+    viridisBig = cm.get_cmap('gist_earth_r', 512)
+    newcmp = ListedColormap(viridisBig(np.linspace(0.10, 0.95, 256)))
+
     map_dct = {'dem': ['BrBG_r', 'Elevation'],
                'slope': ['OrRd', 'Degrees'],
                'twi': ['YlGnBu', 'Index units'],
                'fto': ['Blues', 'Index units'],
                'etpat': ['Blues', 'Index units'],
                'catcha': ['Blues', 'Sq. Meters (log10)'],
-               'basin': ['Greys', 'Boolean']}
+               'basin': ['Greys', 'Boolean'],
+               'variable':[newcmp, 'mm'],
+               'deficit':['jet', 'mm']}
     #
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
@@ -945,7 +953,7 @@ def plot_map_view(map, meta, ranges, mapid='dem', filename='mapview', folder='C:
         map = np.log10(map)
         ranges = np.log10(ranges)
     im = plt.imshow(map, cmap=map_dct[mapid][0], vmin=ranges[0], vmax=ranges[1])
-    plt.title(mapid)
+    plt.title(mapttl)
     plt.axis('off')
     plt.colorbar(im, shrink=0.4)
     #

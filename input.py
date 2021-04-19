@@ -105,7 +105,7 @@ def asc_raster_list(file, filefield='File', sep=';'):
     return meta_lst, array_lst
 
 
-def zmap(file, yfield='TWI\CN'):
+def zmap(file, yfield='TWI\SHRU'):
     """
     Import a zmap to a 2d numpy array and respective 1d arrays of histogram values (it is a 2D histogram)
     :param file: string filepath to zmap file
@@ -116,10 +116,10 @@ def zmap(file, yfield='TWI\CN'):
     3) 1d numpy array of X (horizontal) variable histogram values
     """
     lcl_df = pd.read_csv(file, sep=';')
-    yhist = lcl_df[yfield].values
+    ybins = lcl_df[yfield].values
     #print(yhist)
-    xhist = np.array(lcl_df.columns[1:], dtype='float32')
+    xbins = np.array(lcl_df.columns[1:], dtype='float32')
     #print(xhist)
     zmap = lcl_df.values[:, 1:]
     #print(zmap)
-    return zmap, yhist, xhist
+    return zmap, ybins, xbins
