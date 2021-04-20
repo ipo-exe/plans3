@@ -25,8 +25,8 @@ expansion of nature-based solutions in watersheds. The built-in models includes:
 - [x] All files required to run `plans3`;
 - [x] A directory called `./samples` with examples of input files;
 - [x] A directory called `./docs` with some documentation files;
-- [x] A markdown file called [`iofiles.md`](https://github.com/ipo-exe/plans3/blob/main/iofiles.md) of I/O file documentation;
-- [x] A markdown file called [`guide.md`](https://github.com/ipo-exe/plans3/blob/main/guide.md) for a quick guide of `plans3` applications;
+- [x] A markdown file called [`iofiles.md`](https://github.com/ipo-exe/plans3/blob/main/docs/iofiles.md) of I/O file documentation;
+- [x] A markdown file called [`guide.md`](https://github.com/ipo-exe/plans3/blob/main/docs/guide.md) for a quick guide of `plans3` applications;
 - [ ] A comprehensive `plans3_handbook.pdf` document.
 
 ## `python` and packages required
