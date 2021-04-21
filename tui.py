@@ -47,6 +47,10 @@ def header(p0='title', p1=70, p2='*', p3=True):
     sleep(0.2)
 
 
+def status(msg='Status message'):
+    print('\t>>> {:60}...'.format(msg))
+
+
 def validade_project_name(msg='Enter project name', wng='Warning!',
                           wng1='Invalid name. No spaces allowed',
                           wng2='Invalid name. Max of 20 characters allowed'):
@@ -332,14 +336,21 @@ def main(root='default', importing=True):
                                     elif opt == 'calib_histograms.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2],
-                                                                               filesp[3], folder=projectdirs['Observed'],
+                                                                               folder=projectdirs['Observed'],
                                                                                filename=opt.split('.')[0], tui=True)
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif opt == 'calib_basin_histograms.txt':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2], filesp[3],
+                                                                                     folder=projectdirs['Observed'],
+                                                                                     filename=opt.split('.')[0], tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'calib_etpat_zmaps.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_zmap_series(filesp[0], filesp[1], filesp[2],
-                                                                                filesp[3], filesp[4],
+                                                                                filesp[3],
                                                                                 folder=projectdirs['Observed'],
                                                                                 filename=opt.split('.')[0], tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
@@ -360,6 +371,7 @@ def main(root='default', importing=True):
                                                                               folder=projectdirs['Observed'],
                                                                               filename=opt.split('.')[0],
                                                                               rasterfilename='calib_etpat')
+                                        tools.get_views_rasters(derivedfile, mapvar='ETpat', mapid='etpat', tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif opt == 'aoi_shru_series.txt':
@@ -443,8 +455,12 @@ def main(root='default', importing=True):
                                             fhydroparam = folder + '/' + files_input[1]
                                             fshruparam = folder + '/' + files_input[2]
                                             fhistograms = folder + '/' + files_input[3]
-                                            fbasin = folder + '/' + files_input[4]
-                                            fetpatzmaps = folder + '/' + files_input[5]
+                                            fbasinhists = folder + '/' + files_input[4]
+                                            fbasin = folder + '/' + files_input[5]
+                                            ftwi = folder + '/' + files_input[6]
+                                            fshru = folder + '/' + files_input[7]
+                                            fetpatzmaps = folder + '/' + files_input[8]
+                                            fetpatseries = folder + '/' + files_input[9]
                                             aux_str = 'calib_hydro' + '_' + metric
                                             dst_dir = backend.create_rundir(label=aux_str,
                                                                             wkplc=projectdirs['Optimization'])
@@ -453,11 +469,11 @@ def main(root='default', importing=True):
                                             scale = menu({'Scale': size_opts}, exitkey='d',
                                                          exitmsg='Use default (Small)', msg=lng[5],
                                                         keylbl=lng[7],wng=lng[20], wngmsg=lng[8], chsn=lng[9])
-                                            popsize = 12
+                                            popsize = 10
                                             generations = 3
                                             if scale == size_opts[0]:
                                                 popsize = 12
-                                                generations = 3
+                                                generations = 2
                                             elif scale == size_opts[1]:
                                                 popsize = 25
                                                 generations = 5
@@ -469,10 +485,15 @@ def main(root='default', importing=True):
                                                 generations = 200
                                             calibparam = tools.calib_hydro(fseries=fseries, fhydroparam=fhydroparam,
                                                                            fshruparam=fshruparam,
-                                                                           fhistograms=fhistograms, fbasin=fbasin,
-                                                                           fetpatzmaps=fetpatzmaps , folder=dst_dir,
+                                                                           fhistograms=fhistograms,
+                                                                           fbasinhists=fbasinhists,
+                                                                           fbasin=fbasin,
+                                                                           fetpatzmaps=fetpatzmaps,
+                                                                           fetpatseries=fetpatseries,
+                                                                           ftwi=ftwi, fshru=fshru,
+                                                                           folder=dst_dir,
                                                                            generations=generations, popsize=popsize,
-                                                                           metric=metric, tui=True)
+                                                                           metric=metric, tui=True, mapback=False)
                                             print('\n{}:\n{}\n'.format(lng[30], calibparam))
                                             ok()
                             elif opt == calib_options[1]:
@@ -492,16 +513,16 @@ def main(root='default', importing=True):
             elif opt == project_options[2]:
                 while True:
                     header(lng[16])
-                    sim_options = ['Simulate CALIB hydrology', 'AOI observed policy', 'AOI projected policy']
+                    sim_options = ['CALIB | Stable LULC Hydrology', 'AOI | Changing LULC Hydrology', 'AOI projected policy']
                     opt = menu({lng[6]: sim_options}, title='Simulation menu', exitmsg=lng[10], msg=lng[5],
                                keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                     # simulate observed policy
                     if opt == sim_options[0]:
                         header(opt)
                         # simulate hydrology
-                        if opt == 'Simulate CALIB hydrology':
+                        if opt == 'CALIB | Stable LULC Hydrology':
                             # checker protocol
-                            header(lng[32])
+                            header('SLH - stable lulc hydrology')
                             if backend.check_simhydro_files(project_nm, rootdir, aoi=False):
                                 warning(wng=lng[20], msg=lng[27])
                                 filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=False)
@@ -513,13 +534,19 @@ def main(root='default', importing=True):
                                 fhydroparam = folder + '/' + files_input[1]
                                 fshruparam = folder + '/' + files_input[2]
                                 fhistograms = folder + '/' + files_input[3]
-                                fbasin = folder + '/' + files_input[4]
-                                dst_dir = backend.create_rundir(label='sim_hydro', wkplc=projectdirs['Simulation'])
+                                fbasinhists = folder + '/' + files_input[4]
+                                fbasin = folder + '/' + files_input[5]
+                                ftwi = folder + '/' + files_input[6]
+                                fshru = folder + '/' + files_input[7]
+                                dst_dir = backend.create_rundir(label='calib_SLH', wkplc=projectdirs['Simulation'])
                                 files = tools.stable_lulc_hydro(fseries=fseries, fhydroparam=fhydroparam,
                                                                 fshruparam=fshruparam, fhistograms=fhistograms,
-                                                                fbasin=fbasin,mapvar='D-ET-R-Inf-Tpun-Tpgw', qobs=True,
-                                                                folder=dst_dir, tui=True, mapback=True)
-                                files_analyst = tools.obs_sim_analyst(fseries=files[0], fld_obs='Qobs', fld_sim='Q',
+                                                                fbasinhists=fbasinhists,
+                                                                fbasin=fbasin, ftwi=ftwi, fshru=fshru,
+                                                                mapback=True, mapvar='all', mapdates='all',
+                                                                mapraster=False, qobs=True,
+                                                                folder=dst_dir, tui=True)
+                                files_analyst = tools.obs_sim_analyst(fseries=files['Series'], fld_obs='Qobs', fld_sim='Q',
                                                                       folder=dst_dir, tui=True)
                     # simulate observed policy
                     elif opt == sim_options[1]:

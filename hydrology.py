@@ -1,67 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
-'''
-def find_nse(qobs, qsim, type='lin'):
-    """
-    Nash-Sutcliffe efficiency of 2 arrays of same length
-    :param qobs: observed array
-    :param qsim: simulated array
-    :param type: 'log' for NSElog10
-    :return: float number of NSE
-    """
-    qavg = qobs * 0.0 + np.mean(qsim)
-    if type == 'log':
-        qobs = np.log10(qobs)
-        qsim = np.log10(qsim)
-        qavg = np.log10(qavg)
-    nse = 1 - (np.sum(np.power(qobs - qsim, 2))/ np.sum((qobs - qavg)))
-    return nse
-
-
-def find_pbias(qobs, qsim):
-    """
-    Percent bias coefficient (PBIAS)
-    :param qobs:
-    :param qsim:
-    :return:   
-    
-    """
-       
-    pbias = 100 * np.sum(qobs - qsim) / np.sum(qobs)
-    return pbias
-
-
-def find_rmse(qobs, qsim, type='lin'):
-    """
-    Root of mean squared error of 2 arrays of same length
-    :param qobs: observed array
-    :param qsim: simulated array
-    :param type: log' for RMSElog10
-    :return: float
-    """
-    if type == 'log':
-        qobs = np.log10(qobs)
-        qsim = np.log10(qsim)
-    rmse = np.sqrt(np.mean(np.power(qobs - qsim, 2)))
-    return rmse
-
-
-def find_cfc(a):
-    """
-
-    :param a: array
-    :return: tuple with exeedance probability (%) and CFC values from input array
-    """
-    ptles = np.arange(0, 101, 1)
-    cfc = np.percentile(a, ptles)
-    exeed = 100 - ptles
-    return (exeed, cfc)
-
-
-'''
-
+import matplotlib.pyplot as plt  # todo remove this after release
 
 # auxiliar functions
 def avg_2d(var2d, weight):
@@ -110,7 +49,10 @@ def convert_sq2q(sq, area):
     lcl_q = sq * area / (1000 * 86400)
     return lcl_q
 
-# silent functions
+#
+#
+#
+# general silent functions
 def nash_cascade(q, k, n):
     """
     Runoff routing model of multiple linear reservoirs (Nash Cascade)
@@ -133,89 +75,38 @@ def nash_cascade(q, k, n):
     return qs
 
 
-def count_matrix_twi_shru(twi, shru, aoi, shruids, ntwibins=10):
-    # flat and clear:
-    twi_flat_clear = flatten_clear(twi, aoi)
-    # extract histogram of TWI
-    twi_hist, twi_bins = np.histogram(twi_flat_clear, bins=ntwibins)
-    twi_bins = twi_bins[1:]
-    #
-    countmatrix = np.zeros(shape=(ntwibins, len(shruids)), dtype='int32')
+def count_matrix(twi, shru, aoi, shrubins, twibins):
+    # todo docstring
+    countmatrix = np.zeros(shape=(len(twibins), len(shrubins)), dtype='int32')
     for i in range(len(countmatrix)):
         for j in range(len(countmatrix[i])):
             #print('{}\t{}'.format(twi_bins[i], shruids[j]))
             if i == 0:
-                lcl_mask =  (shru == shruids[j]) * (twi < twi_bins[i]) * aoi
+                lcl_mask =  (shru == shrubins[j]) * (twi < twibins[i]) * aoi
             elif i == len(countmatrix) - 1:
-                lcl_mask = (shru == shruids[j]) * (twi >= twi_bins[i - 1]) * aoi
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * aoi
             else:
-                lcl_mask = (shru == shruids[j]) * (twi >= twi_bins[i - 1]) * (twi < twi_bins[i])  * aoi #* (shru == shruids[j]) * aoi
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i])  * aoi #* (shru == shruids[j]) * aoi
             countmatrix[i][j] = np.sum(lcl_mask)
-    return countmatrix, twi_bins, shruids
+    return countmatrix, twibins, shrubins
 
 
-def built_zmap(varmap, twi, shru, aoi, twibins, shrubins):
+def built_zmap(varmap, twi, shru, twibins, shrubins):
+    # todo docstring
     zmap = np.zeros(shape=(len(twibins), len(shrubins)))
     for i in range(len(zmap)):
         for j in range(len(zmap[i])):
             if i == 0:
-                lcl_mask =  (shru == shrubins[j]) * (twi < twibins[i]) * aoi
+                lcl_mask =  (shru == shrubins[j]) * (twi < twibins[i])
             elif i == len(varmap) - 1:
-                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * aoi
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1])
             else:
-                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i])  * aoi
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i])
             if np.sum(lcl_mask) == 0.0:
                 zmap[i][j] = 0.0
             else:
                 zmap[i][j] = np.sum(varmap * lcl_mask) / np.sum(lcl_mask)  # mean variable value at the local mask
     return zmap
-
-# deprecated
-def count_matrix(array2d1, array2d2, bins1, bins2, aoi):
-    """
-    2D histogram computing of 2 raster layers
-    :param array2d1: 2d numpy array of raster 1
-    :param array2d2: 2d numpy array of raster 2
-    :param bins1: int number of histograms bins for raster 1
-    :param bins2: int number of histograms bins for raster 2
-    :param aoi: 2d numpy Area Of Interest raster pseudo-boolean mask (0 and 1)
-    :return:
-    1) 2d histogram/count (rows - raster 1, columns - raster 2) matrix
-    2) tuple of histogram of raster 1: fist: bins - 1d numpy array, second: count - 1d numpy array
-    3) tuple of histogram of raster 2: fist: bins - 1d numpy array, second: count - 1d numpy array
-    """
-    np.warnings.filterwarnings('ignore')
-    # verify bins size
-    a1_flat_clear = flatten_clear(array=array2d1, mask=aoi)
-    a1_unique = np.unique(a1_flat_clear)
-    if len(a1_unique) < bins1:
-        bins1 = len(a1_unique)
-    a2_flat_clear = flatten_clear(array=array2d2, mask=aoi)
-    a2_unique = np.unique(a2_flat_clear)
-    if len(a2_unique) < bins2:
-        bins2 = len(a2_unique)
-    #
-    # extract histograms
-    a1_hist, a1_bins = np.histogram(a1_flat_clear, bins=bins1)
-    a1_bins = a1_bins[1:]
-    #
-    a2_hist, a2_bins = np.histogram(a2_flat_clear, bins=bins2)
-    a2_bins = a2_bins[1:]
-    #
-    # Cross histograms
-    countmatrix = np.zeros(shape=(bins1, bins2), dtype='int32')
-    for i in range(len(countmatrix)):
-        if i == 0:
-            lcl_a1 = 1.0 * (array2d1 <= a1_bins[i])
-        else:
-            lcl_a1 = 1.0 * (array2d1 > a1_bins[i - 1]) * (array2d1 <= a1_bins[i])
-        for j in range(len(countmatrix[i])):
-            if j == 0:
-                lcl_a2 = 1.0 * (array2d2 <= a2_bins[j])
-            else:
-                lcl_a2 = 1.0 * (array2d2 > a2_bins[j - 1]) * (array2d2 <= a2_bins[j])
-            countmatrix[i][j] = np.sum(lcl_a1 * lcl_a2 * aoi)
-    return countmatrix, (a1_bins, a1_hist), (a2_bins, a2_hist)
 
 
 def map_back(zmatrix, a1, a2, bins1, bins2):
@@ -245,7 +136,10 @@ def map_back(zmatrix, a1, a2, bins1, bins2):
             map = map + lclmap
     return map
 
-# PET model functions
+#
+#
+#
+# PET model silent functions
 def pet_gsc():
     """
     PET model Solar Constant
@@ -351,22 +245,10 @@ def pet_oudin(temperature, day, latitude, k1=100, k2=5):
     pet = (1000 * het / (pet_latent_heat_flux() * pet_water_spmass() * k1)) * (temperature + k2) * ((temperature + k2) > 0) * 1.0
     return pet
 
+#
+#
+#
 # topmodel functions
-# deprecated:
-def topmodel_s0max(cn, a):
-    """
-    Plans 3 Model of S0max as a function of CN
-
-    s0max = a * (100 - CN + b)
-
-    :param cn: float or nd array of CN
-    :param a: scaling parameter in mm/CN
-    :return: float or nd array of S0max
-    """
-    lcl_s0max = a * (100 - cn + 0.1)
-    return lcl_s0max
-
-
 def topmodel_d0(qt0, qo, m):
     """
     TOPMODEL Deficit as a function of baseflow (Beven and Kirkby, 1979)
@@ -426,8 +308,8 @@ def topmodel_vsai(di):
     return ((di == 0) * 1)
 
 
-def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c, lat, k, n,
-                 area, mapback=False, mapvar='all', mapdates='all', qobs=False, tui=False):
+def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c,
+                 lat, k, n, area, basinshadow, mapback=False, mapvar='all', mapdates='all', qobs=False, tui=False):
     # todo docstring
     # extract data input
     ts_prec = series['Prec'].values
@@ -487,6 +369,9 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     pet_i = ts_pet[0] * np.ones(shape=shape)
     tf_i = np.zeros(shape=shape)
     r_i = np.zeros(shape=shape)
+    rse_i = np.zeros(shape=shape)
+    rie_i = np.zeros(shape=shape)
+    rc_i = np.zeros(shape=shape)
     inf_i = np.zeros(shape=shape)
     qv_i = np.zeros(shape=shape)
     evc_i = np.zeros(shape=shape)
@@ -506,6 +391,9 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     ts_tf = np.zeros(shape=size, dtype='float32')
     ts_inf = np.zeros(shape=size, dtype='float32')
     ts_r = np.zeros(shape=size, dtype='float32')
+    ts_rse = np.zeros(shape=size, dtype='float32')
+    ts_rie = np.zeros(shape=size, dtype='float32')
+    ts_rc = np.zeros(shape=size, dtype='float32')
     ts_qv = np.zeros(shape=size, dtype='float32')
     ts_evc = np.zeros(shape=size, dtype='float32')
     ts_evs = np.zeros(shape=size, dtype='float32')
@@ -517,13 +405,13 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     ts_qs = np.zeros(shape=size, dtype='float32')
     ts_q = np.zeros(shape=size, dtype='float32')
     ts_vsa = np.zeros(shape=size, dtype='float32')
-    ts_vsa[0] = np.sum(vsa_i * countmatrix) / np.sum(countmatrix)
+    ts_vsa[0] = np.sum(vsa_i * basinshadow) / np.sum(basinshadow)
     #
     #
     # Z-Map Trace setup
     if mapback:
         if mapvar == 'all':
-            mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+            mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
         mapvar_lst = mapvar.split('-')
         # map dates protocol
         if mapdates == 'all':
@@ -550,9 +438,10 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         for e in mapvar_lst:
             mapkeys_dct[e] = np.zeros(shape=(mapsize, rows, cols), dtype='float32')
         # store initial zmaps in dict
-        mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
-                       'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i,
-                       'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i, 'PET': pet_i, 'D':d_i, 'Unz':unz_i}
+        mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'RSE': rse_i, 'RIE': rie_i, 'RC': rc_i, 'ET': et_i,
+                       'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i, 'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i,
+                       'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i, 'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i,
+                       'PET': pet_i, 'D': d_i, 'Unz': unz_i}
         # append it to map the first record in the map time series
         for e in mapvar_lst:
             mapkeys_dct[e][0] = mapback_dct[e]
@@ -566,15 +455,15 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         #
         # update Canopy water stock
         cpy_i = cpy_i + cpyin_i - tf_i - evc_i
-        ts_cpy[t] = avg_2d(var2d=cpy_i, weight=countmatrix)  # compute average
+        ts_cpy[t] = avg_2d(var2d=cpy_i, weight=basinshadow)  # compute average
         #
         # update Surface water stock
         sfs_i = sfs_i + sfsin_i - r_i - inf_i - evs_i
-        ts_sfs[t] = avg_2d(var2d=sfs_i, weight=countmatrix)  # compute average
+        ts_sfs[t] = avg_2d(var2d=sfs_i, weight=basinshadow)  # compute average
         #
         # update Unsaturated water stock
         unz_i = unz_i - qv_i - tpun_i + inf_i
-        ts_unz[t] = avg_2d(var2d=unz_i, weight=countmatrix)  # compute average
+        ts_unz[t] = avg_2d(var2d=unz_i, weight=basinshadow)  # compute average
         #
         #
         # ****** COMPUTE Flows for usage in next time step ******
@@ -584,27 +473,36 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         prec_i = ts_prec[t] * np.ones(shape=shape) # update PREC
         ira_i = ts_ira[t] * fira_i # update IRA
         cpyin_i = prec_i + ira_i  # canopy total input
-        #plt.imshow(cpyin_i)
-        #plt.title('Total input canopy')
-        #plt.show()
         tf_i = ((cpyin_i - (cpmax_i - cpy_i)) * (cpyin_i > (cpmax_i - cpy_i)))
-        ts_tf[t] = avg_2d(var2d=tf_i, weight=countmatrix)
+        ts_tf[t] = avg_2d(var2d=tf_i, weight=basinshadow)
         #
         # compute current Evc from canopy:
         pet_i = ts_pet[t] * np.ones(shape=shape)  # update PET
         petfull_i = ts_pet[t] * np.ones(shape=shape)  # reserve PET for mapping
         icp_i = cpy_i + cpyin_i - tf_i
         evc_i = (pet_i * (icp_i > pet_i)) + (icp_i * (icp_i <= pet_i))
-        ts_evc[t] = avg_2d(var2d=evc_i, weight=countmatrix)  # compute average
+        ts_evc[t] = avg_2d(var2d=evc_i, weight=basinshadow)  # compute average in the basin
         #
         # --- Surface
+        #
         # compute current runoff
         iri_i = ts_iri[t] * firi_i  # update IRI
         sfsin_i = tf_i + iri_i  # surface total input
-        #plt.title('Total input surface')
-
         r_i = ((sfs_i + sfsin_i) - sfmax_i) * ((sfs_i + sfsin_i) > sfmax_i)
-        ts_r[t] = avg_2d(var2d=r_i, weight=countmatrix)  # compute average
+        # separate runoff
+        rse_i = r_i * vsa_i  # Saturation excess runoff - Dunnean runoff
+        rie_i = 100 * r_i * (vsa_i == 0.0) # Infiltration excess runoff - Hortonian runoff
+        rc_i = (prec_i > 0) * (r_i / ((prec_i == 0) + prec_i))
+        # compute global runoff:
+        ts_r[t] = avg_2d(var2d=r_i, weight=basinshadow)  # compute average in the basin
+        ts_rse[t] = avg_2d(var2d=rse_i, weight=basinshadow)
+        ts_rie[t] = avg_2d(var2d=rie_i, weight=basinshadow)
+        ts_rc[t] = avg_2d(var2d=rc_i, weight=basinshadow)
+        '''
+        # idea for multiple basin runoff routing
+        for b in range(len(basins_list)):
+            ts_r[b][t] = avg_2d(var2d=r_i, weight=basins_list[b])  # time series of Runoff as 2d array
+        '''
         #
         # compute surface depletion
         pet_i = pet_i - evc_i  # update pet
@@ -612,18 +510,13 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         # compute potential separate flows
         p_evs_i = sfs_i * (pet_i / (ksat_i + pet_i + 1)) * ((ksat_i + pet_i) > 0)  # propotional to overall rate
         p_sfs_inf_i = sfs_i * (ksat_i / (ksat_i + pet_i + 1)) * ((ksat_i + pet_i) > 0)  # proportional to overall rate
-        #plt.imshow(p_sfs_inf_i)
-        #plt.show()
         #
         evs_i = (pet_i * (p_evs_i >= pet_i)) + (p_evs_i * (p_evs_i < pet_i))
-        ts_evs[t] = avg_2d(var2d=evs_i, weight=countmatrix)  # compute average
+        ts_evs[t] = avg_2d(var2d=evs_i, weight=basinshadow)  # compute average in the basin
         #
         p_unz_inf_i = (d_i - unz_i) * ((d_i - unz_i) > 0)
         inf_i = (p_sfs_inf_i * (p_sfs_inf_i < p_unz_inf_i)) + (p_unz_inf_i * (p_sfs_inf_i >= p_unz_inf_i))
-        # inf_i = ((p_inf_i * (p_inf_i < (d_i - unz_i))) + ((d_i - unz_i) * (d_i > 0) * (p_inf_i >= (d_i - unz_i))))
-        #plt.imshow(inf_i)
-        #plt.show()
-        ts_inf[t] = avg_2d(var2d=inf_i, weight=countmatrix)  # compute average
+        ts_inf[t] = avg_2d(var2d=inf_i, weight=basinshadow)  # compute average in the basin
         #
         # update PET
         pet_i = pet_i - evs_i
@@ -632,15 +525,13 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         # compute QV
         p_qv_i = topmodel_qv(d=d_i, unz=unz_i, ksat=ksat_i)
         qv_i = unz_i * (p_qv_i/ (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
-        ts_qv[t] = avg_2d(var2d=qv_i, weight=countmatrix)  # compute average
+        ts_qv[t] = avg_2d(var2d=qv_i, weight=basinshadow)  # compute average in the basin
         #
         # compute tpun:
         p_tpun_i = unz_i * (pet_i / (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
-        #plt.imshow(p_tpun_i * (countmatrix > 0))
-        #plt.show()
         tpun_i = (pet_i * (p_tpun_i >= pet_i)) + (p_tpun_i * (p_tpun_i < pet_i))
 
-        ts_tpun[t] = avg_2d(var2d=tpun_i, weight=countmatrix)  # compute average
+        ts_tpun[t] = avg_2d(var2d=tpun_i, weight=basinshadow)  # compute average in the basin
         #
         # update PET
         pet_i = pet_i - tpun_i
@@ -649,12 +540,12 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         # compute tpgw:
         p_tpgw_i = (erz_i - d_i) * ((erz_i - d_i) > 0)  # potential tpgw
         tpgw_i = (pet_i * (p_tpgw_i >= pet_i)) + (p_tpgw_i * (p_tpgw_i < pet_i))
-        ts_tpgw[t] = avg_2d(var2d=tpgw_i, weight=countmatrix)  # compute average
+        ts_tpgw[t] = avg_2d(var2d=tpgw_i, weight=basinshadow)  # compute average in the basin
         #
         # --- ET
         # compute ET
         et_i = evc_i + evs_i + tpun_i + tpgw_i
-        ts_et[t] = avg_2d(var2d=et_i, weight=countmatrix)  # compute average
+        ts_et[t] = avg_2d(var2d=et_i, weight=basinshadow)  # compute average in the basin
         #
         #
         # ****** UPDATE Global Water balance ******
@@ -671,28 +562,24 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         #
         # compute VSA
         vsa_i = topmodel_vsai(di=d_i)
-        ts_vsa[t] = np.sum(vsa_i * countmatrix) / np.sum(countmatrix)
+        ts_vsa[t] = np.sum(vsa_i * basinshadow) / np.sum(basinshadow)
         #
         # get temperature map:
         temp_i = ts_temp[t] * np.ones(shape=shape)
         #
         # trace section
         if mapback:
+            # store timestep maps in dict
+            mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'RSE': rse_i, 'RIE': rie_i, 'RC': rc_i, 'ET': et_i,
+                           'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i, 'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i,
+                           'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i, 'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i,
+                           'PET': petfull_i, 'D': d_i, 'Unz': unz_i}
             if mapdates == 'all':
-                # store timestep maps in dict
-                mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i,
-                               'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i,
-                               'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i, 'PET': petfull_i, 'D':d_i, 'Unz':unz_i}
                 # append it to map
                 for e in mapvar_lst:
                     mapkeys_dct[e][t] = mapback_dct[e]
             else:
                 if t in set(map_timesteps):
-                    # store timestep maps in dict
-                    mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'ET': et_i, 'Cpy': cpy_i, 'Sfs': sfs_i,
-                                   'Inf': inf_i, 'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i, 'Evs': evs_i,
-                                   'VSA': vsa_i, 'P': prec_i, 'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i,
-                                   'PET': petfull_i, 'D': d_i, 'Unz': unz_i}
                     # append it to map
                     for e in mapvar_lst:
                         mapkeys_dct[e][mapid] = mapback_dct[e]
@@ -708,12 +595,18 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     # export data
     exp_df = pd.DataFrame({'Date':series['Date'].values,
                            'Prec':series['Prec'].values,
-                           'Temp':series['Temp'].values, 'PET':ts_pet, 'D':ts_d, 'Cpy':ts_cpy, 'TF':ts_tf,
-                           'Sfs':ts_sfs, 'R':ts_r, 'Inf':ts_inf, 'Unz':ts_unz, 'Qv':ts_qv, 'Evc':ts_evc,
-                           'Evs':ts_evs, 'Tpun':ts_tpun, 'Tpgw':ts_tpgw, 'ET':ts_et, 'Qb':ts_qb,'Qs':ts_qs, 'Q':ts_q,
+                           'Temp':series['Temp'].values, 'PET':ts_pet,
+                           'D':ts_d, 'Cpy':ts_cpy, 'TF':ts_tf,
+                           'Sfs':ts_sfs, 'R':ts_r, 'RSE': ts_rse,
+                           'RIE': ts_rie, 'RC': ts_rc, 'Inf':ts_inf,
+                           'Unz':ts_unz, 'Qv':ts_qv, 'Evc':ts_evc,
+                           'Evs':ts_evs, 'Tpun':ts_tpun, 'Tpgw':ts_tpgw,
+                           'ET':ts_et, 'Qb':ts_qb,'Qs':ts_qs, 'Q':ts_q,
                            'Flow':ts_flow})
     if qobs:
         exp_df['Qobs'] = series['Q'].values
+        exp_df['Fobs'] = convert_sq2q(sq=series['Q'].values, area=area)
+    #
     #
     if mapback:
         return exp_df, mapkeys_dct
@@ -721,13 +614,13 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         return exp_df
 
 
-def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, m_range, qo_range, cpmax_range,
+def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, m_range, qo_range, cpmax_range,
                    sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps,
                    tui=True, grid=200, generations=100, popsize=200, offsfrac=1,
                    mutrate=0.4, puremutrate=0.1, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
-    from analyst import nse, kge, rmse, pbias, frequency
+    from analyst import nse, kge, rmse, pbias, frequency, error
     from sys import getsizeof
     from datetime import datetime
 
@@ -793,6 +686,8 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
     etpat_zmaps_nd = np.array(etpatzmaps)
     sobs_etpat = etpat_zmaps_nd.flatten()
     sobs_etpat = sobs_etpat / np.max(sobs_etpat)  # normalize pattern by max value
+    #plt.plot(np.arange(0, len(sobs_etpat)), sobs_etpat)
+    #plt.show()
     print('SIZE: {}'.format(len(sobs_etpat)))
     # reset random state using time
     seed = int(str(datetime.now())[-6:])
@@ -858,7 +753,8 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
             # run topmodel
             sim_df, etmaps = topmodel_sim(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
                                           lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
-                                          ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8], area=area, tui=False,
+                                          ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8],
+                                          area=area, basinshadow=basinshadow, tui=False,
                                           qobs=True, mapback=True, mapvar='ET', mapdates=etpatdates)
             # compute Flow sim data
             ssim = sim_df['Q'].values
@@ -893,6 +789,12 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
             # extract ETpat array:
             ssim_etmaps = etmaps['ET'].flatten()
             ssim_etpat = ssim_etmaps / np.max(ssim_etmaps)
+            lcl_xval = np.arange(0, len(sobs_etpat))
+            #etpat_signal_rmse = error(sobs_etpat, ssim_etpat)
+            #plt.plot(lcl_xval, etpat_signal_rmse, 'r')
+            #plt.plot(lcl_xval, sobs_etpat)
+            #plt.show()
+            #
             # get fitness score for the ET pattern:
             lcl_etpat_score = kge(obs=sobs_etpat, sim=ssim_etpat)
             #
@@ -917,7 +819,7 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
                                                                                                        pset[4], pset[5],
                                                                                                        pset[6], pset[7],
                                                                                                        pset[8]), end='   ')
-                print(' | Score = {:.3f}  | Flow Score = {:.3f} | ETpat Score = {:.3f}'.format(lcl_dna_score, lcl_flow_score, lcl_etpat_score))
+                print(' | Score: {:8.3f} | Flow: {:8.3f} | ETpat: {:8.3f}'.format(lcl_dna_score, lcl_flow_score, lcl_etpat_score))
             #
             #
             lcl_dna_id = 'G' + str(g + 1) + '-' + str(i)
@@ -981,257 +883,3 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
     else:
         return pset, wtrace
 
-# deprecated:
-def topmodel_hist(twi, cn, aoi, twibins=20, cnbins=10):
-    """
-    2D histogram for TOPMODEL in PLANS 3. Crossed variables: TWI and CN
-    :param twi: 2d numpy array of TWI
-    :param cn: 2d numpy array of CN
-    :param aoi: 2d numpy array of AOI (Area of Interest)
-    :param twibins: int number of bins in TWI histogram
-    :param cnbins: int number of bins in CN histogram
-    :return:
-    1) 2d histogram/count (rows - TWI, columns - CN) matrix
-    2) tuple of histogram of TWI: fist: bins - 1d numpy array, second: count - 1d numpy array
-    3) tuple of histogram of CN: fist: bins - 1d numpy array, second: count - 1d numpy array
-    """
-    countmatrix, twi_hist, cn_hist = count_matrix(array2d1=twi, array2d2=cn, bins1=twibins, bins2=cnbins, aoi=aoi)
-    return countmatrix, twi_hist, cn_hist
-
-# deprecated:
-def topmodel_sim_deprec(series, twihist, cnhist, countmatrix, lamb, ksat, m, qo, a, c, lat, qt0, k, n,
-                 mapback=False, mapvar='R-ET-S1-S2', tui=False, qobs=False):
-    """
-
-    PLANS 3 TOPMODEL simulation procedure
-
-    :param series: Pandas DataFrame of input series.
-    Required fields: 'Date', 'Prec', 'Temp'. Optional: 'Q' (Q obs, in mm)
-    :param twihist: tuple of histogram of TWI
-    :param cnhist: tuple of histogram of CN
-    :param countmatrix: 2D histogram of TWI and CN
-    :param lamb: positive float - average TWI value of the AOI
-    :param ksat: positive float - effective saturated hydraulic conductivity in mm/d
-    :param m: positive float - effective transmissivity decay coefficient in mm
-    :param qo: positive float - max baseflow when d=0 in mm/d
-    :param a: positive float - scaling parameter for S0max model
-    :param c: positive float - scaling parameter for PET model in Celcius
-    :param lat: float - latitude in degrees for PET model
-    :param qt0: positive float - baseflow at t=0 in mm/d
-    :param k: positive float - Nash Cascade residence time in days
-    :param n: positive float - equivalent number of reservoirs in Nash Cascade
-    :param mapback: boolean control to map back variables
-    :param mapvar: string code of variables to map back. Available variables:
-    'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw' (see below the relation)
-    :param tui: boolean to control terminal messages
-    :return: Pandas DataFrame of simulated variables:
-
-    'Date': date (from input)
-    'Prec': precipitation (from input), mm
-    'Temp': temperature (from input), deg C
-    'PET': simulated potential evapotranspiration, mm
-    'S1': simulated water in S1 stock (canopy interceptation), mm
-    'TF': simulated throughfall, mm
-    'Ev': simulated evaporation from canopy, mm
-    'S2': simulated water in S2 stock (unsaturated zone), mm
-    'Inf': simulated infiltration, mm
-    'R': simulated overland runoff, mm
-    'Tp': simulated transpiration from unsaturated zone (S2), mm
-    'Tpgw': simulated transpiration from the saturated zone, mm
-    'ET': simulated actual evapotranspiration, mm
-    'D': simulated soil water deficit, mm
-    'Qb': simualted baseflow, mm
-    'Qv':simulated recharge, mm
-    'Qs':simulated surface flow, mm
-    'Q': simulated streamflow, mm  (Q = Qb + Qs)
-    'VSA': simulated variable source area (saturated areas), in %
-
-    And
-    if mapback=True:
-    Dictionary of encoded 2d numpy arrays maps
-    Keys to access maps: 'TF', Qv', 'R', 'ET', 'S1', 'S2', 'Inf', 'Tp', 'Ev', 'Tpgw'
-    Each key stores an array of 2d numpy arrays (i.e., 3d array) in the ascending order of the time series.
-
-    """
-    #
-    # extract data input
-    ts_prec = series['Prec'].values
-    ts_temp = series['Temp'].values
-    size = len(ts_prec)
-    #
-    # compute PET
-    days = series['Date'].dt.dayofyear
-    ts_days = days.values
-    lat = lat * np.pi / 180  # convet lat to radians
-    ts_pet = pet_oudin(temperature=ts_temp, day=ts_days, latitude=lat, k1=c)
-    #
-    # set initial conditions
-    d0 = topmodel_d0(qt0=qt0, qo=qo, m=m)
-    #
-    twi_bins = twihist[0]
-    twi_count = twihist[1]
-    s0max_bins = topmodel_s0max(cn=cnhist[0], a=a)  # convert cn to S0max
-    #print(s0max_bins)
-    s0max_count = cnhist[1]
-    shape = np.shape(countmatrix)
-    rows = shape[0]
-    cols = shape[1]
-    #
-    # set 2d count parameter arrays
-    s1maxi = 0.2 * s0max_bins * np.ones(shape=shape, dtype='float32')  # canopy water
-    s2maxi = 0.8 * s0max_bins * np.ones(shape=shape, dtype='float32')  # rootzone
-    rzdi = s2maxi.copy()
-    #
-    # get local Lambda
-    lambi = np.reshape(twi_bins, (rows, 1)) * np.ones(shape=shape, dtype='float32')
-    #
-    # set 2d count variable arrays
-    preci = ts_prec[0] * np.ones(shape=shape)
-    peti = ts_pet[0] * np.ones(shape=shape)
-    s1i = np.zeros(shape=shape)  # initial condition
-    tfi = np.zeros(shape=shape)
-    evi = np.zeros(shape=shape)
-    qri = np.zeros(shape=shape)
-    #
-    s2i = np.zeros(shape=shape)  # initial condition
-    infi = np.zeros(shape=shape)
-    ri = np.zeros(shape=shape)
-    tpi = np.zeros(shape=shape)
-    tpgwi = np.zeros(shape=shape)
-    eti = evi + tpi + tpgwi
-    #
-    #s3i = np.zeros(shape=shape)  # initial condition
-    di = topmodel_di(d=d0, twi=lambi, m=m, lamb=lamb)
-    vsai = topmodel_vsai(di=di)
-    qvi = np.zeros(shape=shape)
-    #
-    # set stocks time series arrays and initial conditions
-    ts_s1 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_s1[0] = avg_2d(var2d=s1i, weight=countmatrix)
-    ts_s2 = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_s2[0] = avg_2d(var2d=s2i, weight=countmatrix)
-    ts_d = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_d[0] = d0
-    ts_qv = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_qv[0] = avg_2d(var2d=qvi, weight=countmatrix)
-    ts_qb = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_qb[0] = qt0
-    ts_vsa = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_vsa[0] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
-    #
-    # set flows time series arrays
-    ts_ev = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_tp = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_tpgw = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_et = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_r = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_inf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    ts_tf = np.zeros(shape=np.shape(ts_prec), dtype='float32')
-    #
-    # Trace setup
-    if mapback:
-        mapvar_lst = mapvar.split('-')
-        map_dct = dict()
-        for e in mapvar_lst:
-            map_dct[e] = np.zeros(shape=(size, rows, cols), dtype='float32')
-    #
-    if tui:
-        print('Soil moisture accounting simulation...')
-    # ESMA loop
-    for t in range(1, size):
-        #if tui:
-        #   print('Step {}'.format(t))
-        #
-        # update S1 - Canopy storage - interceptation
-        s1i = s1i - evi - tfi + preci
-        ts_s1[t] = avg_2d(s1i, countmatrix)
-        #
-        # compute current EV - Evaporation from canopy storage
-        peti = ts_pet[t] * np.ones(shape=shape)  # update PET
-        evi = ((peti) * (s1i >= peti)) + (s1i * (s1i < peti))
-        ts_ev[t] = avg_2d(evi, countmatrix)
-        #
-        # compute current TF - Throughfall (or "effective preciputation")
-        preci = ts_prec[t] * np.ones(shape=shape)  # update PREC
-        tfi = ((preci + s1i - evi - s1maxi) * ((preci + s1i - evi) >= s1maxi))
-        ts_tf[t] = avg_2d(tfi, countmatrix)
-        #
-        # update S2 - Unsaturated soil water - vadoze zone
-        s2i = s2i - qvi - tpi + infi
-        ts_s2[t] = avg_2d(s2i, countmatrix)
-        #
-        # compute TP - Plant transpiration from vadoze zone
-        peti = peti - evi  # update peti
-        di_aux = di + ((np.max(di) + 3) * (di <= 0.0))  # auxiliar Di to replace zero values by a higher positive value to avoid division by zero
-        ptpi = ((s2i * (rzdi >= di)) + ((s2i * rzdi / di_aux) * (rzdi < di))) * (di > 0.0)  # compute potential TP
-        tpi = (ptpi * (peti >= ptpi)) + (peti * (peti < ptpi))
-        ts_tp[t] = avg_2d(tpi, countmatrix)
-        #
-        # compute QV - Vertical flow to saturated zone - Water table recharge
-        pqvi = (ksat * s2i / di_aux) * (di > 0.0)  # potential QV
-        qvi = ((pqvi) * (s2i - tpi >= pqvi)) + ((s2i - tpi) * (s2i - tpi < pqvi))
-        ts_qv[t] = avg_2d(qvi, countmatrix)
-        #
-        # compute Inf - Infiltration from surface. Soil has a potential infiltration capacity equal to the rootzone
-        pinfi = (rzdi * (tfi >= rzdi)) + (tfi * (tfi < rzdi))  # potential infiltration -- infiltration capacity
-        infi = ((di - s2i + tpi + qvi) * (pinfi >= (di - s2i + tpi + qvi))) + (pinfi * (pinfi < (di - s2i + tpi + qvi)))
-        ts_inf[t] = avg_2d(infi, countmatrix)
-        #
-        # compute R - Runoff water
-        ri = tfi - infi
-        ts_r[t] = avg_2d(ri, countmatrix)
-        #
-        # compute TP-GW - Plant transpiration directly from the water table (if within reach of the root zone)
-        peti = peti - tpi  # update peti
-        ptpgwi = (rzdi - di) * (di < rzdi)  # potential local TP
-        #ptpgwi = (s2maxi - di) * (di < s2maxi)  # potential local TP
-        tpgwi = (peti * (ptpgwi > peti)) + (ptpgwi * (ptpgwi <= peti))
-        ts_tpgw[t] = avg_2d(tpgwi, countmatrix)
-        #
-        # compute ET - Actual Evapo-transpiration
-        eti = evi + tpi + tpgwi
-        ts_et[t] = avg_2d(eti, countmatrix)
-        #
-        # update D water balance
-        ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1] + ts_tpgw[t - 1]
-        #
-        # compute Qb - Baseflow
-        ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
-        #
-        # Update Di
-        di = topmodel_di(d=ts_d[t], twi=lambi, m=m, lamb=lamb)
-        #
-        # compute VSA
-        vsai = topmodel_vsai(di=di)
-        ts_vsa[t] = np.sum(vsai * countmatrix) / np.sum(countmatrix)
-        #
-        # trace section
-        if mapback:
-            dct = {'TF':tfi, 'Qv':qvi, 'R': ri, 'ET':eti, 'S1':s1i, 'S2':s2i, 'Inf':infi, 'Tp':tpi, 'Ev':evi,
-                   'Tpgw':tpgwi}
-            for e in mapvar_lst:
-                map_dct[e][t] = dct[e]
-    #
-    # RUNOFF ROUTING by Nash Cascade of linear reservoirs
-    if tui:
-        print('Runoff routing...')
-    ts_qs = nash_cascade(ts_r, k=k, n=n)
-    #
-    # compute full discharge Q = Qb + Qs
-    ts_q = ts_qb + ts_qs
-    #
-    # export data
-    exp_df = pd.DataFrame({'Date': series['Date'].values,
-                           'Prec': series['Prec'].values,
-                           'Temp': series['Temp'].values,
-                           'PET': ts_pet,
-                           'S1': np.round(ts_s1, 3), 'TF': np.round(ts_tf, 3), 'Ev': np.round(ts_ev, 3),
-                           'S2': ts_s2, 'Inf': ts_inf, 'R': ts_r, 'Tp': ts_tp, 'Tpgw': ts_tpgw, 'ET': ts_et,
-                           'D': ts_d, 'Qb': ts_qb, 'Qv': ts_qv, 'Qs': ts_qs, 'Q': ts_q, 'VSA': ts_vsa})
-    if qobs:
-        exp_df['Qobs'] = series['Q'].values
-    #
-    if mapback:
-        return exp_df, map_dct
-    else:
-        return exp_df

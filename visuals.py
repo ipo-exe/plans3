@@ -30,7 +30,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     # plot of CFCs
     plt.subplot(gs[0:2, 0:2])
     plt.title('CFCs', loc='left')
-    plt.plot(freq['Exeedance'], freq['ValuesObs'], 'tab:grey', label='Obs')
+    plt.plot(freq['Exeedance'], freq['ValuesObs'], 'tab:orange', label='Obs')
     plt.plot(freq['Exeedance'], freq['ValuesSim'], 'tab:blue', label='Sim')
     plt.ylim((vmin, 1.2 * vmax))
     plt.yscale('log')
@@ -42,7 +42,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     # plot of series
     plt.subplot(gs[0:2, 3:10])
     plt.title('Series', loc='left')
-    plt.plot(series[fld_date], series[fld_obs], 'tab:grey', linewidth=2, label='Observed')
+    plt.plot(series[fld_date], series[fld_obs], 'tab:orange', linewidth=2, label='Observed')
     plt.plot(series[fld_date], series[fld_sim], 'tab:blue', label='Simulated')
     plt.ylim((vmin, 1.2 * vmax))
     plt.yscale('log')
@@ -932,18 +932,20 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='dem', filename='mapv
 def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview', folder='C:/bin', metadata=True, show=False):
     from matplotlib import cm
     from matplotlib.colors import ListedColormap
-    viridisBig = cm.get_cmap('gist_earth_r', 512)
-    newcmp = ListedColormap(viridisBig(np.linspace(0.10, 0.95, 256)))
+    earth_big = cm.get_cmap('gist_earth_r', 512)
+    earthcm = ListedColormap(earth_big(np.linspace(0.10, 0.95, 256)))
+    jet_big = cm.get_cmap('jet_r', 512)
+    jetcm = ListedColormap(jet_big(np.linspace(0.3, 0.75, 256)))
 
     map_dct = {'dem': ['BrBG_r', 'Elevation'],
                'slope': ['OrRd', 'Degrees'],
                'twi': ['YlGnBu', 'Index units'],
                'fto': ['Blues', 'Index units'],
-               'etpat': ['Blues', 'Index units'],
+               'etpat': ['Greys', 'Index units'],
                'catcha': ['Blues', 'Sq. Meters (log10)'],
                'basin': ['Greys', 'Boolean'],
-               'variable':[newcmp, 'mm'],
-               'deficit':['jet', 'mm']}
+               'flow':[earthcm, 'mm'], 'flow_v':[jetcm, 'mm'], 'stock':['Blues', 'mm'],
+               'deficit':['jet', 'mm'], 'VSA':['Blues', 'Boolean']}
     #
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
@@ -985,28 +987,37 @@ def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', fi
     s3 = len(countmatrix[0])
     s2 = int(s1/2)
     fig = plt.figure(figsize=(16, 8))  # Width, Height
-    gs = mpl.gridspec.GridSpec(s1 + s2, s1 + s3, wspace=0.0, hspace=0.0)
+    gs = mpl.gridspec.GridSpec(s1 + s2, s1 + s3, wspace=0.3, hspace=0.3)
     #
+    # first histogram
     ax = fig.add_subplot(gs[:s2+2, :s3])
     x = np.arange(0, len(ys))
-    plt.plot(x, ys)
+    plt.plot(x, ys, 'tab:blue')
     plt.xticks([])
-    plt.xlim((0, len(ys)-1))
+    plt.xlim((0, len(ys) - 1))
     plt.ylabel('% Frequency')
+    plt.ylim(0, 60)
     plt.title('SHRU Histogram')
     #plt.axis('off')
+    #
+    # matrix
     ax = fig.add_subplot(gs[s2:, :s3])
     im = plt.imshow(np.log10(countmatrix + 0.01), cmap='viridis', vmin=0)
+    y = np.arange(0, len(xt))
     plt.title('')
     plt.ylabel('TWI values')
     plt.xlabel('SHRU Ids')
     plt.xticks(x, xs)
-    ax.tick_params(axis='both', which='major', labelsize=6)
+    plt.yticks(y, np.round(xt, 1))
+    ax.tick_params(axis='x', which='major', labelsize=6.5)
+    #
+    # twi histogram vertical
     ax = fig.add_subplot(gs[s2 + 2: s1 + s2 - 2, s3:])
     plt.yticks([])
-    plt.plot(yt, xt)
+    plt.plot(yt, xt, 'tab:blue')
     plt.xlabel('% Frequency')
     plt.title('TWI Histogram')
+    plt.xlim(0, 60)
     plt.gca().invert_yaxis()
     #
     if show:
