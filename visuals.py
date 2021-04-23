@@ -4,7 +4,7 @@ import numpy as np
 
 
 def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', fld_date='Date', filename='analyst', suff='',
-                   folder='C:/bin', show=False):
+                           folder='C:/bin', show=False, log=True, units='flow', title='Obs/Sim Analysis'):
     """
     Pannel of Obs vs. Sim Analyst
     :param series: Series Analyst dataframe (from obs_sim_analyst() function in tools.py)
@@ -22,6 +22,11 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     #
     fig = plt.figure(figsize=(18, 9))  # Width, Height
     gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9)
+    fig.suptitle(title)
+    if units == 'flow':
+        units = 'mm/d'
+    elif units == 'stock':
+        units = 'mm'
     #
     # min max setup
     vmax = np.max((np.max(series[fld_obs]), np.max(series[fld_sim])))
@@ -33,8 +38,9 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.plot(freq['Exeedance'], freq['ValuesObs'], 'tab:orange', label='Obs')
     plt.plot(freq['Exeedance'], freq['ValuesSim'], 'tab:blue', label='Sim')
     plt.ylim((vmin, 1.2 * vmax))
-    plt.yscale('log')
-    plt.ylabel('mm')
+    if log:
+        plt.yscale('log')
+    plt.ylabel(units)
     plt.xlabel('Exeed. %')
     plt.grid(True)
     plt.legend(loc='upper right')
@@ -45,8 +51,9 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.plot(series[fld_date], series[fld_obs], 'tab:orange', linewidth=2, label='Observed')
     plt.plot(series[fld_date], series[fld_sim], 'tab:blue', label='Simulated')
     plt.ylim((vmin, 1.2 * vmax))
-    plt.yscale('log')
-    plt.ylabel('mm')
+    if log:
+        plt.yscale('log')
+    plt.ylabel(units)
     plt.grid(True)
     plt.legend(loc='upper right', ncol=2)
     #
@@ -54,10 +61,11 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.subplot(gs[0:2, 11:])
     plt.title('Obs vs. Sim  (R={:.2f})'.format(float(params[params['Parameter'] == 'R']['Value'])), loc='left')
     plt.scatter(series[fld_obs], series[fld_sim], c='tab:grey', s=15, alpha=0.3, edgecolors='none')
-    plt.xlabel('Q-obs  (mm)')
-    plt.ylabel('Q-sim  (mm)')
-    plt.xscale('log')
-    plt.yscale('log')
+    plt.xlabel('Obs  ({})'.format(units))
+    plt.ylabel('Sim  ({})'.format(units))
+    if log:
+        plt.xscale('log')
+        plt.yscale('log')
     plt.plot([0, vmax], [0, vmax], 'tab:grey', linestyle='--', label='1:1')
     plt.ylim((vmin, 1.2 * vmax))
     plt.xlim((vmin, 1.2 * vmax))
@@ -68,7 +76,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.subplot(gs[2, 0:2])
     plt.title('CFC Error', loc='left')
     plt.plot(freq['Exeedance'], freq['E'], 'tab:red')
-    plt.ylabel('mm')
+    plt.ylabel(units)
     plt.xlabel('Exeed. %')
     plt.grid(True)
     #
@@ -76,14 +84,13 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.subplot(gs[2, 3:10])
     plt.title('Series - Error', loc='left')
     plt.plot(series[fld_date], series['E'], 'tab:red')
-    plt.ylabel('mm')
+    plt.ylabel(units)
     plt.grid(True)
     #
     # plot
     plt.subplot(gs[3, 0:2])
     plt.title('CFC - Squared Error', loc='left')
     plt.plot(freq['Exeedance'], freq['SE'], 'tab:red')
-    plt.ylabel('mm ^ 2')
     plt.xlabel('Exeed. %')
     plt.grid(True)
     #
@@ -91,7 +98,6 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.subplot(gs[3, 3:10])
     plt.title('Series - Sq. Error', loc='left')
     plt.plot(series[fld_date], series['SE'], 'tab:red')
-    plt.ylabel('mm ^ 2')
     plt.grid(True)
     #
     plt.subplot(gs[3, 11:])
@@ -101,25 +107,171 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     plt.text(x=0, y=0.4,  s='RMSE : {:.2f} mm'.format(float(params[params['Parameter'] == 'RMSE']['Value'])))
     plt.text(x=0, y=0.2,  s='NSE : {:.2f}'.format(float(params[params['Parameter'] == 'NSE']['Value'])))
     plt.text(x=0, y=0.0,  s='KGE : {:.2f}'.format(float(params[params['Parameter'] == 'KGE']['Value'])))
-    plt.text(x=0, y=-0.2, s='KGElog : {:.2f}'.format(float(params[params['Parameter'] == 'KGElog']['Value'])))
-    plt.text(x=0, y=-0.4, s='RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog']['Value'])))
-    plt.text(x=0, y=-0.6, s='NSElog : {:.2f}'.format(float(params[params['Parameter'] == 'NSElog']['Value'])))
+    if log:
+        plt.text(x=0, y=-0.2, s='KGElog : {:.2f}'.format(float(params[params['Parameter'] == 'KGElog']['Value'])))
+        plt.text(x=0, y=-0.4, s='RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog']['Value'])))
+        plt.text(x=0, y=-0.6, s='NSElog : {:.2f}'.format(float(params[params['Parameter'] == 'NSElog']['Value'])))
     plt.text(x=0, y=-1.0, s='CFC-R : {:.2f}'.format(float(params[params['Parameter'] == 'R-CFC']['Value'])))
     plt.text(x=0, y=-1.2, s='CFC-RMSE : {:.2f}'.format(float(params[params['Parameter'] == 'RMSE-CFC']['Value'])))
-    plt.text(x=0, y=-1.4, s='CFC-RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog-CFC']['Value'])))
+    if log:
+        plt.text(x=0, y=-1.4, s='CFC-RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog-CFC']['Value'])))
     plt.axis('off')
     #
-    # plot
-    plt.subplot(gs[4, 0:2])
-    plt.title('CFC - Sq. Error of Log', loc='left')
-    plt.plot(freq['Exeedance'], freq['SElog'], 'tab:red')
+    if log:
+        # plot
+        plt.subplot(gs[4, 0:2])
+        plt.title('CFC - Sq. Error of Log', loc='left')
+        plt.plot(freq['Exeedance'], freq['SElog'], 'tab:red')
+        plt.xlabel('Exeed. %')
+        plt.grid(True)
+        # plot
+        plt.subplot(gs[4, 3:10])
+        plt.title('Series - Sq. Error of Log', loc='left')
+        plt.plot(series[fld_date], series['SElog'], 'tab:red')
+        plt.grid(True)
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        if suff != '':
+            filepath = folder + '/' + filename + '_' + suff + '.png'
+        else:
+            filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
+
+
+def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, params_full, params_calib, params_valid,
+                       fld_obs='Obs', fld_sim='Sim', fld_date='Date',
+                       filename='analyst_CVF', suff='', folder='C:/bin',
+                       show=False, log=True, units='flow', title='Obs/Sim Analysis'):
+    #
+    fig = plt.figure(figsize=(18, 9))  # Width, Height
+    gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9)
+    fig.suptitle(title)
+    if units == 'flow':
+        units = 'mm/d'
+    elif units == 'stock':
+        units = 'mm'
+    #
+    # min max setup
+    vmax = np.max((np.max(series_full[fld_obs]), np.max(series_full[fld_sim])))
+    vmin = np.min((np.min(series_full[fld_obs]), np.min(series_full[fld_sim])))
+    #
+    # plot of CFCs
+    plt.subplot(gs[0:2, 0:2])
+    plt.title('CFCs - Full', loc='left')
+    plt.plot(freq_full['Exeedance'], freq_full['ValuesObs'], 'tab:orange', label='Obs.')
+    plt.plot(freq_full['Exeedance'], freq_full['ValuesSim'], 'navy', label='Sim.')
+    plt.ylim((vmin, 1.2 * vmax))
+    if log:
+        plt.yscale('log')
+    plt.ylabel(units)
     plt.xlabel('Exeed. %')
     plt.grid(True)
-    # plot
-    plt.subplot(gs[4, 3:10])
-    plt.title('Series - Sq. Error of Log', loc='left')
-    plt.plot(series[fld_date], series['SElog'], 'tab:red')
+    plt.legend(loc='upper right')
+    #
+    # plot of series
+    plt.subplot(gs[0:2, 3:10])
+    plt.title('Series', loc='left')
+    plt.plot(series_full[fld_date], series_full[fld_obs], 'tab:orange', linewidth=2, label='Observed')
+    plt.plot(series_calib[fld_date], series_calib[fld_sim], 'tab:grey', label='Calibration')
+    plt.plot(series_valid[fld_date], series_valid[fld_sim], 'tab:blue', label='Validation')
+    plt.ylim((vmin, 1.5 * vmax))
+    if log:
+        plt.yscale('log')
+    plt.ylabel(units)
     plt.grid(True)
+    plt.legend(loc='upper right', ncol=3)
+    #
+    # plot of Scatter
+    plt.subplot(gs[0:2, 11:])
+    params = params_full
+    plt.title('Obs vs. Sim  (R={:.2f})'.format(float(params[params['Parameter'] == 'R']['Value'])), loc='left')
+    plt.scatter(series_calib[fld_obs], series_calib[fld_sim], c='tab:grey', s=15, alpha=0.3, edgecolors='none', label='Calib.')
+    plt.scatter(series_valid[fld_obs], series_valid[fld_sim], c='tab:blue', s=15, alpha=0.6, edgecolors='none', label='Valid.')
+    plt.xlabel('Obs  ({})'.format(units))
+    plt.ylabel('Sim  ({})'.format(units))
+    if log:
+        plt.xscale('log')
+        plt.yscale('log')
+    plt.plot([0, vmax], [0, vmax], 'tab:grey', linestyle='--', label='1:1')
+    plt.ylim((vmin, 1.2 * vmax))
+    plt.xlim((vmin, 1.2 * vmax))
+    plt.grid(True)
+    plt.legend(loc='upper left')
+    #
+    # plot of CFC Erros
+    plt.subplot(gs[2, 0:2])
+    plt.title('CFC Error', loc='left')
+    plt.plot(freq_full['Exeedance'], freq_full['E'], 'tab:red')
+    plt.ylabel(units)
+    plt.xlabel('Exeed. %')
+    plt.grid(True)
+    #
+    # plot Error
+    plt.subplot(gs[2, 3:10])
+    plt.title('Series - Error', loc='left')
+    plt.plot(series_calib[fld_date], series_calib['E'], 'tab:grey')
+    plt.plot(series_valid[fld_date], series_valid['E'], 'tab:red')
+    plt.ylabel(units)
+    plt.grid(True)
+    #
+    # plot
+    plt.subplot(gs[3, 0:2])
+    plt.title('CFC - Squared Error', loc='left')
+    plt.plot(freq_full['Exeedance'], freq_full['SE'], 'tab:red')
+    plt.xlabel('Exeed. %')
+    plt.grid(True)
+    #
+    # plot
+    plt.subplot(gs[3, 3:10])
+    plt.title('Series - Sq. Error', loc='left')
+    plt.plot(series_calib[fld_date], series_calib['SE'], 'tab:grey')
+    plt.plot(series_valid[fld_date], series_valid['SE'], 'tab:red')
+    plt.grid(True)
+    #
+    plt.subplot(gs[3, 11:])
+    plt.title('Analyst parameters', loc='left')
+    subtls = ['Full', 'Calib.', 'Valid.']
+    all_params = [params_full, params_calib, params_valid]
+    xs = [-0.8, 0.15, 1.1]
+    for i in range(len(subtls)):
+        params = all_params[i]
+        plt.text(x=xs[i], y=0.8, s='{}'.format(subtls[i]))
+        plt.text(x=xs[i], y=0.6, s='Pbias : {:.2f}%'.format(float(params[params['Parameter'] == 'PBias']['Value'])))
+        plt.text(x=xs[i], y=0.4, s='R : {:.2f}'.format(float(params[params['Parameter'] == 'R']['Value'])))
+        plt.text(x=xs[i], y=0.2, s='RMSE : {:.2f} mm'.format(float(params[params['Parameter'] == 'RMSE']['Value'])))
+        plt.text(x=xs[i], y=0.0, s='NSE : {:.2f}'.format(float(params[params['Parameter'] == 'NSE']['Value'])))
+        plt.text(x=xs[i], y=-0.2, s='KGE : {:.2f}'.format(float(params[params['Parameter'] == 'KGE']['Value'])))
+        if log:
+            plt.text(x=xs[i], y=-0.4, s='KGElog : {:.2f}'.format(float(params[params['Parameter'] == 'KGElog']['Value'])))
+            plt.text(x=xs[i], y=-0.6, s='RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog']['Value'])))
+            plt.text(x=xs[i], y=-0.8, s='NSElog : {:.2f}'.format(float(params[params['Parameter'] == 'NSElog']['Value'])))
+        if subtls[i] == 'Full':
+            plt.text(x=xs[i], y=-1.2, s='CFC-R : {:.2f}'.format(float(params[params['Parameter'] == 'R-CFC']['Value'])))
+            plt.text(x=xs[i], y=-1.4, s='CFC-RMSE : {:.2f}'.format(float(params[params['Parameter'] == 'RMSE-CFC']['Value'])))
+            if log:
+                plt.text(x=xs[i], y=-1.6,
+                         s='CFC-RMSElog : {:.2f}'.format(float(params[params['Parameter'] == 'RMSElog-CFC']['Value'])))
+    plt.axis('off')
+    #
+    if log:
+        # plot
+        plt.subplot(gs[4, 0:2])
+        plt.title('CFC - Sq. Error of Log', loc='left')
+        plt.plot(freq_full['Exeedance'], freq_full['SElog'], 'tab:red')
+        plt.xlabel('Exeed. %')
+        plt.grid(True)
+        # plot
+        plt.subplot(gs[4, 3:10])
+        plt.title('Series - Sq. Error of Log', loc='left')
+        plt.plot(series_calib[fld_date], series_calib['SElog'], 'tab:grey')
+        plt.plot(series_valid[fld_date], series_valid['SElog'], 'tab:red')
+        plt.grid(True)
     #
     if show:
         plt.show()
@@ -936,7 +1088,8 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
     earthcm = ListedColormap(earth_big(np.linspace(0.10, 0.95, 256)))
     jet_big = cm.get_cmap('jet_r', 512)
     jetcm = ListedColormap(jet_big(np.linspace(0.3, 0.75, 256)))
-
+    viridis_big = cm.get_cmap('viridis_r', 512)
+    viridiscm = ListedColormap(viridis_big(np.linspace(0.05, 0.9)))
     map_dct = {'dem': ['BrBG_r', 'Elevation'],
                'slope': ['OrRd', 'Degrees'],
                'twi': ['YlGnBu', 'Index units'],
@@ -944,8 +1097,8 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
                'etpat': ['Greys', 'Index units'],
                'catcha': ['Blues', 'Sq. Meters (log10)'],
                'basin': ['Greys', 'Boolean'],
-               'flow':[earthcm, 'mm'], 'flow_v':[jetcm, 'mm'], 'stock':['Blues', 'mm'],
-               'deficit':['jet', 'mm'], 'VSA':['Blues', 'Boolean']}
+               'flow':[earthcm, 'mm/d'], 'flow_v':[jetcm, 'mm/d'], 'stock':[viridiscm, 'mm'],
+               'deficit':['jet', 'mm'], 'VSA':['Blues', 'Boolean'], 'RC':['Blues']}
     #
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
@@ -968,7 +1121,7 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
         plt.text(x=0.0, y=0.2, s='Columns: {}'.format(meta['ncols']))
         plt.text(x=0.0, y=0.15, s='Cell size: {:.1f} m'.format(meta['cellsize']))
         plt.text(x=0.0, y=0.1, s='xll: {:.2f} m'.format(meta['xllcorner']))
-        plt.text(x=0.0, y=0.05, s='yll: {:.2f} m'.format(meta['xllcorner']))
+        plt.text(x=0.0, y=0.05, s='yll: {:.2f} m'.format(meta['yllcorner']))
     plt.axis('off')
     #
     if show:
@@ -1019,6 +1172,137 @@ def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', fi
     plt.title('TWI Histogram')
     plt.xlim(0, 60)
     plt.gca().invert_yaxis()
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+
+def plot_obssim_zmaps(obs, sim, metric, ranges='local', rangesmetric='local', ttl='title', show=False,
+                      filename='obssim_zmaps', folder='C:/bin'):
+    fig = plt.figure(figsize=(6, 6),)  # Width, Height
+    fig.suptitle('ZMAP | {}'.format(ttl))
+    gs = mpl.gridspec.GridSpec(3, 1, wspace=0.3, hspace=0.3)
+    if ranges == 'local':
+        v_min = np.min(np.array((obs, sim)))
+        v_max = np.max(np.array((obs, sim)))
+    else:
+        v_min = ranges[0]
+        v_max = ranges[1]
+    if rangesmetric == 'local':
+        v_min_m = np.min(metric)
+        v_max_m = np.max(metric)
+    else:
+        v_min_m = rangesmetric[0]
+        v_max_m = rangesmetric[1]
+    ax = fig.add_subplot(gs[0, 0])
+    im = plt.imshow(obs, cmap='Greys_r', vmin=v_min, vmax=v_max)
+    plt.title('Observed')
+    plt.axis('off')
+    ax = fig.add_subplot(gs[1, 0])
+    im = plt.imshow(sim, cmap='Greys_r', vmin=v_min, vmax=v_max)
+    plt.title('Simulated')
+    plt.axis('off')
+    ax = fig.add_subplot(gs[2, 0])
+    im = plt.imshow(metric, cmap='inferno', vmin=v_min_m, vmax=v_max_m)
+    plt.title('Abs Error')
+    plt.axis('off')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+
+
+def plot_map_analyst(obs, sim, metric, obs_sig, sim_sig, metric_sig, metrics_dct, ranges='local', metricranges='local',
+                     ttl='title', filename='map_analyst', folder='C:/bin', show=False):
+    fig = plt.figure(figsize=(14, 7), )  # Width, Height
+    fig.suptitle(ttl)
+    gs = mpl.gridspec.GridSpec(6, 13, wspace=0.3, hspace=0.45)
+    #
+    x_sig = np.arange(0, len(obs_sig))
+    #
+    # ranges selector
+    if ranges != 'local':
+        vmin = ranges[0]
+        vmax = ranges[1]
+    else:
+        vmin = np.min((obs, sim))
+        vmax = np.max((obs, sim))
+    if metricranges != 'local':
+        metric_vmin = metricranges[0]
+        metric_vmax = metricranges[1]
+    else:
+        metric_vmin = np.min(metric)
+        metric_vmax = np.max(metric)
+    #
+    #
+    ax = fig.add_subplot(gs[0:3, 0:3])
+    im = plt.imshow(obs, cmap='Greys', vmin=vmin, vmax=vmax)
+    plt.title('Observed')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    ax = fig.add_subplot(gs[0:3, 3:6])
+    im = plt.imshow(sim, cmap='Greys', vmin=vmin, vmax=vmax)
+    plt.title('Simulated')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    ax = fig.add_subplot(gs[0:3, 7:10])
+    im = plt.imshow(metric, cmap='jet', vmin=metric_vmin, vmax=metric_vmax)
+    plt.title('Local Error')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    ax = fig.add_subplot(gs[3:5, 0:10])
+    plt.plot(x_sig, obs_sig, label='Observed', c='tab:orange')
+    plt.plot(x_sig, sim_sig, label='Simulated', c='tab:blue', alpha=0.5)
+    plt.title('Map signal', loc='left')
+    plt.legend(loc='upper right', ncol=3)
+    plt.xlim((np.min(x_sig), np.max(x_sig)))
+    plt.ylim((vmin, 1.2 * vmax))
+    plt.xticks([])
+    plt.ylabel('Map units')
+    #
+    ax = fig.add_subplot(gs[5:6, 0:10])
+    plt.plot(x_sig, metric_sig, 'tab:red')
+    plt.xlim((np.min(x_sig), np.max(x_sig)))
+    plt.ylim(metric_vmin, metric_vmax)
+    plt.xlabel('Cell ID')
+    plt.ylabel('Error')
+    #
+    ax = fig.add_subplot(gs[3:5, 11:])
+    plt.scatter(obs_sig, sim_sig, c='tab:grey', s=15, alpha=0.1, edgecolors='none')
+    plt.plot([0, vmax], [0, vmax], 'tab:grey', linestyle='--', label='1:1')
+    plt.ylim((vmin, vmax))
+    plt.xlim((vmin, vmax))
+    plt.grid(True)
+    plt.legend(loc='upper left')
+    plt.ylabel('Signal Sim')
+    plt.xlabel('Signal Obs')
+    #
+    #
+    # metrics
+    ax = fig.add_subplot(gs[0:3, 10:])
+    x_offset = 0.36
+    plt.text(x_offset, 1, s='Map Global Metrics')
+    plt.text(x_offset, 0.9, s='Error: {:.2f}'.format(metrics_dct['Error']))
+    plt.text(x_offset, 0.84, s='Sq. Error: {:.2f}'.format(metrics_dct['SqErr']))
+    plt.text(x_offset, 0.78, s='RMSE: {:.2f}'.format(metrics_dct['RMSE']))
+    plt.text(x_offset, 0.5, s='Signal Global Metrics')
+    plt.text(x_offset, 0.4, s='NSE: {:.2f}'.format(metrics_dct['NSE']))
+    plt.text(x_offset, 0.34, s='KGE: {:.2f}'.format(metrics_dct['KGE']))
+    plt.text(x_offset, 0.28, s='R: {:.2f}'.format(metrics_dct['R']))
+    plt.axis('off')
     #
     if show:
         plt.show()

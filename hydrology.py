@@ -109,6 +109,12 @@ def built_zmap(varmap, twi, shru, twibins, shrubins):
     return zmap
 
 
+def extract_zmap_signal(zmap, mask):
+    array_flat = zmap.flatten()
+    mask_flat = (1 * (mask.flatten() > 0))
+    return flatten_clear(array=array_flat, mask=mask_flat)
+
+
 def map_back(zmatrix, a1, a2, bins1, bins2):
     """
     Map back function using a Z-Matrix
@@ -414,34 +420,57 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
             mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
         mapvar_lst = mapvar.split('-')
         # map dates protocol
+        mapped_dates = list()  # list of actual mapped files
         if mapdates == 'all':
             mapsize = size
+            mapped_dates = list(pd.to_datetime(series['Date'], format='%y-%m-%d'))
         else:
             # extract map dates to array
             mapid = 0
+            #
+            # prep map dates
             mapdates_df = pd.DataFrame({'Date': mapdates.split('&')})
-            mapdates_df['Date'] = mapdates_df['Date'].str.strip()
+            mapdates_df['DateStr'] = mapdates_df['Date'].str.strip()
             mapdates_df['Date'] = pd.to_datetime(mapdates_df['Date'])
             lookup_dates = mapdates_df['Date'].values  # it is coming as datetime!
-            mapsize = len(lookup_dates)
+            #print(lookup_dates)
+            #print(len(lookup_dates))
+            #
             # get series dates
             dates_series = series['Date'].values
-            # built the array of timestep dates to map
+            #
+            # built the array of timestep index of dates to map
             map_timesteps = list()
             for i in range(len(lookup_dates)):
                 lcl_series_df = series.query('Date == "{}"'.format(lookup_dates[i]))
+                #print(lcl_series_df)
+                #print(len(lcl_series_df))
                 if len(lcl_series_df) == 1:
-                    map_timesteps.append(lcl_series_df.index[0])  # append to list
+                    lcl_step = lcl_series_df.index[0]
+                    #print(lcl_step)
+                    map_timesteps.append(lcl_step)  # append index to list
+                    mapped_dates.append(mapdates_df['DateStr'].values[i])
+            mapsize = len(map_timesteps)
+            #print(mapsize)
+        #print(len(mapped_dates))
         #
         # load to dict object a time series of empty zmaps for each variable
         mapkeys_dct = dict()
         for e in mapvar_lst:
             mapkeys_dct[e] = np.zeros(shape=(mapsize, rows, cols), dtype='float32')
         # store initial zmaps in dict
-        mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'RSE': rse_i, 'RIE': rie_i, 'RC': rc_i, 'ET': et_i,
-                       'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i, 'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i,
-                       'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i, 'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i,
-                       'PET': pet_i, 'D': d_i, 'Unz': unz_i}
+        ext = 1 * (countmatrix > 0)  # filter by map extension
+        mapback_dct = {'TF': tf_i * ext, 'Qv': qv_i * ext, 'R': r_i * ext,
+                       'RSE': rse_i * ext, 'RIE': rie_i * ext,
+                       'RC': rc_i * ext, 'ET': et_i * ext,
+                       'Cpy': cpy_i * ext, 'Sfs': sfs_i * ext,
+                       'Inf': inf_i * ext, 'Tpun': tpun_i * ext,
+                       'Evc': evc_i * ext, 'Tpgw': tpgw_i * ext,
+                       'Evs': evs_i * ext, 'VSA': vsa_i * ext,
+                       'P': prec_i * ext, 'Temp': temp_i * ext,
+                       'IRA': ira_i * ext, 'IRI': iri_i * ext,
+                       'PET': pet_i * ext, 'D': d_i * ext,
+                       'Unz': unz_i * ext}
         # append it to map the first record in the map time series
         for e in mapvar_lst:
             mapkeys_dct[e][0] = mapback_dct[e]
@@ -570,10 +599,17 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         # trace section
         if mapback:
             # store timestep maps in dict
-            mapback_dct = {'TF': tf_i, 'Qv': qv_i, 'R': r_i, 'RSE': rse_i, 'RIE': rie_i, 'RC': rc_i, 'ET': et_i,
-                           'Cpy': cpy_i, 'Sfs': sfs_i, 'Inf': inf_i, 'Tpun': tpun_i, 'Evc': evc_i, 'Tpgw': tpgw_i,
-                           'Evs': evs_i, 'VSA': vsa_i, 'P': prec_i, 'Temp': temp_i, 'IRA': ira_i, 'IRI': iri_i,
-                           'PET': petfull_i, 'D': d_i, 'Unz': unz_i}
+            mapback_dct = {'TF': tf_i * ext, 'Qv': qv_i * ext, 'R': r_i * ext,
+                           'RSE': rse_i * ext, 'RIE': rie_i * ext,
+                           'RC': rc_i * ext, 'ET': et_i * ext,
+                           'Cpy': cpy_i * ext, 'Sfs': sfs_i * ext,
+                           'Inf': inf_i * ext, 'Tpun': tpun_i * ext,
+                           'Evc': evc_i * ext, 'Tpgw': tpgw_i * ext,
+                           'Evs': evs_i * ext, 'VSA': vsa_i * ext,
+                           'P': prec_i * ext, 'Temp': temp_i * ext,
+                           'IRA': ira_i * ext, 'IRI': iri_i * ext,
+                           'PET': petfull_i * ext, 'D': d_i * ext,
+                           'Unz': unz_i * ext}
             if mapdates == 'all':
                 # append it to map
                 for e in mapvar_lst:
@@ -608,10 +644,11 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         exp_df['Fobs'] = convert_sq2q(sq=series['Q'].values, area=area)
     #
     #
+    out_dct = {'Series':exp_df}
     if mapback:
-        return exp_df, mapkeys_dct
-    else:
-        return exp_df
+        out_dct['Maps'] = mapkeys_dct
+        out_dct['MappedDates'] = mapped_dates
+    return out_dct
 
 
 def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, m_range, qo_range, cpmax_range,
@@ -675,20 +712,48 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
         :return: numpy array of parameter set
         """
         return (np.array(gene) * ranges / 100) + lowerb
+
+    def clear_prec_by_dates(dseries, datesstr):
+        def_df = dseries.copy()
+        mapdates_df = pd.DataFrame({'Date': datesstr.split('&')})
+        mapdates_df['Date'] = mapdates_df['Date'].str.strip()
+        mapdates_df['Date'] = pd.to_datetime(mapdates_df['Date'])
+        lookup_dates = mapdates_df['Date'].values  # it is coming as datetime!
+        for i in range(len(lookup_dates)):
+            index = def_df[def_df['Date'] == lookup_dates[i]].index
+            def_df.loc[index, 'Prec'] = 0.0
+        return def_df
+
+    def clear_full_signal(array3d, count):
+        out_lst = list()
+        for i in range(len(array3d)):
+            lcl_signal = extract_zmap_signal(array3d[i], count)
+            out_lst.append(lcl_signal)
+        out_array = np.array(out_lst)
+        return out_array.flatten()
+    #
     #
     # run setup
     runsize = generations * popsize * 2
     #
     # extract observed data
-    loglim = 0.000001
+    series = clear_prec_by_dates(dseries=series, datesstr=etpatdates)
     sobs = series['Q'].values
+    # get log10 of flow for calibration metrics
+    loglim = 0.000001
     sobs_log = np.log10(sobs + (loglim * (sobs <= 0)))
+    #
+    # get etpat zmap signal
     etpat_zmaps_nd = np.array(etpatzmaps)
-    sobs_etpat = etpat_zmaps_nd.flatten()
-    sobs_etpat = sobs_etpat / np.max(sobs_etpat)  # normalize pattern by max value
-    #plt.plot(np.arange(0, len(sobs_etpat)), sobs_etpat)
+    #plt.imshow(etpat_zmaps_nd[0])
     #plt.show()
-    print('SIZE: {}'.format(len(sobs_etpat)))
+    sobs_etpat = clear_full_signal(etpat_zmaps_nd, countmatrix)
+    sobs_etpat = sobs_etpat / np.max(sobs_etpat)  # normalize pattern by max value
+    lcl_x = np.arange(0, len(sobs_etpat))
+    #plt.plot(lcl_x, sobs_etpat)
+    #plt.show()
+    #
+    #
     # reset random state using time
     seed = int(str(datetime.now())[-6:])
     np.random.seed(seed)
@@ -751,11 +816,12 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
             #
             #
             # run topmodel
-            sim_df, etmaps = topmodel_sim(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
-                                          lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
-                                          ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8],
-                                          area=area, basinshadow=basinshadow, tui=False,
-                                          qobs=True, mapback=True, mapvar='ET', mapdates=etpatdates)
+            sim_dct = topmodel_sim(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
+                                   lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
+                                   ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8],
+                                   area=area, basinshadow=basinshadow, tui=False,
+                                   qobs=True, mapback=True, mapvar='ET', mapdates=etpatdates)
+            sim_df = sim_dct['Series']
             # compute Flow sim data
             ssim = sim_df['Q'].values
             ssim_log = np.log10(ssim + (loglim * (ssim <= 0)))
@@ -787,12 +853,13 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
                 lcl_flow_score = nse(obs=sobs, sim=ssim)
             #
             # extract ETpat array:
-            ssim_etmaps = etmaps['ET'].flatten()
-            ssim_etpat = ssim_etmaps / np.max(ssim_etmaps)
-            lcl_xval = np.arange(0, len(sobs_etpat))
-            #etpat_signal_rmse = error(sobs_etpat, ssim_etpat)
-            #plt.plot(lcl_xval, etpat_signal_rmse, 'r')
-            #plt.plot(lcl_xval, sobs_etpat)
+            et_zmaps_nd = np.array(sim_dct['Maps']['ET'])
+            #plt.imshow(et_zmaps_nd[2])
+            #plt.show()
+            ssim_etmaps =  clear_full_signal(et_zmaps_nd, countmatrix)
+            ssim_etpat = ssim_etmaps / np.max(ssim_etmaps)  # Normalize simulated signal
+            #plt.plot(lcl_x, ssim_etpat)
+            #plt.plot(lcl_x, sobs_etpat)
             #plt.show()
             #
             # get fitness score for the ET pattern:
