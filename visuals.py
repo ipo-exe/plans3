@@ -35,7 +35,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     # plot of CFCs
     plt.subplot(gs[0:2, 0:2])
     plt.title('CFCs', loc='left')
-    plt.plot(freq['Exeedance'], freq['ValuesObs'], 'tab:orange', label='Obs')
+    plt.plot(freq['Exeedance'], freq['ValuesObs'], 'tab:grey', label='Obs')
     plt.plot(freq['Exeedance'], freq['ValuesSim'], 'tab:blue', label='Sim')
     plt.ylim((vmin, 1.2 * vmax))
     if log:
@@ -48,7 +48,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     # plot of series
     plt.subplot(gs[0:2, 3:10])
     plt.title('Series', loc='left')
-    plt.plot(series[fld_date], series[fld_obs], 'tab:orange', linewidth=2, label='Observed')
+    plt.plot(series[fld_date], series[fld_obs], 'tab:grey', linewidth=2, label='Observed')
     plt.plot(series[fld_date], series[fld_sim], 'tab:blue', label='Simulated')
     plt.ylim((vmin, 1.2 * vmax))
     if log:
@@ -164,8 +164,8 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     # plot of CFCs
     plt.subplot(gs[0:2, 0:2])
     plt.title('CFCs - Full', loc='left')
-    plt.plot(freq_full['Exeedance'], freq_full['ValuesObs'], 'tab:orange', label='Obs.')
-    plt.plot(freq_full['Exeedance'], freq_full['ValuesSim'], 'navy', label='Sim.')
+    plt.plot(freq_full['Exeedance'], freq_full['ValuesObs'], 'tab:grey', label='Obs.')
+    plt.plot(freq_full['Exeedance'], freq_full['ValuesSim'], 'blue', label='Sim.')
     plt.ylim((vmin, 1.2 * vmax))
     if log:
         plt.yscale('log')
@@ -177,9 +177,9 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     # plot of series
     plt.subplot(gs[0:2, 3:10])
     plt.title('Series', loc='left')
-    plt.plot(series_full[fld_date], series_full[fld_obs], 'tab:orange', linewidth=2, label='Observed')
-    plt.plot(series_calib[fld_date], series_calib[fld_sim], 'tab:grey', label='Calibration')
-    plt.plot(series_valid[fld_date], series_valid[fld_sim], 'tab:blue', label='Validation')
+    plt.plot(series_full[fld_date], series_full[fld_obs], 'tab:grey', linewidth=2, label='Observed')
+    plt.plot(series_calib[fld_date], series_calib[fld_sim], 'tab:blue', label='Calibration')
+    plt.plot(series_valid[fld_date], series_valid[fld_sim], 'navy', label='Validation')
     plt.ylim((vmin, 1.5 * vmax))
     if log:
         plt.yscale('log')
@@ -191,8 +191,8 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     plt.subplot(gs[0:2, 11:])
     params = params_full
     plt.title('Obs vs. Sim  (R={:.2f})'.format(float(params[params['Parameter'] == 'R']['Value'])), loc='left')
-    plt.scatter(series_calib[fld_obs], series_calib[fld_sim], c='tab:grey', s=15, alpha=0.3, edgecolors='none', label='Calib.')
-    plt.scatter(series_valid[fld_obs], series_valid[fld_sim], c='tab:blue', s=15, alpha=0.6, edgecolors='none', label='Valid.')
+    plt.scatter(series_calib[fld_obs], series_calib[fld_sim], c='tab:blue', s=15, alpha=0.3, edgecolors='none', label='Calib.')
+    plt.scatter(series_valid[fld_obs], series_valid[fld_sim], c='navy', s=15, alpha=0.6, edgecolors='none', label='Valid.')
     plt.xlabel('Obs  ({})'.format(units))
     plt.ylabel('Sim  ({})'.format(units))
     if log:
@@ -215,8 +215,8 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     # plot Error
     plt.subplot(gs[2, 3:10])
     plt.title('Series - Error', loc='left')
-    plt.plot(series_calib[fld_date], series_calib['E'], 'tab:grey')
-    plt.plot(series_valid[fld_date], series_valid['E'], 'tab:red')
+    plt.plot(series_calib[fld_date], series_calib['E'], 'tab:red')
+    plt.plot(series_valid[fld_date], series_valid['E'], 'maroon')
     plt.ylabel(units)
     plt.grid(True)
     #
@@ -230,8 +230,8 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     # plot
     plt.subplot(gs[3, 3:10])
     plt.title('Series - Sq. Error', loc='left')
-    plt.plot(series_calib[fld_date], series_calib['SE'], 'tab:grey')
-    plt.plot(series_valid[fld_date], series_valid['SE'], 'tab:red')
+    plt.plot(series_calib[fld_date], series_calib['SE'], 'tab:red')
+    plt.plot(series_valid[fld_date], series_valid['SE'], 'maroon')
     plt.grid(True)
     #
     plt.subplot(gs[3, 11:])
@@ -269,8 +269,8 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
         # plot
         plt.subplot(gs[4, 3:10])
         plt.title('Series - Sq. Error of Log', loc='left')
-        plt.plot(series_calib[fld_date], series_calib['SElog'], 'tab:grey')
-        plt.plot(series_valid[fld_date], series_valid['SElog'], 'tab:red')
+        plt.plot(series_calib[fld_date], series_calib['SElog'], 'tab:red')
+        plt.plot(series_valid[fld_date], series_valid['SElog'], 'maroon')
         plt.grid(True)
     #
     if show:
@@ -284,6 +284,190 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
             filepath = folder + '/' + filename + '.png'
         plt.savefig(filepath)
         plt.close(fig)
+        return filepath
+
+
+def pannel_frame(series, star, deficit, sups, mids, star_rng, deficit_rng, sup_rng, mid1_rng, mid2_rng, mid3_rng,
+                 mid4_rng, t, offset_back, offset_front, type='ET', filename='frame', folder='C:/bin',
+                 show=False, suff='', dpi=300):
+    from matplotlib import cm
+    from matplotlib.colors import ListedColormap
+    from pandas import to_datetime
+    #
+    #
+    earth_big = cm.get_cmap('gist_earth_r', 512)
+    earthcm = ListedColormap(earth_big(np.linspace(0.10, 0.95, 256)))
+    jet_big = cm.get_cmap('jet_r', 512)
+    jetcm = ListedColormap(jet_big(np.linspace(0.3, 0.75, 256)))
+    jet_big2 = cm.get_cmap('jet', 512)
+    jetcm2 = ListedColormap(jet_big2(np.linspace(0.1, 0.9, 256)))
+    viridis_big = cm.get_cmap('viridis_r', 512)
+    viridiscm = ListedColormap(viridis_big(np.linspace(0.05, 0.9)))
+    #
+    dates_labels = to_datetime(series['Date'], format='%Y%m%d')
+    dates_labels = dates_labels.astype('str')
+    #
+    #
+    if type == 'ET':
+        cmaps = (jetcm, jetcm2, 'Blues', 'Blues', 'Blues', 'Blues', jetcm, jetcm, jetcm, jetcm)
+        titles = ('ET - Evapotranspiration (mm/d)', 'Groundwater\ndeficit (mm)', 'Precip. (mm/d)', 'Irrigation by\naspersion (mm/d)',
+                  'Irrigation by\ninundation (mm/d)', 'Total input (mm/d)',
+                  'Evaporation\nfrom canopy (mm/d)', 'Evaporation\nfrom surface (mm/d)',
+                  'Transpiration\nfrom soil (mm/d)', 'Transpiration from\ngroundwater (mm/d)')
+        suptitle = 'Evapotranspiration (ET) Pannel | {}'.format(dates_labels.values[t])
+    elif type == 'Qv':
+        cmaps = (earthcm, jetcm2, 'Blues', 'Blues', 'Blues', 'Blues', earthcm, viridiscm, viridiscm, viridiscm)
+        titles = ('Recharge (mm/d)', 'Groundwater\ndeficit (mm)', 'Precip. (mm/d)', 'Irrigation by\naspersion (mm/d)',
+                  'Irrigation by\ninundation (mm/d)',
+                    'Total input (mm/d)',
+                    'Infiltration\n(mm/d)', 'Canopy\nwater stock (mm)',
+                    'Surface\nwater stock (mm)', 'Soil\nwater stock (mm)')
+        suptitle = 'Recharge to groundwater Pannel | {}'.format(dates_labels.values[t])
+    elif type == 'R':
+        cmaps = (earthcm, jetcm2, 'Blues', 'Blues', 'Blues', 'Blues', earthcm, earthcm, earthcm, 'Blues')
+        titles = ('Runoff (mm/d)', 'Groundwater\ndeficit (mm)', 'Precip. (mm/d)', 'Irrigation by\naspersion (mm/d)',
+                  'Irrigation by\ninundation (mm/d)',
+                    'Total input (mm/d)',
+                    'Throughfall\n(mm/d)', 'Infiltration excess\nrunoff (mm/d)',
+                    'Saturation excess\nrunoff (mm/d)', 'Variable\nSource Area')
+        suptitle = 'Runoff Pannel | {}'.format(dates_labels.values[t])
+    #
+    # Star plot
+    fig = plt.figure(figsize=(17, 8))  # Width, Height
+    gs = mpl.gridspec.GridSpec(8, 17, wspace=0.8, hspace=0.6)
+    fig.suptitle(suptitle)
+    #
+    # STAR
+    plt.subplot(gs[:5, :5])
+    im = plt.imshow(star, cmap=cmaps[0], vmin=star_rng[0], vmax=star_rng[1])
+    plt.title(titles[0])
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # DEFICIT
+    plt.subplot(gs[5:, :3])
+    im = plt.imshow(deficit, cmap=cmaps[1], vmin=deficit_rng[0], vmax=deficit_rng[1])
+    plt.title(titles[1], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # SUP 1 - Prec
+    lcl_rng = sup_rng
+    prec_map = (sups[0] * 0.0) + series['Prec'].values[t]
+    plt.subplot(gs[:2, 5:7])
+    im = plt.imshow(prec_map, cmap=cmaps[2], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    plt.title(titles[2], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    # SUP 2 - IRA
+    lcl_rng = sup_rng
+    plt.subplot(gs[:2, 8:10])
+    im = plt.imshow(sups[0], cmap=cmaps[3], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    plt.title(titles[3], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    # SUP 2 - IRI
+    lcl_rng = sup_rng
+    plt.subplot(gs[:2, 11:13])
+    im = plt.imshow(sups[1], cmap=cmaps[4], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    plt.title(titles[4], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    # SUP 2 - IRI
+    lcl_rng = sup_rng
+    plt.subplot(gs[:2, 14:16])
+    im = plt.imshow(sups[0] + sups[1] + prec_map, cmap=cmaps[5], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    plt.title(titles[5], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    #
+    # MID 1
+    lcl_rng = mid1_rng
+    plt.subplot(gs[2:5, 5:8])
+    im = plt.imshow(mids[0], cmap=cmaps[6], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    plt.title(titles[6], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    # MID 2
+    lcl_rng = mid2_rng
+    plt.subplot(gs[2:5, 8:11])
+    im = plt.imshow(mids[1], cmap=cmaps[7], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    plt.title(titles[7], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    # MID 3
+    lcl_rng = mid3_rng
+    plt.subplot(gs[2:5, 11:14])
+    im = plt.imshow(mids[2], cmap=cmaps[8], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    plt.title(titles[8], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    # MID 4
+    lcl_rng = mid4_rng
+    plt.subplot(gs[2:5, 14:])
+    im = plt.imshow(mids[3], cmap=cmaps[9], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    plt.title(titles[9], fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # SERIES
+    #
+    plt.subplot(gs[5, 5:])
+    total_input = series['Prec'].values + series['IRA'].values + series['IRI'].values
+    plt.plot(series['Date'].values[t - offset_back: t + offset_front],
+             total_input[t - offset_back: t + offset_front], 'navy', label='Total input')
+    plt.plot(series['Date'].values[t - offset_back: t + offset_front],
+             series['Prec'].values[t - offset_back: t + offset_front], 'tab:blue', label='Precip.')
+    plt.plot(series['Date'].values[t - offset_back: t + offset_front],
+             series['IRA'].values[t - offset_back: t + offset_front], 'green', label='IRA')
+    plt.plot(series['Date'].values[t - offset_back: t + offset_front],
+             series['IRI'].values[t - offset_back: t + offset_front], 'orange', label='IRI')
+    plt.vlines(series['Date'].values[t], ymax=1.2 * np.max(total_input), ymin=0, colors=['k'])
+    plt.plot(series['Date'].values[t], total_input[t], 'o', color='tab:blue' )
+    plt.ylim((0, 1.2 * np.max(total_input)))
+    plt.title('Date: {}'.format(dates_labels.values[t]), loc='left', fontsize=10)
+    plt.legend(loc='upper right', ncol=4, framealpha=1, fancybox=False)
+    fig.text(x=0.3, y=0.33, s='Input\nmm/d')
+    #
+    plt.subplot(gs[6, 5:])
+    plt.plot(series['Date'].values[t - offset_back: t + offset_front], series['PET'].values[t - offset_back: t + offset_front], 'tab:grey', label='PET')
+    plt.plot(series['Date'].values[t - offset_back: t + offset_front], series['ET'].values[t - offset_back: t + offset_front], 'tab:red', label='ET')
+    plt.vlines(series['Date'].values[t], ymax=np.max(series['PET'].values), ymin=0,
+               colors=['k'])
+    plt.plot(series['Date'].values[t], series['ET'].values[t], 'o', color='tab:red')
+    plt.ylim((0, np.max(series['PET'])))
+    plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
+    fig.text(x=0.3, y=0.23, s='ET & PET.\nmm/d')
+    #
+    plt.subplot(gs[7, 5:])
+    plt.plot(series['Date'].values[t - offset_back: t + offset_front], series['Q'].values[t - offset_back: t + offset_front], 'tab:blue', label='Flow')
+    plt.plot(series['Date'].values[t - offset_back: t + offset_front], series['Qb'].values[t - offset_back: t + offset_front], 'navy', label='Baseflow')
+    plt.vlines(series['Date'].values[t], ymax= 10 * np.max(series['Q'].values), ymin=np.min(series['Q'].values),
+               colors=['k'])
+    if series['Q'].values[t] == series['Qb'].values[t]:
+        plt.plot(series['Date'].values[t], series['Q'].values[t], 'o', color='navy')
+    else:
+        plt.plot(series['Date'].values[t], series['Q'].values[t], 'o', color='tab:blue')
+        plt.plot(series['Date'].values[t], series['Qb'].values[t], 'o', color='navy')
+    plt.ylim((np.min(series['Q']), 10 * np.max(series['Q'])))
+    plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
+    plt.yscale('log')
+    fig.text(x=0.3, y=0.13, s='Flow\nmm/d')
+    #
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        if suff != '':
+            filepath = '{}/{}_{}_{}_{}.png'.format(folder, suff, filename, type, dates_labels.values[t])
+        else:
+            filepath = '{}/{}_{}_{}.png'.format(folder, filename, type, dates_labels.values[t])
+        plt.savefig(filepath, dpi=dpi)
+        plt.close(fig)
+        plt.clf()
         return filepath
 
 
@@ -615,6 +799,160 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True,
 
 
 def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel_topmodel', suff=''):
+    """
+    visualize the topmodel global variables in a single pannel
+    :param dataframe: pandas dataframe from hydrology.topmodel_sim()
+    :param grid: boolean for grid
+    :param folder: string to destination directory
+    :param filename: string file name
+    :param suff: string suffix in file name
+    :param show: boolean control to show figure instead of saving it
+    :return: string file path
+    """
+    #
+    fig = plt.figure(figsize=(20, 12))  # Width, Height
+    fig.suptitle('Pannel of simulated hydrological processes')
+    gs = mpl.gridspec.GridSpec(5, 18, wspace=0.0, hspace=0.2)  # nrows, ncols
+    col1 = 8
+    col2 = 10
+    max_prec = 1.2 * np.max(dataframe['Prec'].values)
+    max_et = 1.2 * np.max(dataframe['PET'].values)
+    max_irr = 1.2 * np.max((dataframe['IRI'].values, dataframe['IRA'].values))
+    if max_irr == 0:
+        max_irr = 1
+    max_stocks = 1.2 * np.max((dataframe['Unz'].values, dataframe['Sfs'].values, dataframe['Cpy'].values))
+    max_int_flow = 1.2 * np.max((dataframe['Inf'].values, dataframe['Qv'].values))
+    qmin = 0.8 * np.min(dataframe['Q'].values)
+    if qobs:
+        qmin = 0.8 * np.min((dataframe['Q'].values, dataframe['Qobs'].values))
+    # 1
+    ax = fig.add_subplot(gs[0, 0:col1])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['Prec'], label='Precipitation')
+    plt.ylabel('mm/d (Prec)')
+    plt.ylim(0, max_prec)
+    plt.legend(loc='upper left', ncol=1, framealpha=1, fancybox=False)
+    ax2 = ax.twinx()
+    plt.plot(dataframe['Date'], dataframe['IRA'], 'orange', label='Irrigation by aspersion')
+    plt.plot(dataframe['Date'], dataframe['IRI'], 'green', label='Irrigation by inundation')
+    plt.ylabel('mm/d (IRA, IRI)')
+    plt.ylim(0, max_irr)
+    plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    # 1
+    ax = fig.add_subplot(gs[0, col2:])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['Temp'], 'tab:orange', label='Temperature')
+    plt.ylabel('°C')
+    plt.legend(loc='upper left', ncol=1, framealpha=1, fancybox=False)
+    ax2 = ax.twinx()
+    plt.plot(dataframe['Date'], dataframe['PET'], 'tab:grey', label='PET - Potential Evapotranspiration')
+    plt.ylim(0, max_et)
+    plt.ylabel('mm/d')
+    plt.legend(loc='upper right', ncol=1, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    # 2
+    ax = fig.add_subplot(gs[1, 0:col1])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['TF'], 'skyblue', label='Troughfall')
+    plt.plot(dataframe['Date'], dataframe['R'], 'dodgerblue', label='Runoff')
+    plt.plot(dataframe['Date'], dataframe['RIE'], 'blue', label='Hortonian R.')
+    plt.plot(dataframe['Date'], dataframe['RSE'], 'navy', label='Dunnean R.')
+    plt.ylabel('mm/d')
+    plt.ylim(0, max_prec)
+    plt.legend(loc='upper left', ncol=4, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    # 3
+    ax = fig.add_subplot(gs[1, col2:])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['PET'], 'tab:grey', label='PET')
+    plt.plot(dataframe['Date'], dataframe['ET'], 'tab:red', label='Actual ET')
+    plt.ylim(0, max_et)
+    plt.ylabel('mm/d')
+    plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    # 3
+    ax = fig.add_subplot(gs[2, 0:col1])
+    plt.grid(grid)
+    if qobs:
+        plt.plot(dataframe['Date'], dataframe['Qobs'], 'tab:grey', label='Observed data')
+    plt.plot(dataframe['Date'], dataframe['Q'], 'tab:blue', label='Flow')
+    plt.plot(dataframe['Date'], dataframe['Qb'], 'navy', label='Baseflow')
+    plt.ylim(qmin, 10 * max_prec)
+    plt.ylabel('mm/d')
+    plt.legend(loc='upper right', ncol=3, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    plt.yscale('log')
+
+    # 3
+    ax = fig.add_subplot(gs[2, col2:])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['PET'], 'tab:grey', label='PET')
+    plt.plot(dataframe['Date'], dataframe['Evc'], 'tan', label='Evap. canopy')
+    plt.plot(dataframe['Date'], dataframe['Evs'], 'maroon', label='Evap. surface')
+    plt.ylim(0, max_et)
+    plt.ylabel('mm/d')
+    plt.legend(loc='upper right', ncol=3, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    # 3
+    ax = fig.add_subplot(gs[3, 0:col1])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['Inf'], 'tab:blue', label='Infiltration')
+    plt.plot(dataframe['Date'], dataframe['Qv'], 'navy', label='Groundwater recharge')
+    plt.ylim(0, max_int_flow)
+    plt.ylabel('mm/d')
+    plt.legend(loc='upper left', ncol=2, framealpha=1, fancybox=False)
+    # 3
+    ax = fig.add_subplot(gs[3, col2:])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['PET'], 'tab:grey', label='PET')
+    plt.plot(dataframe['Date'], dataframe['Tpun'], 'yellowgreen', label='Transp. vadose zone')
+    plt.plot(dataframe['Date'], dataframe['Tpgw'], 'darkgreen', label='Transp. groundwater')
+    plt.ylim(0, max_et)
+    plt.ylabel('mm/d')
+    plt.legend(loc='upper right', ncol=3, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    # 3
+    ax = fig.add_subplot(gs[4, 0:col1])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['D'], 'k', label='Groundwater stock deficit')
+    plt.ylim(0, 1.5 * np.max(dataframe['D'].values))
+    plt.ylabel('mm')
+    plt.legend(loc='upper left', ncol=2, framealpha=1, fancybox=False)
+    ax2 = ax.twinx()
+    plt.plot(dataframe['Date'], dataframe['Unz'], 'teal', label='Vadose water stock')
+    plt.ylim(0, max_stocks)
+    plt.ylabel('mm')
+    plt.legend(loc='upper right', ncol=1, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    # 3
+    ax = fig.add_subplot(gs[4, col2:])
+    plt.grid(grid)
+    plt.plot(dataframe['Date'], dataframe['Cpy'], 'limegreen', label='Canopy water stock')
+    plt.plot(dataframe['Date'], dataframe['Sfs'], 'tab:blue', label='Surface water stock')
+    plt.ylim(0, max_stocks)
+    plt.ylabel('mm')
+    plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
+    ax.tick_params(axis='x', which='major', labelsize=8)
+    #
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        if suff != '':
+            filepath = folder + '/' + filename + '_' + suff + '.png'
+        else:
+            filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=600)
+        plt.close(fig)
+        plt.clf()
+        return filepath
+
+
+# deprecated
+def pannel_topmodel2(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel_topmodel', suff=''):
     """
     visualize the topmodel global variables in a single pannel
     :param dataframe: pandas dataframe from hydrology.topmodel_sim()
@@ -1181,6 +1519,7 @@ def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', fi
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
+
 
 def plot_obssim_zmaps(obs, sim, metric, ranges='local', rangesmetric='local', ttl='title', show=False,
                       filename='obssim_zmaps', folder='C:/bin'):

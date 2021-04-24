@@ -520,7 +520,7 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         r_i = ((sfs_i + sfsin_i) - sfmax_i) * ((sfs_i + sfsin_i) > sfmax_i)
         # separate runoff
         rse_i = r_i * vsa_i  # Saturation excess runoff - Dunnean runoff
-        rie_i = 100 * r_i * (vsa_i == 0.0) # Infiltration excess runoff - Hortonian runoff
+        rie_i = r_i * (vsa_i == 0.0) # Infiltration excess runoff - Hortonian runoff
         rc_i = (prec_i > 0) * (r_i / ((prec_i == 0) + prec_i))
         # compute global runoff:
         ts_r[t] = avg_2d(var2d=r_i, weight=basinshadow)  # compute average in the basin
@@ -631,7 +631,10 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     # export data
     exp_df = pd.DataFrame({'Date':series['Date'].values,
                            'Prec':series['Prec'].values,
-                           'Temp':series['Temp'].values, 'PET':ts_pet,
+                           'Temp':series['Temp'].values,
+                           'IRA': series['IRA'].values,
+                           'IRI': series['IRI'].values,
+                           'PET':ts_pet,
                            'D':ts_d, 'Cpy':ts_cpy, 'TF':ts_tf,
                            'Sfs':ts_sfs, 'R':ts_r, 'RSE': ts_rse,
                            'RIE': ts_rie, 'RC': ts_rc, 'Inf':ts_inf,

@@ -1087,7 +1087,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     # export visual pannel
     if tui:
         status('exporting visual results')
-    exp_file4 = pannel_topmodel(sim_df, grid=False, show=False, qobs=qobs, folder=folder)
+    exp_file4 = pannel_topmodel(sim_df, grid=True, show=False, qobs=qobs, folder=folder)
     #
     #
     #

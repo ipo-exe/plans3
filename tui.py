@@ -260,60 +260,60 @@ def main(root='default', importing=True):
                         observed_options = [lng[24], lng[25]]
                     else:
                         observed_options = [lng[25]]
-                    opt = menu({lng[6]:observed_options}, title='', exitmsg=lng[10], msg=lng[5],
+                    lcl_opt = menu({lng[6]:observed_options}, title='', exitmsg=lng[10], msg=lng[5],
                            keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                     #
                     # import datasets
-                    if opt == lng[24]:
+                    if lcl_opt == lng[24]:
                         # import menu loop
                         while True:
-                            header(lng[24])
+                            header(lcl_opt)
                             inputfiles_df = files_df[files_df['Type'] == 'input']  #
                             files_lst = list(inputfiles_df['File'])
                             status_lst = list(inputfiles_df['Status'])
-                            opt = menu({lng[6]: files_lst, 'Status':status_lst}, title='', exitmsg=lng[10],
-                                       msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                            lcl_lcl_opt = menu({lng[6]: files_lst, 'Status':status_lst}, title='', exitmsg=lng[10],
+                                                msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                             # exit menu condition
-                            if opt == lng[10]:
+                            if lcl_lcl_opt == lng[10]:
                                 break
                             # import file
                             else:
-                                extension = opt.split('.')[-1]
+                                extension = lcl_lcl_opt.split('.')[-1]
                                 aux_str = '.' + extension + ' file'
                                 src_filenm = pick_file(p0=extension, p1=aux_str)
                                 if src_filenm == 'cancel':
                                     pass
                                 else:
-                                    dst_filenm = projectdirs['Observed'] + '/' + opt
+                                    dst_filenm = projectdirs['Observed'] + '/' + lcl_lcl_opt
                                     # copy and paste
                                     backend.importfile(src_filenm, dst_filenm)
                                     # update database
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
                                     print('\n{}:\n{}\n'.format(lng[30], dst_filenm))
-                                    tools.view_imported(opt, folder=projectdirs['Observed'])
+                                    tools.view_imported(lcl_lcl_opt, folder=projectdirs['Observed'])
                                     ok()
                     #
                     # derive data
-                    elif opt == lng[25]:
+                    elif lcl_opt == lng[25]:
                         while True:
-                            header(lng[25])
+                            header(lcl_opt)
                             derivefiles_df = files_df[files_df['Type'] == 'derived']
                             files_lst = list(derivefiles_df['File'])
-                            opt = menu({lng[6]: files_lst}, title='', exitmsg=lng[10],
-                                       msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                            lcl_lcl_opt = menu({lng[6]: files_lst}, title='', exitmsg=lng[10],
+                                               msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                             #
                             # exit menu condition
-                            if opt == lng[10]:
+                            if lcl_lcl_opt == lng[10]:
                                 break
                             #
                             # derive file
                             else:
                                 #
                                 # get input needs
-                                filesderiv_df = backend.verify_input2derived(derived=opt, p0=project_nm, wkplc=rootdir)
+                                filesderiv_df = backend.verify_input2derived(derived=lcl_lcl_opt, p0=project_nm, wkplc=rootdir)
                                 #
                                 # check missing files
-                                if backend.check_input2derived(derived=opt, p0=project_nm, wkplc=rootdir):
+                                if backend.check_input2derived(derived=lcl_lcl_opt, p0=project_nm, wkplc=rootdir):
                                     warning(wng=lng[20], msg=lng[27])
                                     print(filesderiv_df.to_string(index=False))
                                 else:
@@ -322,6 +322,7 @@ def main(root='default', importing=True):
                                     files_used_df = pd.DataFrame({'Files used':filesnames})
                                     print(files_used_df.to_string(index=False))
                                     #
+                                    lcl_filename = lcl_lcl_opt.split('.')[0]
                                     # get files paths
                                     filesp = list()
                                     for i in range(len(filesnames)):
@@ -330,96 +331,96 @@ def main(root='default', importing=True):
                                     # evaluate options
                                     #
                                     # Derive TWI
-                                    if opt == 'calib_twi.asc' or opt == 'aoi_twi.asc':
+                                    if lcl_lcl_opt == 'calib_twi.asc' or lcl_lcl_opt == 'aoi_twi.asc':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.map_twi(filesp[0], filesp[1], filesp[2],
                                                                     folder=projectdirs['Observed'],
-                                                                    filename=opt.split('.')[0])
+                                                                    filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'calib_shru.asc':
+                                    elif lcl_lcl_opt == 'calib_shru.asc':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.map_shru(filesp[0], filesp[1], filesp[2],
                                                                      filesp[3], filesp[4],
                                                                      folder=projectdirs['Observed'],
-                                                                     filename=opt.split('.')[0])
+                                                                     filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'calib_histograms.txt':
+                                    elif lcl_lcl_opt == 'calib_histograms.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2],
                                                                                folder=projectdirs['Observed'],
-                                                                               filename=opt.split('.')[0], tui=True)
+                                                                               filename=lcl_filename, tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'calib_basin_histograms.txt':
+                                    elif lcl_lcl_opt == 'calib_basin_histograms.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2], filesp[3],
                                                                                      folder=projectdirs['Observed'],
-                                                                                     filename=opt.split('.')[0], tui=True)
+                                                                                     filename=lcl_filename, tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'calib_etpat_zmaps.txt':
+                                    elif lcl_lcl_opt == 'calib_etpat_zmaps.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_zmap_series(filesp[0], filesp[1], filesp[2],
                                                                                 filesp[3],
                                                                                 folder=projectdirs['Observed'],
-                                                                                filename=opt.split('.')[0], tui=True)
+                                                                                filename=lcl_filename, tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'aoi_lulc_series.txt':
+                                    elif lcl_lcl_opt == 'aoi_lulc_series.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.import_map_series(filesp[0],
                                                                                rasterfolder=projectdirs['LULC'],
                                                                                folder=projectdirs['Observed'],
-                                                                               filename=opt.split('.')[0],
+                                                                               filename=lcl_filename,
                                                                                rasterfilename='aoi_lulc')
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'calib_etpat_series.txt':
+                                    elif lcl_lcl_opt == 'calib_etpat_series.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.import_etpat_series(filesp[0],
                                                                                 rasterfolder=projectdirs['ETpat'],
                                                                                 folder=projectdirs['Observed'],
-                                                                                filename=opt.split('.')[0],
+                                                                                filename=lcl_filename,
                                                                                 rasterfilename='calib_etpat', tui=True)
                                         tools.get_views_rasters(derivedfile, mapvar='ETpat', mapid='etpat',
                                                                 vmin=0, vmax=1, tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'aoi_shru_series.txt':
+                                    elif lcl_lcl_opt == 'aoi_shru_series.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.import_shru_series(filesp[0], filesp[1], filesp[2],
                                                                                filesp[3], filesp[4],
                                                                                rasterfolder=projectdirs['SHRU'],
                                                                                folder=projectdirs['Observed'],
-                                                                               filename=opt.split('.')[0],
+                                                                               filename=lcl_filename,
                                                                                suff='aoi', tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'aoi_shru_param.txt' or opt == 'calib_shru_param.txt':
+                                    elif lcl_lcl_opt == 'aoi_shru_param.txt' or lcl_lcl_opt == 'calib_shru_param.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.shru_param(filesp[0], filesp[1],
                                                                        folder=projectdirs['Observed'],
-                                                                       filename=opt.split('.')[0])
+                                                                       filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'aoi_slope.asc' or opt == 'calib_slope.asc':
+                                    elif lcl_lcl_opt == 'aoi_slope.asc' or lcl_lcl_opt == 'calib_slope.asc':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.map_slope(filesp[0], folder=projectdirs['Observed'],
-                                                                      filename=opt.split('.')[0])
+                                                                      filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif opt == 'aoi_fto.asc' or opt == 'calib_fto.asc':
+                                    elif lcl_lcl_opt == 'aoi_fto.asc' or lcl_lcl_opt == 'calib_fto.asc':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.map_fto(filesp[0], filesp[1],
                                                                     folder=projectdirs['Observed'],
-                                                                    filename=opt.split('.')[0])
+                                                                    filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                     #
                     # exit
-                    elif opt == lng[10]:
+                    elif lcl_opt == lng[10]:
                         break
             #
             # manage projected datasets
@@ -457,15 +458,13 @@ def main(root='default', importing=True):
                     sim_options = ['CALIB Basin | Observed - Stable LULC Hydrology',
                                    'AOI   Basin | Observed - Changing LULC Hydrology',
                                    'AOI   Basin | Projected - Changing LULC Hydrology']
-                    opt = menu({lng[6]: sim_options}, title='Simulation menu', exitmsg=lng[10], msg=lng[5],
+                    lcl_opt = menu({lng[6]: sim_options}, title='Simulation menu', exitmsg=lng[10], msg=lng[5],
                                keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                     #
                     # simulate observed policy
-                    if opt == sim_options[0]:
-                        header(opt)
-                        #
+                    if lcl_opt == sim_options[0]:
+                        header(lcl_opt)
                         # checker protocol
-                        header('SLH - stable lulc hydrology')
                         if backend.check_simhydro_files(project_nm, rootdir, aoi=False):
                             warning(wng=lng[20], msg=lng[27])
                             filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=False)
@@ -487,13 +486,13 @@ def main(root='default', importing=True):
                                                       wkpl=True, tui=True, mapback=True, mapraster=False, label='calib')
                     #
                     # simulate observed policy
-                    elif opt == sim_options[1]:
-                        header(opt)
+                    elif lcl_opt == sim_options[1]:
+                        header(lcl_opt)
                         missing()
                     #
                     # simulate projected policy
-                    elif opt == sim_options[2]:
-                        header(opt)
+                    elif lcl_opt == sim_options[2]:
+                        header(lcl_opt)
                         missing()
                     #
                     # exit
@@ -506,14 +505,14 @@ def main(root='default', importing=True):
                     header(opt)
                     optimize_options = ('Calibrate CALIB Basin Hydrology', 'Calibrate Population Model',
                                         'Optimize LULC Policy')
-                    opt = menu({'Model': optimize_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7], wng=lng[20],
+                    lcl_opt = menu({'Model': optimize_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7], wng=lng[20],
                                wngmsg=lng[8], chsn=lng[9])
                     # exit menu condition
-                    if opt == lng[10]:
+                    if lcl_opt == lng[10]:
                         break
                     #
                     # calibrate hydrology:
-                    elif opt == optimize_options[0]:
+                    elif lcl_opt == optimize_options[0]:
                         # checker protocol
                         if backend.check_calibhydro_files(project_nm, rootdir):
                             warning(wng=lng[20], msg=lng[27])
@@ -521,7 +520,7 @@ def main(root='default', importing=True):
                             print(filesclib_df[filesclib_df['Status'] == 'missing'].to_string(index=False))
                         else:
                             while True:
-                                header(optimize_options[0])
+                                header(lcl_opt)
                                 metrics_options = ('NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias',
                                                    'RMSE-CFC', 'RMSElog-CFC')
                                 metric = menu({'Metric': metrics_options}, title='Calibration metric Menu', exitmsg=lng[10], msg=lng[5],
@@ -545,7 +544,7 @@ def main(root='default', importing=True):
                                     aux_str = 'calib_hydro' + '_' + metric
                                     #dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
                                     size_opts = ('Very Small - Size:12 Gens:2', 'Small - Size:25 Gens:5',
-                                                 'Medium - Size:50 Gens:50', 'Large - Size:100 Gens:200')
+                                                 'Medium - Size:100 Gens:10', 'Large - Size:500 Gens:200')
                                     scale = menu({'Scale': size_opts}, exitkey='d', title='Genetic Algorithm Scale',
                                                  exitmsg='Use default (Small)', msg=lng[5],
                                                  keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
@@ -559,7 +558,7 @@ def main(root='default', importing=True):
                                         generations = 5
                                     elif scale == size_opts[2]:
                                         popsize = 100
-                                        generations = 50
+                                        generations = 10
                                     elif scale == size_opts[3]:
                                         popsize = 500
                                         generations = 200
@@ -578,13 +577,13 @@ def main(root='default', importing=True):
                                     ok()
                     #
                     # population
-                    elif opt == optimize_options[1]:
-                        header(opt)
+                    elif lcl_opt == optimize_options[1]:
+                        header(lcl_opt)
                         missing()
                     #
                     # optimize lulc polilcy
-                    elif opt == optimize_options[2]:
-                        header(opt)
+                    elif lcl_opt == optimize_options[2]:
+                        header(lcl_opt)
                         missing()
             #
             # exit
