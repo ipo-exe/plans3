@@ -287,9 +287,11 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
         return filepath
 
 
-def pannel_frame(series, star, deficit, sups, mids, star_rng, deficit_rng, sup_rng, mid1_rng, mid2_rng, mid3_rng,
-                 mid4_rng, t, offset_back, offset_front, type='ET', filename='frame', folder='C:/bin',
-                 show=False, suff='', dpi=300):
+def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
+                 sup1_rng, sup2_rng, sup3_rng, sup4_rng,
+                 mid1_rng, mid2_rng, mid3_rng, mid4_rng,
+                 t, offset_back, offset_front, type='ET', filename='frame', folder='C:/bin',
+                 show=False, suff='', dpi=300, png=False):
     from matplotlib import cm
     from matplotlib.colors import ListedColormap
     from pandas import to_datetime
@@ -309,28 +311,47 @@ def pannel_frame(series, star, deficit, sups, mids, star_rng, deficit_rng, sup_r
     #
     #
     if type == 'ET':
-        cmaps = (jetcm, jetcm2, 'Blues', 'Blues', 'Blues', 'Blues', jetcm, jetcm, jetcm, jetcm)
-        titles = ('ET - Evapotranspiration (mm/d)', 'Groundwater\ndeficit (mm)', 'Precip. (mm/d)', 'Irrigation by\naspersion (mm/d)',
-                  'Irrigation by\ninundation (mm/d)', 'Total input (mm/d)',
+        cmaps = (jetcm, jetcm2, 'Blues', 'BuPu', 'BuPu', 'BuPu', jetcm, jetcm, jetcm, jetcm)
+        titles = ('ET - Evapotranspiration (mm/d)',
+                  'Groundwater\ndeficit (mm)',
+                  'Precipitation\n(mm/d)',
+                  'Irrigation by\naspersion (mm/d)',
+                  'Irrigation by\ninundation (mm/d)',
+                  'Total irrigation\ninput (mm/d)',
                   'Evaporation\nfrom canopy (mm/d)', 'Evaporation\nfrom surface (mm/d)',
                   'Transpiration\nfrom soil (mm/d)', 'Transpiration from\ngroundwater (mm/d)')
         suptitle = 'Evapotranspiration (ET) Pannel | {}'.format(dates_labels.values[t])
+        series_label = 'ET & PET.\nmm/d'
+        lengend_lbl = 'ET'
+        star_color = 'tab:red'
     elif type == 'Qv':
-        cmaps = (earthcm, jetcm2, 'Blues', 'Blues', 'Blues', 'Blues', earthcm, viridiscm, viridiscm, viridiscm)
-        titles = ('Recharge (mm/d)', 'Groundwater\ndeficit (mm)', 'Precip. (mm/d)', 'Irrigation by\naspersion (mm/d)',
+        cmaps = (earthcm, jetcm2, 'Blues', 'BuPu', 'BuPu', 'BuPu', earthcm, viridiscm, viridiscm, viridiscm)
+        titles = ('Recharge (mm/d)',
+                  'Groundwater\ndeficit (mm)',
+                  'Precipitation\n(mm/d)',
+                  'Irrigation by\naspersion (mm/d)',
                   'Irrigation by\ninundation (mm/d)',
-                    'Total input (mm/d)',
-                    'Infiltration\n(mm/d)', 'Canopy\nwater stock (mm)',
-                    'Surface\nwater stock (mm)', 'Soil\nwater stock (mm)')
+                  'Total irrigation\ninput (mm/d)',
+                  'Infiltration\n(mm/d)', 'Canopy\nwater stock (mm)',
+                  'Surface\nwater stock (mm)', 'Soil\nwater stock (mm)')
         suptitle = 'Recharge to groundwater Pannel | {}'.format(dates_labels.values[t])
+        series_label = 'Recharge\nmm/d'
+        star_color = 'teal'
+        lengend_lbl = 'Recharge'
     elif type == 'R':
-        cmaps = (earthcm, jetcm2, 'Blues', 'Blues', 'Blues', 'Blues', earthcm, earthcm, earthcm, 'Blues')
-        titles = ('Runoff (mm/d)', 'Groundwater\ndeficit (mm)', 'Precip. (mm/d)', 'Irrigation by\naspersion (mm/d)',
+        cmaps = (earthcm, jetcm2, 'Blues', 'BuPu', 'BuPu', 'BuPu', earthcm, earthcm, earthcm, 'Blues')
+        titles = ('Runoff (mm/d)',
+                  'Groundwater\ndeficit (mm)',
+                  'Precipitation\n(mm/d)',
+                  'Irrigation by\naspersion (mm/d)',
                   'Irrigation by\ninundation (mm/d)',
-                    'Total input (mm/d)',
-                    'Throughfall\n(mm/d)', 'Infiltration excess\nrunoff (mm/d)',
-                    'Saturation excess\nrunoff (mm/d)', 'Variable\nSource Area')
+                  'Total irrigation\ninput (mm/d)',
+                  'Throughfall\n(mm/d)', 'Infiltration excess\nrunoff (mm/d)',
+                  'Saturation excess\nrunoff (mm/d)', 'Variable\nSource Area')
         suptitle = 'Runoff Pannel | {}'.format(dates_labels.values[t])
+        series_label = 'Runoff\nmm/d'
+        lengend_lbl = 'Runoff'
+        star_color = 'blue'
     #
     # Star plot
     fig = plt.figure(figsize=(17, 8))  # Width, Height
@@ -352,7 +373,7 @@ def pannel_frame(series, star, deficit, sups, mids, star_rng, deficit_rng, sup_r
     plt.axis('off')
     #
     # SUP 1 - Prec
-    lcl_rng = sup_rng
+    lcl_rng = sup1_rng
     prec_map = (sups[0] * 0.0) + series['Prec'].values[t]
     plt.subplot(gs[:2, 5:7])
     im = plt.imshow(prec_map, cmap=cmaps[2], vmin=lcl_rng[0], vmax=lcl_rng[1])
@@ -360,23 +381,23 @@ def pannel_frame(series, star, deficit, sups, mids, star_rng, deficit_rng, sup_r
     plt.colorbar(im, shrink=0.4)
     plt.axis('off')
     # SUP 2 - IRA
-    lcl_rng = sup_rng
+    lcl_rng = sup2_rng
     plt.subplot(gs[:2, 8:10])
     im = plt.imshow(sups[0], cmap=cmaps[3], vmin=lcl_rng[0], vmax=lcl_rng[1])
     plt.title(titles[3], fontsize=10)
     plt.colorbar(im, shrink=0.4)
     plt.axis('off')
-    # SUP 2 - IRI
-    lcl_rng = sup_rng
+    # SUP 3
+    lcl_rng = sup3_rng
     plt.subplot(gs[:2, 11:13])
     im = plt.imshow(sups[1], cmap=cmaps[4], vmin=lcl_rng[0], vmax=lcl_rng[1])
     plt.title(titles[4], fontsize=10)
     plt.colorbar(im, shrink=0.4)
     plt.axis('off')
-    # SUP 2 - IRI
-    lcl_rng = sup_rng
+    # SUP 4
+    lcl_rng = sup4_rng
     plt.subplot(gs[:2, 14:16])
-    im = plt.imshow(sups[0] + sups[1] + prec_map, cmap=cmaps[5], vmin=lcl_rng[0], vmax=lcl_rng[1])
+    im = plt.imshow(sups[0] + sups[1], cmap=cmaps[5], vmin=lcl_rng[0], vmax=lcl_rng[1])
     plt.title(titles[5], fontsize=10)
     plt.colorbar(im, shrink=0.4)
     plt.axis('off')
@@ -413,36 +434,67 @@ def pannel_frame(series, star, deficit, sups, mids, star_rng, deficit_rng, sup_r
     #
     # SERIES
     #
-    plt.subplot(gs[5, 5:])
-    total_input = series['Prec'].values + series['IRA'].values + series['IRI'].values
-    plt.plot(series['Date'].values[t - offset_back: t + offset_front],
-             total_input[t - offset_back: t + offset_front], 'navy', label='Total input')
-    plt.plot(series['Date'].values[t - offset_back: t + offset_front],
-             series['Prec'].values[t - offset_back: t + offset_front], 'tab:blue', label='Precip.')
-    plt.plot(series['Date'].values[t - offset_back: t + offset_front],
-             series['IRA'].values[t - offset_back: t + offset_front], 'green', label='IRA')
-    plt.plot(series['Date'].values[t - offset_back: t + offset_front],
-             series['IRI'].values[t - offset_back: t + offset_front], 'orange', label='IRI')
-    plt.vlines(series['Date'].values[t], ymax=1.2 * np.max(total_input), ymin=0, colors=['k'])
-    plt.plot(series['Date'].values[t], total_input[t], 'o', color='tab:blue' )
-    plt.ylim((0, 1.2 * np.max(total_input)))
+    if t < offset_back:
+        low = 0
+        hi = offset_front + offset_back + 1
+    elif t >= len(series) - offset_front - 1:
+        low = len(series) - offset_front - offset_back - 1
+        hi = len(series)
+    else:
+        low = t - offset_back
+        hi = t + offset_front + 1
+    #
+    #
+    #
+    # Input water
+    ax = fig.add_subplot(gs[5, 5:])
     plt.title('Date: {}'.format(dates_labels.values[t]), loc='left', fontsize=10)
-    plt.legend(loc='upper right', ncol=4, framealpha=1, fancybox=False)
-    fig.text(x=0.3, y=0.33, s='Input\nmm/d')
+    plt.vlines(series['Date'].values[t], ymax=1.5 * np.max(series['Prec'].values), ymin=0, colors=['k'])
+    plt.plot(series['Date'].values[low:hi],
+             series['Prec'].values[low:hi], 'tab:blue', label='Precip.')
+    plt.legend(loc='upper left', ncol=1, framealpha=1, fancybox=False)
+    plt.ylim((0, 1.5 * np.max(series['Prec'].values)))
+    # markers
+    plt.plot(series['Date'].values[t], series['Prec'].values[t], 'o', color='tab:blue')
+    # IRA and IRI
+    ax2 = ax.twinx()
+    plt.plot(series['Date'].values[low:hi],
+             series['IRA'].values[low:hi], 'green', label='IRA')
+    plt.plot(series['Date'].values[low:hi],
+             series['IRI'].values[low:hi], 'orange', label='IRI')
+    plt.ylim((0, 1.5 * np.max((series['IRA'].values, series['IRI'].values))))
+    # markers
+    plt.plot(series['Date'].values[t], series['IRA'].values[t], 'o', color='green')
+    plt.plot(series['Date'].values[t], series['IRI'].values[t], 'o', color='orange')
     #
-    plt.subplot(gs[6, 5:])
-    plt.plot(series['Date'].values[t - offset_back: t + offset_front], series['PET'].values[t - offset_back: t + offset_front], 'tab:grey', label='PET')
-    plt.plot(series['Date'].values[t - offset_back: t + offset_front], series['ET'].values[t - offset_back: t + offset_front], 'tab:red', label='ET')
-    plt.vlines(series['Date'].values[t], ymax=np.max(series['PET'].values), ymin=0,
-               colors=['k'])
-    plt.plot(series['Date'].values[t], series['ET'].values[t], 'o', color='tab:red')
-    plt.ylim((0, np.max(series['PET'])))
+    # legend
     plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
-    fig.text(x=0.3, y=0.23, s='ET & PET.\nmm/d')
+    fig.text(x=0.28, y=0.33, s='Precip.\nmm/d')
+    fig.text(x=0.93, y=0.33, s='Irrigation\nmm/d')
     #
-    plt.subplot(gs[7, 5:])
-    plt.plot(series['Date'].values[t - offset_back: t + offset_front], series['Q'].values[t - offset_back: t + offset_front], 'tab:blue', label='Flow')
-    plt.plot(series['Date'].values[t - offset_back: t + offset_front], series['Qb'].values[t - offset_back: t + offset_front], 'navy', label='Baseflow')
+    #
+    #
+    # star plot
+    ax = fig.add_subplot(gs[6, 5:])
+    if type == 'ET':
+        plt.plot(series['Date'].values[low:hi],
+             series['PET'].values[low:hi], 'tab:grey', label='PET')
+    plt.plot(series['Date'].values[low:hi],
+             series[type].values[low:hi], color=star_color, label=lengend_lbl)
+    plt.vlines(series['Date'].values[t], ymax=1.5 * np.max(series[type].values), ymin=0, colors=['k'])
+    plt.plot(series['Date'].values[t], series[type].values[t], 'o', color=star_color)
+    plt.ylim((0, 1.5 * np.max(series[type])))
+    plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
+    fig.text(x=0.28, y=0.23, s=series_label)
+    #
+    #
+    #
+    # Flow
+    ax = fig.add_subplot(gs[7, 5:])
+    plt.plot(series['Date'].values[low:hi],
+             series['Q'].values[low:hi], 'tab:blue', label='Flow')
+    plt.plot(series['Date'].values[low:hi],
+             series['Qb'].values[low:hi], 'navy', label='Baseflow')
     plt.vlines(series['Date'].values[t], ymax= 10 * np.max(series['Q'].values), ymin=np.min(series['Q'].values),
                colors=['k'])
     if series['Q'].values[t] == series['Qb'].values[t]:
@@ -453,7 +505,7 @@ def pannel_frame(series, star, deficit, sups, mids, star_rng, deficit_rng, sup_r
     plt.ylim((np.min(series['Q']), 10 * np.max(series['Q'])))
     plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
     plt.yscale('log')
-    fig.text(x=0.3, y=0.13, s='Flow\nmm/d')
+    fig.text(x=0.28, y=0.13, s='Flow\nmm/d')
     #
     #
     if show:
@@ -462,211 +514,16 @@ def pannel_frame(series, star, deficit, sups, mids, star_rng, deficit_rng, sup_r
     else:
         # export file
         if suff != '':
-            filepath = '{}/{}_{}_{}_{}.png'.format(folder, suff, filename, type, dates_labels.values[t])
+            filepath = '{}/{}_{}_{}_{}'.format(folder, suff, filename, type, dates_labels.values[t])
         else:
-            filepath = '{}/{}_{}_{}.png'.format(folder, filename, type, dates_labels.values[t])
+            filepath = '{}/{}_{}_{}'.format(folder, filename, type, dates_labels.values[t])
+        if png:
+            filepath = filepath + '.png'
+        else:
+            filepath = filepath + '.jpg'
         plt.savefig(filepath, dpi=dpi)
         plt.close(fig)
         plt.clf()
-        return filepath
-
-
-def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, titles, vline=20,
-                          cmap='jet', folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
-    """
-    Plot a pannel with 1 image (left) and  3 signals (right).
-    :param image: 2d numpy array of image
-    :param imax: float max value of image
-    :param t: 1d array of x-axis shared variable
-    :param x1: 1d array of first signal
-    :param x2: 1d array of third signal
-    :param x3: 1d array of second signal
-    :param x1max: float max value of x1
-    :param x2max: float max value of x2
-    :param x3max: float max value of x3
-    :param vline: int of index position of vertical line
-    :param folder: string folder path to export image
-    :param filename: string of file name
-    :param suff: string of suffix
-    :return: string file path of plot
-    """
-    #
-    fig = plt.figure(figsize=(16, 8))  # Width, Height
-    gs = mpl.gridspec.GridSpec(3, 6, wspace=0.8, hspace=0.6)
-    #
-    # plot image
-    plt.subplot(gs[0:, 0:2])
-    im = plt.imshow(image, cmap=cmap, vmin=0, vmax=imax)
-    plt.axis('off')
-    plt.title(titles[0])
-    plt.colorbar(im, shrink=0.4)
-    #
-    # plot x1
-    y = x1
-    ymax = x1max
-    plt.subplot(gs[0, 2:])
-    var = y[vline]
-    plt.title('{}: {:.1f}'.format(titles[1], var), loc='left')
-    plt.ylabel('mm')
-    plt.plot(t, y)
-    plt.ylim(0, 1.1 * ymax)
-    plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
-    plt.plot(t[vline], y[vline], 'ro')
-    #
-    # plot x2
-    y = x2
-    ymax = x2max
-    plt.subplot(gs[1, 2:])
-    var = y[vline]
-    plt.title('{}: {:.2f}'.format(titles[2], var), loc='left')
-    plt.ylabel('mm')
-    plt.plot(t, y, 'navy')
-    plt.ylim(0, 1.1 * ymax)
-    plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
-    plt.plot(t[vline], y[vline], 'ro')
-    #
-    # plot x3
-    y = x3
-    ymax = x3max
-    plt.subplot(gs[2, 2:])
-    var = y[vline]
-    plt.title('{}: {:.1f}'.format(titles[3], var), loc='left')
-    plt.ylabel('mm')
-    plt.plot(t, y, 'tab:orange')
-    plt.ylim(0, 1.1 * ymax)
-    plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
-    plt.plot(t[vline], y[vline], 'ro')
-    #
-    # Fix date formatting
-    # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
-    fig.autofmt_xdate()
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        # export file
-        filepath = folder + '/' + filename + '_' + suff + '.png'
-        plt.savefig(filepath)
-        plt.close(fig)
-        return filepath
-
-
-def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitles, ylabels, vline=20,
-                          folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
-    """
-    Plot a pannel with 4 images (left) and  4 signals (right).
-    :param im4: tuple of 4 2d arrays (images)
-    :param imax: float of images vmax
-    :param t: 1d array of x-axis shared variable
-    :param y4: tuple of 4 signal series arrays
-    :param y4max: tuple of 4 vmax of series arrays
-    :param y4min: tuple of 4 vmin of series arrays
-    :param cmaps: tuple of 4 string codes to color maps
-    :param imtitles: tuple of 4 string titles for images
-    :param ytitles: tuple of 4 string titles of series
-    :param ylabels: tuple of 4 string y axis labels
-    :param vline: int of index position of vertical line
-    :param folder: string folder path to export image
-    :param show: boolean to show image instead of exporting
-    :param filename: string of file name (without extension)
-    :param suff: string of suffix
-    :return: string file path of plot
-    """
-    #
-    fig = plt.figure(figsize=(16, 9))  # Width, Height
-    gs = mpl.gridspec.GridSpec(4, 10, wspace=0.8, hspace=0.6)
-    #
-    # images
-    #
-    # Left Upper
-    ax = fig.add_subplot(gs[0:2, 0:2])
-    im = plt.imshow(im4[0], cmap=cmaps[0], vmin=0, vmax=imax)
-    plt.axis('off')
-    plt.title(imtitles[0])
-    plt.colorbar(im, shrink=0.4)
-    #
-    # Left bottom
-    ax = fig.add_subplot(gs[2:4, 0:2])
-    im = plt.imshow(im4[1], cmap=cmaps[1], vmin=0, vmax=0.5 * imax)
-    plt.axis('off')
-    plt.title(imtitles[1])
-    plt.colorbar(im, shrink=0.4)
-    #
-    # Right Upper
-    ax = fig.add_subplot(gs[0:2, 2:4])
-    im = plt.imshow(im4[2], cmap=cmaps[2], vmin=0, vmax=0.5 * imax)
-    plt.axis('off')
-    plt.title(imtitles[2])
-    plt.colorbar(im, shrink=0.4)
-    #
-    # Right Bottom
-    ax = fig.add_subplot(gs[2:4, 2:4])
-    im = plt.imshow(im4[3], cmap=cmaps[3], vmin=0, vmax=imax)
-    plt.axis('off')
-    plt.title(imtitles[3])
-    plt.colorbar(im, shrink=0.4)
-    #
-    # series
-    #
-    # set x ticks
-    size = len(t)
-    spaces = int(size / 5)
-    locs = np.arange(0, size, spaces)
-    labels = t[locs]
-    #
-    ax = fig.add_subplot(gs[0, 5:])
-    lcl = 0
-    y = y4[lcl]
-    plt.plot(t, y)
-    plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
-    plt.plot(t[vline], y[vline], 'ro')
-    var = y[vline]
-    plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
-    plt.ylabel(ylabels[lcl])
-    #
-    ax2 = fig.add_subplot(gs[1, 5:])#, sharex=ax)
-    lcl = lcl + 1
-    y = y4[lcl]
-    plt.plot(t, y)
-    plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
-    plt.plot(t[vline], y[vline], 'ro')
-    var = y[vline]
-    plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
-    plt.ylabel(ylabels[lcl])
-    #
-    ax2 = fig.add_subplot(gs[2, 5:])#, sharex=ax)
-    lcl = lcl + 1
-    y = y4[lcl]
-    plt.plot(t, y)
-    plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
-    plt.plot(t[vline], y[vline], 'ro')
-    var = y[vline]
-    plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
-    plt.ylabel(ylabels[lcl])
-    #
-    ax2 = fig.add_subplot(gs[3, 5:])#, sharex=ax)
-    lcl = lcl + 1
-    y = y4[lcl]
-    plt.plot(t, y, 'k')
-    plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
-    plt.plot(t[vline], y[vline], 'ro')
-    var = y[vline]
-    plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
-    plt.ylabel(ylabels[lcl])
-    #
-    # Fix date formatting
-    # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
-    fig.autofmt_xdate()
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        # export file
-        filepath = folder + '/' + filename + '_' + suff + '.png'
-        plt.savefig(filepath)
-        plt.close(fig)
         return filepath
 
 
@@ -798,7 +655,7 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True,
         return filepath
 
 
-def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel_topmodel', suff=''):
+def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel_topmodel', suff=''):
     """
     visualize the topmodel global variables in a single pannel
     :param dataframe: pandas dataframe from hydrology.topmodel_sim()
@@ -817,7 +674,7 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
     col2 = 10
     max_prec = 1.2 * np.max(dataframe['Prec'].values)
     max_et = 1.2 * np.max(dataframe['PET'].values)
-    max_irr = 1.2 * np.max((dataframe['IRI'].values, dataframe['IRA'].values))
+    max_irr = 1.5 * np.max((dataframe['IRI'].values, dataframe['IRA'].values))
     if max_irr == 0:
         max_irr = 1
     max_stocks = 1.2 * np.max((dataframe['Unz'].values, dataframe['Sfs'].values, dataframe['Cpy'].values))
@@ -948,218 +805,6 @@ def pannel_topmodel(dataframe, qobs=False, grid=True, show=False, folder='C:/bin
         plt.savefig(filepath, dpi=600)
         plt.close(fig)
         plt.clf()
-        return filepath
-
-
-# deprecated
-def pannel_topmodel2(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel_topmodel', suff=''):
-    """
-    visualize the topmodel global variables in a single pannel
-    :param dataframe: pandas dataframe from hydrology.topmodel_sim()
-    :param grid: boolean for grid
-    :param folder: string to destination directory
-    :param filename: string file name
-    :param suff: string suffix in file name
-    :param show: boolean control to show figure instead of saving it
-    :return: string file path
-    """
-    #
-    fig = plt.figure(figsize=(16, 25))  # Width, Height
-    gs = mpl.gridspec.GridSpec(10, 8, wspace=0.8, hspace=0.6)  # nrows, ncols
-    # 1
-    ind = 0
-    ax = fig.add_subplot(gs[ind, 0:])
-    plt.plot(dataframe['Date'], dataframe['Prec'])
-    plt.ylabel('Prec mm')
-    ax2 = ax.twinx()
-    plt.plot(dataframe['Date'], dataframe['Temp'], 'tab:orange')
-    plt.ylabel('Temp °C')
-    plt.grid(grid)
-    # 2
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['PET'], 'k', label='PET')
-    plt.plot(dataframe['Date'], dataframe['ET'], 'tab:red', label='ET')
-    plt.plot(dataframe['Date'], dataframe['Tpun'] + dataframe['Tpgw'] , 'r', label='Tp')
-    plt.ylabel('PET, ET\nmm')
-    plt.grid(grid)
-    plt.legend(loc='upper right', ncol=3)
-    # 3
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['PET'], 'k', label='PET')
-    plt.plot(dataframe['Date'], dataframe['Evc'], 'tab:red', label='Evc')
-    plt.plot(dataframe['Date'], dataframe['Evs'], 'r', label='Evs')
-    plt.ylabel('PET & Ev\nmm')
-    plt.grid(grid)
-    plt.legend(loc='upper right', ncol=3)
-    # 4
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['PET'], 'k', label='PET')
-    plt.plot(dataframe['Date'], dataframe['Tpun'], 'tab:red', label='Tpun')
-    plt.plot(dataframe['Date'], dataframe['Tpgw'], 'r', label='Tpgw')
-    plt.ylabel('PET & Tp\nmm')
-    plt.grid(grid)
-    plt.legend(loc='upper right', ncol=3)
-    # 5
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    #plt.plot(dataframe['Date'], dataframe['Cpy'])
-    plt.plot(dataframe['Date'], dataframe['TF'])
-    plt.ylabel('Cpy&TF\nmm')
-    plt.grid(grid)
-    # 6
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['R'], 'tab:orange')
-    plt.plot(dataframe['Date'], dataframe['Inf'], 'k')
-    plt.ylabel('R & Inf\nmm')
-    plt.grid(grid)
-    # 7
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['Sfs'])
-    plt.ylabel('Sfs\nmm')
-    plt.grid(grid)
-    # 8
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['D'], 'k')
-    plt.plot(dataframe['Date'], dataframe['Unz'])
-    plt.ylabel('Unz & D\nmm')
-    plt.grid(grid)
-    # 9
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['Qv'])
-    plt.ylabel('Qv\nmm')
-    plt.grid(grid)
-    # 10
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    if qobs:
-        plt.plot(dataframe['Date'], dataframe['Qobs'], 'tab:orange')
-    plt.plot(dataframe['Date'], dataframe['Q'])
-    plt.plot(dataframe['Date'], dataframe['Qb'], 'navy')
-    if qobs:
-        plt.ylim(0.9 * np.min((dataframe['Q'].values, dataframe['Qobs'].values)),
-                 1.1 * np.max((dataframe['Q'].values, dataframe['Qobs'].values)))
-    plt.ylabel('Q mm')
-    plt.yscale('log')
-    plt.grid(grid)
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        # export file
-        if suff != '':
-            filepath = folder + '/' + filename + '_' + suff + '.png'
-        else:
-            filepath = folder + '/' + filename + '.png'
-        plt.savefig(filepath)
-        plt.close(fig)
-        return filepath
-
-# deprecated
-def pannel_topmodel_maps(t, prec, precmax, qb, qbmax, pet, et, etmax, maps, mapsmax, vline=20,
-                         folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
-    """
-    Plot a pannel of all 13 processes maps of Topmodel and precipitation, baseflow and ET series.
-    :param t: Series or Array of dates
-    :param prec: array of precipiation data
-    :param precmax: float of max value of precipitation
-    :param qb: array of baseflow data
-    :param qbmax: float of max value of baseflow
-    :param pet: array of PET data
-    :param et: array of ET data
-    :param etmax: float of max value of ET
-    :param maps: iterable object (tuple, list, array) of 2d-arrays of 13 processes maps in the following order:
-    Prec, VSA, D, S1, S2, TF, Inf, R, Qv, ET, Ev, Tp, Tpgw .
-    :param mapsmax: float of max value of map processes
-    :param vline: int of index position of vertical line
-    :param folder: string path to destination folder
-    :param filename: string of file name (without extension)
-    :param suff: string suffix to file name
-    :param show: boolean control to show or save frame - Default: False
-    :return: string file path of plot (only when show=False)
-    """
-    #
-    fig = plt.figure(figsize=(15, 7))  # Width, Height
-    nrows = 3
-    ncols = 8
-    gs = mpl.gridspec.GridSpec(nrows, ncols, wspace=0.8, hspace=0.6)
-    #
-    # titles setup
-    titles = ('Precip. (mm).', 'VSA', 'Deficit', 'Canopy water ', 'Soil water',
-              'Throughfall', 'Infiltration', 'Runoff', 'Recharge',
-              'ET', 'Evap. (Canopy)', 'Transp. (Soil)', 'Transp. (GW)')
-    #
-    # plotting maps loop
-    count = 0
-    for i in range(0, nrows):
-        for j in range(0, 5):
-            if i > 0 and j == 0:
-                pass
-            else:
-                ax = fig.add_subplot(gs[i, j])
-                if i == 0 and j == 1:
-                    lcl_max = 1
-                    lcl_cmap = 'Blues'  # color map
-                elif i == 0 and j == 2:
-                    lcl_max = mapsmax
-                    lcl_cmap = 'jet'  # color map
-                else:
-                    lcl_max = mapsmax
-                    lcl_cmap = 'viridis_r'  # color map
-                im = plt.imshow(maps[count], cmap=lcl_cmap, vmin=0, vmax=lcl_max)
-                plt.axis('off')
-                plt.title(titles[count])
-                if i == 0 and j == 1:
-                    pass
-                else:
-                    plt.colorbar(im, shrink=0.5)
-                count = count + 1
-    #
-    ax = fig.add_subplot(gs[0, 5:])
-    plt.plot(t, prec)
-    plt.vlines(t[vline], ymin=0, ymax=precmax, colors='r')
-    plt.plot(t[vline], prec[vline], 'ro')
-    plt.title('Precipitation: {:.2f} mm'.format(prec[vline]), loc='left')
-    plt.ylabel('mm')
-    #
-    ax = fig.add_subplot(gs[1, 5:])
-    plt.plot(t, qb, 'navy')
-    plt.vlines(t[vline], ymin=0, ymax=qbmax, colors='r')
-    plt.plot(t[vline], qb[vline], 'ro')
-    plt.title('Baseflow: {:.2f} mm'.format(qb[vline]), loc='left')
-    plt.ylabel('mm')
-    #
-    ax = fig.add_subplot(gs[2, 5:])
-    plt.plot(t, et, 'tab:red', label='ET')
-    plt.plot(t, pet , 'grey', label='PET')
-    plt.vlines(t[vline], ymin=0, ymax=etmax, colors='r')
-    plt.plot(t[vline], et[vline], 'ro')
-    plt.title('Actual ET: {:.2f} mm'.format(et[vline]), loc='left')
-    plt.ylabel('mm')
-    plt.legend( ncol=2, loc='upper right')
-    #
-    # Fix date formatring
-    # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
-    fig.autofmt_xdate()
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        # export file
-        if suff != '':
-            filepath = folder + '/' + filename + '_' + suff + '.png'
-        else:
-            filepath = folder + '/' + filename + '.png'
-        plt.savefig(filepath)
-        plt.close(fig)
         return filepath
 
 
@@ -1323,7 +968,7 @@ def plot_lulc_view(lulc, lulc_df, basin, meta, mapttl='lulc', filename='mapview'
         return expfile
 
 
-def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='C:/bin', metadata=True, show=False):
+def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='C:/bin', ttl='SHRU', metadata=True, show=False):
     from matplotlib.colors import ListedColormap
     cmap_lulc = ListedColormap(shruparam['ColorLULC'].values)
     cmap_soil = ListedColormap(shruparam['ColorSoil'].values)
@@ -1336,7 +981,7 @@ def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='
     ax = fig.add_subplot(gs[:, :3])
     im = plt.imshow(lulc, cmap=cmap_lulc, vmin=ranges_lulc[0], vmax=ranges_lulc[1])
     im = plt.imshow(soils, cmap=cmap_soil, vmin=ranges_soil[0], vmax=ranges_soil[1], alpha=0.5)
-    plt.title('shru')
+    plt.title(ttl)
     plt.axis('off')
     #
     # lengend
@@ -1378,7 +1023,7 @@ def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='
         return expfile
 
 
-def plot_qmap_view(map, meta, colors, names, ranges, mapid='dem', filename='mapview', folder='C:/bin',
+def plot_qmap_view(map, meta, colors, names, ranges, mapid='lulc', filename='mapview', folder='C:/bin',
                    metadata=True, show=False):
     from matplotlib.colors import ListedColormap
     cmap = ListedColormap(colors)
@@ -1419,7 +1064,8 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='dem', filename='mapv
         return expfile
 
 
-def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview', folder='C:/bin', metadata=True, show=False):
+def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview', folder='C:/bin',
+                  metadata=True, show=False, integration=False, png=False):
     from matplotlib import cm
     from matplotlib.colors import ListedColormap
     earth_big = cm.get_cmap('gist_earth_r', 512)
@@ -1435,8 +1081,8 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
                'etpat': ['Greys', 'Index units'],
                'catcha': ['Blues', 'Sq. Meters (log10)'],
                'basin': ['Greys', 'Boolean'],
-               'flow':[earthcm, 'mm/d'], 'flow_v':[jetcm, 'mm/d'], 'stock':[viridiscm, 'mm'],
-               'deficit':['jet', 'mm'], 'VSA':['Blues', 'Boolean'], 'RC':['Blues']}
+               'flow':[earthcm, 'mm/d', 'mm'], 'flow_v':[jetcm, 'mm/d', 'mm'], 'stock':[viridiscm, 'mm', 'mm'],
+               'deficit':['jet', 'mm', 'mm'], 'VSA':['Blues', 'Boolean', '%'], 'RC':['YlOrRd', '%', '%']}
     #
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
@@ -1452,7 +1098,10 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
     #
     #
     ax = fig.add_subplot(gs[:, 3:])
-    plt.text(x=-0.45, y=0.75, s=map_dct[mapid][1])
+    if integration:
+        plt.text(x=-0.45, y=0.75, s=map_dct[mapid][2])
+    else:
+        plt.text(x=-0.45, y=0.75, s=map_dct[mapid][1])
     if metadata:
         plt.text(x=0.0, y=0.3, s='Metadata:')
         plt.text(x=0.0, y=0.25, s='Rows: {}'.format(meta['nrows']))
@@ -1466,10 +1115,14 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.png'
-        plt.savefig(expfile)
+        filepath = folder + '/' + filename
+        if png:
+            filepath = filepath + '.png'
+        else:
+            filepath = filepath + '.jpg'
+        plt.savefig(filepath)
         plt.close(fig)
-        return expfile
+        return filepath
 
 
 def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', filename='histograms', suff=''):
@@ -1515,7 +1168,7 @@ def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', fi
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.png'
+        expfile = folder + '/' + filename + '.jpg'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1555,7 +1208,7 @@ def plot_obssim_zmaps(obs, sim, metric, ranges='local', rangesmetric='local', tt
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.png'
+        expfile = folder + '/' + filename + '.jpg'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1647,7 +1300,7 @@ def plot_map_analyst(obs, sim, metric, obs_sig, sim_sig, metric_sig, metrics_dct
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.png'
+        expfile = folder + '/' + filename + '.jpg'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile

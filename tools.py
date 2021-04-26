@@ -1,47 +1,253 @@
 import numpy as np
 import pandas as pd
 import input, output, geo
+from output import export_report
 from input import dataframe_prepro
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
 
-def export_report(report_lst, filename='report', folder='C:/bin', tui=False):
+def view_imported_map(filename, folder, aux_folder=''):
+    from input import dataframe_prepro
+    from os import listdir
     # todo docstring
-    from backend import header_plans, header
-    filepath = folder + '/' + filename + '.txt'
-    fle = open(filepath, 'w+')
-    header = header('output report')
-    report_lst.insert(0, header)
-    header = header_plans()
-    report_lst.insert(0, header)
-    fle.writelines(report_lst[:])
-    fle.close()
-    if tui:
-        for e in report_lst[1:]:
-            print(e)
+    from visuals import plot_map_view, plot_calib_series, plot_qmap_view, plot_shrumap_view
 
 
-def view_imported(filename, folder):
-    # todo docstring
-    from visuals import plot_map_view, plot_calib_series
+    def plot_lulc(fraster, fparams, mapid='LULC'):
+        lulc_param_df = pd.read_csv(fparams, sep=';', engine='python')
+        lulc_param_df = dataframe_prepro(lulc_param_df, 'LULCName,ConvertTo,ColorLULC')
+        meta, rmap = input.asc_raster(fraster)
+        ranges = (np.min(lulc_param_df['IdLULC']), np.max(lulc_param_df['IdLULC']))
+        plot_qmap_view(rmap, meta, colors=lulc_param_df['ColorLULC'].values, names=lulc_param_df['LULCName'].values,
+                       mapid=mapid, ranges=ranges, filename=filename.split('.')[0], folder=folder)
+
     file = folder + '/' + filename
     quantmaps = ('aoi_dem.asc', 'aoi_catcha.asc', 'aoi_basin.asc',
                  'calib_dem.asc', 'calib_catcha.asc', 'calib_basin.asc')
-    if filename == 'calib_lulc.asc':
-        print()
-    elif filename in set(quantmaps):
+    lulc_maps = ('aoi_lulc.asc', 'calib_lulc.asc')
+    if filename in set(quantmaps):
         mapid = filename.split('.')[0].split('_')[1]
         meta, rmap = input.asc_raster(file)
         ranges = (np.min(rmap), np.max(rmap))
         plot_map_view(rmap, meta, ranges, mapid=mapid, filename=filename.split('.')[0], folder=folder, metadata=True)
+    elif filename == 'calib_lulc.asc':
+        folder_files = listdir(folder)
+        aux_filename = 'calib_lulc_param.txt'
+        if aux_filename in set(folder_files):
+            fraster = '{}/{}'.format(folder, filename)
+            fparam = '{}/{}'.format(folder, aux_filename)
+            plot_lulc(fraster=fraster, fparams=fparam)
+    elif filename == 'calib_lulc_param.txt':
+        folder_files = listdir(folder)
+        aux_filename = 'calib_lulc.asc'
+        if 'calib_lulc.asc' in set(folder_files):
+            fraster = '{}/{}'.format(folder, aux_filename)
+            fparam = '{}/{}'.format(folder, filename)
+            plot_lulc(fraster=fraster, fparams=fparam)
+    elif filename == 'calib_soils.asc':
+        folder_files = listdir(folder)
+        aux_filename = 'calib_soils_param.txt'
+        if aux_filename in set(folder_files):
+            flulcparam = '{}/{}'.format(folder, aux_filename)
+            soils_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
+            soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
+            meta, rmap = input.asc_raster(file)
+            ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
+            plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
+                           mapid='Soils', ranges=ranges, filename=filename.split('.')[0], folder=folder)
+    elif filename == 'calib_soils_param.txt':
+        folder_files = listdir(folder)
+        aux_filename = 'calib_soils.asc'
+        if aux_filename in set(folder_files):
+            flulcparam = '{}/{}'.format(folder, filename)
+            soils_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
+            soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
+            meta, rmap = input.asc_raster('{}/{}'.format(folder, aux_filename))
+            ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
+            plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
+                           mapid='Soils', ranges=ranges, filename=filename.split('.')[0], folder=folder)
+    elif filename.split('_')[0] == 'aoi' and filename.split('_')[1] == 'lulc':
+        lcl_stamp = filename.split('.')[0].split('_')[2]
+        folder_files = listdir(aux_folder)
+        aux_filename = 'aoi_lulc_param.txt'
+        if aux_filename in set(folder_files):
+            fraster = '{}/{}'.format(folder, filename)
+            fparam = '{}/{}'.format(aux_folder, aux_filename)
+            plot_lulc(fraster=fraster, fparams=fparam, mapid='AOI LULC | {}'.format(lcl_stamp))
+    elif filename == 'aoi_soils.asc':
+        folder_files = listdir(folder)
+        aux_filename = 'aoi_soils_param.txt'
+        if aux_filename in set(folder_files):
+            flulcparam = '{}/{}'.format(folder, aux_filename)
+            soils_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
+            soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
+            meta, rmap = input.asc_raster(file)
+            ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
+            plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
+                           mapid='Soils', ranges=ranges, filename=filename.split('.')[0], folder=folder)
+    elif filename == 'aoi_soils_param.txt':
+        folder_files = listdir(folder)
+        aux_filename = 'aoi_soils.asc'
+        if aux_filename in set(folder_files):
+            flulcparam = '{}/{}'.format(folder, filename)
+            soils_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
+            soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
+            meta, rmap = input.asc_raster('{}/{}'.format(folder, aux_filename))
+            ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
+            plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
+                           mapid='Soils', ranges=ranges, filename=filename.split('.')[0], folder=folder)
     elif filename == 'calib_series.txt':
         series_df = pd.read_csv(file, sep=';')
         series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
         plot_calib_series(series_df, filename=filename, folder=folder, show=False)
 
 
-def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin', filename='shru'):
+def export_local_pannels(ftwi, fshru, folder='C:/bin', tui=False):
+    from backend import get_all_vars
+    from hydrology import map_back
+    from visuals import pannel_local
+    from os import mkdir
+    if tui:
+        from tui import status
+    #
+    # load heavy inputs
+    meta, twi = input.asc_raster(ftwi)
+    meta, shru = input.asc_raster(fshru)
+    size = 50
+    twi = twi[:size, :size]
+    shru = shru[:size, :size]
+    # load series
+    fseries = '{}/sim_series.txt'.format(folder)
+    fseries = folder + r'\sim_series.txt'
+    series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    #
+    #
+    # filter dates (remove this)
+    date_init = '2011-01-01'
+    date_end = '2012-02-01'
+    query_str = 'Date > "{}" and Date < "{}"'.format(date_init, date_end)
+    series = series.query(query_str)
+    dates_labels = pd.to_datetime(series['Date'], format='%Y%m%d')
+    dates_labels = dates_labels.astype('str')
+    #
+    #
+    vars = 'D-ET-IRA-IRI-Tpun-Tpgw-Evc-Evs-Qv-Inf-Cpy-Unz-Sfs-TF-R-RIE-RSE-Qv-VSA'.split('-')
+    # 1) load zmap series dataframes in a dict for each
+    zmaps_series = dict()
+    for var in vars:
+        lcl_file = '{}/sim_zmaps_series_{}.txt'.format(folder, var)  # next will be sim_zmaps_series_{}.txt
+        lcl_df = pd.read_csv(lcl_file, sep=';', parse_dates=['Date'])
+        lcl_df = lcl_df.query(query_str)
+        # print(lcl_df.tail().to_string())
+        zmaps_series[var] = lcl_df.copy()
+    #
+    #
+    # load rasters from zmap files
+    raster_series = dict()
+    rasters_maxval = dict()
+    rasters_minval = dict()
+    for var in vars:
+        lcl_df = zmaps_series[var]
+        raster_list = list()
+        if tui:
+            status('computing raster maps of {} ... '.format(var))
+        for i in range(len(series)):
+            lcl_file = lcl_df['File'].values[i]
+            lcl_zmap, ybins, xbins = input.zmap(lcl_file)
+            lcl_raster = map_back(lcl_zmap, a1=twi, a2=shru, bins1=ybins, bins2=xbins)
+            raster_list.append(lcl_raster)
+        raster_nd = np.array(raster_list)
+        raster_series[var] = raster_nd
+        rasters_minval[var] = np.min(raster_nd)
+        rasters_maxval[var] = np.max(raster_nd)
+        if tui:
+            status('{} maps loaded'.format(len(raster_nd)))
+    #
+    offsetback = 15
+    offsetfront = 60
+    #
+    # plot ET pannels:
+    lcl_folder = '{}/ET_frames'.format(folder)
+    mkdir(lcl_folder)
+    vars = 'D-ET-IRA-IRI-Tpun-Tpgw-Evc-Evs'.split('-')
+    star = 'ET'
+    mids = ('Evc', 'Evs', 'Tpun', 'Tpgw')
+    prec_rng = (0, np.max(series['Prec'].values))
+    irri_rng = (0, np.max((series['IRA'].values, series['IRA'].values)))
+    for t in range(len(series)):
+        if tui:
+            status('ET pannel t = {} | plotting date {}'.format(t, dates_labels.values[t]))
+        pannel_local(series, star=raster_series[star][t],
+                     deficit=raster_series['D'][t],
+                     sups=[raster_series['IRA'][t], raster_series['IRI'][t]],
+                     mids=[raster_series[mids[0]][t], raster_series[mids[1]][t],
+                           raster_series[mids[2]][t], raster_series[mids[3]][t]],
+                     star_rng=(rasters_minval[star], rasters_maxval[star]),
+                     deficit_rng=(rasters_minval['D'], rasters_maxval['D']),
+                     sup1_rng=prec_rng, sup2_rng=irri_rng, sup3_rng=irri_rng, sup4_rng=irri_rng,
+                     mid1_rng=(rasters_minval['ET'], rasters_maxval['ET']),
+                     mid2_rng=(rasters_minval['ET'], rasters_maxval['ET']),
+                     mid3_rng=(rasters_minval['ET'], rasters_maxval['ET']),
+                     mid4_rng=(rasters_minval['ET'], rasters_maxval['ET']),
+                     t=t, type='ET', show=False, offset_back=offsetback, offset_front=offsetfront,
+                     folder=lcl_folder)
+    #
+    # plot QV pannels:
+    lcl_folder = '{}/Qv_frames'.format(folder)
+    mkdir(lcl_folder)
+    vars = 'D-Qv-IRA-IRI-Inf-Cpy-Sfs-Unz'.split('-')
+    star = 'Qv'
+    mids = ('Inf', 'Cpy', 'Sfs', 'Unz')
+    prec_rng = (0, np.max(series['Prec'].values))
+    irri_rng = (0, np.max((series['IRA'].values, series['IRA'].values)))
+    stockmax = np.max((rasters_maxval['Unz'], rasters_maxval['Cpy'], rasters_maxval['Sfs']))
+    for t in range(len(series)):
+        if tui:
+            status('Qv pannel t = {} | plotting date {}'.format(t, dates_labels.values[t]))
+        pannel_local(series, star=raster_series[star][t],
+                     deficit=raster_series['D'][t],
+                     sups=[raster_series['IRA'][t], raster_series['IRI'][t]],
+                     mids=[raster_series[mids[0]][t], raster_series[mids[1]][t],
+                           raster_series[mids[2]][t], raster_series[mids[3]][t]],
+                     star_rng=(0, rasters_maxval['Inf']),
+                     deficit_rng=(rasters_minval['D'], rasters_maxval['D']),
+                     sup1_rng=prec_rng, sup2_rng=irri_rng, sup3_rng=irri_rng, sup4_rng=irri_rng,
+                     mid1_rng=(0, rasters_maxval['Inf']),
+                     mid2_rng=(0, stockmax),
+                     mid3_rng=(0, stockmax),
+                     mid4_rng=(0, stockmax),
+                     t=t, type=star, show=False, offset_back=offsetback, offset_front=offsetfront,
+                     folder=lcl_folder)
+    #
+    # plot R pannels:
+    lcl_folder = '{}/R_frames'.format(folder)
+    mkdir(lcl_folder)
+    vars = 'D-TF-IRA-IRI-R-RIE-RSE-VSA'.split('-')
+    star = 'R'
+    mids = ('TF', 'RIE', 'RSE', 'VSA')
+    prec_rng = (0, np.max(series['Prec'].values))
+    irri_rng = (0, np.max((series['IRA'].values, series['IRA'].values)))
+    for t in range(len(series)):
+        if tui:
+            status('R pannel t = {} | plotting date {}'.format(t, dates_labels.values[t]))
+        pannel_local(series, star=raster_series[star][t],
+                     deficit=raster_series['D'][t],
+                     sups=[raster_series['IRA'][t], raster_series['IRI'][t]],
+                     mids=[raster_series[mids[0]][t], raster_series[mids[1]][t],
+                           raster_series[mids[2]][t], raster_series[mids[3]][t]],
+                     star_rng=(0, rasters_maxval['TF']),
+                     deficit_rng=(rasters_minval['D'], rasters_maxval['D']),
+                     sup1_rng=prec_rng, sup2_rng=irri_rng, sup3_rng=irri_rng, sup4_rng=irri_rng,
+                     mid1_rng=(0, rasters_maxval['TF']),
+                     mid2_rng=(0, rasters_maxval['TF']),
+                     mid3_rng=(0, rasters_maxval['TF']),
+                     mid4_rng=(0, rasters_maxval['TF']),
+                     t=t, type=star, show=False, offset_back=offsetback, offset_front=offsetfront,
+                     folder=lcl_folder)
+
+
+def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin', filename='shru', viewlabel=''):
     """
 
     :param flulc: string file path to lulc .asc raster file
@@ -55,6 +261,7 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
     :return: string file path
     """
     from visuals import plot_shrumap_view
+
     #
     # import data
     metalulc, lulc = input.asc_raster(flulc)
@@ -72,7 +279,11 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
     shru_map = geo.xmap(map1=lulc, map2=soils, map1ids=lulc_ids, map2ids=soils_ids, map1f=100, map2f=1)
     #plt.imshow(shru_map)
     #plt.show()
-    plot_shrumap_view(lulc, soils, metalulc, shru_df, filename=filename, folder=folder, metadata=True)
+    title = 'SHRU'
+    if viewlabel != '':
+        title = ' SHRU | {}'.format(viewlabel)
+    plot_shrumap_view(lulc, soils, metalulc, shru_df, filename=filename, folder=folder,
+                      metadata=True, ttl=title)
     # export data
     export_file = output.asc_raster(shru_map, metalulc, folder, filename)
     return export_file
@@ -239,7 +450,7 @@ def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=15, folder
     return exp_file
 
 
-def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filename='map_series', rasterfilename='map'):
+def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filename='map_series', rasterfilename='map', viewtype='lulc'):
     """
     import map series data set
     :param fmapseries: string for the input time series data frame. Must have 'Date' and 'File" as fields
@@ -267,6 +478,9 @@ def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filena
         copyfile(src=src, dst=dst)
         #print(lcl_expf)
         new_files.append(dst)
+        #
+        # plot view
+        view_imported_map(lcl_filenm, rasterfolder, folder)
     #
     # export data
     exp_df = pd.DataFrame({'Date':dates, 'File':new_files})
@@ -320,7 +534,7 @@ def import_etpat_series(finputseries, rasterfolder='C:/bin', folder='C:/bin', fi
     return exp_file
 
 
-def get_views_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='local', tui=False):
+def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='local', tui=False):
     from visuals import plot_map_view
     import os
     # import data
@@ -440,7 +654,7 @@ def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, fshruparam,
             print('procesing file:\t{}'.format(lcl_filename))
         # process data
         shru_file = map_shru(flulc=files[i], flulcparam=flulcparam, fsoils=fsoils, fsoilsparam=fsoilsparam,
-                             fshruparam=fshruparam, folder=rasterfolder, filename=lcl_filename)
+                             fshruparam=fshruparam, folder=rasterfolder, filename=lcl_filename, viewlabel=lcl_date)
         # print(lcl_expf)
         new_files.append(shru_file)
     #
@@ -451,7 +665,7 @@ def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, fshruparam,
     return exp_file
 
 
-def shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_param'):
+def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_param'):
     # todo docstring
     # extract data
     lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
@@ -937,37 +1151,55 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
 
 
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, mapback=False,
-        mapraster=False, mapvar='all', mapdates='all', qobs=False, folder='C:/bin', wkpl=False, label='',
-        tui=False):
+        mapraster=False, mapvar='all', mapdates='all', integrate=False, qobs=False, folder='C:/bin',
+        wkpl=False, label='',  tui=False):
+    #
     # todo 1) docstring
     import time, datetime
     from shutil import copyfile
-    from hydrology import topmodel_sim, map_back
-    from visuals import pannel_topmodel
+    from input import zmap
+    from hydrology import simulation, map_back
+    from visuals import pannel_global
     from backend import create_rundir
 
-    def extract_histdata(fhistograms):
-        dataframe = pd.read_csv(fhistograms, sep=';')
-        dataframe = dataframe_prepro(dataframe, strf=False)
-        dataframe = dataframe.set_index(dataframe.columns[0])
-        shru_ids = dataframe.columns.astype('int')
-        twi_bins = dataframe.index.values
-        count_matrix = dataframe.values
-        return count_matrix, twi_bins, shru_ids
 
     def extract_twi_avg(twibins, count):
+        """
+        convenience function for extracting TWI average value
+        :param twibins: 1d array of TWI bins
+        :param count: 2d array of countmatrix of basin
+        :return: average value of TWI
+        """
         twi_sum = 0
         for i in range(len(twibins)):
             twi_sum = twi_sum + (twibins[i] * np.sum(count[i]))
         return twi_sum / np.sum(count)
+
+    def get_mapid(var):
+        if var == 'D':
+            mapid = 'deficit'
+        elif var in set(['Cpy', 'Sfs', 'Unz']):
+            mapid = 'stock'
+        elif var in set(['R', 'Inf', 'TF', 'IRA', 'IRI', 'Qv', 'P']):
+            mapid = 'flow'
+        elif var in set(['ET', 'Evc', 'Evs', 'Tpun', 'Tpgw']):
+            mapid = 'flow_v'
+        elif var == 'VSA':
+            mapid = 'VSA'
+        elif var == 'RC':
+            mapid = 'RC'
+        else:
+            mapid = 'flow'
+        return mapid
+
+
     #
     #
     # Run Folder setup
-    if wkpl:  # if the passed folder is a workplace, create a sub folder
+    if wkpl:  # if the passed folder is a workplace, create a sub folder within it
         if label != '':
             label = label + '_'
         folder = create_rundir(label=label + 'SLH', wkplc=folder)
-    #
     #
     # time and report setup
     t0 = time.time()
@@ -981,11 +1213,17 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     #
     #
     #
-    # Importing section
+    #
+    #
+    #
+    # ****** IMPORT ******
+    #
+    #
+    #
     init = time.time()
     if tui:
         from tui import status
-        print('\n\t**** Load Data Protocol ****\n')
+        print('\n\nLocal run folder: {}\n\n'.format(folder))
         status('loading time series')
 
     series_df =  pd.read_csv(fseries, sep=';')
@@ -1016,56 +1254,63 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     #
     # extract count matrix (full map extension)
     if tui:
-        status('loading histograms of full extension')
-    count, twibins, shrubins = extract_histdata(fhistograms=fhistograms)
+        status('loading histograms of map extension')
+    count, twibins, shrubins = zmap(file=fhistograms)
     #
     # extract count matrix (basin)
     if tui:
         status('loading histograms of basin')
-    basincount, twibins2, shrubins2 = extract_histdata(fhistograms=fbasinhists)
+    basincount, twibins2, shrubins2 = zmap(file=fbasinhists)
     #
     # get basin boundary conditions
     if tui:
-        status('loading boundary conditions')
-    meta = input.asc_raster_meta(fbasin)
+        status('loading boundary basin conditions')
+    meta = input.asc_raster_meta(fbasin)  # get just the metadata
     area = np.sum(basincount) * meta['cellsize'] * meta['cellsize']
     qt0 = 0.01  # fixed
     if qobs:
         qt0 = series_df['Q'].values[0]
+    # extract the average TWI of basin
     lamb = extract_twi_avg(twibins, basincount)
     #
     end = time.time()
     report_lst.append('\n\nLoading enlapsed time: {:.3f} seconds\n'.format(end - init))
     if tui:
-        print('\nloading enlapsed time: {:.3f} seconds'.format(end - init))
+        status('loading enlapsed time: {:.3f} seconds'.format(end - init), process=False)
     #
     #
     #
     #
-    # ****** Simulation section ******
+    #
+    # ****** SIMULATION ******
+    #
+    #
     init = time.time()
     if tui:
-        print('\n\t**** Simulation Protocol ****\n')
         status('running simulation')
-    sim_dct = topmodel_sim(series=series_df, shruparam=shru_df, twibins=twibins, countmatrix=count, lamb=lamb,
-                           qt0=qt0, m=m, qo=qo, cpmax=cpmax, sfmax=sfmax, erz=erz, ksat=ksat, c=c, lat=lat,
-                           k=k, n=n, area=area, basinshadow=basincount, tui=False, qobs=qobs, mapback=mapback,
-                           mapvar=mapvar,
-                           mapdates=mapdates)
+    sim_dct = simulation(series=series_df, shruparam=shru_df, twibins=twibins, countmatrix=count, lamb=lamb,
+                         qt0=qt0, m=m, qo=qo, cpmax=cpmax, sfmax=sfmax, erz=erz, ksat=ksat, c=c, lat=lat,
+                         k=k, n=n, area=area, basinshadow=basincount, tui=False, qobs=qobs, mapback=mapback,
+                         mapvar=mapvar,
+                         mapdates=mapdates)
     sim_df = sim_dct['Series']
     if mapback:
         mapped = sim_dct['Maps']
     end = time.time()
     report_lst.append('Simulation enlapsed time: {:.3f} seconds\n'.format(end - init))
     if tui:
-        print('\nsimulation enlapsed time: {:.3f} seconds'.format(end - init))
+        status('simulation enlapsed time: {:.3f} seconds'.format(end - init), process=False)
     #
     #
     #
-    # exporting section
+    #
+    #
+    # ****** DEFAULT EXPORT ******
+    #
+    #
+    #
     init = time.time()
     if tui:
-        print('\n\t**** Export Data Protocol ****\n')
         status('exporting simulated time series')
     #
     # export time series
@@ -1087,78 +1332,148 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     # export visual pannel
     if tui:
         status('exporting visual results')
-    exp_file4 = pannel_topmodel(sim_df, grid=True, show=False, qobs=qobs, folder=folder)
+    exp_file4 = pannel_global(sim_df, grid=True, show=False, qobs=qobs, folder=folder)
     #
     #
     #
-    # export maps
+    #
+    #
+    # ****** MAP EXPORT ******
+    #
+    #
     if mapback:
         if tui:
             status('exporting variable maps')
         from os import mkdir
-        if mapvar == 'all':
-            mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
-        mapvar_lst = mapvar.split('-')  # load string variables alias to list
-        # get stamps
-        stamp = sim_dct['MappedDates']
+        from backend import get_all_vars
+        from output import zmap
         #
-        #
-        # Zmaps exporting
-        mapfiles_lst = list()
-        zmaps_dct = dict()
-        for var in mapvar_lst:  # loop across all variables
-            if tui:
-                status('exporting {} zmaps'.format(var))
-            #
-            # make dir
-            lcl_folder = folder + '/sim_' + var
-            mkdir(lcl_folder)  # make new diretory
-            lcl_files = list()
-            for t in range(len(stamp)):  # loop across all timesteps
-                lcl_filename = 'zmap_' + var + '_' + str(stamp[t]).split(sep=' ')[0] + '.txt'
-                lcl_file = lcl_folder + '/' + lcl_filename
-                lcl_files.append(lcl_file)
-                # export local dataframe to text file in local folder
-                lcl_exp_df = pd.DataFrame(mapped[var][t], index=twibins, columns=shrubins)
-                lcl_exp_df.to_csv(lcl_file, sep=';', index_label='TWI\SHRU')
-            #
-            # export map list file to main folder:
-            lcl_exp_df = pd.DataFrame({'Date': stamp, 'File': lcl_files})
-            lcl_file = folder + '/' + 'sim_zmaps_' + var + '.txt'
-            lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
-            zmaps_dct[var] = lcl_file
-            mapfiles_lst.append(lcl_file)
-        #
-        # Raster maps exporting
-        if mapraster:
+        if mapraster or integrate:
             from hydrology import map_back
-            from geo import mask
             from visuals import plot_map_view
-            if tui:
-                status('raster map export section')
+            #
+            # heavy imports
             if tui:
                 status('importing twi raster')
             meta, twi = input.asc_raster(ftwi)
             if tui:
                 status('importing shru raster')
             meta, shru = input.asc_raster(fshru)
-            # loop in variables
+        if integrate:
+            # make integration directory
+            int_folder = folder + '/integration'
+            mkdir(int_folder)
+        #
+        if mapvar == 'all':
+            mapvar = get_all_vars()
+        mapvar_lst = mapvar.split('-')  # load string variables alias to list
+        #
+        # get map stamps
+        stamp = sim_dct['MappedDates']
+        #
+        #
+        #
+        #
+        # ****** ZMAP EXPORT ******
+        #
+        #
+        mapfiles_lst = list()
+        intmaps_files = list()
+        zmaps_dct = dict()
+        for var in mapvar_lst:  # loop across asked variables
+            if tui:
+                status('exporting zmaps | {}'.format(var))
+            #
+            # make var directory
+            lcl_folder = folder + '/sim_' + var
+            mkdir(lcl_folder)
+            #
+            if integrate:
+                # initiate integration
+                integration = mapped[var][0] * 0.0
+            # loop across all mapped dates
+            lcl_files = list()
+            for t in range(len(stamp)):
+                # get local file name
+                lcl_filename ='zmap_{}_{}'.format(var, stamp[t])
+                # export to CSV
+                lcl_file = zmap(zmap=mapped[var][t], twibins=twibins, shrubins=shrubins,
+                                folder=lcl_folder, filename=lcl_filename)
+                # trace file path
+                lcl_files.append(lcl_file)
+                # conpute integration
+                if integrate:
+                    integration = integration + mapped[var][t]
+            #
+            if integrate:
+                # stock variables
+                lcl_label = 'Accumulation'
+                if var in set(['D', 'Unz', 'Cpy', 'Sfs', 'RC', 'VSA']):
+                    integration = integration / len(mapped[var])  # take the average
+                    if var == 'VSA':
+                        integration = integration * 100
+                    lcl_label = 'Average'
+                # export integral zmap
+                lcl_filename = 'zmap_integral_{}'.format(var)
+                lcl_file = zmap(zmap=integration, twibins=twibins, shrubins=shrubins,
+                                folder=int_folder, filename=lcl_filename)
+                intmaps_files.append(lcl_files)
+                #
+                # recover raster
+                mp = map_back(integration, a1=twi, a2=shru, bins1=twibins, bins2=shrubins)
+                # export raster map
+                lcl_filename = 'raster_integral_{}'.format(var)
+                lcl_file = output.asc_raster(mp, meta, int_folder, lcl_filename)
+                intmaps_files.append(lcl_file)
+                # export raster view
+                mapid = get_mapid(var)
+                #
+                ranges = [np.min(integration), np.max(integration)]  # set global ranges
+                # plot raster view
+                lcl_ttl = '{} of {}\n {} to {} | {} days'.format(lcl_label, var, stamp[0], stamp[len(stamp) - 1], len(stamp))
+                plot_map_view(mp, meta, ranges, mapid, mapttl=lcl_ttl,folder=int_folder,
+                              filename=lcl_filename, show=False, integration=True)
+            #
+            # export map list file to main folder:
+            lcl_exp_df = pd.DataFrame({'Date': stamp, 'File': lcl_files})
+            lcl_file = folder + '/' + 'sim_zmaps_series_' + var + '.txt'
+            lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
+            zmaps_dct[var] = lcl_file
+            mapfiles_lst.append(lcl_file)
+        #
+        #
+        #
+        #
+        # ****** RASTER EXPORT ******
+        #
+        #
+        if mapraster:
+            #
+            if tui:
+                status('raster map export section')
+            #
+            #
+            # loop in asked variables
             raster_dct = dict()
             for var in mapvar_lst:
                 if tui:
-                    status('exporting {} raster maps'.format(var))
+                    status('exporting raster maps | {}'.format(var))
                 lcl_folder = folder + '/sim_' + var
+                #
+                # loop across all asked timesteps
                 lcl_files = list()
-                for t in range(len(stamp)):  # loop across all timesteps
-                    stamp_str = str(stamp[t]).split(sep=' ')[0]
-                    lcl_filename = 'raster_' + var + '_' + stamp_str
-                    lcl_file = lcl_folder + '/' + lcl_filename
-                    lcl_files.append(lcl_file + '.asc')
+                for t in range(len(stamp)):
+                    #
+                    lcl_filename = 'raster_{}_{}'.format(var, stamp[t])  # 'raster_' + var + '_' + stamp_str
                     #
                     # express the map
                     mp = map_back(zmatrix=mapped[var][t], a1=twi, a2=shru, bins1=twibins, bins2=shrubins)
                     #
-                    # export view
+                    # export raster map
+                    lcl_file = output.asc_raster(mp, meta, lcl_folder, lcl_filename)
+                    lcl_files.append(lcl_file)
+                    #
+                    # export raster view
                     # smart mapid selector
                     if var == 'D':
                         mapid = 'deficit'
@@ -1172,18 +1487,20 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                         mapid = 'VSA'
                     else:
                         mapid = 'flow'
-                    ranges = [0, np.max(sim_df[var].values)]
-                    plot_map_view(mp, meta, ranges, mapid, mapttl='{} | {}'.format(var, stamp_str),
+                    #
+                    ranges = [np.min(mapped[var]), np.max(mapped[var])] # set global ranges
+                    # plot raster view
+                    plot_map_view(mp, meta, ranges, mapid, mapttl='{} | {}'.format(var, stamp[t]),
                                   folder=lcl_folder, filename=lcl_filename, show=False)
-                    # export raster map
-                    output.asc_raster(mp, meta, lcl_folder, lcl_filename)
                 #
                 # export map list file to main folder:
                 lcl_exp_df = pd.DataFrame({'Date': stamp, 'File': lcl_files})
-                lcl_file = folder + '/' + 'sim_raster_' + var + '.txt'
+                lcl_file = folder + '/' + 'sim_raster_series_' + var + '.txt'
                 lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
-                mapfiles_lst.append(lcl_file)
+                # allocate in dictionary
                 raster_dct[var] = lcl_file
+                # append to mapfiles list
+                mapfiles_lst.append(lcl_file)
     #
     #
     #
@@ -1192,29 +1509,35 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     end = time.time()
     report_lst.append('Exporting enlapsed time: {:.3f} seconds\n'.format(end - init))
     if tui:
-        print('Exporting enlapsed time: {:.3f} seconds'.format(end - init))
+        status('exporting enlapsed time: {:.3f} seconds'.format(end - init), process=False)
     #
     tf = time.time()
     if tui:
-        print('\nExecution enlapsed time: {:.3f} seconds'.format(tf - t0))
-        print('\n\n\n')
+        status('Execution enlapsed time: {:.3f} seconds'.format(tf - t0), process=False)
     #
     report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
-    if mapback:
-        outfiles = [exp_file1, exp_file2, exp_file3, exp_file4]
-        for e in mapfiles_lst:
-            outfiles.append(e)
-        output_df = pd.DataFrame({'Output files': outfiles})
-    else:
-        output_df = pd.DataFrame({'Output files': (exp_file1, exp_file2, exp_file3, exp_file4)})
+    #
+    #
+    # output files report
+    outfiles = [exp_file1, exp_file2, exp_file3, exp_file4]
+    output_df = pd.DataFrame({'Main output files': outfiles})
     report_lst.append(output_df.to_string(index=False))
+    report_lst.append('\n')
+    if mapback:
+        output_df = pd.DataFrame({'Map series output files': mapfiles_lst})
+        report_lst.append(output_df.to_string(index=False))
+        report_lst.append('\n')
     export_report(report_lst, filename='REPORT__simulation', folder=folder, tui=tui)
     #
     #
     #
     #
     # return section
-    out_dct = {'Series':exp_file1, 'Histograms':exp_file2, 'Parameters':exp_file3, 'Pannel':exp_file4, 'Folder':folder}
+    out_dct = {'Series':exp_file1,
+               'Histograms':exp_file2,
+               'Parameters':exp_file3,
+               'Pannel':exp_file4,
+               'Folder':folder}
     if mapback:
         out_dct['ZMaps'] = zmaps_dct
         if mapraster:
@@ -1222,12 +1545,12 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     return out_dct
 
 
-def calib_hydro(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fetpatzmaps,
-                fetpatseries, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all', qobs=True,
-                generations=100, popsize=200, metric='NSE', label=''):
+def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fetpatzmaps,
+              fetpatseries, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all', qobs=True,
+              generations=100, popsize=200, metric='NSE', label=''):
     # todo docstring
-    from hydrology import avg_2d, topmodel_sim, map_back, topmodel_calib
-    from visuals import pannel_topmodel
+    from hydrology import avg_2d, simulation, map_back, calibration
+    from visuals import pannel_global
     from backend import create_rundir
     import time
     from os import mkdir
@@ -1408,14 +1731,14 @@ def calib_hydro(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbas
         init = time.time()
         print('\n\t**** Calibration Protocol ****\n')
         status('running calibration')
-    pset, traced, tracedpop = topmodel_calib(series=calib_df, shruparam=shru_df, twibins=twibins, countmatrix=count,
-                                             lamb=lamb, qt0=qt0, lat=lat, area=area, basinshadow=basincount,
-                                             m_range=m_rng, qo_range=qo_rng,
-                                             cpmax_range=cpmax_rng, sfmax_range=sfmax_rng, erz_range=erz_rng,
-                                             ksat_range=ksat_rng, c_range=c_rng, k_range=ksat_rng, n_range=n_rng,
-                                             etpatdates=etpat_dates_str_calib, etpatzmaps=etpat_zmaps_obs_calib,
-                                             tui=tui, generations=generations, popsize=popsize, metric=metric,
-                                             tracefrac=1, tracepop=True)
+    pset, traced, tracedpop = calibration(series=calib_df, shruparam=shru_df, twibins=twibins, countmatrix=count,
+                                          lamb=lamb, qt0=qt0, lat=lat, area=area, basinshadow=basincount,
+                                          m_range=m_rng, qo_range=qo_rng,
+                                          cpmax_range=cpmax_rng, sfmax_range=sfmax_rng, erz_range=erz_rng,
+                                          ksat_range=ksat_rng, c_range=c_rng, k_range=ksat_rng, n_range=n_rng,
+                                          etpatdates=etpat_dates_str_calib, etpatzmaps=etpat_zmaps_obs_calib,
+                                          tui=tui, generations=generations, popsize=popsize, metric=metric,
+                                          tracefrac=1, tracepop=True)
     end = time.time()
     if tui:
         print('\nCalibration enlapsed time: {:.3f} seconds'.format(end - init))
@@ -1560,7 +1883,7 @@ def calib_hydro(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbas
                                                   rasterfilename='raster_ETPat', tui=tui,
                                                   folder=calib_folder, filename='sim_raster_ETPat')
     # export raster views
-    get_views_rasters(fetpat_raster_sim_calib, mapvar='ETPat', mapid='etpat', vmin=0, vmax=1, tui=tui)
+    view_rasters(fetpat_raster_sim_calib, mapvar='ETPat', mapid='etpat', vmin=0, vmax=1, tui=tui)
     #
     # create a OBS-SIM dataframe for analysis
     etpat_raster_sim_calib_df = pd.read_csv(fetpat_raster_sim_calib, sep=';')

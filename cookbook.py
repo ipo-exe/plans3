@@ -790,7 +790,7 @@ def demo_watch():
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
-    from visuals import pannel_frame
+    from visuals import pannel_local
     import input
     from hydrology import map_back
     folder ='C:/Plans3/demo/datasets/observed'
@@ -800,28 +800,29 @@ def demo_watch():
     meta, twi = input.asc_raster(ftwi)
     meta, shru = input.asc_raster(fshru)
 
-    folder = r"C:\Plans3\demo\runbin\simulation\calib_SLH_2021-04-23-14-51-41\calibration_period"
+    folder = r"C:\Plans3\demo\runbin\simulation\calib_SLH_2021-04-25-14-32-52\calibration_period"
     fseries = folder  + r'\sim_series.txt'
     series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
 
     date_init = '2011-01-01'
-    date_end = '2012-03-01'
+    date_end = '2011-05-01'
     query_str = 'Date > "{}" and Date < "{}"'.format(date_init, date_end)
     series = series.query(query_str)
     print(len(series))
     #vars = 'Cpy-Sfs-Unz-D-TF-Tpun-Tpgw-Evc-Evs-ET-R-Inf-RIE-RSE-IRA-IRI-Qv-VSA'.split('-')
     # for QV vars = 'D-Qv-Inf-Cpy-IRA-IRI-Unz-Sfs'.split('-')
-    # for ETvars = 'D-ET-IRA-IRI-Tpun-Tpgw-Evc-Evs'.split('-')
-    vars = 'D-IRA-IRI-R-RIE-RSE-VSA-TF'.split('-')
+    # for ET
+    vars = 'D-ET-IRA-IRI-Tpun-Tpgw-Evc-Evs-Qv-Inf-Cpy-Unz-Sfs-R-RIE-RSE-Qv-VSA'.split('-')
+    #for R vars = 'D-IRA-IRI-R-RIE-RSE-VSA-TF'.split('-')
     #
     #
-    # load zmap files
+    # 1) load zmap series dataframes in a dict for each
     zmaps_series = dict()
     for var in vars:
-        lcl_file = '{}/sim_zmaps_{}.txt'.format(folder, var)
+        lcl_file = '{}/sim_zmaps_series_{}.txt'.format(folder, var)  # next will be sim_zmaps_series_{}.txt
         lcl_df = pd.read_csv(lcl_file, sep=';', parse_dates=['Date'])
         lcl_df = lcl_df.query(query_str)
-        print(lcl_df.tail().to_string())
+        #print(lcl_df.tail().to_string())
         zmaps_series[var] = lcl_df.copy()
     #
     #
@@ -848,22 +849,63 @@ def demo_watch():
     #print(rasters_maxval['R'])
     offsetback = 10
     offsetfront = 40
-    input_range = (0, np.max(series['Prec'].values))
+    prec_rng = (0, np.max(series['Prec'].values))
+    irri_rng = (0, np.max((series['IRA'].values, series['IRA'].values)))
     for t in range(offsetback, len(series) - offsetfront -1):
         print('t = {} | plotting date {}'.format(t, series['Date'].values[t]))
-        pannel_frame(series, star=raster_series['R'][t],
+        pannel_local(series, star=raster_series['ET'][t],
                      deficit=raster_series['D'][t],
                      sups=[raster_series['IRA'][t], raster_series['IRI'][t]],
-                     mids=[raster_series['TF'][t], raster_series['RIE'][t],
-                           raster_series['RSE'][t], raster_series['VSA'][t]],
-                     star_rng=(rasters_minval['TF'], rasters_maxval['TF']),
+                     mids=[raster_series['Evc'][t], raster_series['Evs'][t],
+                           raster_series['Tpun'][t], raster_series['Tpgw'][t]],
+                     star_rng=(rasters_minval['ET'], rasters_maxval['ET']),
                      deficit_rng=(rasters_minval['D'], rasters_maxval['D']),
-                     sup_rng=input_range,
-                     mid1_rng=(rasters_minval['TF'], rasters_maxval['TF']),
-                     mid2_rng=(rasters_minval['TF'], rasters_maxval['TF']),
-                     mid3_rng=(rasters_minval['TF'], rasters_maxval['TF']),
-                     mid4_rng=(rasters_minval['VSA'], rasters_maxval['VSA']),
-                     t=t, type='R', show=False, offset_back=offsetback, offset_front=offsetfront)
+                     sup1_rng=prec_rng, sup2_rng=irri_rng, sup3_rng=irri_rng, sup4_rng=irri_rng,
+                     mid1_rng=(rasters_minval['ET'], rasters_maxval['ET']),
+                     mid2_rng=(rasters_minval['ET'], rasters_maxval['ET']),
+                     mid3_rng=(rasters_minval['ET'], rasters_maxval['ET']),
+                     mid4_rng=(rasters_minval['ET'], rasters_maxval['ET']),
+                     t=t, type='ET', show=True, offset_back=offsetback, offset_front=offsetfront)
+
+
+def demo_simulation():
+    from tools import slh
+    import backend
+    import pandas as pd
+
+    files_input = backend.get_input2simbhydro(aoi=False)
+    folder = 'C:/Plans3/demo/datasets/observed'
+    fseries ='{}/{}'.format(folder, files_input[0])
+    fhydroparam = '{}/{}'.format(folder, files_input[1])
+    fshruparam = '{}/{}'.format(folder, files_input[2])
+    fhistograms = '{}/{}'.format(folder, files_input[3])
+    fbasinhists = '{}/{}'.format(folder, files_input[4])
+    fbasin = '{}/{}'.format(folder, files_input[5])
+    ftwi = '{}/{}'.format(folder, files_input[6])
+    fshru = '{}/{}'.format(folder, files_input[7])
+
+    series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    date_init = '2011-01-01'
+    date_end = '2012-01-01'
+    query_str = 'Date >= "{}" and Date < "{}"'.format(date_init, date_end)
+    series = series.query(query_str)
+
+    vars = 'IRI-IRA'
+    #vars = 'all'
+
+    mapdates = ' & '.join(series['Date'].astype('str'))
+    #mapdates = 'all'
+    #print(mapdates)
+    outfolder = 'C:/bin'
+    out_dct = slh(fseries=fseries, fhydroparam=fhydroparam, fshruparam=fshruparam,
+                  fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin,
+                  ftwi=ftwi, fshru=fshru, folder=outfolder,
+                  wkpl=True,
+                  tui=True,
+                  mapback=True,
+                  mapraster=True,
+                  mapvar=vars, integrate=True,
+                  mapdates=mapdates, qobs=True)
 
 
 
@@ -878,4 +920,16 @@ def demo_watch():
 
 #delete_values_by_date()
 
-demo_watch()
+#demo_watch()
+#demo_simulation()
+
+folder ='C:/Plans3/demo/datasets/observed'
+ftwi = '{}/calib_twi.asc'.format(folder)
+fshru = '{}/calib_shru.asc'.format(folder)
+
+folder = r"C:\Plans3\demo\runbin\simulation\calib_SLH_2021-04-25-14-32-52\calibration_period"
+fseries = folder  + r'\sim_series.txt'
+
+from tools import export_all_frames
+
+export_all_frames(ftwi, fshru, folder, tui=True)

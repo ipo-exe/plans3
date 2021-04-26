@@ -240,6 +240,10 @@ def get_prj_dirs():
     return dct
 
 
+def get_all_vars():
+    return 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+
+
 def get_prj_dirs_paths(p0='name', wkplc='C:'):
     """
 

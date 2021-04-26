@@ -46,7 +46,26 @@ def asc_raster(array, meta, folder, filename):
 
 
 def zmap(zmap, twibins, shrubins, index_lbl='TWI\SHRU', folder='C:/bin', filename='zmap'):
+    # todo docstring
     exp_file = folder + '/' + filename + '.txt'
     lcl_exp_df = pd.DataFrame(zmap, index=twibins, columns=shrubins)
     lcl_exp_df.to_csv(exp_file, sep=';', index_label=index_lbl)
     return exp_file
+
+
+def export_report(report_lst, filename='report', folder='C:/bin', tui=False):
+    # todo docstring
+    from backend import header_plans, header
+    filepath = folder + '/' + filename + '.txt'
+    fle = open(filepath, 'w+')
+    header = header('output report')
+    report_lst.insert(0, header)
+    header = header_plans()
+    report_lst.insert(0, header)
+    fle.writelines(report_lst[:])
+    fle.close()
+    if tui:
+        print('\n\n')
+        for e in report_lst[1:]:
+            print(e)
+        print('\n\n')

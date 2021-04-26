@@ -115,11 +115,14 @@ def zmap(file, yfield='TWI\SHRU'):
     2) 1d numpy array of Y (vertical) variable histogram values
     3) 1d numpy array of X (horizontal) variable histogram values
     """
-    lcl_df = pd.read_csv(file, sep=';')
-    ybins = lcl_df[yfield].values
-    #print(yhist)
-    xbins = np.array(lcl_df.columns[1:], dtype='float32')
-    #print(xhist)
-    zmap = lcl_df.values[:, 1:]
-    #print(zmap)
-    return zmap, ybins, xbins
+    dataframe = pd.read_csv(file, sep=';')
+    dataframe = dataframe_prepro(dataframe, strf=False)
+    # set first column as index
+    dataframe = dataframe.set_index(dataframe.columns[0])
+    # get shru bins
+    shru_bins = dataframe.columns.astype('int')
+    # get twi bins
+    twi_bins = dataframe.index.values
+    # extract ZMAP
+    zmap = dataframe.values
+    return zmap, twi_bins, shru_bins

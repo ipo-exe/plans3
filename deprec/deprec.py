@@ -463,8 +463,8 @@ def run_topmodel_deprec(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',tui=Fa
     4) tuple of string file paths of map lists files
     """
     #
-    from hydrology import avg_2d, topmodel_hist, topmodel_sim, map_back
-    from visuals import pannel_topmodel
+    from hydrology import avg_2d, topmodel_hist, simulation, map_back
+    from visuals import pannel_global
     import time
     #
     if tui:
@@ -521,11 +521,11 @@ def run_topmodel_deprec(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',tui=Fa
     init = time.time()
     # mapback conditionals:
     if mapback:
-        sim_df, mapped = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                                      lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar, qobs=qobs)
+        sim_df, mapped = simulation(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
+                                    lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar, qobs=qobs)
     else:
-        sim_df = topmodel_sim(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
-                                      lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar, qobs=qobs)
+        sim_df = simulation(lcl_df, twihist, cnhist, countmatrix, lamb=lamb, ksat=ksat, m=m, qo=qo, a=a, c=c,
+                            lat=lat, qt0=qt0, k=k, n=n, tui=False, mapback=mapback, mapvar=mapvar, qobs=qobs)
     end = time.time()
     if tui:
         print('Enlapsed time: {:.3f} seconds'.format(end - init))
@@ -557,7 +557,7 @@ def run_topmodel_deprec(fseries, fparam, faoi, ftwi, fcn, folder='C:/bin',tui=Fa
     if tui:
         print('exporting visual results...')
     sim_df['Qobs'] = lcl_df['Q']
-    exp_file4 = pannel_topmodel(sim_df, grid=False, show=False, qobs=True, folder=folder)
+    exp_file4 = pannel_global(sim_df, grid=False, show=False, qobs=True, folder=folder)
     #
     if mapback:
         if tui:
@@ -676,4 +676,203 @@ def map_cn_avg(fcnseries, fseries, folder='C:/bin', filename='cn_calib'):
     #
     exp_file = output.asc_raster(array=cn_avg, meta=meta, folder=folder, filename=filename)
     return exp_file
+
+
+def pannel_1image_3series(image, imax, t, x1, x2, x3, x1max, x2max, x3max, titles, vline=20,
+                          cmap='jet', folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
+    """
+    Plot a pannel with 1 image (left) and  3 signals (right).
+    :param image: 2d numpy array of image
+    :param imax: float max value of image
+    :param t: 1d array of x-axis shared variable
+    :param x1: 1d array of first signal
+    :param x2: 1d array of third signal
+    :param x3: 1d array of second signal
+    :param x1max: float max value of x1
+    :param x2max: float max value of x2
+    :param x3max: float max value of x3
+    :param vline: int of index position of vertical line
+    :param folder: string folder path to export image
+    :param filename: string of file name
+    :param suff: string of suffix
+    :return: string file path of plot
+    """
+    #
+    fig = plt.figure(figsize=(16, 8))  # Width, Height
+    gs = mpl.gridspec.GridSpec(3, 6, wspace=0.8, hspace=0.6)
+    #
+    # plot image
+    plt.subplot(gs[0:, 0:2])
+    im = plt.imshow(image, cmap=cmap, vmin=0, vmax=imax)
+    plt.axis('off')
+    plt.title(titles[0])
+    plt.colorbar(im, shrink=0.4)
+    #
+    # plot x1
+    y = x1
+    ymax = x1max
+    plt.subplot(gs[0, 2:])
+    var = y[vline]
+    plt.title('{}: {:.1f}'.format(titles[1], var), loc='left')
+    plt.ylabel('mm')
+    plt.plot(t, y)
+    plt.ylim(0, 1.1 * ymax)
+    plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
+    plt.plot(t[vline], y[vline], 'ro')
+    #
+    # plot x2
+    y = x2
+    ymax = x2max
+    plt.subplot(gs[1, 2:])
+    var = y[vline]
+    plt.title('{}: {:.2f}'.format(titles[2], var), loc='left')
+    plt.ylabel('mm')
+    plt.plot(t, y, 'navy')
+    plt.ylim(0, 1.1 * ymax)
+    plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
+    plt.plot(t[vline], y[vline], 'ro')
+    #
+    # plot x3
+    y = x3
+    ymax = x3max
+    plt.subplot(gs[2, 2:])
+    var = y[vline]
+    plt.title('{}: {:.1f}'.format(titles[3], var), loc='left')
+    plt.ylabel('mm')
+    plt.plot(t, y, 'tab:orange')
+    plt.ylim(0, 1.1 * ymax)
+    plt.vlines(t[vline], ymin=0, ymax=1.2 * ymax, colors='r')
+    plt.plot(t[vline], y[vline], 'ro')
+    #
+    # Fix date formatting
+    # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
+    fig.autofmt_xdate()
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        filepath = folder + '/' + filename + '_' + suff + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
+
+
+def pannel_4image_4series(im4, imax, t, y4, y4max, y4min, cmaps, imtitles, ytitles, ylabels, vline=20,
+                          folder='C:/bin', filename='pannel_topmodel', suff='', show=False):
+    """
+    Plot a pannel with 4 images (left) and  4 signals (right).
+    :param im4: tuple of 4 2d arrays (images)
+    :param imax: float of images vmax
+    :param t: 1d array of x-axis shared variable
+    :param y4: tuple of 4 signal series arrays
+    :param y4max: tuple of 4 vmax of series arrays
+    :param y4min: tuple of 4 vmin of series arrays
+    :param cmaps: tuple of 4 string codes to color maps
+    :param imtitles: tuple of 4 string titles for images
+    :param ytitles: tuple of 4 string titles of series
+    :param ylabels: tuple of 4 string y axis labels
+    :param vline: int of index position of vertical line
+    :param folder: string folder path to export image
+    :param show: boolean to show image instead of exporting
+    :param filename: string of file name (without extension)
+    :param suff: string of suffix
+    :return: string file path of plot
+    """
+    #
+    fig = plt.figure(figsize=(16, 9))  # Width, Height
+    gs = mpl.gridspec.GridSpec(4, 10, wspace=0.8, hspace=0.6)
+    #
+    # images
+    #
+    # Left Upper
+    ax = fig.add_subplot(gs[0:2, 0:2])
+    im = plt.imshow(im4[0], cmap=cmaps[0], vmin=0, vmax=imax)
+    plt.axis('off')
+    plt.title(imtitles[0])
+    plt.colorbar(im, shrink=0.4)
+    #
+    # Left bottom
+    ax = fig.add_subplot(gs[2:4, 0:2])
+    im = plt.imshow(im4[1], cmap=cmaps[1], vmin=0, vmax=0.5 * imax)
+    plt.axis('off')
+    plt.title(imtitles[1])
+    plt.colorbar(im, shrink=0.4)
+    #
+    # Right Upper
+    ax = fig.add_subplot(gs[0:2, 2:4])
+    im = plt.imshow(im4[2], cmap=cmaps[2], vmin=0, vmax=0.5 * imax)
+    plt.axis('off')
+    plt.title(imtitles[2])
+    plt.colorbar(im, shrink=0.4)
+    #
+    # Right Bottom
+    ax = fig.add_subplot(gs[2:4, 2:4])
+    im = plt.imshow(im4[3], cmap=cmaps[3], vmin=0, vmax=imax)
+    plt.axis('off')
+    plt.title(imtitles[3])
+    plt.colorbar(im, shrink=0.4)
+    #
+    # series
+    #
+    # set x ticks
+    size = len(t)
+    spaces = int(size / 5)
+    locs = np.arange(0, size, spaces)
+    labels = t[locs]
+    #
+    ax = fig.add_subplot(gs[0, 5:])
+    lcl = 0
+    y = y4[lcl]
+    plt.plot(t, y)
+    plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
+    plt.plot(t[vline], y[vline], 'ro')
+    var = y[vline]
+    plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
+    plt.ylabel(ylabels[lcl])
+    #
+    ax2 = fig.add_subplot(gs[1, 5:])#, sharex=ax)
+    lcl = lcl + 1
+    y = y4[lcl]
+    plt.plot(t, y)
+    plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
+    plt.plot(t[vline], y[vline], 'ro')
+    var = y[vline]
+    plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
+    plt.ylabel(ylabels[lcl])
+    #
+    ax2 = fig.add_subplot(gs[2, 5:])#, sharex=ax)
+    lcl = lcl + 1
+    y = y4[lcl]
+    plt.plot(t, y)
+    plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
+    plt.plot(t[vline], y[vline], 'ro')
+    var = y[vline]
+    plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
+    plt.ylabel(ylabels[lcl])
+    #
+    ax2 = fig.add_subplot(gs[3, 5:])#, sharex=ax)
+    lcl = lcl + 1
+    y = y4[lcl]
+    plt.plot(t, y, 'k')
+    plt.vlines(t[vline], ymin=y4min[lcl], ymax=y4max[lcl], colors='r')
+    plt.plot(t[vline], y[vline], 'ro')
+    var = y[vline]
+    plt.title('{}: {:.2f}'.format(ytitles[lcl], var), loc='left')
+    plt.ylabel(ylabels[lcl])
+    #
+    # Fix date formatting
+    # https://matplotlib.org/stable/gallery/recipes/common_date_problems.html#sphx-glr-gallery-recipes-common-date-problems-py
+    fig.autofmt_xdate()
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        filepath = folder + '/' + filename + '_' + suff + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
 

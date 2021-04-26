@@ -52,9 +52,11 @@ def header(p0='title', p1=70, p2='*', p3=True):
     sleep(0.2)
 
 
-def status(msg='Status message'):
-    print('\t>>> {:60}...'.format(msg))
-
+def status(msg='Status message', process=True):
+    if process:
+        print('\t>>> {:60}...'.format(msg))
+    else:
+        print('\n\t>>> {:60}\n'.format(msg))
 
 def validade_project_name(msg='Enter project name', wng='Warning!',
                           wng1='Invalid name. No spaces allowed',
@@ -290,7 +292,7 @@ def main(root='default', importing=True):
                                     # update database
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
                                     print('\n{}:\n{}\n'.format(lng[30], dst_filenm))
-                                    tools.view_imported(lcl_lcl_opt, folder=projectdirs['Observed'])
+                                    tools.view_imported_map(lcl_lcl_opt, folder=projectdirs['Observed'])
                                     ok()
                     #
                     # derive data
@@ -384,8 +386,8 @@ def main(root='default', importing=True):
                                                                                 folder=projectdirs['Observed'],
                                                                                 filename=lcl_filename,
                                                                                 rasterfilename='calib_etpat', tui=True)
-                                        tools.get_views_rasters(derivedfile, mapvar='ETpat', mapid='etpat',
-                                                                vmin=0, vmax=1, tui=True)
+                                        tools.view_rasters(derivedfile, mapvar='ETpat', mapid='etpat',
+                                                           vmin=0, vmax=1, tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'aoi_shru_series.txt':
@@ -400,9 +402,9 @@ def main(root='default', importing=True):
                                         ok()
                                     elif lcl_lcl_opt == 'aoi_shru_param.txt' or lcl_lcl_opt == 'calib_shru_param.txt':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.shru_param(filesp[0], filesp[1],
-                                                                       folder=projectdirs['Observed'],
-                                                                       filename=lcl_filename)
+                                        derivedfile = tools.get_shru_param(filesp[0], filesp[1],
+                                                                           folder=projectdirs['Observed'],
+                                                                           filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'aoi_slope.asc' or lcl_lcl_opt == 'calib_slope.asc':
@@ -496,7 +498,7 @@ def main(root='default', importing=True):
                         missing()
                     #
                     # exit
-                    elif opt == lng[10]:
+                    elif lcl_opt == lng[10]:
                         break
             #
             # optimization
@@ -562,17 +564,17 @@ def main(root='default', importing=True):
                                     elif scale == size_opts[3]:
                                         popsize = 500
                                         generations = 200
-                                    calibfiles = tools.calib_hydro(fseries=fseries, fhydroparam=fhydroparam,
-                                                                   fshruparam=fshruparam,
-                                                                   fhistograms=fhistograms,
-                                                                   fbasinhists=fbasinhists,
-                                                                   fbasin=fbasin,
-                                                                   fetpatzmaps=fetpatzmaps,
-                                                                   fetpatseries=fetpatseries,
-                                                                   ftwi=ftwi, fshru=fshru,
-                                                                   folder=projectdirs['Optimization'], label='calib',
-                                                                   generations=generations, popsize=popsize,
-                                                                   metric=metric, tui=True, mapback=False)
+                                    calibfiles = tools.calibrate(fseries=fseries, fhydroparam=fhydroparam,
+                                                                 fshruparam=fshruparam,
+                                                                 fhistograms=fhistograms,
+                                                                 fbasinhists=fbasinhists,
+                                                                 fbasin=fbasin,
+                                                                 fetpatzmaps=fetpatzmaps,
+                                                                 fetpatseries=fetpatseries,
+                                                                 ftwi=ftwi, fshru=fshru,
+                                                                 folder=projectdirs['Optimization'], label='calib',
+                                                                 generations=generations, popsize=popsize,
+                                                                 metric=metric, tui=True, mapback=False)
                                     print('\nRun files sucessfully created at:\n{}\n'.format(calibfiles['Folder']))
                                     ok()
                     #

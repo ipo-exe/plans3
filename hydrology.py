@@ -291,7 +291,7 @@ def topmodel_qv(d, unz, ksat):
 
 def topmodel_di(d, twi, m, lamb):
     """
-    local deficit di
+    local deficit di (Beven and Kirkby, 1979)
     :param d: global deficit float
     :param twi: TWI 1d bins array
     :param m: float
@@ -312,10 +312,11 @@ def topmodel_vsai(di):
     :return: float or nd array of pseudo boolean of saturated areas
     """
     return ((di == 0) * 1)
-
-
-def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c,
-                 lat, k, n, area, basinshadow, mapback=False, mapvar='all', mapdates='all', qobs=False, tui=False):
+#
+#
+# main functions
+def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c,
+               lat, k, n, area, basinshadow, mapback=False, mapvar='all', mapdates='all', qobs=False, tui=False):
     # todo docstring
     # extract data input
     ts_prec = series['Prec'].values
@@ -394,6 +395,8 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     ts_d = np.zeros(shape=size, dtype='float32')
     ts_d[0] = d0
     # flow variables time series:
+    ts_iri_out = np.zeros(shape=size, dtype='float32')
+    ts_ira_out = np.zeros(shape=size, dtype='float32')
     ts_tf = np.zeros(shape=size, dtype='float32')
     ts_inf = np.zeros(shape=size, dtype='float32')
     ts_r = np.zeros(shape=size, dtype='float32')
@@ -419,11 +422,13 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         if mapvar == 'all':
             mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
         mapvar_lst = mapvar.split('-')
+        #
+        #
         # map dates protocol
-        mapped_dates = list()  # list of actual mapped files
+        mapped_dates = list()  # list of actual mapped files dates
         if mapdates == 'all':
             mapsize = size
-            mapped_dates = list(pd.to_datetime(series['Date'], format='%y-%m-%d'))
+            mapped_dates = list(series['Date'].astype('str')) # old code: list(pd.to_datetime(series['Date'], format='%y-%m-%d'))
         else:
             # extract map dates to array
             mapid = 0
@@ -433,8 +438,6 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
             mapdates_df['DateStr'] = mapdates_df['Date'].str.strip()
             mapdates_df['Date'] = pd.to_datetime(mapdates_df['Date'])
             lookup_dates = mapdates_df['Date'].values  # it is coming as datetime!
-            #print(lookup_dates)
-            #print(len(lookup_dates))
             #
             # get series dates
             dates_series = series['Date'].values
@@ -443,16 +446,11 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
             map_timesteps = list()
             for i in range(len(lookup_dates)):
                 lcl_series_df = series.query('Date == "{}"'.format(lookup_dates[i]))
-                #print(lcl_series_df)
-                #print(len(lcl_series_df))
                 if len(lcl_series_df) == 1:
                     lcl_step = lcl_series_df.index[0]
-                    #print(lcl_step)
                     map_timesteps.append(lcl_step)  # append index to list
                     mapped_dates.append(mapdates_df['DateStr'].values[i])
             mapsize = len(map_timesteps)
-            #print(mapsize)
-        #print(len(mapped_dates))
         #
         # load to dict object a time series of empty zmaps for each variable
         mapkeys_dct = dict()
@@ -477,7 +475,10 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     #
     #
     #
+    #
     # ***** ESMA loop by finite differences *****
+    #
+    #
     for t in range(1, size):
         #
         # ****** UPDATE local water balance ******
@@ -501,6 +502,7 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         # compute current TF - Throughfall (or "effective precipitation")
         prec_i = ts_prec[t] * np.ones(shape=shape) # update PREC
         ira_i = ts_ira[t] * fira_i # update IRA
+        ts_ira_out[t] = avg_2d(ira_i, basinshadow)
         cpyin_i = prec_i + ira_i  # canopy total input
         tf_i = ((cpyin_i - (cpmax_i - cpy_i)) * (cpyin_i > (cpmax_i - cpy_i)))
         ts_tf[t] = avg_2d(var2d=tf_i, weight=basinshadow)
@@ -516,19 +518,20 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
         #
         # compute current runoff
         iri_i = ts_iri[t] * firi_i  # update IRI
+        ts_iri_out[t] = avg_2d(iri_i, basinshadow)
         sfsin_i = tf_i + iri_i  # surface total input
         r_i = ((sfs_i + sfsin_i) - sfmax_i) * ((sfs_i + sfsin_i) > sfmax_i)
         # separate runoff
         rse_i = r_i * vsa_i  # Saturation excess runoff - Dunnean runoff
         rie_i = r_i * (vsa_i == 0.0) # Infiltration excess runoff - Hortonian runoff
-        rc_i = (prec_i > 0) * (r_i / ((prec_i == 0) + prec_i))
+        rc_i = 100 * (prec_i > 0) * (r_i / ((prec_i == 0) + prec_i))
         # compute global runoff:
         ts_r[t] = avg_2d(var2d=r_i, weight=basinshadow)  # compute average in the basin
         ts_rse[t] = avg_2d(var2d=rse_i, weight=basinshadow)
         ts_rie[t] = avg_2d(var2d=rie_i, weight=basinshadow)
         ts_rc[t] = avg_2d(var2d=rc_i, weight=basinshadow)
         '''
-        # idea for multiple basin runoff routing
+        # idea for multiple basin runoff routing -- do this off the loop
         for b in range(len(basins_list)):
             ts_r[b][t] = avg_2d(var2d=r_i, weight=basins_list[b])  # time series of Runoff as 2d array
         '''
@@ -615,25 +618,29 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
                 for e in mapvar_lst:
                     mapkeys_dct[e][t] = mapback_dct[e]
             else:
+                # check if the current time step is a mapped time step
                 if t in set(map_timesteps):
                     # append it to map
                     for e in mapvar_lst:
                         mapkeys_dct[e][mapid] = mapback_dct[e]
-                    mapid = mapid + 1
+                    mapid = mapid + 1  # increment mapid
+    #
     #
     # RUNOFF ROUTING by Nash Cascade of linear reservoirs
     ts_qs = nash_cascade(ts_r, k=k, n=n)
     #
-    # compute full discharge Q = Qb + Qs
+    #
+    # Compute full discharge Q = Qb + Qs
     ts_q = ts_qb + ts_qs
     ts_flow = convert_sq2q(sq=ts_q, area=area)
+    #
     #
     # export data
     exp_df = pd.DataFrame({'Date':series['Date'].values,
                            'Prec':series['Prec'].values,
                            'Temp':series['Temp'].values,
-                           'IRA': series['IRA'].values,
-                           'IRI': series['IRI'].values,
+                           'IRA': ts_ira_out,
+                           'IRI': ts_iri_out,
                            'PET':ts_pet,
                            'D':ts_d, 'Cpy':ts_cpy, 'TF':ts_tf,
                            'Sfs':ts_sfs, 'R':ts_r, 'RSE': ts_rse,
@@ -654,10 +661,10 @@ def topmodel_sim(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpma
     return out_dct
 
 
-def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, m_range, qo_range, cpmax_range,
-                   sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps,
-                   tui=True, grid=200, generations=100, popsize=200, offsfrac=1,
-                   mutrate=0.4, puremutrate=0.1, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
+def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, m_range, qo_range, cpmax_range,
+                sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps,
+                tui=True, grid=200, generations=100, popsize=200, offsfrac=1,
+                mutrate=0.4, puremutrate=0.1, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
     from analyst import nse, kge, rmse, pbias, frequency, error
@@ -819,11 +826,11 @@ def topmodel_calib(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area
             #
             #
             # run topmodel
-            sim_dct = topmodel_sim(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
-                                   lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
-                                   ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8],
-                                   area=area, basinshadow=basinshadow, tui=False,
-                                   qobs=True, mapback=True, mapvar='ET', mapdates=etpatdates)
+            sim_dct = simulation(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
+                                 lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
+                                 ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8],
+                                 area=area, basinshadow=basinshadow, tui=False,
+                                 qobs=True, mapback=True, mapvar='ET', mapdates=etpatdates)
             sim_df = sim_dct['Series']
             # compute Flow sim data
             ssim = sim_df['Q'].values
