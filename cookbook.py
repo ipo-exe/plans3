@@ -908,8 +908,12 @@ def demo_simulation():
                   mapdates=mapdates, qobs=True)
 
 
-
-
+def diags():
+    import pandas as pd
+    from tools import sdiag
+    fseries = r"C:\Plans3\pardo\runbin\simulation\calib_SLH_2021-04-30-09-27-27\calibration_period\sim_series.txt"
+    series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    sdiag(fseries, tui=True)
 
 
 #file = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-18-20-15\bestset\calibration_period\raster_etpat_obssim_series.txt"
@@ -923,13 +927,15 @@ def demo_simulation():
 #demo_watch()
 #demo_simulation()
 
-folder ='C:/Plans3/demo/datasets/observed'
-ftwi = '{}/calib_twi.asc'.format(folder)
-fshru = '{}/calib_shru.asc'.format(folder)
+#folder ='C:/Plans3/pardo/datasets/observed'
+#ftwi = '{}/calib_twi.asc'.format(folder)
+#fshru = '{}/calib_shru.asc'.format(folder)
 
-folder = r"C:\Plans3\demo\runbin\simulation\calib_SLH_2021-04-25-14-32-52\calibration_period"
-fseries = folder  + r'\sim_series.txt'
+#folder = r"C:\Plans3\demo\runbin\simulation\calib_SLH_2021-04-25-14-32-52\calibration_period"
+#folder  = r"C:\Plans3\pardo\runbin\simulation\calib_SLH_2021-04-26-23-13-45\validation_period"
 
-from tools import export_all_frames
+#from tools import export_local_pannels
 
-export_all_frames(ftwi, fshru, folder, tui=True)
+#export_local_pannels(ftwi, fshru, folder, tui=True)
+
+diags()

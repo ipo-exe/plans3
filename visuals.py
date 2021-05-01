@@ -819,7 +819,7 @@ def plot_zmap3d(zmap, x, y):
     plt.show()
 
 
-def plot_calib_series(dataframe, grid=True, filename='calib_series', folder='C:/bin', show=True):
+def plot_calib_series(dataframe, grid=True, filename='calib_series', folder='C:/bin', show=True, suff=''):
     # todo docstring
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 8, wspace=0.8, hspace=0.2)  # nrows, ncols
@@ -855,9 +855,9 @@ def plot_calib_series(dataframe, grid=True, filename='calib_series', folder='C:/
     else:
         # export file
         if suff != '':
-            filepath = folder + '/' + filename + '_' + suff + '.png'
+            filepath = folder + '/' + filename + '_' + suff + '.jpg'
         else:
-            filepath = folder + '/' + filename + '.png'
+            filepath = folder + '/' + filename + '.jpg'
         plt.savefig(filepath)
         plt.close(fig)
         return filepath
@@ -1017,7 +1017,7 @@ def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.png'
+        expfile = folder + '/' + filename + '.jpg'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1058,7 +1058,7 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='lulc', filename='map
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.png'
+        expfile = folder + '/' + filename + '.jpg'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1127,42 +1127,42 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
 
 def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', filename='histograms', suff=''):
     #
-    s1 = len(countmatrix)
-    s3 = len(countmatrix[0])
-    s2 = int(s1/2)
-    fig = plt.figure(figsize=(16, 8))  # Width, Height
-    gs = mpl.gridspec.GridSpec(s1 + s2, s1 + s3, wspace=0.3, hspace=0.3)
+    fig = plt.figure(figsize=(12, 16))  # Width, Height
+    gs = mpl.gridspec.GridSpec(4, 3, wspace=0.3, hspace=0.3)
     #
     # first histogram
-    ax = fig.add_subplot(gs[:s2+2, :s3])
+    # twi histogram
+    ax = fig.add_subplot(gs[0, :2])
+    xt = np.round(xt, 1)
+    plt.bar(xt, yt, color='tab:blue')
+    plt.ylabel('% Frequency')
+    plt.title('TWI Histogram')
+    plt.xlabel('TWI values')
+    plt.ylim(0, 60)
+    ax.tick_params(axis='x', which='major', labelsize=7)
+    #
+    ax = fig.add_subplot(gs[1, :])
     x = np.arange(0, len(ys))
-    plt.plot(x, ys, 'tab:blue')
-    plt.xticks([])
+    plt.bar(x, ys, color='tab:blue')
     plt.xlim((0, len(ys) - 1))
+    plt.xlabel('SHRU Ids')
+    plt.xticks(x, xs)
     plt.ylabel('% Frequency')
     plt.ylim(0, 60)
     plt.title('SHRU Histogram')
+    ax.tick_params(axis='x', which='major', labelsize=7)
     #plt.axis('off')
     #
     # matrix
-    ax = fig.add_subplot(gs[s2:, :s3])
+    ax = fig.add_subplot(gs[2:, :])
     im = plt.imshow(np.log10(countmatrix + 0.01), cmap='viridis', vmin=0)
     y = np.arange(0, len(xt))
-    plt.title('')
+    plt.title('Count matrix (2d-Histogram)')
     plt.ylabel('TWI values')
     plt.xlabel('SHRU Ids')
     plt.xticks(x, xs)
     plt.yticks(y, np.round(xt, 1))
-    ax.tick_params(axis='x', which='major', labelsize=6.5)
-    #
-    # twi histogram vertical
-    ax = fig.add_subplot(gs[s2 + 2: s1 + s2 - 2, s3:])
-    plt.yticks([])
-    plt.plot(yt, xt, 'tab:blue')
-    plt.xlabel('% Frequency')
-    plt.title('TWI Histogram')
-    plt.xlim(0, 60)
-    plt.gca().invert_yaxis()
+    ax.tick_params(axis='both', which='major', labelsize=7)
     #
     if show:
         plt.show()

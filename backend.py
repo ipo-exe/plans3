@@ -241,7 +241,7 @@ def get_prj_dirs():
 
 
 def get_all_vars():
-    return 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+    return 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
 
 
 def get_prj_dirs_paths(p0='name', wkplc='C:'):
@@ -308,6 +308,7 @@ def create_new_project(p0, wkplc='C:'):
     os.mkdir(new_prj_path + '/' + subdirs['Runbin'])
     os.mkdir(new_prj_path + '/' + subdirs['Runbin'] + '/' + subdirs['Simulation'])
     os.mkdir(new_prj_path + '/' + subdirs['Runbin'] + '/' + subdirs['Optimization'])
+    os.mkdir(new_prj_path + '/' + subdirs['Runbin'] + '/' + subdirs['Assessment'])
     return new_prj_path
 
 

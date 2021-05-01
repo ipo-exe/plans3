@@ -422,6 +422,20 @@ def flow_dir(dem, status=False):
     return flowdir_array
 
 
+def fuzzy_transition(array, a, b, ascending=True, type='senoid'):
+    if ascending:
+        if type == 'senoid':
+            transition = (array >= b) + (array > a) * (array < b) * (-0.5 * np.cos(np.pi * (array - a)/(b - a)) + 0.5 )
+        if type == 'linear':
+            transition = (array >= b) + (array > a) * (array < b) * (( array / (b - a)) - (a / (b - a)))
+    else:
+        if type == 'senoid':
+            transition = (array <= a) + (array > a) * (array < b) * (0.5 * np.cos(np.pi * (array - a)/(b - a)) + 0.5)
+        if type == 'linear':
+            transition = (array <= a) + (array > a) * (array < b) * ((- array / (b - a)) + (b / (b - a)))
+    return transition
+
+
 def local_flowacc(flowdir):
     """
     compute the local flow accumulation

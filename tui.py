@@ -77,11 +77,72 @@ def validade_project_name(msg='Enter project name', wng='Warning!',
     return nm
 
 
+
+def settings_simulation(key):
+    header('Simulation settings')
+    mapback = True
+    integrate = True
+    mapraster = False
+    mapvar = 'all'
+    mapdates = 'all'
+    #
+    # Mapping options
+    simulation_opts = ('Default settings | Mapback & Integrate',
+                       'Very light | No Mapback',
+                       'Light | Mapback',
+                       'Moderate | Mapback & Integrate (default)',
+                       'Heavy | Rasterize maps')
+    map_opts = menu({key: simulation_opts}, title='Mapping settings', exit=False)
+    if map_opts == simulation_opts[0]:
+        mapback = True
+        integrate = True
+        mapraster = False
+    elif map_opts == simulation_opts[1]:
+        mapback = False
+        integrate = False
+        mapraster = False
+    elif map_opts == simulation_opts[2]:
+        mapback = True
+        integrate = False
+        mapraster = False
+    elif map_opts == simulation_opts[3]:
+        mapback = True
+        integrate = True
+        mapraster = False
+    elif map_opts == simulation_opts[4]:
+        mapback = True
+        integrate = True
+        mapraster = True
+    #
+    #
+    frametype = 'Skip'
+    if mapback:
+        frame_opts = ('Export all frames',
+                           'Export ET pannel frames',
+                           'Export Runoff pannel frames',
+                           'Export Recharge pannel frames',
+                           'Skip frame export')
+        exp_opts = menu({key:frame_opts}, title='Frame settings', exit=False)
+        if exp_opts == frame_opts[0]:
+            frametype = 'all'
+        elif exp_opts == frame_opts[1]:
+            frametype = 'ET'
+        elif exp_opts == frame_opts[2]:
+            frametype = 'R'
+        elif exp_opts == frame_opts[3]:
+            frametype = 'Qv'
+        elif exp_opts == frame_opts[4]:
+            frametype = 'Skip'
+    #
+    out_dct = {'Mapback':mapback, 'Integrate':integrate, 'Mapraster':mapraster, 'Frametype':frametype}
+    return out_dct
+
+
 def menu(options, title='Menu', msg='Chose key', exit=True, exitkey='e', exitmsg='Exit menu',
          keylbl='Keys', wng='Warning!', wngmsg='Key not found', chsn='Chosen'):
     """
     Display a Menu
-    :param options: iterable with string options
+    :param options: dict with string options
     :param title: title string
     :param msg: message string
     :param keylbl: keys label string
@@ -458,8 +519,8 @@ def main(root='default', importing=True):
                 while True:
                     header(opt)
                     sim_options = ['CALIB Basin | Observed - Stable LULC Hydrology',
-                                   'AOI   Basin | Observed - Changing LULC Hydrology',
-                                   'AOI   Basin | Projected - Changing LULC Hydrology']
+                                   'AOI Basin | Observed - Changing LULC Hydrology',
+                                   'AOI Basin | Projected - Changing LULC Hydrology']
                     lcl_opt = menu({lng[6]: sim_options}, title='Simulation menu', exitmsg=lng[10], msg=lng[5],
                                keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                     #
@@ -472,6 +533,11 @@ def main(root='default', importing=True):
                             filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=False)
                             print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
                         else:
+                            #
+                            # SETTINGS
+                            settings = settings_simulation(lng[6])
+
+
                             files_input = backend.get_input2simbhydro(aoi=False)
                             folder = projectdirs['Observed']
                             fseries = folder + '/' + files_input[0]
@@ -485,7 +551,14 @@ def main(root='default', importing=True):
                             out_dct = tools.slh_calib(fseries=fseries, fhydroparam=fhydroparam, fshruparam=fshruparam,
                                                       fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin,
                                                       ftwi=ftwi, fshru=fshru, folder=projectdirs['Simulation'],
-                                                      wkpl=True, tui=True, mapback=True, mapraster=False, label='calib')
+                                                      integrate=settings['Integrate'], wkpl=True, tui=True,
+                                                      mapback=settings['Mapback'], mapraster=settings['Mapraster'],
+                                                      label='calib')
+                            # todo post a checker here
+                            print(settings['Frametype'])
+                            if settings['Frametype'] != 'Skip':
+                                tools.export_local_pannels(ftwi, fshru, folder=out_dct['CalibFolder'], frametype=settings['Frametype'], tui=True)
+                                tools.export_local_pannels(ftwi, fshru, folder=out_dct['ValidFolder'],  frametype=settings['Frametype'], tui=True)
                     #
                     # simulate observed policy
                     elif lcl_opt == sim_options[1]:

@@ -85,6 +85,8 @@ def kge(obs, sim):
 def pbias(obs, sim):
     """
     P-Bias function
+    Negative P-Bias ->> Too much water! - ET have to work harder to remove water from the system
+    Positive P-Bias ->> Too less water! -  ET is draining too much water
     :param obs: numpy array of Observerd data
     :param sim: numpy array of Simulated data
     :return: float of P-bias in % (0 to 100)

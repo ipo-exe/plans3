@@ -14,17 +14,18 @@ def avg_2d(var2d, weight):
     return lcl_avg
 
 
-def flatten_clear(array, mask):
+def flatten_clear(array, mask, nodata=0):
     """
-    convert an nd numpy array to 1d of True values
+    convert an nd numpy array to 1d of cleared non-nan values
     :param array: nd numpy array
     :param mask: nd pseudo-boolean numpy array of mask (0 and 1)
-    :return: 1d numpy array of True values
+    :return: 1d numpy array of cleared non-nan values
     """
-    masked = np.copy(array)
-    masked[mask == 0] = np.nan
-    flatten = masked.flatten()
-    cleared = masked[~np.isnan(masked)]
+    masked = np.copy(array)  # get copy
+    masked[masked == nodata] = np.nan  # set nodata in array
+    masked[mask == 0] = np.nan  # set nodata to 0 in mask
+    flatten = masked.flatten()  # flatten
+    cleared = masked[~np.isnan(masked)]  # clear nan values from flat array
     return cleared
 
 
@@ -76,43 +77,139 @@ def nash_cascade(q, k, n):
 
 
 def count_matrix(twi, shru, aoi, shrubins, twibins):
-    # todo docstring
+    """
+
+    Countmatrix function. Note: maps must have the same dimensions!
+
+    :param twi: 2d numpy array of TWI raster map
+    :param shru: 2d numpy array of SHRU raster map
+    :param aoi: 2d numpy array of AOI pseudo-boolean raster map
+    :param shrubins: 1d numpy array of SHRU id bins
+    :param twibins: 1d numpy array of TWI bins
+    :return: 2d numpy array of Countmatrix, 1d array of TWI bins (echo) and 1d array of SHRU id bins (echo)
+    """
     countmatrix = np.zeros(shape=(len(twibins), len(shrubins)), dtype='int32')
     for i in range(len(countmatrix)):
         for j in range(len(countmatrix[i])):
-            #print('{}\t{}'.format(twi_bins[i], shruids[j]))
             if i == 0:
                 lcl_mask =  (shru == shrubins[j]) * (twi < twibins[i]) * aoi
             elif i == len(countmatrix) - 1:
                 lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * aoi
             else:
-                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i])  * aoi #* (shru == shruids[j]) * aoi
-            countmatrix[i][j] = np.sum(lcl_mask)
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i])  * aoi
+            countmatrix[i][j] = np.sum(lcl_mask)  # insert sum of pixels found in local HRU
     return countmatrix, twibins, shrubins
 
 
-def built_zmap(varmap, twi, shru, twibins, shrubins):
-    # todo docstring
+def built_zmap(varmap, twi, shru, twibins, shrubins, nodata=-1.0):
+    """
+    Built a ZMAP of a variable map . Note: maps must have the same dimensions!
+    :param varmap: 2d numpy array of variable raster map
+    :param twi: 2d numpy array of twi raster map
+    :param shru: 2d numpy array of SHRU raster map
+    :param twibins: 1d numpy array of TWI bins
+    :param shrubins: 1d numpy array of SHRU id bins
+    :param nodata: float of standard no data value
+    :return: 2d numpy array of variable ZMAP
+    """
+    aoivar = 1.0 * (varmap != nodata)
     zmap = np.zeros(shape=(len(twibins), len(shrubins)))
     for i in range(len(zmap)):
         for j in range(len(zmap[i])):
             if i == 0:
-                lcl_mask =  (shru == shrubins[j]) * (twi < twibins[i])
+                lcl_mask =  (shru == shrubins[j]) * (twi < twibins[i]) * aoivar  # get the HRU mask
             elif i == len(varmap) - 1:
-                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1])
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * aoivar
             else:
-                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i])
-            if np.sum(lcl_mask) == 0.0:
-                zmap[i][j] = 0.0
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i]) * aoivar
+            if np.sum(lcl_mask) == 0.0:  # not found any local HRU within the AOI of var
+                zmap[i][j] = nodata
             else:
-                zmap[i][j] = np.sum(varmap * lcl_mask) / np.sum(lcl_mask)  # mean variable value at the local mask
+                zmap[i][j] = np.sum(varmap * lcl_mask) / np.sum(lcl_mask)  # mean variable value at the local HRU mask
     return zmap
 
 
-def extract_zmap_signal(zmap, mask):
+def extract_map_signal(zmap, mask, nodata=-1):
+    """
+    Extract the signal of a map array
+    :param zmap: 2d array of zmap
+    :param mask: 3d array of pseudo-boolean mask or AOI
+    :param nodata: float of no data
+    :return: 1d array of zmap signal
+    """
     array_flat = zmap.flatten()
-    mask_flat = (1 * (mask.flatten() > 0))
-    return flatten_clear(array=array_flat, mask=mask_flat)
+    mask_flat = (1 * (mask.flatten() > 0.0))
+    return flatten_clear(array=array_flat, mask=mask_flat, nodata=nodata)
+
+
+def extract_sim_diagnostics(simseries):
+    """
+    Extract a diagnostics from the simulated dataframe
+    :param simseries: pandas DataFrame of simulated series - see output from hydrology.simulation()
+    :return: pandas DataFrame of Diagnostics parameter for each variable. Parameters:
+
+    Sum: sum of values for flow variables
+    Mean: mean of all variables
+    SD: Standard deviation for all variables
+    N: number of events higher than 0.0
+    Mean_N: mean of events
+    SD_N: standard deviation of events
+    C_Prec: Flow coeficient related to Prec
+    C_Input: Flow coeficient related to total input (Prec + IRI + IRA)
+
+    """
+    from backend import get_all_vars
+
+    parameters = ('Sum', 'Mean', 'SD', 'N', 'Mean_N', 'SD_N', 'C_Prec', 'C_Input')
+    variables = get_all_vars().split('-')
+    variables.append('Q')
+    variables.append('Qb')
+    variables.append('Qs')
+    stocks = ('Cpy', 'Sfs', 'Unz', 'D', 'Temp')
+    vnonwater = ('RC', 'VSA', 'Temp')
+    prec = simseries['Prec'].values
+    tinput = simseries['Prec'].values + simseries['IRA'].values + simseries['IRI'].values
+    columns = simseries.columns
+    diags = dict()
+    diags['Parameter'] = parameters
+    for v in variables:
+        # get vector
+        lcl_v = simseries[v].values
+        if v in set(stocks) or v in set(vnonwater):
+            lcl_sum = np.nan
+        else:
+            lcl_sum = np.sum(lcl_v)
+        lcl_mean = np.mean(lcl_v)
+        # SD
+        if lcl_sum == 0.0:
+            lcl_sd = 0.0
+        else:
+            lcl_sd = np.std(lcl_v)
+        # events
+        lcl_n = np.sum(1 * lcl_v > 0.0)
+        # events stats
+        if lcl_sum == 0:
+            lcl_mean_n = 0
+            lcl_sd_n = 0
+        elif lcl_n == len(lcl_v):
+            lcl_mean_n = lcl_mean
+            lcl_sd_n = lcl_sd
+        else:
+            lcl_mask = 1 * (lcl_v > 0)
+            lcl_v_clear = flatten_clear(lcl_v, lcl_mask)
+            lcl_mean_n = np.mean(lcl_v_clear)
+            lcl_sd_n = np.std(lcl_v_clear)
+        # Coefs
+        if v in set(stocks) or v in set(vnonwater):
+            lcl_cprec = np.nan
+            lcl_cinput = np.nan
+        else:
+            lcl_cprec = 100 * lcl_sum / np.sum(prec)
+            lcl_cinput = 100 * lcl_sum / np.sum(tinput)
+        diags[v] = (lcl_sum, lcl_mean, lcl_sd, lcl_n, lcl_mean_n, lcl_sd_n, lcl_cprec, lcl_cinput)
+    diag_df = pd.DataFrame(diags)
+    #print(diag_df.to_string())
+    return diag_df
 
 
 def map_back(zmatrix, a1, a2, bins1, bins2):
@@ -420,7 +517,8 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
     # Z-Map Trace setup
     if mapback:
         if mapvar == 'all':
-            mapvar = 'P-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+            from backend import get_all_vars
+            mapvar = get_all_vars()
         mapvar_lst = mapvar.split('-')
         #
         #
@@ -465,7 +563,7 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
                        'Inf': inf_i * ext, 'Tpun': tpun_i * ext,
                        'Evc': evc_i * ext, 'Tpgw': tpgw_i * ext,
                        'Evs': evs_i * ext, 'VSA': vsa_i * ext,
-                       'P': prec_i * ext, 'Temp': temp_i * ext,
+                       'Prec': prec_i * ext, 'Temp': temp_i * ext,
                        'IRA': ira_i * ext, 'IRI': iri_i * ext,
                        'PET': pet_i * ext, 'D': d_i * ext,
                        'Unz': unz_i * ext}
@@ -594,7 +692,7 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
         #
         # compute VSA
         vsa_i = topmodel_vsai(di=d_i)
-        ts_vsa[t] = np.sum(vsa_i * basinshadow) / np.sum(basinshadow)
+        ts_vsa[t] = 100 * np.sum(vsa_i * basinshadow) / np.sum(basinshadow) # in %
         #
         # get temperature map:
         temp_i = ts_temp[t] * np.ones(shape=shape)
@@ -609,7 +707,7 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
                            'Inf': inf_i * ext, 'Tpun': tpun_i * ext,
                            'Evc': evc_i * ext, 'Tpgw': tpgw_i * ext,
                            'Evs': evs_i * ext, 'VSA': vsa_i * ext,
-                           'P': prec_i * ext, 'Temp': temp_i * ext,
+                           'Prec': prec_i * ext, 'Temp': temp_i * ext,
                            'IRA': ira_i * ext, 'IRI': iri_i * ext,
                            'PET': petfull_i * ext, 'D': d_i * ext,
                            'Unz': unz_i * ext}
@@ -648,7 +746,7 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
                            'Unz':ts_unz, 'Qv':ts_qv, 'Evc':ts_evc,
                            'Evs':ts_evs, 'Tpun':ts_tpun, 'Tpgw':ts_tpgw,
                            'ET':ts_et, 'Qb':ts_qb,'Qs':ts_qs, 'Q':ts_q,
-                           'Flow':ts_flow})
+                           'Flow':ts_flow, 'VSA':ts_vsa})
     if qobs:
         exp_df['Qobs'] = series['Q'].values
         exp_df['Fobs'] = convert_sq2q(sq=series['Q'].values, area=area)
@@ -663,7 +761,7 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
 
 def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, m_range, qo_range, cpmax_range,
                 sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps,
-                tui=True, grid=200, generations=100, popsize=200, offsfrac=1,
+                tui=True, normalize=True, grid=200, generations=100, popsize=200, offsfrac=1,
                 mutrate=0.4, puremutrate=0.1, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
@@ -734,10 +832,10 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             def_df.loc[index, 'Prec'] = 0.0
         return def_df
 
-    def clear_full_signal(array3d, count):
+    def clear_full_signal(array3d, masks, nodata=0):
         out_lst = list()
         for i in range(len(array3d)):
-            lcl_signal = extract_zmap_signal(array3d[i], count)
+            lcl_signal = extract_map_signal(array3d[i], mask=masks[i], nodata=nodata)
             out_lst.append(lcl_signal)
         out_array = np.array(out_lst)
         return out_array.flatten()
@@ -755,9 +853,10 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
     #
     # get etpat zmap signal
     etpat_zmaps_nd = np.array(etpatzmaps)
+    etpat_zmaps_masks = 1.0 * (etpat_zmaps_nd != -1.0)
     #plt.imshow(etpat_zmaps_nd[0])
     #plt.show()
-    sobs_etpat = clear_full_signal(etpat_zmaps_nd, countmatrix)
+    sobs_etpat = clear_full_signal(etpat_zmaps_nd, masks=etpat_zmaps_masks, nodata=-1.0)
     sobs_etpat = sobs_etpat / np.max(sobs_etpat)  # normalize pattern by max value
     lcl_x = np.arange(0, len(sobs_etpat))
     #plt.plot(lcl_x, sobs_etpat)
@@ -832,6 +931,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
                                  area=area, basinshadow=basinshadow, tui=False,
                                  qobs=True, mapback=True, mapvar='ET', mapdates=etpatdates)
             sim_df = sim_dct['Series']
+            #
             # compute Flow sim data
             ssim = sim_df['Q'].values
             ssim_log = np.log10(ssim + (loglim * (ssim <= 0)))
@@ -862,17 +962,24 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             else:
                 lcl_flow_score = nse(obs=sobs, sim=ssim)
             #
-            # extract ETpat array:
+            #
+            # extract ET array:
             et_zmaps_nd = np.array(sim_dct['Maps']['ET'])
             #plt.imshow(et_zmaps_nd[2])
             #plt.show()
-            ssim_etmaps =  clear_full_signal(et_zmaps_nd, countmatrix)
-            ssim_etpat = ssim_etmaps / np.max(ssim_etmaps)  # Normalize simulated signal
-            #plt.plot(lcl_x, ssim_etpat)
-            #plt.plot(lcl_x, sobs_etpat)
-            #plt.show()
+            # get et signal
+            ssim_et =  clear_full_signal(et_zmaps_nd, masks=etpat_zmaps_masks, nodata=-1)
             #
-            # get fitness score for the ET pattern:
+            # normalize ET signal - get ETPat signal
+            if normalize:
+                ssim_etpat = ssim_et / np.max(ssim_et)  # Normalize simulated full signal
+            else:
+                ssim_etpat = ssim_et
+            plt.plot(lcl_x, ssim_etpat)
+            plt.plot(lcl_x, sobs_etpat)
+            plt.show()
+            #
+            # get fitness score for the full signal of ET pattern:
             lcl_etpat_score = kge(obs=sobs_etpat, sim=ssim_etpat)
             #
             #
