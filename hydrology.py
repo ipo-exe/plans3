@@ -142,12 +142,13 @@ def extract_map_signal(zmap, mask, nodata=-1):
     return flatten_clear(array=array_flat, mask=mask_flat, nodata=nodata)
 
 
-def extract_sim_diagnostics(simseries):
+def extract_sim_diagnostics(simseries, vars='all'):
     """
     Extract a diagnostics from the simulated dataframe
     :param simseries: pandas DataFrame of simulated series - see output from hydrology.simulation()
+    :param vars: string of variables alias joined by '-' or 'all'. Available:
+    'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA-Q-Qs-Qb'
     :return: pandas DataFrame of Diagnostics parameter for each variable. Parameters:
-
     Sum: sum of values for flow variables
     Mean: mean of all variables
     SD: Standard deviation for all variables
@@ -159,12 +160,11 @@ def extract_sim_diagnostics(simseries):
 
     """
     from backend import get_all_vars
-
     parameters = ('Sum', 'Mean', 'SD', 'N', 'Mean_N', 'SD_N', 'C_Prec', 'C_Input')
-    variables = get_all_vars().split('-')
-    variables.append('Q')
-    variables.append('Qb')
-    variables.append('Qs')
+    if vars == 'all':
+        variables = get_all_vars().split('-')
+    else:
+        variables = vars.split('-')
     stocks = ('Cpy', 'Sfs', 'Unz', 'D', 'Temp')
     vnonwater = ('RC', 'VSA', 'Temp')
     prec = simseries['Prec'].values
@@ -517,8 +517,8 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
     # Z-Map Trace setup
     if mapback:
         if mapvar == 'all':
-            from backend import get_all_vars
-            mapvar = get_all_vars()
+            from backend import get_all_lclvars
+            mapvar = get_all_lclvars()
         mapvar_lst = mapvar.split('-')
         #
         #
@@ -761,15 +761,15 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
 
 def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, m_range, qo_range, cpmax_range,
                 sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps,
-                tui=True, normalize=True, grid=200, generations=100, popsize=200, offsfrac=1,
-                mutrate=0.4, puremutrate=0.1, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
+                tui=True, normalize=True, grid=500, generations=100, popsize=200, offsfrac=1,
+                mutrate=0.5, puremutrate=0.8, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
     from analyst import nse, kge, rmse, pbias, frequency, error
     from sys import getsizeof
     from datetime import datetime
 
-    def wrapper(traced, lowerb, ranges):
+    def wrapper(traced, lowerb, ranges, gridsize):
         """
         Wrapper function to return list of dataframes with expressed genes
         :param traced: list of dictionaries with encoded generations
@@ -778,6 +778,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         :return: list of dataframes of each generation
         """
         df_lst = list()
+        #
         # generation loop:
         for g in range(len(traced)):
             m_lst = list()
@@ -789,12 +790,11 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             c_lst = list()
             k_lst = list()
             n_lst = list()
+            #
             # individual loop:
             for i in range(len(traced[g]['DNAs'])):
                 lcl_dna = traced[g]['DNAs'][i]
-                #print(lcl_dna[0], end='\t\t')
-                lcl_pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerb, ranges=ranges)
-                #print(lcl_pset)
+                lcl_pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerb, ranges=ranges, gridsize=gridsize)
                 m_lst.append(lcl_pset[0])
                 qo_lst.append(lcl_pset[1])
                 cpmax_lst.append(lcl_pset[2])
@@ -804,33 +804,52 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
                 c_lst.append(lcl_pset[6])
                 k_lst.append(lcl_pset[7])
                 n_lst.append(lcl_pset[8])
-            lcl_df = pd.DataFrame({'Id':traced[g]['Ids'], 'Score':traced[g]['Scores'],
-                                    'm':m_lst, 'qo':qo_lst, 'cpmax':cpmax_lst, 'sfmax':sfmax_lst, 'erz':erz_lst,
-                                   'ksat':ksat_lst, 'c':c_lst, 'k':k_lst, 'n':n_lst})
-            #print(lcl_df.to_string())
+            #
+            # built export dataframe
+            lcl_df = pd.DataFrame({'Id':traced[g]['Ids'],
+                                   'Score':traced[g]['Scores'],
+                                   'FlowScore':traced[g]['FlowScores'],
+                                   'EtpatScore':traced[g]['EtpatScores'],
+                                   'm': m_lst,
+                                   'qo': qo_lst,
+                                   'cpmax': cpmax_lst,
+                                   'sfmax': sfmax_lst,
+                                   'erz': erz_lst,
+                                   'ksat': ksat_lst,
+                                   'c': c_lst,
+                                   'k': k_lst,
+                                   'n': n_lst,
+                                   'NSE': traced[g]['NSE'],
+                                   'NSElog': traced[g]['NSElog'],
+                                   'KGE': traced[g]['KGE'],
+                                   'KGElog': traced[g]['KGElog'],
+                                   'RMSE': traced[g]['RMSE'],
+                                   'RMSElog': traced[g]['RMSElog'],
+                                   'PBias': traced[g]['PBias'],
+                                   'RMSE_CFC': traced[g]['RMSE_CFC'],
+                                   'RMSElog_CFC': traced[g]['RMSElog_CFC'],
+                                   'Q_sum': traced[g]['Q_sum'],
+                                   'Q_mean': traced[g]['Q_mean'],
+                                   'Q_sd': traced[g]['Q_sd'],
+                                   'Qb_sum': traced[g]['Qb_sum'],
+                                   'Qb_mean': traced[g]['Qb_mean'],
+                                   'Qb_sd': traced[g]['Qb_sd'],
+                                   'Q_C': traced[g]['Q_C'],
+                                   'Qb_C': traced[g]['Qb_C']
+                                   })
             df_lst.append(lcl_df.copy())
+        # return dataframe list
         return df_lst
 
-    def express_parameter_set(gene, lowerb, ranges):
+    def express_parameter_set(gene, lowerb, ranges, gridsize):
         """
         Expression of parameter set
-        :param gene: gene tuple
-        :param lowerb: numpy array of lowerbound values
-        :param ranges: numpy array of range values
+        :param gene: gene tuple ex: (4, 60, 20, 123, 12, 11, 400, 303)
+        :param lowerb: numpy array of lowerbound values ex: (1, 2, 0.2, 2, 1, 0.5, 0.5, 0.6)
+        :param ranges: numpy array of range values ex: (20, 45, 10, 32, 45, 50, 100, 30)
         :return: numpy array of parameter set
         """
-        return (np.array(gene) * ranges / 100) + lowerb
-
-    def clear_prec_by_dates(dseries, datesstr):
-        def_df = dseries.copy()
-        mapdates_df = pd.DataFrame({'Date': datesstr.split('&')})
-        mapdates_df['Date'] = mapdates_df['Date'].str.strip()
-        mapdates_df['Date'] = pd.to_datetime(mapdates_df['Date'])
-        lookup_dates = mapdates_df['Date'].values  # it is coming as datetime!
-        for i in range(len(lookup_dates)):
-            index = def_df[def_df['Date'] == lookup_dates[i]].index
-            def_df.loc[index, 'Prec'] = 0.0
-        return def_df
+        return (np.array(gene) * ranges / gridsize) + lowerb
 
     def clear_full_signal(array3d, masks, nodata=0):
         out_lst = list()
@@ -843,9 +862,9 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
     #
     # run setup
     runsize = generations * popsize * 2
+    print('Runsize = {}'.format(runsize))
     #
     # extract observed data
-    series = clear_prec_by_dates(dseries=series, datesstr=etpatdates)
     sobs = series['Q'].values
     # get log10 of flow for calibration metrics
     loglim = 0.000001
@@ -853,6 +872,14 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
     #
     # get etpat zmap signal
     etpat_zmaps_nd = np.array(etpatzmaps)
+    # compute signals
+    sobs_etpat = list()
+    for e in range(len(etpat_zmaps_nd)):
+        lcl_mask = 1 + (etpat_zmaps_nd[e] * 0.0)
+        lcl_ssim_etpat = flatten_clear(etpat_zmaps_nd[e], mask=lcl_mask, nodata=-1)
+        sobs_etpat.append(lcl_ssim_etpat)
+    lcl_x = np.arange(0, len(sobs_etpat[0]))
+    '''
     etpat_zmaps_masks = 1.0 * (etpat_zmaps_nd != -1.0)
     #plt.imshow(etpat_zmaps_nd[0])
     #plt.show()
@@ -861,6 +888,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
     lcl_x = np.arange(0, len(sobs_etpat))
     #plt.plot(lcl_x, sobs_etpat)
     #plt.show()
+    '''
     #
     #
     # reset random state using time
@@ -898,18 +926,45 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
                                        puremutrate=puremutrate, cutfrac=cutfrac)
         # recruit new population
         population = recruitment(parents, offspring)
+        #
+        #
         if tui:
             print('Population: {} KB       '.format(getsizeof(population)))
             print('                   | Set  ', end='\t  ')
             print('{:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7}'.format('m', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n'))
+        #
         # fit new population
         ids_lst = list()
-        scores_lst = list()
-        scores_flow_lst = list()
-        scores_etpat_lst = list()
+        scores_lst = np.zeros(len(population))
+        scores_flow_lst = np.zeros(len(population))
+        scores_etpat_lst = np.zeros(len(population))
         pop_dct = dict()
+        #
+        # metadata metric arrays
+        meta_nse = np.zeros(len(population))
+        meta_nselog = np.zeros(len(population))
+        meta_kge = np.zeros(len(population))
+        meta_kgelog = np.zeros(len(population))
+        meta_rmse = np.zeros(len(population))
+        meta_rmselog = np.zeros(len(population))
+        meta_pbias = np.zeros(len(population))
+        meta_rmse_cfc = np.zeros(len(population))
+        meta_rmselog_cfc = np.zeros(len(population))
+        #
+        # metadata diags arrays
+        meta_q_sum = np.zeros(len(population))
+        meta_q_mean = np.zeros(len(population))
+        meta_q_sd = np.zeros(len(population))
+        meta_qb_sum = np.zeros(len(population))
+        meta_qb_mean = np.zeros(len(population))
+        meta_qb_sd = np.zeros(len(population))
+        meta_c_qprec = np.zeros(len(population))
+        meta_c_qbprec = np.zeros(len(population))
+        #
         if tracepop:
             dnas_lst = list()
+        #
+        #
         # loop in individuals
         for i in range(len(population)):
             runstatus = 100 * counter / runsize
@@ -921,7 +976,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             #
             #
             # express parameter set
-            pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerbound, ranges=ranges)  # express the parameter set
+            pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerbound, ranges=ranges, gridsize=grid)  # express the parameter set
             #
             #
             # run topmodel
@@ -936,61 +991,103 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             ssim = sim_df['Q'].values
             ssim_log = np.log10(ssim + (loglim * (ssim <= 0)))
             #
+            #
+            # get metadata of simulated values
+            lcl_q_sum = np.sum(ssim)
+            lcl_q_mean = np.mean(ssim)
+            lcl_q_sd = np.std(ssim + (loglim * (ssim <= 0)))
+            lcl_qb_sum = np.sum(sim_df['Qb'].values)
+            lcl_qb_mean = np.mean(sim_df['Qb'].values)
+            lcl_qb_sd = np.std(sim_df['Qb'].values + (loglim * (sim_df['Qb'].values <= 0)))
+            lcl_c_qprec = 100 * lcl_q_sum / np.sum(sim_df['Prec'].values)
+            lcl_c_qbprec = 100 * lcl_qb_sum / np.sum(sim_df['Prec'].values)
+            cfc_obs = frequency(series=sobs)['Values']
+            cfc_sim = frequency(series=ssim)['Values']
+            #
+            # get metadata metrics
+            lcl_nse = nse(obs=sobs, sim=ssim)
+            lcl_nselog = nse(obs=sobs_log, sim=ssim_log)
+            lcl_kge = kge(obs=sobs, sim=ssim)
+            lcl_kgelog = kge(obs=sobs_log, sim=ssim_log)
+            lcl_rmse = rmse(obs=sobs, sim=ssim)
+            lcl_rmselog = rmse(obs=sobs_log, sim=ssim_log)
+            lcl_pbias = pbias(obs=sobs, sim=ssim)
+            lcl_rmse_cfc = rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim))
+            lcl_rmselog_cfc = rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim))
+            #
+            #
             # Get fitness score for Flow:
             if metric == 'NSE':
-                lcl_flow_score = nse(obs=sobs, sim=ssim)
+                lcl_flow_score = lcl_nse
             elif metric == 'NSElog':
-                lcl_flow_score = nse(obs=sobs_log, sim=ssim_log)
+                lcl_flow_score = lcl_nselog
             elif metric == 'KGE':
-                lcl_flow_score = kge(obs=sobs, sim=ssim)
+                lcl_flow_score = lcl_kge
             elif metric == 'KGElog':
-                lcl_flow_score = kge(obs=sobs_log, sim=ssim_log)
+                lcl_flow_score = lcl_kgelog
             elif metric == 'RMSE':
-                lcl_flow_score = 1 - (1 / (rmse(obs=sobs, sim=ssim) + loglim))
+                lcl_flow_score = 1 - lcl_rmse
             elif metric == 'RMSElog':
-                lcl_flow_score = 1 - (1 / (rmse(obs=sobs_log, sim=ssim_log) + loglim))
+                lcl_flow_score = 1 - lcl_rmselog
             elif metric == 'PBias':
-                lcl_flow_score = 1 / (np.abs(pbias(obs=sobs, sim=ssim)) + loglim)
+                lcl_flow_score = 1 - np.abs(lcl_pbias)
             elif metric == 'RMSE-CFC':
-                cfc_obs = frequency(series=sobs)['Values']
-                cfc_sim = frequency(series=ssim)['Values']
-                lcl_flow_score = 1 - (1 / (rmse(obs=cfc_obs, sim=cfc_sim) + loglim))
+                lcl_flow_score = 1 - lcl_rmse_cfc
             elif metric == 'RMSElog-CFC':
-                cfc_obs = frequency(series=sobs)['Values']
-                cfc_sim = frequency(series=ssim)['Values']
-                lcl_flow_score = 1 - (1 / (rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim)) + loglim))
+                lcl_flow_score = 1 - lcl_rmselog_cfc
+            elif metric == 'NSElog x KGElog':
+                lcl_flow_score = lcl_nselog * lcl_kgelog
+            elif metric == 'NSElog x RMSElog-CFC':
+                lcl_flow_score = lcl_nselog * (1 - lcl_rmselog_cfc)
+            elif metric == 'KGElog x RMSElog-CFC':
+                lcl_flow_score = lcl_kgelog * (1 - lcl_rmselog_cfc)
             else:
-                lcl_flow_score = nse(obs=sobs, sim=ssim)
+                lcl_flow_score = lcl_nse
+            #
+            #
             #
             #
             # extract ET array:
             et_zmaps_nd = np.array(sim_dct['Maps']['ET'])
-            #plt.imshow(et_zmaps_nd[2])
-            #plt.show()
-            # get et signal
-            ssim_et =  clear_full_signal(et_zmaps_nd, masks=etpat_zmaps_masks, nodata=-1)
+            lcl_etpat_scores_lst = list()
+            for e in range(len(et_zmaps_nd)):
+                # get a mask for the zmap based on the observed zmap
+                lcl_mask = 1 * (etpat_zmaps_nd[e] != -1)
+                # extract the zmap of the ET Pattern based on the maximum value
+                lcl_etpat_zmap = et_zmaps_nd[e]/np.max(et_zmaps_nd[e])
+                # compute the local simulated etpat signal
+                lcl_ssim_etpat = flatten_clear(lcl_etpat_zmap, mask=lcl_mask, nodata=-1)
+                # get NSE of signals
+                lcl_sg_etpat_score = nse(obs=sobs_etpat[e], sim=lcl_ssim_etpat)
+                # append to list
+                lcl_etpat_scores_lst.append(lcl_sg_etpat_score)
+                # plot signals:
+                #plt.plot(lcl_x, lcl_ssim_etpat, 'r')
+                #plt.plot(lcl_x, sobs_etpat[e], 'b')
+                #plt.show()
+                # plot maps:
+                #fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True)
+                #axs[0].imshow(etpat_zmaps_nd[e], cmap='Greys_r')
+                #axs[1].imshow(lcl_etpat_zmap, cmap='jet')
+                #lcl_error = error(obs=etpat_zmaps_nd[e], sim=lcl_etpat_zmap)
+                #axs[2].imshow(lcl_error)
+                #plt.show()
             #
-            # normalize ET signal - get ETPat signal
-            if normalize:
-                ssim_etpat = ssim_et / np.max(ssim_et)  # Normalize simulated full signal
-            else:
-                ssim_etpat = ssim_et
-            plt.plot(lcl_x, ssim_etpat)
-            plt.plot(lcl_x, sobs_etpat)
-            plt.show()
-            #
-            # get fitness score for the full signal of ET pattern:
-            lcl_etpat_score = kge(obs=sobs_etpat, sim=ssim_etpat)
+            # get fitness score for etpat based on the mean value of list
+            lcl_etpat_score = np.mean(lcl_etpat_scores_lst)
             #
             #
             #
             # COMPUTE GLOBAL SCORE:
-            w_flow = len(sobs)
-            w_etpat = len(etpatzmaps)
+            w_flow = len(sobs)  # weight of flow
+            w_etpat = len(etpatzmaps[0]) * len(etpatzmaps)  # weight of etpat
             dx = (1 - lcl_flow_score)
             dy = (1 - lcl_etpat_score) * (w_etpat / w_flow)
             euclid_d = np.sqrt(np.power(dx, 2) + np.power(dy, 2))  # euclidean distance
+            #
+            #
             lcl_dna_score = 1 - euclid_d
+            #
             #
             #
             #
@@ -1006,63 +1103,155 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
                 print(' | Score: {:8.3f} | Flow: {:8.3f} | ETpat: {:8.3f}'.format(lcl_dna_score, lcl_flow_score, lcl_etpat_score))
             #
             #
-            lcl_dna_id = 'G' + str(g + 1) + '-' + str(i)
+            lcl_dna_id = 'G' + str(g + 1) + '-' + str(i)  # stamp DNA
             #
             # store in retrieval system:
-            pop_dct[lcl_dna_id] = lcl_dna
+            pop_dct[lcl_dna_id] = lcl_dna  # dict of population
             ids_lst.append(lcl_dna_id)
-            scores_lst.append(lcl_dna_score)
-            scores_flow_lst.append(lcl_flow_score)
-            scores_etpat_lst.append(lcl_etpat_score)
+            scores_lst[i] = lcl_dna_score
+            scores_flow_lst[i] = lcl_flow_score
+            scores_etpat_lst[i] = lcl_etpat_score
             if tracepop:
                 dnas_lst.append(lcl_dna)
+            #
+            # store metadata metrics:
+            meta_nse[i] = lcl_nse
+            meta_nselog[i] = lcl_nselog
+            meta_kge[i] = lcl_kge
+            meta_kgelog[i] = lcl_kgelog
+            meta_rmse[i] = lcl_rmse
+            meta_rmselog[i] = lcl_rmselog
+            meta_pbias[i] = lcl_pbias
+            meta_rmse_cfc[i] = lcl_rmse_cfc
+            meta_rmselog_cfc[i] = lcl_rmselog_cfc
+            #
+            # store metadata diags
+            meta_q_sum[i] = lcl_q_sum
+            meta_q_mean[i] = lcl_q_mean
+            meta_q_sd[i] = lcl_q_sd
+            meta_qb_sum[i] = lcl_qb_sum
+            meta_qb_mean[i] = lcl_qb_mean
+            meta_qb_sd[i] = lcl_qb_sd
+            meta_c_qprec[i] = lcl_c_qprec
+            meta_c_qbprec[i] = lcl_c_qbprec
         #
         # trace full population
         if tracepop:
-            trace_pop.append({'DNAs': dnas_lst[:], 'Ids': ids_lst[:], 'Scores': scores_lst[:],
-                              'FlowScores':scores_flow_lst[:], 'EtpatScores':scores_etpat_lst[:]})
+            trace_pop.append({'DNAs': dnas_lst[:],
+                              'Ids': ids_lst[:],
+                              'Scores': scores_lst[:],
+                              'FlowScores':scores_flow_lst[:],
+                              'EtpatScores':scores_etpat_lst[:],
+                              'NSE':meta_nse[:],
+                              'NSElog':meta_nselog[:],
+                              'KGE':meta_kge[:],
+                              'KGElog':meta_kgelog[:],
+                              'RMSE':meta_rmse[:],
+                              'RMSElog':meta_rmselog[:],
+                              'PBias':meta_pbias[:],
+                              'RMSE_CFC':meta_rmse_cfc[:],
+                              'RMSElog_CFC':meta_rmselog_cfc[:],
+                              'Q_sum':meta_q_sum[:],
+                              'Q_mean':meta_q_mean[:],
+                              'Q_sd':meta_q_sd[:],
+                              'Qb_sum':meta_qb_sum[:],
+                              'Qb_mean':meta_qb_mean,
+                              'Qb_sd':meta_qb_sd[:],
+                              'Q_C':meta_c_qprec[:],
+                              'Qb_C':meta_c_qbprec[:]})
+        #
         #
         # rank new population (Survival)
-        df_population_rank = pd.DataFrame({'Id': ids_lst, 'Score': scores_lst,
-                                           'FlowScores':scores_flow_lst[:], 'EtpatScores':scores_etpat_lst[:]})
+        df_population_rank = pd.DataFrame({'Id': ids_lst,
+                                           'Score': scores_lst,
+                                           'FlowScores':scores_flow_lst[:],
+                                           'EtpatScores':scores_etpat_lst[:],
+                                           'NSE': meta_nse[:],
+                                           'NSElog': meta_nselog[:],
+                                           'KGE': meta_kge[:],
+                                           'KGElog': meta_kgelog[:],
+                                           'RMSE': meta_rmse[:],
+                                           'RMSElog': meta_rmselog[:],
+                                           'PBias': meta_pbias[:],
+                                           'RMSE_CFC': meta_rmse_cfc[:],
+                                           'RMSElog_CFC': meta_rmselog_cfc[:],
+                                           'Q_sum': meta_q_sum[:],
+                                           'Q_mean': meta_q_mean[:],
+                                           'Q_sd': meta_q_sd[:],
+                                           'Qb_sum': meta_qb_sum[:],
+                                           'Qb_mean': meta_qb_mean[:],
+                                           'Qb_sd': meta_qb_sd[:],
+                                           'Q_C': meta_c_qprec[:],
+                                           'Qb_C': meta_c_qbprec[:]
+                                           })
+        #
+        #
+        #
+        # Maximization. Therefore ascending=False
         df_population_rank.sort_values(by='Score', ascending=False, inplace=True)
         #
-        # Selection of mating pool
+        #
+        # Selection of mating pool (Parents) - N largest score values
         df_parents_rank = df_population_rank.nlargest(len(parents), columns=['Score'])
         #
+        # Extract parents
         parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
-        parents_scores = df_parents_rank['Score'].values  # numpy array of float scores
-        parents_scores_flow = df_parents_rank['FlowScores'].values
-        parents_scores_etpat = df_parents_rank['EtpatScores'].values
         #
+        # Retrieve from pop dict the DNA of each parent ID
         parents_lst = list()
         for i in range(len(parents_ids)):
             parents_lst.append(pop_dct[parents_ids[i]])
-        parents = tuple(parents_lst)  # update parents DNAs
+        # update parents DNAs
+        parents = tuple(parents_lst)
         #
-        # tracing
+        # tracing len setup
         tr_len = int(len(parents) * tracefrac)
-        # printing
-        '''if tui:
-            for i in range(tr_len):
-                print('{}\t\t\tScore: {}'.format(parents[i], round(parents_scores[i], 3)))'''
         #
         # trace best parents
-        trace.append({'DNAs': parents[:tr_len], 'Ids': parents_ids[:tr_len], 'Scores': parents_scores[:tr_len],
-                      'FlowScores': parents_scores_flow[:tr_len], 'EtpatScores':parents_scores_etpat[:tr_len]})
+        trace.append({'DNAs': parents[:tr_len],
+                      'Ids': parents_ids[:tr_len],
+                      'Scores': df_parents_rank['Score'].values[:tr_len],
+                      'FlowScores': df_parents_rank['FlowScores'].values[:tr_len],
+                      'EtpatScores':df_parents_rank['EtpatScores'].values[:tr_len],
+                      'NSE': df_parents_rank['NSE'].values[:tr_len],
+                      'NSElog': df_parents_rank['NSElog'].values[:tr_len],
+                      'KGE': df_parents_rank['KGE'].values[:tr_len],
+                      'KGElog': df_parents_rank['KGElog'].values[:tr_len],
+                      'RMSE': df_parents_rank['RMSE'].values[:tr_len],
+                      'RMSElog': df_parents_rank['RMSElog'].values[:tr_len],
+                      'PBias': df_parents_rank['PBias'].values[:tr_len],
+                      'RMSE_CFC': df_parents_rank['RMSE_CFC'].values[:tr_len],
+                      'RMSElog_CFC': df_parents_rank['RMSElog_CFC'].values[:tr_len],
+                      'Q_sum': df_parents_rank['Q_sum'].values[:tr_len],
+                      'Q_mean': df_parents_rank['Q_mean'].values[:tr_len],
+                      'Q_sd': df_parents_rank['Q_sd'].values[:tr_len],
+                      'Qb_sum': df_parents_rank['Qb_sum'].values[:tr_len],
+                      'Qb_mean': df_parents_rank['Qb_mean'].values[:tr_len],
+                      'Qb_sd': df_parents_rank['Qb_sd'].values[:tr_len],
+                      'Q_C': df_parents_rank['Q_C'].values[:tr_len],
+                      'Qb_C': df_parents_rank['Qb_C'].values[:tr_len]
+                      })
     #
     # retrieve last best solution
     last = trace[len(trace) - 1]
     last_dna = last['DNAs'][0]
     last_score = last['Scores'][0]
-    pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges)
+    last_flow_score = last['FlowScores'][0]
+    last_etpat_score = last['EtpatScores'][0]
+    pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges, gridsize=grid)
     if tui:
-        print('\n\nBEST solution:')
-        print(pset)
-        print('Score = {}'.format(last_score))
-    wtrace = wrapper(traced=trace, lowerb=lowerbound, ranges=ranges)
-    wtrace_pop = wrapper(traced=trace_pop, lowerb=lowerbound, ranges=ranges)
+        print('\n\nBEST SET solution:')
+        tui_df = pd.DataFrame({'Parameter': ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n'),
+                               'Set': pset})
+        print(tui_df.to_string())
+        print('Score = {:.3f}'.format(last_score))
+        print('Flow Score = {:.3f}'.format(last_flow_score))
+        print('Etpat Score = {:.3f}'.format(last_etpat_score))
+    #
+    # wrap popuplation and
+    wtrace = wrapper(traced=trace, lowerb=lowerbound, ranges=ranges, gridsize=grid)
     if tracepop:
+        wtrace_pop = wrapper(traced=trace_pop, lowerb=lowerbound, ranges=ranges, gridsize=grid)
         return pset, wtrace, wtrace_pop
     else:
         return pset, wtrace

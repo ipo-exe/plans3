@@ -915,6 +915,102 @@ def diags():
     series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     sdiag(fseries, tui=True)
 
+def plot_sal_frames():
+    import numpy as np
+    from visuals import sal_deficit_frame
+    from input import asc_raster
+    from hydrology import topmodel_di, topmodel_vsai, avg_2d
+
+    def stamped(g):
+        if g < 10:
+            stamp = '0000' + str(g)
+        elif g >= 10 and g < 100:
+            stamp = '000' + str(g)
+        elif g >= 100 and g < 1000:
+            stamp = '00' + str(g)
+        elif g >= 1000 and g < 10000:
+            stamp = '0' + str(g)
+        else:
+            stamp = str(g)
+        return stamp
+
+
+    meta, twi = asc_raster('./samples/calib_twi.asc')
+
+    lamb = avg_2d(twi, weight=(1 + (twi * 0)))
+    print(lamb)
+    m1 = 10
+    m2 = 30
+    d_nd = np.arange(0, 151)
+    print(d_nd)
+    d1_lst = list()
+    d2_lst = list()
+    for d in d_nd:
+        di1 = topmodel_di(d, twi, m=m1, lamb=lamb)
+        d1_lst.append(di1)
+        di2 = topmodel_di(d, twi, m=m2, lamb=lamb)
+        d2_lst.append(di2)
+    vmax = np.max((d1_lst, d2_lst))
+    print(vmax)
+    count = 0
+    for i in range(len(d1_lst)):
+        vsai1 = topmodel_vsai(d1_lst[i])
+        vsai2 = topmodel_vsai(d2_lst[i])
+        filename = 'SAL_d_frame_{}'.format(stamped(count))
+        print(filename)
+        sal_deficit_frame(d_nd[i], d1=d1_lst[i], vsa1=vsai1, d2=d2_lst[i], vsa2=vsai2, m1=m1, m2=m2, vmax=vmax, vmin=0,
+                          dgbl_max=np.max(d_nd), filename=filename)
+        count = count + 1
+    for i in range(len(d1_lst) - 1, -1, -1):
+        vsai1 = topmodel_vsai(d1_lst[i])
+        vsai2 = topmodel_vsai(d2_lst[i])
+        filename = 'SAL_d_frame_{}'.format(stamped(count))
+        print(filename)
+        sal_deficit_frame(d_nd[i], d1=d1_lst[i], vsa1=vsai1, d2=d2_lst[i], vsa2=vsai2, m1=m1, m2=m2, vmax=vmax, vmin=0,
+                          dgbl_max=np.max(d_nd), filename=filename)
+        count = count + 1
+
+
+def plot_gens_evolution(folder='C:/bin'):
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    def stamped(g):
+        if g < 10:
+            stamp = '0000' + str(g)
+        elif g >= 10 and g < 100:
+            stamp = '000' + str(g)
+        elif g >= 100 and g < 1000:
+            stamp = '00' + str(g)
+        elif g >= 1000 and g < 10000:
+            stamp = '0' + str(g)
+        else:
+            stamp = str(g)
+        return stamp
+
+    f = r"C:\Plans3\pardo\runbin\optimization\calib_Hydrology_KGElog_2021-05-05-13-20-14\generations\population\generations_population.txt"
+    df = pd.read_csv(f, sep=';')
+    param = 'sfmax'
+    likelihood = 'Qb_C'
+    for i in range(len(df)):
+        lcl_f = df['File'].values[i]
+        lcl_df = pd.read_csv(lcl_f, sep=';')
+        if i == 0:
+            x = lcl_df[param]
+            y = lcl_df[likelihood].values / 100
+        else:
+            x = np.append(x, lcl_df[param])
+            y = np.append(y, lcl_df[likelihood].values / 100)
+        plt.scatter(x, y, cmap='Spectral', c=y)
+        plt.ylim((-1, 1))
+        plt.ylabel(likelihood)
+        plt.xlabel('{} parameter'.format(param))
+        plt.title('Generation {}'.format(i + 1))
+        filename = 'generation_{}_{}_{}.jpg'.format(param, likelihood, stamped(i))
+        print(filename)
+        exp = '{}/{}'.format(folder, filename)
+        plt.savefig(exp)
 
 #file = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-18-20-15\bestset\calibration_period\raster_etpat_obssim_series.txt"
 #file = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-18-20-15\bestset\calibration_period\zmaps_etpat_obssim_series.txt"
@@ -938,4 +1034,4 @@ def diags():
 
 #export_local_pannels(ftwi, fshru, folder, tui=True)
 
-diags()
+plot_gens_evolution()

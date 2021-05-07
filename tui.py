@@ -426,7 +426,7 @@ def main(root='default', importing=True):
                                     elif lcl_lcl_opt == 'calib_etpat_zmaps.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_zmap_series(filesp[0], filesp[1], filesp[2],
-                                                                                filesp[3],
+                                                                                filesp[3], var='etpat',
                                                                                 folder=projectdirs['Observed'],
                                                                                 filename=lcl_filename, tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
@@ -619,7 +619,7 @@ def main(root='default', importing=True):
                                     aux_str = 'calib_hydro' + '_' + metric
                                     #dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
                                     size_opts = ('Very Small - Size:12 Gens:2', 'Small - Size:25 Gens:5',
-                                                 'Medium - Size:100 Gens:10', 'Large - Size:500 Gens:200')
+                                                 'Medium - Size:100 Gens:10', 'Large - Size:250 Gens:10')
                                     scale = menu({'Scale': size_opts}, exitkey='d', title='Genetic Algorithm Scale',
                                                  exitmsg='Use default (Small)', msg=lng[5],
                                                  keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
@@ -635,8 +635,8 @@ def main(root='default', importing=True):
                                         popsize = 100
                                         generations = 10
                                     elif scale == size_opts[3]:
-                                        popsize = 500
-                                        generations = 200
+                                        popsize = 250
+                                        generations = 10
                                     calibfiles = tools.calibrate(fseries=fseries, fhydroparam=fhydroparam,
                                                                  fshruparam=fshruparam,
                                                                  fhistograms=fhistograms,
