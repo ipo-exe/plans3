@@ -311,7 +311,9 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
 
 def map_fto(fsoils, fsoilsparam, folder='C:/bin', filename='fto'):
     """
+
     Derive the f_To map from soils map and soils parameters
+
     :param fsoils: string path to soils raster .asc file
     :param fsoilsparam: string path to soils parameters .txt file. Separator = ;
     :param folder: string path to destination folder
@@ -1277,8 +1279,31 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, mapback=False,
         mapraster=False, mapvar='all', mapdates='all', integrate=False, qobs=False, folder='C:/bin',
         wkpl=False, label='',  tui=False):
-    #
-    # todo 1) docstring
+    """
+
+    SLH - Stable LULC Hydrology routine
+
+    :param fseries: string filepath to simulation series
+    :param fhydroparam: string filepath to parameters csv (txt file)
+    :param fshruparam: string filepath to shru parameters csv (txt file)
+    :param fhistograms: string filepath to histograms csv (txt file)
+    :param fbasinhists: string filepath to basin histograms csv (txt file)
+    :param fbasin: string filepath to basin raster map (asc file)
+    :param ftwi: string filepath to twi raster map (asc file)
+    :param fshru: string filepath to shru raster map (asc file)
+    :param mapback: boolean to map back variables
+    :param mapraster: boolean to map back raster maps
+    :param mapvar: string of variables to map. Pass concatenated by '-'. Ex: 'ET-TF-Inf'.
+    Options: 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+    :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-21-01 & 21-22-01'
+    :param integrate: boolean to inclue variable integration over the simulation period
+    :param qobs: boolean to inclue Qobs in visuals
+    :param folder: string to folderpath
+    :param wkpl: boolean to set folder as workplace
+    :param label: string label
+    :param tui: boolean to TUI display
+    :return: dictionary with keys to output filepaths
+    """
     import time, datetime
     from shutil import copyfile
     from input import zmap
@@ -1315,9 +1340,6 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         else:
             mapid = 'flow'
         return mapid
-
-
-    #
     #
     # Run Folder setup
     if wkpl:  # if the passed folder is a workplace, create a sub folder within it
