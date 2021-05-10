@@ -598,10 +598,10 @@ def main(root='default', importing=True):
                                 header(lcl_opt)
                                 metrics_options = ('NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias',
                                                    'RMSE-CFC', 'RMSElog-CFC')
-                                metric = menu({'Metric': metrics_options}, title='Calibration metric Menu', exitmsg=lng[10], msg=lng[5],
+                                likelihood = menu({'Likelihood': metrics_options}, title='Flow Likelihood Menu', exitmsg=lng[10], msg=lng[5],
                                               keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                                 # exit menu condition
-                                if metric == lng[10]:
+                                if likelihood == lng[10]:
                                     break
                                 else:
                                     files_input = backend.get_input2calibhydro()
@@ -616,26 +616,26 @@ def main(root='default', importing=True):
                                     fshru = folder + '/' + files_input[7]
                                     fetpatzmaps = folder + '/' + files_input[8]
                                     fetpatseries = folder + '/' + files_input[9]
-                                    aux_str = 'calib_hydro' + '_' + metric
+                                    aux_str = 'calib_hydro' + '_' + likelihood
                                     #dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
-                                    size_opts = ('Very Small - Size:12 Gens:2', 'Small - Size:25 Gens:5',
-                                                 'Medium - Size:100 Gens:10', 'Large - Size:250 Gens:10')
+                                    size_opts = ('Very Small - Size:10 Gens:2', 'Small - Size:25 Gens:5',
+                                                 'Medium - Size:250 Gens:5', 'Large - Size:300 Gens:10')
                                     scale = menu({'Scale': size_opts}, exitkey='d', title='Genetic Algorithm Scale',
                                                  exitmsg='Use default (Small)', msg=lng[5],
                                                  keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
                                     popsize = 10
                                     generations = 3
                                     if scale == size_opts[0]:
-                                        popsize = 12
+                                        popsize = 10
                                         generations = 2
                                     elif scale == size_opts[1]:
                                         popsize = 25
                                         generations = 5
                                     elif scale == size_opts[2]:
-                                        popsize = 100
-                                        generations = 10
-                                    elif scale == size_opts[3]:
                                         popsize = 250
+                                        generations = 5
+                                    elif scale == size_opts[3]:
+                                        popsize = 300
                                         generations = 10
                                     calibfiles = tools.calibrate(fseries=fseries, fhydroparam=fhydroparam,
                                                                  fshruparam=fshruparam,
@@ -647,7 +647,7 @@ def main(root='default', importing=True):
                                                                  ftwi=ftwi, fshru=fshru,
                                                                  folder=projectdirs['Optimization'], label='calib',
                                                                  generations=generations, popsize=popsize,
-                                                                 metric=metric, tui=True, mapback=False)
+                                                                 likelihood=likelihood, tui=True, mapback=False)
                                     print('\nRun files sucessfully created at:\n{}\n'.format(calibfiles['Folder']))
                                     ok()
                     #

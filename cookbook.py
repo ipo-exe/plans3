@@ -915,6 +915,7 @@ def diags():
     series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     sdiag(fseries, tui=True)
 
+
 def plot_sal_frames():
     import numpy as np
     from visuals import sal_deficit_frame
@@ -1012,26 +1013,3 @@ def plot_gens_evolution(folder='C:/bin'):
         exp = '{}/{}'.format(folder, filename)
         plt.savefig(exp)
 
-#file = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-18-20-15\bestset\calibration_period\raster_etpat_obssim_series.txt"
-#file = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-18-20-15\bestset\calibration_period\zmaps_etpat_obssim_series.txt"
-#demo_obs_sim_map_analyst(file, 'raster')
-
-#watch_maps()
-
-#delete_values_by_date()
-
-#demo_watch()
-#demo_simulation()
-
-#folder ='C:/Plans3/pardo/datasets/observed'
-#ftwi = '{}/calib_twi.asc'.format(folder)
-#fshru = '{}/calib_shru.asc'.format(folder)
-
-#folder = r"C:\Plans3\demo\runbin\simulation\calib_SLH_2021-04-25-14-32-52\calibration_period"
-#folder  = r"C:\Plans3\pardo\runbin\simulation\calib_SLH_2021-04-26-23-13-45\validation_period"
-
-#from tools import export_local_pannels
-
-#export_local_pannels(ftwi, fshru, folder, tui=True)
-
-plot_gens_evolution()

@@ -762,7 +762,7 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
 def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, m_range, qo_range, cpmax_range,
                 sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps,
                 tui=True, normalize=True, grid=500, generations=100, popsize=200, offsfrac=1,
-                mutrate=0.5, puremutrate=0.8, cutfrac=0.33, tracefrac=0.1, tracepop=True, metric='NSE'):
+                mutrate=0.5, puremutrate=0.8, cutfrac=0.33, tracefrac=0.1, tracepop=True, likelihood='NSE'):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
     from analyst import nse, kge, rmse, pbias, frequency, error
@@ -791,7 +791,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             k_lst = list()
             n_lst = list()
             #
-            # individual loop:
+            # individual loop to extract :
             for i in range(len(traced[g]['DNAs'])):
                 lcl_dna = traced[g]['DNAs'][i]
                 lcl_pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerb, ranges=ranges, gridsize=gridsize)
@@ -805,8 +805,11 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
                 k_lst.append(lcl_pset[7])
                 n_lst.append(lcl_pset[8])
             #
+            gen = np.ones(len(m_lst)) * g
             # built export dataframe
-            lcl_df = pd.DataFrame({'Id':traced[g]['Ids'],
+            lcl_df = pd.DataFrame({'Gen': gen,
+                                   'Id':traced[g]['Ids'],
+                                   'SetIds': traced[g]['SetIds'],
                                    'Score':traced[g]['Scores'],
                                    'FlowScore':traced[g]['FlowScores'],
                                    'EtpatScore':traced[g]['EtpatScores'],
@@ -837,9 +840,15 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
                                    'Q_C': traced[g]['Q_C'],
                                    'Qb_C': traced[g]['Qb_C']
                                    })
-            df_lst.append(lcl_df.copy())
-        # return dataframe list
-        return df_lst
+            #
+            #
+            if g == 0:
+                out_df = lcl_df
+            else:
+                out_df = out_df.append(lcl_df, ignore_index=True)
+        out_df['Qb_R'] = out_df['Qb_sum'].values / out_df['Q_sum'].values
+        # return full dataframe
+        return out_df
 
     def express_parameter_set(gene, lowerb, ranges, gridsize):
         """
@@ -935,6 +944,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         #
         # fit new population
         ids_lst = list()
+        ids_set_lst = list()
         scores_lst = np.zeros(len(population))
         scores_flow_lst = np.zeros(len(population))
         scores_etpat_lst = np.zeros(len(population))
@@ -972,6 +982,8 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             #
             # get local score and id:
             lcl_dna = population[i]  # local dna
+            #print(lcl_dna[0])
+            lcl_set_id = str(lcl_dna[0])
             #
             #
             #
@@ -999,8 +1011,8 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             lcl_qb_sum = np.sum(sim_df['Qb'].values)
             lcl_qb_mean = np.mean(sim_df['Qb'].values)
             lcl_qb_sd = np.std(sim_df['Qb'].values + (loglim * (sim_df['Qb'].values <= 0)))
-            lcl_c_qprec = 100 * lcl_q_sum / np.sum(sim_df['Prec'].values)
-            lcl_c_qbprec = 100 * lcl_qb_sum / np.sum(sim_df['Prec'].values)
+            lcl_c_qprec = lcl_q_sum / np.sum(sim_df['Prec'].values)
+            lcl_c_qbprec = lcl_qb_sum / np.sum(sim_df['Prec'].values)
             cfc_obs = frequency(series=sobs)['Values']
             cfc_sim = frequency(series=ssim)['Values']
             #
@@ -1017,29 +1029,29 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             #
             #
             # Get fitness score for Flow:
-            if metric == 'NSE':
+            if likelihood == 'NSE':
                 lcl_flow_score = lcl_nse
-            elif metric == 'NSElog':
+            elif likelihood == 'NSElog':
                 lcl_flow_score = lcl_nselog
-            elif metric == 'KGE':
+            elif likelihood == 'KGE':
                 lcl_flow_score = lcl_kge
-            elif metric == 'KGElog':
+            elif likelihood == 'KGElog':
                 lcl_flow_score = lcl_kgelog
-            elif metric == 'RMSE':
+            elif likelihood == 'RMSE':
                 lcl_flow_score = 1 - lcl_rmse
-            elif metric == 'RMSElog':
+            elif likelihood == 'RMSElog':
                 lcl_flow_score = 1 - lcl_rmselog
-            elif metric == 'PBias':
+            elif likelihood == 'PBias':
                 lcl_flow_score = 1 - np.abs(lcl_pbias)
-            elif metric == 'RMSE-CFC':
+            elif likelihood == 'RMSE-CFC':
                 lcl_flow_score = 1 - lcl_rmse_cfc
-            elif metric == 'RMSElog-CFC':
+            elif likelihood == 'RMSElog-CFC':
                 lcl_flow_score = 1 - lcl_rmselog_cfc
-            elif metric == 'NSElog x KGElog':
+            elif likelihood == 'NSElog x KGElog':
                 lcl_flow_score = lcl_nselog * lcl_kgelog
-            elif metric == 'NSElog x RMSElog-CFC':
+            elif likelihood == 'NSElog x RMSElog-CFC':
                 lcl_flow_score = lcl_nselog * (1 - lcl_rmselog_cfc)
-            elif metric == 'KGElog x RMSElog-CFC':
+            elif likelihood == 'KGElog x RMSElog-CFC':
                 lcl_flow_score = lcl_kgelog * (1 - lcl_rmselog_cfc)
             else:
                 lcl_flow_score = lcl_nse
@@ -1108,6 +1120,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             # store in retrieval system:
             pop_dct[lcl_dna_id] = lcl_dna  # dict of population
             ids_lst.append(lcl_dna_id)
+            ids_set_lst.append(lcl_set_id)
             scores_lst[i] = lcl_dna_score
             scores_flow_lst[i] = lcl_flow_score
             scores_etpat_lst[i] = lcl_etpat_score
@@ -1139,6 +1152,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         if tracepop:
             trace_pop.append({'DNAs': dnas_lst[:],
                               'Ids': ids_lst[:],
+                              'SetIds': ids_set_lst[:],
                               'Scores': scores_lst[:],
                               'FlowScores':scores_flow_lst[:],
                               'EtpatScores':scores_etpat_lst[:],
@@ -1162,8 +1176,9 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         #
         #
         # rank new population (Survival)
-        df_population_rank = pd.DataFrame({'Id': ids_lst,
-                                           'Score': scores_lst,
+        df_population_rank = pd.DataFrame({'Id': ids_lst[:],
+                                           'SetIds': ids_set_lst[:],
+                                           'Score': scores_lst[:],
                                            'FlowScores':scores_flow_lst[:],
                                            'EtpatScores':scores_etpat_lst[:],
                                            'NSE': meta_nse[:],
@@ -1210,6 +1225,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         # trace best parents
         trace.append({'DNAs': parents[:tr_len],
                       'Ids': parents_ids[:tr_len],
+                      'SetIds': ids_set_lst[:tr_len],
                       'Scores': df_parents_rank['Score'].values[:tr_len],
                       'FlowScores': df_parents_rank['FlowScores'].values[:tr_len],
                       'EtpatScores':df_parents_rank['EtpatScores'].values[:tr_len],
@@ -1240,7 +1256,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
     last_etpat_score = last['EtpatScores'][0]
     pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges, gridsize=grid)
     if tui:
-        print('\n\nBEST SET solution:')
+        print('\n\nMaximum Likelihood Model:')
         tui_df = pd.DataFrame({'Parameter': ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n'),
                                'Set': pset})
         print(tui_df.to_string())
@@ -1248,11 +1264,12 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         print('Flow Score = {:.3f}'.format(last_flow_score))
         print('Etpat Score = {:.3f}'.format(last_etpat_score))
     #
-    # wrap popuplation and
+    # wrap traced
     wtrace = wrapper(traced=trace, lowerb=lowerbound, ranges=ranges, gridsize=grid)
+    out_dct = {'MLM':pset, 'Traced': wtrace}
     if tracepop:
+        # wrap population
         wtrace_pop = wrapper(traced=trace_pop, lowerb=lowerbound, ranges=ranges, gridsize=grid)
-        return pset, wtrace, wtrace_pop
-    else:
-        return pset, wtrace
+        out_dct['Population'] = wtrace_pop
+    return out_dct
 

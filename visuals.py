@@ -1216,6 +1216,25 @@ def plot_obssim_zmaps(obs, sim, metric, ranges='local', rangesmetric='local', tt
 
 def plot_map_analyst(obs, sim, metric, obs_sig, sim_sig, metric_sig, metrics_dct, ranges='local', metricranges='local',
                      ttl='title', filename='map_analyst', folder='C:/bin', show=False):
+    """
+
+    Plot a MAP analyst
+
+    :param obs: 2d numpy array of OBS map
+    :param sim: 2d numpy array of SIM map
+    :param metric: 2d numpy array of evaluation metric
+    :param obs_sig: 1d numpy array of OBS signal
+    :param sim_sig: 1d numpy array of SIM signal
+    :param metric_sig: 1d numpy array of signal of evaluation metric
+    :param metrics_dct: dictonary of global evaluation metrics
+    :param ranges: string or tuple of ranges of maps. Default: "local" to use local min max of OBS and SIM
+    :param metricranges: string or tuple of ranges of metric map. Default: "local" to use local min max of Metric map
+    :param ttl: string of superior title
+    :param filename: string of filename
+    :param folder: string filepath of export folder
+    :param show: boolean to show instead of saving. Default: False
+    :return: string of filepath
+    """
     fig = plt.figure(figsize=(14, 7), )  # Width, Height
     fig.suptitle(ttl)
     gs = mpl.gridspec.GridSpec(6, 13, wspace=0.3, hspace=0.45)
@@ -1348,5 +1367,145 @@ def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, m1, m2, vmax=100, vmin=0, dgbl_m
     plt.close(fig)
 
 
-
+def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behaviroural=0.5,
+                     filename='post_scattergram', folder='C:/bin', show=False):
+    """
+    Plot the 9 scattergrams of GLUE analysis
+    :param models_df: pandas dataframe - models dataframe (behavioural)
+    :param rng_dct: dictionary - range dictionary with parameter keys followed by '_rng'.
+     Example: key "m_rng" would access the range tuple of m parameter
+    :param likelihood: string of likelihood index.
+    :param criteria: string of behavioural criteria
+    :param behaviroural: float of behavioural threshold
+    :param filename: string of filename
+    :param folder: string of folder path
+    :param show: boolean to show instead of saving
+    :return: string of filepath
+    """
+    fig = plt.figure(figsize=(14, 6), )  # Width, Height
+    fig.suptitle('GLUE | Posterior scattergrams of behavioural models'
+                 ' | Criteria: {} {} {} | N = {}'.format(likelihood, criteria, behaviroural, len(models_df)))
+    gs = mpl.gridspec.GridSpec(2, 5, wspace=0.45, hspace=0.45)
+    #
+    params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    units = ('mm', 'mm/d', 'mm', 'mm', 'mm', 'mm/d', '°C', 'days', 'stores units')
+    #
+    criteria_line = (models_df['m'].values * 0.0) + (behaviroural * 0.97)
+    #
+    ind = 0
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[0, 0])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    ind = 1
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[0, 1])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    ind = 2
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[0, 2])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    ind = 3
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[0, 3])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    ind = 4
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[0, 4])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    ind = 5
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[1, 0])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    ind = 6
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[1, 1])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    ind = 7
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[1, 2])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    ind = 8
+    lcl_prm = params[ind]
+    lcl_units = units[ind]
+    ax = fig.add_subplot(gs[1, 3])
+    plt.title('{}'.format(lcl_prm))
+    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+    plt.ylabel('L[M|y]')
+    plt.xlabel('{}'.format(lcl_units))
+    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+    plt.ylim((0, 1.1))
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.jpg'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
 

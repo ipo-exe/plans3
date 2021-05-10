@@ -1140,9 +1140,8 @@ def osa_map(fseries, fhistograms, type, var='ETPat', filename='obssim_maps_analy
 
 
 def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, mapback=False,
-              mapraster=False, mapvar='all', mapdates='all', integrate=False, cutdatef=0.3, qobs=True, folder='C:/bin', wkpl=False,
-              label='',
-              tui=False):
+              mapraster=False, mapvar='all', mapdates='all', integrate=False, cutdatef=0.3, qobs=True,
+              folder='C:/bin', wkpl=False, label='',tui=False):
     from backend import create_rundir
     from visuals import pannel_calib_valid
     from os import mkdir
@@ -1674,8 +1673,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
 
 def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fetpatzmaps,
               fetpatseries, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all',
-              qobs=True, cutdatef=0.3,
-              generations=100, popsize=200, metric='NSE', label='', normalize=True):
+              qobs=True, cutdatef=0.3, generations=100, popsize=200, likelihood='NSE', label='', normalize=True):
     # todo docstring
     from hydrology import avg_2d, simulation, map_back, calibration
     from visuals import pannel_global
@@ -1710,6 +1708,46 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         count_matrix = dataframe.values
         return count_matrix, twi_bins, shru_ids
 
+    def extract_ranges(fhydroparam):
+        hydroparam_df = pd.read_csv(fhydroparam, sep=';')
+        hydroparam_df = dataframe_prepro(hydroparam_df, 'Parameter')
+        #
+        # extract set range values
+        m_min = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Min'].values[0]
+        qo_min = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Min'].values[0]
+        cpmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Min'].values[0]
+        sfmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Min'].values[0]
+        erz_min = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Min'].values[0]
+        ksat_min = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Min'].values[0]
+        c_min = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Min'].values[0]
+        k_min = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Min'].values[0]
+        n_min = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Min'].values[0]
+        #
+        #
+        m_max = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Max'].values[0]
+        qo_max = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Max'].values[0]
+        cpmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Max'].values[0]
+        sfmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Max'].values[0]
+        erz_max = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Max'].values[0]
+        ksat_max = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Max'].values[0]
+        c_max = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Max'].values[0]
+        k_max = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Max'].values[0]
+        n_max = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Max'].values[0]
+        lat = hydroparam_df[hydroparam_df['Parameter'] == 'lat']['Max'].values[0]
+        #
+        out_dct = {'Params_df':hydroparam_df,
+                   'm_rng': (m_min, m_max),
+                   'qo_rng': (qo_min, qo_max),
+                   'cpmax_rng': (cpmax_min, cpmax_max),
+                   'sfmax_rng': (sfmax_min, sfmax_max),
+                   'erz_rng': (erz_min, erz_max),
+                   'ksat_rng': (ksat_min, ksat_max),
+                   'c_rng': (c_min, c_max),
+                   'k_rng': (k_min, k_max),
+                   'n_rng': (n_min, n_max),
+                   'lat':lat}
+        return out_dct
+
     def extract_twi_avg(twibins, count):
         twi_sum = 0
         for i in range(len(twibins)):
@@ -1733,7 +1771,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # Run Folder setup
     if label != '':
         label = label + '_'
-    folder = create_rundir(label=label + 'Hydrology_' + metric, wkplc=folder)
+    folder = create_rundir(label=label + 'Hydrology_' + likelihood, wkplc=folder)
     #
     t0 = time.time()
     if tui:
@@ -1755,42 +1793,9 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     #
     if tui:
         status('loading hydrology parameters') #print(' >>> loading hydrology parameters...')
-    hydroparam_df = pd.read_csv(fhydroparam, sep=';')
-    hydroparam_df = dataframe_prepro(hydroparam_df, 'Parameter')
-    #
-    # extract set range values
-    m_min = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Min'].values[0]
-    qo_min = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Min'].values[0]
-    cpmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Min'].values[0]
-    sfmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Min'].values[0]
-    erz_min = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Min'].values[0]
-    ksat_min = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Min'].values[0]
-    c_min = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Min'].values[0]
-    k_min = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Min'].values[0]
-    n_min = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Min'].values[0]
-    #
-    #
-    m_max = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Max'].values[0]
-    qo_max = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Max'].values[0]
-    cpmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Max'].values[0]
-    sfmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Max'].values[0]
-    erz_max = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Max'].values[0]
-    ksat_max = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Max'].values[0]
-    c_max = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Max'].values[0]
-    k_max = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Max'].values[0]
-    n_max = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Max'].values[0]
-    lat = hydroparam_df[hydroparam_df['Parameter'] == 'lat']['Max'].values[0]
-    #
-    # ranges setup
-    m_rng = (m_min, m_max)
-    qo_rng = (qo_min, qo_max)
-    cpmax_rng = (cpmax_min, cpmax_max)
-    sfmax_rng = (sfmax_min, sfmax_max)
-    erz_rng = (erz_min, erz_max)
-    ksat_rng = (ksat_min, ksat_max)
-    c_rng = (c_min, c_max)
-    k_rng = (k_min, k_max)
-    n_rng = (n_min, n_max)
+    rng_dct = extract_ranges(fhydroparam=fhydroparam)
+    hydroparam_df = rng_dct['Params_df']
+    lat = rng_dct['lat']
     #
     if tui:
         status('loading SHRU parameters')
@@ -1833,9 +1838,14 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     etpat_dates_str_calib = ' & '.join(etpat_zmaps_obs_calib_df['Date'].astype('str').values)  # for calibration!!
     etpat_dates_str_full = ' & '.join(etpat_zmaps_obs_df['Date'].astype('str').values)  # for full
     #
+    #
+    #
     # clear prec by dates:
     series_df = clear_prec_by_dates(dseries=series_df, datesstr=etpat_dates_str_full)  # clear prec by dates
+    # split series
     calib_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef)
+    #
+    #
     #
     # export to file and update fseries
     fseries = '{}/calibration_series.txt'.format(folder)
@@ -1858,6 +1868,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # split dataframes for later
     etpat_raster_obs_calib_df = etpat_raster_obs_df.query('Date < "{}"'.format(cut_date))
     etpat_raster_obs_valid_df = etpat_raster_obs_df.query('Date >= "{}"'.format(cut_date))
+    #
+    #
     #
     #
     # get boundary conditions
@@ -1885,14 +1897,20 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         init = time.time()
         print('\n\t**** Calibration Protocol ****\n')
         status('running calibration')
-    pset, traced, tracedpop = calibration(series=calib_df, shruparam=shru_df, twibins=twibins, countmatrix=count,
-                                          lamb=lamb, qt0=qt0, lat=lat, area=area, basinshadow=basincount,
-                                          m_range=m_rng, qo_range=qo_rng,
-                                          cpmax_range=cpmax_rng, sfmax_range=sfmax_rng, erz_range=erz_rng,
-                                          ksat_range=ksat_rng, c_range=c_rng, k_range=ksat_rng, n_range=n_rng,
-                                          etpatdates=etpat_dates_str_calib, etpatzmaps=etpat_zmaps_obs_calib,
-                                          tui=tui, generations=generations, popsize=popsize, metric=metric,
-                                          tracefrac=1, tracepop=True, normalize=normalize)
+    cal_dct = calibration(series=calib_df, shruparam=shru_df, twibins=twibins, countmatrix=count,
+                          lamb=lamb, qt0=qt0, lat=lat, area=area, basinshadow=basincount,
+                          m_range=rng_dct['m_rng'],
+                          qo_range=rng_dct['qo_rng'],
+                          cpmax_range=rng_dct['cpmax_rng'],
+                          sfmax_range=rng_dct['sfmax_rng'],
+                          erz_range=rng_dct['erz_rng'],
+                          ksat_range=rng_dct['ksat_rng'],
+                          c_range=rng_dct['c_rng'],
+                          k_range=rng_dct['k_rng'],
+                          n_range=rng_dct['n_rng'],
+                          etpatdates=etpat_dates_str_calib, etpatzmaps=etpat_zmaps_obs_calib,
+                          tui=tui, generations=generations, popsize=popsize, likelihood=likelihood,
+                          tracefrac=1, tracepop=True, normalize=normalize)
     end = time.time()
     if tui:
         print('\nCalibration enlapsed time: {:.3f} seconds'.format(end - init))
@@ -1911,36 +1929,14 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # export generations
     lcl_folder = folder + '/generations'
     mkdir(lcl_folder)  # make diretory
-    lcl_folder1 = lcl_folder + '/parents'
-    mkdir(lcl_folder1)  # make diretory
-    lcl_folder2 = lcl_folder + '/population'
-    mkdir(lcl_folder2)  # make diretory
     #
-    # export parents
-    lcl_files = list()
-    lcl_gen_ids = list()
-    for g in range(len(traced)):
-        stamp = stamped(g=g)
-        lcl_filepath = lcl_folder1 + '/gen_' + stamp + '.txt'
-        traced[g].to_csv(lcl_filepath, sep=';', index=False)
-        lcl_gen_ids.append(g)
-        lcl_files.append(lcl_filepath)
-    traced_df = pd.DataFrame({'Gen': lcl_gen_ids, 'File': lcl_files})
-    exp_file5 = lcl_folder1 + '/' + 'generations_parents.txt'
-    traced_df.to_csv(exp_file5, sep=';', index=False)
+    # export traced parents
+    exp_file5 = lcl_folder + '/' + 'traced_parents.txt'
+    cal_dct['Traced'].to_csv(exp_file5, sep=';', index=False)
     #
-    # export full population
-    lcl_files = list()
-    lcl_gen_ids = list()
-    for g in range(len(tracedpop)):
-        stamp = stamped(g=g)
-        lcl_filepath = lcl_folder2 + '/gen_' + stamp + '.txt'
-        tracedpop[g].to_csv(lcl_filepath, sep=';', index=False)
-        lcl_gen_ids.append(g)
-        lcl_files.append(lcl_filepath)
-    traced_df = pd.DataFrame({'Gen': lcl_gen_ids, 'File': lcl_files})
-    exp_file6 = lcl_folder2 + '/' + 'generations_population.txt'
-    traced_df.to_csv(exp_file6, sep=';', index=False)
+    # export traced population
+    exp_file6 = lcl_folder + '/' + 'population.txt'
+    cal_dct['Population'].to_csv(exp_file6, sep=';', index=False)
     #
     #
     #
@@ -1948,36 +1944,45 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     #
     #
     #
-    # ********* BEST SET ASSESSMENT *********
+    # ********* MAXIMUM LIKELIHOOD MODEL ASSESSMENT *********
     #
     #
     #
-    # create best set folder
-    bestset_folder = folder + '/' + 'bestset'
-    mkdir(bestset_folder)
-    #
+    # create MLM folder
+    mlm_folder = folder + '/' + 'MLM'
+    mkdir(mlm_folder)
     #
     # best set parameters export
     if tui:
         print(' >>> exporting best set run parameters...')
-    fhydroparam_bestset = bestset_folder + '/' + 'bestset_parameters.txt'
-    hydroparam_df['Set'] = [pset[0], pset[1], pset[2], pset[3], pset[4], pset[5], pset[6], lat, pset[7], pset[8]]
-    hydroparam_df.to_csv(fhydroparam_bestset, sep=';', index=False)
+    fhydroparam_mlm = mlm_folder + '/' + 'mlm_parameters.txt'
+    hydroparam_df['Set'] = [cal_dct['MLM'][0], cal_dct['MLM'][1], cal_dct['MLM'][2], cal_dct['MLM'][3],
+                            cal_dct['MLM'][4], cal_dct['MLM'][5], cal_dct['MLM'][6], lat, cal_dct['MLM'][7],
+                            cal_dct['MLM'][8]]
+    hydroparam_df.to_csv(fhydroparam_mlm, sep=';', index=False)
     #
     #
     # run SLH for calibration basin, asking for mapping the ET:
-    slh_dct = slh_calib(fseries=fseries, fhydroparam=fhydroparam_bestset, fshruparam=fshruparam,
+    slh_dct = slh_calib(fseries=fseries, fhydroparam=fhydroparam_mlm, fshruparam=fshruparam,
                         fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru,
                         mapback=True, mapraster=True, mapvar='ET', mapdates=etpat_dates_str_full,
-                        qobs=True, tui=tui, folder=bestset_folder)
+                        qobs=True, tui=tui, folder=mlm_folder)
     # extract folders:
     calib_folder = slh_dct['CalibFolder']
     valid_folder = slh_dct['ValidFolder']
-    full_folder = slh_dct['ValidFolder']
+    full_folder = slh_dct['FullFolder']
     #
     #
     #
     #
+    #
+    # ********* GLUE *********
+    #
+    #
+    # create the GLUE folder
+    glue_folder = folder + '/' + 'GLUE'
+    mkdir(glue_folder)
+
     #
     #
     etpat_assessment = False
@@ -2053,8 +2058,123 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         
         '''
         #
+    #
+    #
+    #
     # return dictionary
     return {'Folder':folder}
+
+
+def glue(fseries, fmodels, fhydroparam, nmodels='all', modelid='SetIds', likelihood='Score', criteria='>', behavioural=0.1,
+         sampling_grid=20, folder='C:/bin', wkpl=False, tui=False, label=''):
+    from backend import create_rundir
+    from visuals import glue_scattergram
+
+    def extract_ranges(fhydroparam):
+        hydroparam_df = pd.read_csv(fhydroparam, sep=';')
+        hydroparam_df = dataframe_prepro(hydroparam_df, 'Parameter')
+        #
+        # extract set range values
+        m_min = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Min'].values[0]
+        qo_min = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Min'].values[0]
+        cpmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Min'].values[0]
+        sfmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Min'].values[0]
+        erz_min = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Min'].values[0]
+        ksat_min = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Min'].values[0]
+        c_min = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Min'].values[0]
+        k_min = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Min'].values[0]
+        n_min = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Min'].values[0]
+        #
+        #
+        m_max = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Max'].values[0]
+        qo_max = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Max'].values[0]
+        cpmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Max'].values[0]
+        sfmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Max'].values[0]
+        erz_max = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Max'].values[0]
+        ksat_max = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Max'].values[0]
+        c_max = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Max'].values[0]
+        k_max = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Max'].values[0]
+        n_max = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Max'].values[0]
+        lat = hydroparam_df[hydroparam_df['Parameter'] == 'lat']['Max'].values[0]
+        #
+        out_dct = {'Params_df':hydroparam_df,
+                   'm_rng': (m_min, m_max),
+                   'qo_rng': (qo_min, qo_max),
+                   'cpmax_rng': (cpmax_min, cpmax_max),
+                   'sfmax_rng': (sfmax_min, sfmax_max),
+                   'erz_rng': (erz_min, erz_max),
+                   'ksat_rng': (ksat_min, ksat_max),
+                   'c_rng': (c_min, c_max),
+                   'k_rng': (k_min, k_max),
+                   'n_rng': (n_min, n_max),
+                   'lat':lat}
+        return out_dct
+    #
+    #
+    # folder setup
+    if tui:
+        from tui import status
+        status('setting folders')
+    if wkpl:  # if the passed folder is a workplace, create a sub folder
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'GLUE_{}'.format(likelihood), wkplc=folder)
+
+    # import models dataframe:
+    models_df = pd.read_csv(fmodels, sep=';')
+    #
+    # get unique models
+    models_df = models_df.drop_duplicates(subset=[modelid])
+    #
+    # filter behavioural models
+    behav_df = models_df.query('{} {} {}'.format(likelihood, criteria, behavioural))
+    if nmodels != 'all':
+        # extract n models
+        behav_df = behav_df.nlargest(nmodels, columns=[likelihood])
+    print(behav_df.head().to_string())
+    params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    rng_dct = extract_ranges(fhydroparam=fhydroparam)
+    #exp_file1 = glue_scattergram(behav_df, rng_dct, likelihood=likelihood, criteria=criteria, behaviroural=behavioural, folder=folder)
+    params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    hist_dct = dict()
+    clf_dct = dict()
+    prior_likelihood = np.ones(sampling_grid) / sampling_grid
+    print(prior_likelihood)
+    print(len(prior_likelihood))
+    for p in params:
+        lcl_rng = rng_dct['{}_rng'.format(p)]
+        lcl_grid = np.linspace(start=lcl_rng[0], stop=lcl_rng[1], num=sampling_grid + 1)
+        hist_raw_lst = list()
+        for i in range(1, len(lcl_grid)):
+            if i == 1:
+                lcl_df = behav_df.query('{} < {}'.format(p, lcl_grid[i]))
+            else:
+                lcl_df = behav_df.query('{} >= {} and {} < {}'.format(p, lcl_grid[i - 1], p, lcl_grid[i]))
+            lcl_val = np.max(lcl_df[likelihood].values)
+            hist_raw_lst.append(lcl_val)
+        hist_raw = np.array(hist_raw_lst)
+        print(len(hist_raw))
+        constant = np.sum(hist_raw * prior_likelihood)
+        #
+        #
+        # Bayes Theorem:
+        posterior_likelihood = hist_raw * prior_likelihood / constant
+        print(np.sum(posterior_likelihood))
+        #
+        clf_lst = list()
+        lcl_clf = 0
+        for i in range(len(posterior_likelihood)):
+            lcl_clf = lcl_clf + posterior_likelihood[i]
+            clf_lst.append(lcl_clf)
+        plt.plot(lcl_grid[1:], clf_lst)
+        plt.ylim((0, 1.1))
+        plt.show()
+
+
+
+
+
+    #print(full_df.to_string())
 
 
 
