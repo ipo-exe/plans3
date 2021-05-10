@@ -148,6 +148,29 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
                        fld_obs='Obs', fld_sim='Sim', fld_date='Date',
                        filename='analyst_CVF', suff='', folder='C:/bin',
                        show=False, log=True, units='flow', title='Obs/Sim Analysis'):
+    """
+
+    Plot Calibration/Validation/Full Pannel - CVF Analyst
+
+    :param series_full: pandas dataframe
+    :param series_calib: pandas dataframe
+    :param series_valid: pandas dataframe
+    :param freq_full: pandas dataframe
+    :param params_full: pandas dataframe
+    :param params_calib: pandas dataframe
+    :param params_valid: pandas dataframe
+    :param fld_obs: string of field of OBS
+    :param fld_sim: string of field of SIM
+    :param fld_date: string of field of Date or X axis
+    :param filename: string of filename
+    :param suff: string suffix
+    :param folder: string to foldepath
+    :param show: boolean to show instead of save
+    :param log: boolean to log scale
+    :param units: string of units type. Options: 'flow' or 'stock'
+    :param title: string of superior title
+    :return: string of filepath
+    """
     #
     fig = plt.figure(figsize=(18, 9))  # Width, Height
     gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9)
@@ -292,6 +315,37 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
                  mid1_rng, mid2_rng, mid3_rng, mid4_rng,
                  t, offset_back, offset_front, type='ET', filename='frame', folder='C:/bin',
                  show=False, suff='', dpi=300, png=False):
+    """
+
+    Plot the local pannel frame
+
+    :param series: pandas dataframe
+    :param star: 2d numpy array of Star map
+    :param deficit: 2d numpy array of Deficit
+    :param sups: 3d numpy array of superior 2d numpy arrays maps
+    :param mids: 3d numpy array of median 2d numpy arrays maps
+    :param star_rng: iterable of star range
+    :param deficit_rng: iterable of map range
+    :param sup1_rng: iterable of map range
+    :param sup2_rng: iterable of map range
+    :param sup3_rng: iterable of map range
+    :param sup4_rng: iterable of map range
+    :param mid1_rng: iterable of map range
+    :param mid2_rng: iterable of map range
+    :param mid3_rng: iterable of map range
+    :param mid4_rng: iterable of map range
+    :param t: integer time step
+    :param offset_back: int offset to back window
+    :param offset_front: int offset to front window
+    :param type: string - type of pannel - ET, Qv, R.
+    :param filename: string filename
+    :param folder: string folder path
+    :param show: boolean to show instead of save
+    :param suff: string suffix
+    :param dpi: boolean
+    :param png: boolean
+    :return: string filepath
+    """
     from matplotlib import cm
     from matplotlib.colors import ListedColormap
     from pandas import to_datetime
@@ -528,6 +582,20 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
 
 
 def pannel_prec_q(t, prec, q, grid=True, folder='C:/bin', filename='pannel_prec_q', suff='', show=False):
+    """
+
+    A simple Prec/Q plot
+
+    :param t: iterable of dates/timestep
+    :param prec: iterable of Prec
+    :param q: iterable of Q
+    :param grid: boolean to grid
+    :param folder: string to folder path
+    :param filename: string of filename
+    :param suff: string of suffix
+    :param show: boolean to show instead of saving
+    :return: string filepath
+    """
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     gs = mpl.gridspec.GridSpec(2, 1, wspace=0.8, hspace=0.6)
@@ -536,7 +604,7 @@ def pannel_prec_q(t, prec, q, grid=True, folder='C:/bin', filename='pannel_prec_
     ymax = np.max(y)
     ax1 = fig.add_subplot(gs[0, 0])
     plt.title('Precipitation', loc='left')
-    plt.ylabel('mm')
+    plt.ylabel('mm/d')
     plt.plot(t, y)
     plt.ylim(0, 1.1 * ymax)
     plt.grid(grid)
@@ -545,8 +613,8 @@ def pannel_prec_q(t, prec, q, grid=True, folder='C:/bin', filename='pannel_prec_
     y = q
     ymax = np.max(y)
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
-    plt.title('Discharge', loc='left')
-    plt.ylabel('mm')
+    plt.title('Flow', loc='left')
+    plt.ylabel('mm/d')
     plt.plot(t, y)
     plt.ylim(0, 1.1 * ymax)
     plt.grid(grid)
@@ -564,6 +632,20 @@ def pannel_prec_q(t, prec, q, grid=True, folder='C:/bin', filename='pannel_prec_
 
 
 def pannel_prec_q_logq(t, prec, q, grid=True, folder='C:/bin', filename='pannel_prec_q_logq', suff='', show=False):
+    """
+
+    A simple Prec/Q plot but with also the Log Q
+
+    :param t: iterable of dates/timestep
+    :param prec: iterable of Prec
+    :param q: iterable of Q
+    :param grid: boolean to grid
+    :param folder: string to folder path
+    :param filename: string of filename
+    :param suff: string of suffix
+    :param show: boolean to show instead of saving
+    :return: string filepath
+    """
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 1, wspace=0.8, hspace=0.6)
@@ -572,7 +654,7 @@ def pannel_prec_q_logq(t, prec, q, grid=True, folder='C:/bin', filename='pannel_
     ymax = np.max(y)
     ax1 = fig.add_subplot(gs[0, 0])
     plt.title('Precipitation', loc='left')
-    plt.ylabel('mm')
+    plt.ylabel('mm/d')
     plt.plot(t, y)
     plt.ylim(0, 1.1 * ymax)
     plt.grid(grid)
@@ -580,8 +662,8 @@ def pannel_prec_q_logq(t, prec, q, grid=True, folder='C:/bin', filename='pannel_
     y = q
     ymax = np.max(y)
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
-    plt.title('Discharge', loc='left')
-    plt.ylabel('mm')
+    plt.title('Flow', loc='left')
+    plt.ylabel('mm/d')
     plt.plot(t, y)
     plt.ylim(0, 1.1 * ymax)
     plt.grid(grid)
@@ -590,8 +672,8 @@ def pannel_prec_q_logq(t, prec, q, grid=True, folder='C:/bin', filename='pannel_
     ymax = np.max(y)
     ymin = np.min(y)
     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
-    plt.title('Discharge', loc='left')
-    plt.ylabel('mm')
+    plt.title('Flow', loc='left')
+    plt.ylabel('mm/d')
     plt.plot(t, y)
     plt.ylim(0.9 * ymin, 1.1 * ymax)
     plt.yscale('log')
@@ -608,9 +690,22 @@ def pannel_prec_q_logq(t, prec, q, grid=True, folder='C:/bin', filename='pannel_
         return filepath
 
 
-def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True,
-                           folder='C:/bin', filename='pannel_sim_prec_q_logq', suff='', show=False):
-    #
+def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True, folder='C:/bin', filename='pannel_sim_prec_q_logq', suff='', show=False):
+    """
+
+    Plot a Pannel of Qsim and Qobs in linear and log scale
+
+    :param t: iterable of dates/timestep
+    :param prec: iterable of Prec
+    :param qobs: iterable of QOBS
+    :param qsim: iterable of QSIM
+    :param grid: boolean to grid
+    :param folder: string to folder path
+    :param filename: string of filename
+    :param suff: string of suffix
+    :param show: boolean to show instead of saving
+    :return:
+    """
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 1, wspace=0.8, hspace=0.6)
     # plot prec
@@ -618,7 +713,7 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True,
     ymax = np.max(y)
     ax1 = fig.add_subplot(gs[0, 0])
     plt.title('Precipitation', loc='left')
-    plt.ylabel('mm')
+    plt.ylabel('mm/d')
     plt.plot(t, y)
     plt.ylim(0, 1.1 * ymax)
     plt.grid(grid)
@@ -627,8 +722,8 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True,
     y2 = qsim
     ymax = np.max((y1, y2))
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
-    plt.title('Discharge', loc='left')
-    plt.ylabel('mm')
+    plt.title('Flow', loc='left')
+    plt.ylabel('mm/d')
     plt.plot(t, y1)
     plt.plot(t, y2)
     plt.ylim(0, 1.1 * ymax)
@@ -636,8 +731,8 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True,
     # plot log q
     ymin = np.min((y1, y2))
     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
-    plt.title('Discharge', loc='left')
-    plt.ylabel('mm')
+    plt.title('FLow', loc='left')
+    plt.ylabel('mm/d')
     plt.plot(t, y1)
     plt.plot(t, y2)
     plt.ylim(0.9 * ymin, 1.1 * ymax)
@@ -819,50 +914,6 @@ def plot_zmap3d(zmap, x, y):
     plt.show()
 
 
-def plot_calib_series(dataframe, grid=True, filename='calib_series', folder='C:/bin', show=True, suff=''):
-    # todo docstring
-    fig = plt.figure(figsize=(16, 8))  # Width, Height
-    gs = mpl.gridspec.GridSpec(3, 8, wspace=0.8, hspace=0.2)  # nrows, ncols
-    # 1
-    ind = 0
-    ax = fig.add_subplot(gs[ind, 0:])
-    plt.plot(dataframe['Date'], dataframe['Prec'])
-    plt.ylabel('Prec mm')
-    ax2 = ax.twinx()
-    plt.plot(dataframe['Date'], dataframe['Temp'], 'tab:orange')
-    plt.ylabel('Temp °C')
-    plt.grid(grid)
-    # 2
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['Q'])
-    plt.ylabel('Q mm')
-    plt.yscale('log')
-    plt.grid(grid)
-    #
-    # 3
-    ind = ind + 1
-    ax2 = fig.add_subplot(gs[ind, 0:], sharex=ax)
-    plt.plot(dataframe['Date'], dataframe['IRI'], label='IRI')
-    plt.plot(dataframe['Date'], dataframe['IRA'], label='IRA')
-    plt.legend(loc='upper right', ncol=2)
-    plt.ylabel('Irrigation mm')
-    plt.grid(grid)
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        # export file
-        if suff != '':
-            filepath = folder + '/' + filename + '_' + suff + '.jpg'
-        else:
-            filepath = folder + '/' + filename + '.jpg'
-        plt.savefig(filepath)
-        plt.close(fig)
-        return filepath
-
-
 def plot_lulc_view(lulc, lulc_df, basin, meta, mapttl='lulc', filename='mapview', folder='C:/bin', metadata=False, show=False):
     from geo import reclassify, mask
     from matplotlib.colors import ListedColormap
@@ -1025,6 +1076,22 @@ def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='
 
 def plot_qmap_view(map, meta, colors, names, ranges, mapid='lulc', filename='mapview', folder='C:/bin',
                    metadata=True, show=False):
+    """
+
+    Plot generic qualitative map
+
+    :param map: 2d numpy array of map
+    :param meta: dictionary of map metadata
+    :param colors: iterable of class color names
+    :param names: iterable of class names
+    :param ranges: tuple of ranges
+    :param mapid: string of mapid. Ex: 'lulc' or 'soils'
+    :param filename: string filename
+    :param folder: string folder path
+    :param metadata: boolean to print metadata in figure
+    :param show: boolean to show instead of saving
+    :return: string filepath
+    """
     from matplotlib.colors import ListedColormap
     cmap = ListedColormap(colors)
     #
@@ -1066,6 +1133,23 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='lulc', filename='map
 
 def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview', folder='C:/bin',
                   metadata=True, show=False, integration=False, png=False):
+    """
+
+    Plot a generic map view
+
+    :param map: 2d numpy array of map
+    :param meta: dictionary of map metadata
+    :param ranges: tuple of ranges
+    :param mapid: string of map id
+    :param mapttl: string of map title
+    :param filename: string filename
+    :param folder: string folder path
+    :param metadata: boolean to print metadata on figure
+    :param show: boolean to show instead of saving
+    :param integration: boolean to show integration units instead of instant units
+    :param png: boolean to export as PNG
+    :return: string filepath
+    """
     from matplotlib import cm
     from matplotlib.colors import ListedColormap
     earth_big = cm.get_cmap('gist_earth_r', 512)
@@ -1126,6 +1210,21 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
 
 
 def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', filename='histograms', suff=''):
+    """
+
+    Plot histograms of TWI and SHRU
+
+    :param countmatrix: 2d numpy array of count matrix
+    :param xs: 1d iterable of x labels of SHRU
+    :param ys: 1d iterable of y labels of SHRU
+    :param xt: 1d iterable of x labels of TWI
+    :param yt: 1d iterable of y labels of TWI
+    :param show: boolean to show instead of saving
+    :param folder: string to folder
+    :param filename: string of filename
+    :param suff: string suffix of filename
+    :return: string of filepath
+    """
     #
     fig = plt.figure(figsize=(12, 16))  # Width, Height
     gs = mpl.gridspec.GridSpec(4, 3, wspace=0.3, hspace=0.3)
