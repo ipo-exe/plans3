@@ -217,7 +217,7 @@ def map_back(zmatrix, a1, a2, bins1, bins2):
     Map back function using a Z-Matrix
     :param zmatrix: 2d numpy array of z matrix of values
     :param a1: 2d numpy array reference array of rows (ex: TWI)
-    :param a2: 2d numpy array reference array of columns  (ex: CN)
+    :param a2: 2d numpy array reference array of columns  (ex: SHRU)
     :param bins1: 1d numpy array of array 1 histogram bins
     :param bins2: 1d numpy array of array 2 histogram bins
     :return: 2d numpy array
@@ -766,6 +766,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
     from analyst import nse, kge, rmse, pbias, frequency, error
+    from geo import fuzzy_transition
     from sys import getsizeof
     from datetime import datetime
 
@@ -869,25 +870,36 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         return out_array.flatten()
     #
     #
+    #
     # run setup
     runsize = generations * popsize * 2
     print('Runsize = {}'.format(runsize))
     #
+    #
     # extract observed data
     sobs = series['Q'].values
+    #
     # get log10 of flow for calibration metrics
     loglim = 0.000001
     sobs_log = np.log10(sobs + (loglim * (sobs <= 0)))
     #
-    # get etpat zmap signal
+    #
+    #
+    # get OBS etpat zmap signal
     etpat_zmaps_nd = np.array(etpatzmaps)
+    #
     # compute signals
-    sobs_etpat = list()
+    sobs_etpat_lst = list()
     for e in range(len(etpat_zmaps_nd)):
+        #plt.imshow(etpat_zmaps_nd[e])
+        #plt.show()
         lcl_mask = 1 + (etpat_zmaps_nd[e] * 0.0)
-        lcl_ssim_etpat = flatten_clear(etpat_zmaps_nd[e], mask=lcl_mask, nodata=-1)
-        sobs_etpat.append(lcl_ssim_etpat)
-    lcl_x = np.arange(0, len(sobs_etpat[0]))
+        lcl_sobs_etpat = flatten_clear(etpat_zmaps_nd[e], mask=lcl_mask, nodata=-1)
+        lcl_x = np.arange(0, len(lcl_sobs_etpat))
+        #plt.plot(lcl_x, lcl_sobs_etpat)
+        #plt.show()
+        sobs_etpat_lst.append(lcl_sobs_etpat)
+
     '''
     etpat_zmaps_masks = 1.0 * (etpat_zmaps_nd != -1.0)
     #plt.imshow(etpat_zmaps_nd[0])
@@ -1063,27 +1075,25 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             et_zmaps_nd = np.array(sim_dct['Maps']['ET'])
             lcl_etpat_scores_lst = list()
             for e in range(len(et_zmaps_nd)):
+                # fuzzify ET
+                lcl_sim_et_zmap = et_zmaps_nd[e]
+                lcl_et_mean = np.mean(lcl_sim_et_zmap)
+                lcl_et_sd = np.std(lcl_sim_et_zmap)
+                a_value = lcl_et_mean - 2 * lcl_et_sd
+                b_value = lcl_et_mean + 2 * lcl_et_sd
+                #
+                # extract the zmap of the ET Pattern based on the fuzzy senoidal transition
+                lcl_sim_etpat_zmap = fuzzy_transition(lcl_sim_et_zmap, a_value, b_value, type='senoid')
+                #
+                #
                 # get a mask for the zmap based on the observed zmap
                 lcl_mask = 1 * (etpat_zmaps_nd[e] != -1)
-                # extract the zmap of the ET Pattern based on the maximum value
-                lcl_etpat_zmap = et_zmaps_nd[e]/np.max(et_zmaps_nd[e])
                 # compute the local simulated etpat signal
-                lcl_ssim_etpat = flatten_clear(lcl_etpat_zmap, mask=lcl_mask, nodata=-1)
+                lcl_ssim_etpat = flatten_clear(lcl_sim_etpat_zmap, mask=lcl_mask, nodata=-1)
                 # get NSE of signals
-                lcl_sg_etpat_score = nse(obs=sobs_etpat[e], sim=lcl_ssim_etpat)
+                lcl_sg_etpat_score = nse(obs=sobs_etpat_lst[e], sim=lcl_ssim_etpat)
                 # append to list
                 lcl_etpat_scores_lst.append(lcl_sg_etpat_score)
-                # plot signals:
-                #plt.plot(lcl_x, lcl_ssim_etpat, 'r')
-                #plt.plot(lcl_x, sobs_etpat[e], 'b')
-                #plt.show()
-                # plot maps:
-                #fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True)
-                #axs[0].imshow(etpat_zmaps_nd[e], cmap='Greys_r')
-                #axs[1].imshow(lcl_etpat_zmap, cmap='jet')
-                #lcl_error = error(obs=etpat_zmaps_nd[e], sim=lcl_etpat_zmap)
-                #axs[2].imshow(lcl_error)
-                #plt.show()
             #
             # get fitness score for etpat based on the mean value of list
             lcl_etpat_score = np.mean(lcl_etpat_scores_lst)

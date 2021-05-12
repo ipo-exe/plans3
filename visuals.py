@@ -1608,3 +1608,123 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
         plt.close(fig)
         return expfile
 
+
+def map_series(map_series1, map_series2, rng1, rng2, dates, ttl='Map Series', ttl_s1='Series 1', ttl_s2='Series 2',
+               filename='map_series', folder='C:/bin', show=False):
+    from matplotlib import cm
+    from matplotlib.colors import ListedColormap
+    jet_big = cm.get_cmap('jet_r', 512)
+    jetcm = ListedColormap(jet_big(np.linspace(0.3, 0.75, 256)))
+
+    fig = plt.figure(figsize=(16, 8), )  # Width, Height
+    fig.suptitle(ttl)
+    gs = mpl.gridspec.GridSpec(8, 21, wspace=0.5, hspace=0.3)
+    #
+    # plot series 1
+    vmin = rng1[0]
+    vmax = rng1[1]
+    for i in range(len(map_series1)):
+        lcl_x = i * 3
+        ax = fig.add_subplot(gs[0:4, lcl_x:lcl_x + 3])
+        im = plt.imshow(map_series1[i], cmap='plasma', vmin=np.min(map_series1[i]), vmax=np.max(map_series1[i]))
+        plt.title('{} | {}'.format(ttl_s1, dates[i]), fontsize=10)
+        plt.colorbar(im, shrink=0.4)
+        plt.axis('off')
+    #
+    # plot series 2
+    vmin = rng2[0]
+    vmax = rng2[1]
+    for i in range(len(map_series2)):
+        lcl_x = i * 3
+        ax = fig.add_subplot(gs[4:, lcl_x:lcl_x + 3])
+        im = plt.imshow(map_series2[i], cmap=jetcm, vmin=vmin, vmax=vmax)
+        plt.title('{} | {}'.format(ttl_s2, dates[i]), fontsize=10)
+        plt.colorbar(im, shrink=0.4)
+        plt.axis('off')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.jpg'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+
+
+def map_compare(obs, sim, err, obs_z, sim_z, err_z, obs_sg, sim_sg, err_sg, ttl='Date',
+                filename='map_compare', folder='C:/bin', show=False):
+    fig = plt.figure(figsize=(12, 10), )  # Width, Height
+    fig.suptitle(ttl)
+    gs = mpl.gridspec.GridSpec(10, 12, wspace=0.2, hspace=0.2)
+    #
+    ax = fig.add_subplot(gs[0:4, 0:3])
+    im = plt.imshow(obs, cmap='Greys', vmin=0, vmax=1)
+    plt.title('Observado', fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    ax = fig.add_subplot(gs[0:4, 4:7])
+    im = plt.imshow(sim, cmap='Greys', vmin=0, vmax=1)
+    plt.title('Simulado', fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    ax = fig.add_subplot(gs[0:4, 9:])
+    im = plt.imshow(err, cmap='seismic', vmin=-1.5, vmax=1.5)
+    plt.title('Erro local', fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    #
+    ax = fig.add_subplot(gs[5:7, 0:3])
+    im = plt.imshow(obs_z, cmap='Greys', vmin=0, vmax=1)
+    plt.title('Obs. compactado', fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    ax = fig.add_subplot(gs[5:7, 4:7])
+    im = plt.imshow(sim_z, cmap='Greys', vmin=0, vmax=1)
+    plt.title('Sim. compactado', fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    ax = fig.add_subplot(gs[5:7, 9:])
+    im = plt.imshow(err_z, cmap='seismic', vmin=-1.5, vmax=1.5)
+    plt.title('Erro local', fontsize=10)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    #
+    lcl_x = np.arange(len(obs_sg))
+    ax = fig.add_subplot(gs[8:, 0:3])
+    plt.plot(lcl_x, obs_sg, 'tab:blue')
+    plt.title('Sinal observado', fontsize=10)
+    plt.ylim((0, 1))
+    plt.xlabel('id')
+    #
+    ax = fig.add_subplot(gs[8:, 4:7])
+    plt.plot(lcl_x, sim_sg, 'tab:orange')
+    plt.title('Sinal simulado', fontsize=10)
+    plt.ylim((0, 1))
+    plt.xlabel('id')
+    #
+    ax = fig.add_subplot(gs[8:, 9:])
+    plt.plot(lcl_x, err_sg, 'tab:red')
+    plt.title('Erro local', fontsize=10)
+    plt.ylim((-1.5, 1.5))
+    plt.xlabel('id')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.jpg'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+
+
+
+
+

@@ -2005,7 +2005,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # create the GLUE folder
     glue_folder = folder + '/' + 'GLUE'
     mkdir(glue_folder)
-
+    glue(fseries=fseries, fmodels=exp_file6, fhydroparam=fhydroparam, folder=glue_folder, wkpl=False)
     #
     #
     etpat_assessment = False
@@ -2157,7 +2157,7 @@ def glue(fseries, fmodels, fhydroparam, nmodels='all', modelid='SetIds', likelih
     print(behav_df.head().to_string())
     params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
     rng_dct = extract_ranges(fhydroparam=fhydroparam)
-    #exp_file1 = glue_scattergram(behav_df, rng_dct, likelihood=likelihood, criteria=criteria, behaviroural=behavioural, folder=folder)
+    exp_file1 = glue_scattergram(behav_df, rng_dct, likelihood=likelihood, criteria=criteria, behaviroural=behavioural, folder=folder)
     params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
     hist_dct = dict()
     clf_dct = dict()
@@ -2189,9 +2189,9 @@ def glue(fseries, fmodels, fhydroparam, nmodels='all', modelid='SetIds', likelih
         for i in range(len(posterior_likelihood)):
             lcl_clf = lcl_clf + posterior_likelihood[i]
             clf_lst.append(lcl_clf)
-        plt.plot(lcl_grid[1:], clf_lst)
-        plt.ylim((0, 1.1))
-        plt.show()
+        #plt.plot(lcl_grid[1:], clf_lst)
+        #plt.ylim((0, 1.1))
+        #plt.show()
 
 
 

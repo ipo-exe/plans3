@@ -423,6 +423,17 @@ def flow_dir(dem, status=False):
 
 
 def fuzzy_transition(array, a, b, ascending=True, type='senoid'):
+    """
+
+    Fuzzify a numpy array by a transition from a to b values
+
+    :param array: numpy array
+    :param a: float initial threshold
+    :param b: float terminal threshold
+    :param ascending: boolean
+    :param type: string type of fuzzy. options: 'senoid' and 'linear' (trapezoid)
+    :return: numpy array
+    """
     if ascending:
         if type == 'senoid':
             transition = (array >= b) + (array > a) * (array < b) * (-0.5 * np.cos(np.pi * (array - a)/(b - a)) + 0.5 )
