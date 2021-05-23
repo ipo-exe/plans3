@@ -131,10 +131,11 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
     #
     #
     # filter dates (remove this)
-    #date_init = '2011-01-01'
-    #date_end = '2012-02-01'
-    #query_str = 'Date > "{}" and Date < "{}"'.format(date_init, date_end)
-    #series = series.query(query_str)
+    date_init = '2011-01-01'
+    date_end = '2012-01-01'
+    query_str = 'Date > "{}" and Date < "{}"'.format(date_init, date_end)
+    series = series.query(query_str)
+    #
     dates_labels = pd.to_datetime(series['Date'], format='%Y%m%d')
     dates_labels = dates_labels.astype('str')
     #
@@ -1375,6 +1376,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
 
     series_df =  pd.read_csv(fseries, sep=';')
     series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
+    #series_df = series_df.query('Date < "2011-05-01"')
     #
     if tui:
         status('loading hydrology parameters')
@@ -2088,10 +2090,13 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     return {'Folder':folder}
 
 
-def glue(fseries, fmodels, fhydroparam, nmodels='all', modelid='SetIds', likelihood='Score', criteria='>', behavioural=0.1,
-         sampling_grid=20, folder='C:/bin', wkpl=False, tui=False, label=''):
+def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin,
+         nmodels='all', modelid='SetIds', likelihood='Score', criteria='>', behavioural=0.1,
+         sampling_grid=20, folder='C:/bin', wkpl=False, tui=False, label='', qobs=True):
     from backend import create_rundir
     from visuals import glue_scattergram
+    from hydrology import ensemble
+    import input
 
     def extract_ranges(fhydroparam):
         hydroparam_df = pd.read_csv(fhydroparam, sep=';')
@@ -2132,6 +2137,21 @@ def glue(fseries, fmodels, fhydroparam, nmodels='all', modelid='SetIds', likelih
                    'n_rng': (n_min, n_max),
                    'lat':lat}
         return out_dct
+
+    def extract_histdata(fhistograms):
+        dataframe = pd.read_csv(fhistograms, sep=';')
+        dataframe = dataframe_prepro(dataframe, strf=False)
+        dataframe = dataframe.set_index(dataframe.columns[0])
+        shru_ids = dataframe.columns.astype('int')
+        twi_bins = dataframe.index.values
+        count_matrix = dataframe.values
+        return count_matrix, twi_bins, shru_ids
+
+    def extract_twi_avg(twibins, count):
+        twi_sum = 0
+        for i in range(len(twibins)):
+            twi_sum = twi_sum + (twibins[i] * np.sum(count[i]))
+        return twi_sum / np.sum(count)
     #
     #
     # folder setup
@@ -2142,23 +2162,125 @@ def glue(fseries, fmodels, fhydroparam, nmodels='all', modelid='SetIds', likelih
         if label != '':
             label = label + '_'
         folder = create_rundir(label=label + 'GLUE_{}'.format(likelihood), wkplc=folder)
-
-    # import models dataframe:
-    models_df = pd.read_csv(fmodels, sep=';')
     #
+    #
+    #
+    #
+    # ******* IMPORT DATA *******
+    #
+    # Series
+    series_df = pd.read_csv(fseries, sep=';')
+    series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
+    #
+    if tui:
+        status('loading hydrology parameters')  # print(' >>> loading hydrology parameters...')
+    rng_dct = extract_ranges(fhydroparam=fhydroparam)
+    hydroparam_df = rng_dct['Params_df']
+    lat = rng_dct['lat']
+    params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    #
+    if tui:
+        status('loading SHRU parameters')
+    shru_df = pd.read_csv(fshruparam, sep=';')
+    shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
+    #
+    #
+    # extract countmatrix (full map extension)
+    if tui:
+        status('loading histograms of full extension')
+    count, twibins, shrubins = extract_histdata(fhistograms=fhistograms)
+    #
+    #
+    # extract count matrix (basin)
+    if tui:
+        status('loading histograms of basin')
+    basincount, twibins2, shrubins2 = extract_histdata(fhistograms=fbasinhists)
+    #
+    # import models dataframe:
+    if tui:
+        status('loading GLUE models')
+    models_df = pd.read_csv(fmodels, sep=';')
     # get unique models
     models_df = models_df.drop_duplicates(subset=[modelid])
     #
+    # get boundary conditions
+    if tui:
+        status('loading boundary conditions')
+    meta = input.asc_raster_meta(fbasin)
+    area = np.sum(basincount) * meta['cellsize'] * meta['cellsize']
+    qt0 = 0.01  # fixed
+    if qobs:
+        qt0 = series_df['Q'].values[0]
+    lamb = extract_twi_avg(twibins, basincount)
+    #
+    #
+    #
+    #
+    #
+    # ******* SELECTION OF BEHAVIOURAL MODELS *******
+    #
+    #
     # filter behavioural models
+    if tui:
+        status('selecting behavioural models')
     behav_df = models_df.query('{} {} {}'.format(likelihood, criteria, behavioural))
     if nmodels != 'all':
         # extract n models
         behav_df = behav_df.nlargest(nmodels, columns=[likelihood])
     print(behav_df.head().to_string())
-    params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
-    rng_dct = extract_ranges(fhydroparam=fhydroparam)
-    exp_file1 = glue_scattergram(behav_df, rng_dct, likelihood=likelihood, criteria=criteria, behaviroural=behavioural, folder=folder)
-    params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    #
+    # export behaviroural models:
+    if tui:
+        status('exporting behavioural models datasets')
+    exp_file0 = '{}/behaviroural.txt'.format(folder)
+    behav_df = behav_df.sort_values(by=likelihood, ascending=False)
+    behav_df.to_csv(exp_file0, sep=';', index=False)
+    #
+    # export visual scattergrams:
+    exp_file1 = glue_scattergram(behav_df, rng_dct,
+                                 likelihood=likelihood,
+                                 criteria=criteria,
+                                 behaviroural=behavioural,
+                                 folder=folder)
+    #
+    #
+    #
+    # ******* FLOW ENSEMBLE *******
+    #
+    #
+    if tui:
+        status('computing ensemble datasets')
+    ensb_dct = ensemble(series=series_df,
+                        models_df=behav_df,
+                        shruparam=shru_df,
+                        twibins=twibins,
+                        countmatrix=count,
+                        lamb=lamb,
+                        qt0=qt0,
+                        lat=lat,
+                        area=area,
+                        basinshadow=basincount,
+                        tui=tui)
+    # export
+    if tui:
+        status('exporting ensemble datasets')
+    exp_en_q = '{}/ensemble_q.txt'.format(folder)
+    ensb_dct['Q'].to_csv(exp_en_q, sep=';', index=False)
+    exp_en_q = '{}/ensemble_qb.txt'.format(folder)
+    ensb_dct['Qb'].to_csv(exp_en_q, sep=';', index=False)
+    #
+    plt.plot(ensb_dct['Qb']['Date'], ensb_dct['Qb']['Lo_90'])
+    plt.plot(ensb_dct['Qb']['Date'], ensb_dct['Qb']['Hi_90'])
+    plt.show()
+    #
+    #
+    #
+    # ******* POSTERIOR BAYESIAN ANALYSIS *******
+    #
+    #
+    #
+    # compute posterior CDFs and posterior ranges (90%)
+    # continue here:
     hist_dct = dict()
     clf_dct = dict()
     prior_likelihood = np.ones(sampling_grid) / sampling_grid
@@ -2192,11 +2314,6 @@ def glue(fseries, fmodels, fhydroparam, nmodels='all', modelid='SetIds', likelih
         #plt.plot(lcl_grid[1:], clf_lst)
         #plt.ylim((0, 1.1))
         #plt.show()
-
-
-
-
-
     #print(full_df.to_string())
 
 

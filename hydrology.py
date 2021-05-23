@@ -1283,3 +1283,107 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         out_dct['Population'] = wtrace_pop
     return out_dct
 
+
+def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, tui=False):
+
+    from analyst import frequency
+
+    def stamped(g):
+        if g < 10:
+            stamp = '0000' + str(g)
+        elif g >= 10 and g < 100:
+            stamp = '000' + str(g)
+        elif g >= 100 and g < 1000:
+            stamp = '00' + str(g)
+        elif g >= 1000 and g < 10000:
+            stamp = '0' + str(g)
+        else:
+            stamp = str(g)
+        return stamp
+
+    #
+    # set up
+    n_ensem = len(models_df)
+    t_ensem = len(series)
+    sim_grid_q = np.zeros(shape=(n_ensem, t_ensem))
+    sim_grid_qb = np.zeros(shape=(n_ensem, t_ensem))
+    sim_ids = models_df['Id']
+    m_vec = models_df['m'].values
+    qo_vec = models_df['qo'].values
+    cpmax_vec = models_df['cpmax'].values
+    sfmax_vec = models_df['sfmax'].values
+    erz_vec = models_df['erz'].values
+    ksat_vec = models_df['ksat'].values
+    c_vec = models_df['c'].values
+    k_vec = models_df['k'].values
+    n_vec = models_df['n'].values
+    #
+    # simulate every model:
+    for i in range(n_ensem):
+        print('Running model {} of {}'.format(i + 1, n_ensem))
+        sim_dct = simulation(series=series,
+                             shruparam=shruparam,
+                             twibins=twibins,
+                             countmatrix=countmatrix,
+                             lamb=lamb,
+                             qt0=qt0,
+                             area=area,
+                             basinshadow=basinshadow,
+                             lat=lat,
+                             m=m_vec[i],
+                             qo=qo_vec[i],
+                             cpmax=cpmax_vec[i],
+                             sfmax=sfmax_vec[i],
+                             erz=erz_vec[i],
+                             ksat=ksat_vec[i],
+                             c=c_vec[i],
+                             k=k_vec[i],
+                             n=n_vec[i],
+                             mapback=False)
+        sim_df = sim_dct['Series']
+        sim_grid_q[i] = sim_df['Q'].values
+        sim_grid_qb[i] = sim_df['Qb'].values
+    #
+    # transpose grid
+    sim_grid_q_t = np.transpose(sim_grid_q)
+    sim_grid_qb_t = np.transpose(sim_grid_qb)
+    #
+    # compute lo-hi bounds
+    lo_bound_q = np.zeros(shape=np.shape(series['Prec'].values))
+    hi_bound_q = np.zeros(shape=np.shape(series['Prec'].values))
+    lo_bound_qb = np.zeros(shape=np.shape(series['Prec'].values))
+    hi_bound_qb = np.zeros(shape=np.shape(series['Prec'].values))
+    #
+    for t in range(len(sim_grid_q_t)):
+        #
+        # full discharge
+        lcl_freq = frequency(series=sim_grid_q_t[t])
+        lo_bound_q[t] = lcl_freq['Values'][5]
+        hi_bound_q[t] = lcl_freq['Values'][95]
+        #
+        # baseflow
+        lcl_freq = frequency(series=sim_grid_qb_t[t])
+        lo_bound_qb[t] = lcl_freq['Values'][5]
+        hi_bound_qb[t] = lcl_freq['Values'][95]
+    #
+    #
+    # built exports
+    out_q_df = pd.DataFrame({'Date': series['Date'],
+                             'Lo_90': lo_bound_q,
+                             'Hi_90': hi_bound_q })
+    app_q_df = pd.DataFrame(sim_grid_q_t, columns=sim_ids)
+    out_q_df = pd.concat([out_q_df, app_q_df], axis=1)
+    # qb:
+    out_qb_df = pd.DataFrame({'Date': series['Date'],
+                             'Lo_90': lo_bound_qb,
+                             'Hi_90': hi_bound_qb})
+    app_qb_df = pd.DataFrame(sim_grid_qb_t, columns=sim_ids)
+    out_qb_df = pd.concat([out_qb_df, app_qb_df], axis=1)
+    #
+    return {'Q':out_q_df, 'Qb':out_qb_df}
+
+
+
+
+
+

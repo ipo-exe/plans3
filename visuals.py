@@ -1609,6 +1609,43 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
         return expfile
 
 
+def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, filename='glue_ensemble', folder='C:/bin',):
+    #
+    fig = plt.figure(figsize=(16, 8))  # Width, Height
+    fig.suptitle('GLUE | Envoltória de 90% de confiança para modelos admissíveis')
+    gs = mpl.gridspec.GridSpec(2, 1, wspace=0.8, hspace=0.6)
+    # plot prec
+    ax1 = fig.add_subplot(gs[0, 0])
+    plt.title('Precipitação observada', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(sim_df['Date'], sim_df['Prec'])
+    plt.ylim(0, 1.1 * np.max(sim_df['Prec'].values))
+    plt.grid(grid)
+    # plt.xticks(locs, labels)
+    # plot q
+    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
+    plt.title('Vazões simuladas - envoltória de 90% de confiança', loc='left')
+    plt.ylabel('mm/d')
+    plt.fill_between(x=ensemble_df['Date'], y1=ensemble_df['Lo_90'], y2=ensemble_df['Hi_90'],
+                     color='lightsteelblue', label='Envoltória de 90%')
+    plt.plot(ensemble_df['Date'], sim_df['Qobs'], color='tab:grey', label='Dados observados')
+    plt.plot(ensemble_df['Date'], sim_df['Q'], linestyle='dashed', color='tab:blue', label='Modelo de máxima verossimilhança')
+    plt.grid(grid)
+    #plt.yscale('log')
+    plt.legend()
+    # plt.xticks(locs, labels)
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        filepath = folder + '/' + filename + '_' + suff + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
+
+
 def map_series(map_series1, map_series2, rng1, rng2, dates, ttl='Map Series', ttl_s1='Series 1', ttl_s2='Series 2',
                filename='map_series', folder='C:/bin', show=False):
     from matplotlib import cm
@@ -1626,7 +1663,9 @@ def map_series(map_series1, map_series2, rng1, rng2, dates, ttl='Map Series', tt
     for i in range(len(map_series1)):
         lcl_x = i * 3
         ax = fig.add_subplot(gs[0:4, lcl_x:lcl_x + 3])
-        im = plt.imshow(map_series1[i], cmap='plasma', vmin=np.min(map_series1[i]), vmax=np.max(map_series1[i]))
+        vmin = np.percentile(map_series1[i], 5)
+        vmax = np.percentile(map_series1[i], 95)
+        im = plt.imshow(map_series1[i], cmap='hot_r', vmin=np.min(map_series1[i]), vmax=np.max(map_series1[i]))
         plt.title('{} | {}'.format(ttl_s1, dates[i]), fontsize=10)
         plt.colorbar(im, shrink=0.4)
         plt.axis('off')
@@ -1637,6 +1676,8 @@ def map_series(map_series1, map_series2, rng1, rng2, dates, ttl='Map Series', tt
     for i in range(len(map_series2)):
         lcl_x = i * 3
         ax = fig.add_subplot(gs[4:, lcl_x:lcl_x + 3])
+        #vmin = np.percentile(map_series2[i], 5)
+        #vmax = np.percentile(map_series2[i], 95)
         im = plt.imshow(map_series2[i], cmap=jetcm, vmin=vmin, vmax=vmax)
         plt.title('{} | {}'.format(ttl_s2, dates[i]), fontsize=10)
         plt.colorbar(im, shrink=0.4)
