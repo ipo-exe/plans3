@@ -447,6 +447,41 @@ def fuzzy_transition(array, a, b, ascending=True, type='senoid'):
     return transition
 
 
+def landforms(slope, tpimicro, tpimacro, v1=-1, v2=1, v3=-1, v4=1, v5=4):
+    """
+    landform TPI-based classification (Weiss, 2001)
+
+    :param slope: 2d numpy array of slope
+    :param tpimicro: 2d numpy array of TPI of micro topography
+    :param tpimacro: 2d numpy array of TPI of macro topography
+    :param v1: float of tpi micro lower threshold in tpi units
+    :param v2: float of tpi micro upper threshold in tpi units
+    :param v3: float of tpi micro lower threshold in tpi units
+    :param v4: float of tpi macro upper threshold in tpi units
+    :param v5: float of slope threshold in slope units
+    :return: numpy array of 10 landform classes:
+
+    11 - valley bottoms
+    12 - valleys
+    13 - valley borders
+    21 - Mesas
+    22 - Gentle hillslopes
+    23 - Ridges
+    24 - Plains
+    31 - Hill thalweg
+    32 - Hill tops
+    33 - Peaks
+    """
+    slope_rcl = 1 * (slope <= v5)
+    tpi_micro_rcl = (1 * (tpimicro <= v1)) + (2 * (tpimicro > v1) * (tpimicro <= v2)) + (3 * (tpimicro > v2))
+    tpi_macro_rcl = (1 * (tpimacro <= v3)) + (2 * (tpimacro > v3) * (tpimacro <= v4)) + (3 * (tpimacro > v4))
+    # cross tpi
+    lf9 = tpi_micro_rcl + (tpi_macro_rcl * 10)
+    # define plains
+    lf10 = ((slope_rcl * (lf9 == 22)) * 2) + lf9
+    return lf10
+
+
 def local_flowacc(flowdir):
     """
     compute the local flow accumulation
@@ -719,6 +754,36 @@ def mask(array, mask):
     return masked
 
 
+def ndvi(nir, red):
+    """
+    Normalized Difference Vegetation Index - NDVI
+    :param nir: 2d numpy array of NIR (Near Infrared) - Band 5 of Landsat 8
+    :param red: 2d numpy array of Red - Band 4 of Landsat 8
+    :return: 2d numpy array of NDVI
+    """
+    return (nir - red) / (nir + red)
+
+
+def ndwi_v(nir, swir):
+    """
+    Normalized Difference Wetness Index of Vegetation - NDWIv
+    :param nir: 2d numpy array of NIR (Near Infrared) - Band 5 of Landsat 8
+    :param swir: 2d numpy array of SWIR (Shortwave Infrared) - Band 6 of Landsat 8
+    :return: 2d numpy array of NDWI_v
+    """
+    return (nir - swir) / (nir + swir)
+
+
+def ndwi_w(green, nir):
+    """
+    Normalized Difference Wetness Index of Water - NDWIw
+    :param green: 2d numpy array of Green - Band 3 of Landsat 8
+    :param nir: 2d numpy array of NIR (Near Infrared) - Band 5 of Landsat 8
+    :return: 2d numpy array of NDWIw
+    """
+    return (green - nir) / (green + nir)
+
+
 def reclassify(array, upvalues, classes):
     """
     utility function -
@@ -794,6 +859,40 @@ def slope(dem, cellsize, degree=True):
     if degree:
         slope_array = slope_array * 360 / (2 * np.pi)
     return slope_array
+
+
+def soils_landforms(landforms):
+    """
+    Landform-based soil classification
+    :param landforms: numpy array of 10 landform classes:
+
+    11 - valley bottoms
+    12 - valleys
+    13 - valley borders
+    21 - Mesas
+    22 - Gentle hillslopes
+    23 - Ridges
+    24 - Plains
+    31 - Hill thalweg
+    32 - Hill tops
+    33 - Peaks
+
+    :return: numpy array of soil classification
+
+    1 - Alluvial
+    2 - Colluvial
+    3 - Residual
+    4 - Neosols
+
+    """
+
+    alluvial = 1 * (landforms == 12) # valley
+    colluvial = 2 * ((landforms == 11) + (landforms == 13)) # valley bottom and valley border
+    residuals = 3 * ((landforms == 31) + (landforms == 32) + (landforms == 21) + (landforms == 22) + (landforms == 23) + (landforms == 24))
+    neosols = 4 * (landforms == 33)  # peaks
+
+    soils_land = alluvial + colluvial + residuals + neosols
+    return soils_land
 
 
 def stddem():
