@@ -11,15 +11,14 @@ This document present the list of all Input / Output files of `plans3`.
 ioType | FileName | FileFormat | FileType
  :---  |  :---  |  :---  |  :--- 
 input | aoi_basin | asc | raster map
-input | aoi_catcha | asc | raster map
 input | aoi_dem | asc | raster map
 input | aoi_lulc_param | txt | csv data frame
 input | aoi_lulc_series_input | txt | csv time series
 input | aoi_series | txt | csv time series
 input | aoi_soils | asc | raster map
 input | aoi_soils_param | txt | csv data frame
+input | aoi_twi | asc | raster map
 input | calib_basin | asc | raster map
-input | calib_catcha | asc | raster map
 input | calib_dem | asc | raster map
 input | calib_etpat_series_input | txt | csv time series
 input | calib_lulc | asc | raster map
@@ -27,6 +26,7 @@ input | calib_lulc_param | txt | csv data frame
 input | calib_series | txt | csv time series
 input | calib_soils | asc | raster map
 input | calib_soils_param | txt | csv data frame
+input | calib_twi | asc | raster map
 input | hydro_param | txt | csv data frame
 
 ## `aoi_basin.asc`
@@ -44,21 +44,6 @@ input | hydro_param | txt | csv data frame
 - **Example**:
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/basin.PNG "aoi_basin")
-
-## `aoi_catcha.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of catchment area (also known as flow accumulation) of the AOI basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: squared meters.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/catcha.PNG "aoi_catcha")
 
 ## `aoi_dem.asc`
 
@@ -202,6 +187,21 @@ IdSoil;     SoilName;  f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
      5;      Neosols;   0.5;      1.0;        0.4;   0.0013;       maroon
 ```
 
+## `aoi_twi.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of the Topographic Wetness Index (TWI) for the AOI basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: TWI units.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "aoi_twi")
+
 ## `calib_basin.asc`
 
 - **I/O**: input.
@@ -217,21 +217,6 @@ IdSoil;     SoilName;  f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
 - **Example**:
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/basin.PNG "calib_basin")
-
-## `calib_catcha.asc`
-
-- **I/O**: input.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of catchment area (also known as flow accumulation) of the calibration basin.
-- **Requirements**:
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: squared meters.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/catcha.PNG "calib_catcha")
 
 ## `calib_dem.asc`
 
@@ -405,6 +390,21 @@ IdSoil;     SoilName;  f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
      5;      Neosols;   0.5;      1.0;        0.4;   0.0013;       maroon
 ```
 
+## `calib_twi.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) for the calibration basin.
+- **Requirements**:
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: TWI units.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twi")
+
 ## `hydro_param.txt`
 
 - **I/O**: input.
@@ -456,7 +456,8 @@ derived | aoi_lulc_series | txt | csv time series
 derived | aoi_shru_param | txt | csv data frame
 derived | aoi_shru_series | txt | csv time series
 derived | aoi_slope | asc | raster map
-derived | aoi_twi | asc | raster map
+derived | aoi_twito | asc | raster map
+derived | calib_basin_histograms | txt | csv data frame
 derived | calib_etpat_series | txt | csv time series
 derived | calib_etpat_zmaps | txt | csv time series
 derived | calib_fto | asc | raster map
@@ -464,7 +465,7 @@ derived | calib_histograms | txt | csv data frame
 derived | calib_shru | asc | raster map
 derived | calib_shru_param | txt | csv data frame
 derived | calib_slope | asc | raster map
-derived | calib_twi | asc | raster map
+derived | calib_twito | asc | raster map
 
 ## `aoi_fto.asc`
 
@@ -619,12 +620,12 @@ IdSHRU;               SHRUName; IdLULC; IdSoil;     LULCName; f_Canopy; f_RootDe
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "aoi_slope")
 
-## `aoi_twi.asc`
+## `aoi_twito.asc`
 
 - **I/O**: derived.
 - **File type**: raster map.
 - **Dataset type**: observed.
-- **Dataset description**: Raster map of the Topographic Wetness Index (TWI) for the AOI basin.
+- **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) added to the natural log of inverse transmissivity factor for the calibration basin.
 - **Requirements**:
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
@@ -632,7 +633,25 @@ IdSHRU;               SHRUName; IdLULC; IdSoil;     LULCName; f_Canopy; f_RootDe
 	 - Cells values units: TWI units.
 - **Example**:
 
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "aoi_twi")
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "aoi_twito")
+
+## `calib_basin_histograms.txt`
+
+- **I/O**: derived.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of CALIB basin. Values are in counted cells.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
+- **Example**:
+```
+sample file
+```
 
 ## `calib_etpat_series.txt`
 
@@ -702,7 +721,7 @@ sample file
 - **I/O**: derived.
 - **File type**: csv data frame.
 - **Dataset type**: observed.
-- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of CALIB basin. Values are in counted cells.
+- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of CALIB full extension. Values are in counted cells.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
@@ -820,12 +839,12 @@ IdSHRU;               SHRUName; IdLULC; IdSoil;     LULCName; f_Canopy; f_RootDe
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "calib_slope")
 
-## `calib_twi.asc`
+## `calib_twito.asc`
 
 - **I/O**: derived.
 - **File type**: raster map.
 - **Dataset type**: observed.
-- **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) for the calibration basin.
+- **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) added to the natural log of inverse transmissivity factor for the calibration basin.
 - **Requirements**:
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
@@ -833,17 +852,36 @@ IdSHRU;               SHRUName; IdLULC; IdSoil;     LULCName; f_Canopy; f_RootDe
 	 - Cells values units: TWI units.
 - **Example**:
 
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twi")
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twito")
 
 ---
 # extracted files
 
 ioType | FileName | FileFormat | FileType
  :---  |  :---  |  :---  |  :--- 
+extracted | aoi_basin_histograms_YYYY-MM-DD | txt | csv data frame
 extracted | aoi_histograms_YYYY-MM-DD | txt | csv data frame
 extracted | aoi_lulc_YYYY-MM-DD | asc | raster map
 extracted | aoi_shru_YYYY-MM-DD | asc | raster map
 extracted | calib_etpat_YYYY-MM-DD | asc | raster map
+
+## `aoi_basin_histograms_YYYY-MM-DD.txt`
+
+- **I/O**: extracted.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of AOI basin in date YYYY-MM-DD. Values are in counted cells.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
+- **Example**:
+```
+sample file
+```
 
 ## `aoi_histograms_YYYY-MM-DD.txt`
 
