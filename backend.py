@@ -372,8 +372,8 @@ def get_observed_files(infile='iofiles.txt', sep='|'):
 
 
 def get_input2derived():
-    dct = {'calib_twi.asc':('calib_slope.asc', 'calib_catcha.asc', 'calib_fto.asc'),
-           'aoi_twi.asc':('aoi_slope.asc', 'aoi_catcha.asc', 'aoi_fto.asc'),
+    dct = {'calib_twito.asc':('calib_twi.asc', 'calib_fto.asc'),
+           'aoi_twito.asc':('calib_twi.asc', 'calib_fto.asc'),
            'calib_shru.asc': ('calib_lulc.asc', 'calib_lulc_param.txt', 'calib_soils.asc', 'calib_soils_param.txt', 'calib_shru_param.txt'),
            'aoi_lulc_series.txt':('aoi_lulc_series_input.txt',),
            'aoi_shru_series.txt':('aoi_lulc_series.txt', 'aoi_lulc_param.txt', 'aoi_soils.asc', 'aoi_soils_param.txt', 'aoi_shru_param.txt'),
@@ -387,7 +387,6 @@ def get_input2derived():
            'calib_fto.asc': ('calib_soils.asc', 'calib_soils_param.txt'),
            'calib_etpat_series.txt':('calib_etpat_series_input.txt',),
            'calib_etpat_zmaps.txt':('calib_etpat_series.txt', 'calib_twi.asc', 'calib_shru.asc', 'calib_histograms.txt')}
-
     return dct
 
 

@@ -393,12 +393,13 @@ def main(root='default', importing=True):
                                     #
                                     # evaluate options
                                     #
-                                    # Derive TWI
-                                    if lcl_lcl_opt == 'calib_twi.asc' or lcl_lcl_opt == 'aoi_twi.asc':
+                                    # Derive TWITO
+                                    if lcl_lcl_opt == 'calib_twito.asc' or lcl_lcl_opt == 'aoi_twito.asc':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.map_twi(filesp[0], filesp[1], filesp[2],
-                                                                    folder=projectdirs['Observed'],
-                                                                    filename=lcl_filename)
+                                        derivedfile = tools.map_twito(filesp[0],
+                                                                      filesp[1],
+                                                                      folder=projectdirs['Observed'],
+                                                                      filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'calib_shru.asc':

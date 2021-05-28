@@ -126,12 +126,17 @@ def view_imported_map(filename, folder, aux_folder=''):
 def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=False):
     """
 
-    :param ftwi: string filepath to twito
-    :param fshru:
-    :param folder:
-    :param frametype:
-    :param tui:
-    :return:
+    Export frames of local variables
+
+    :param ftwi: string filepath to twi raster map
+    :param fshru: string filepath to twi raster map
+    :param folder: string filepath to simulation/output folder. The folder must contain all series files:
+
+    'sim_series.txt' and all 'sim_zmaps_series_VAR.txt' VAR files
+
+    :param frametype: string code to frametypes. options: 'all', 'ET', 'Qv' and 'R"
+    :param tui: boolean to display
+    :return: none
     """
     from backend import get_all_lclvars
     from hydrology import map_back
@@ -154,7 +159,6 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
     #
     #
     # load series
-    fseries = '{}/sim_series.txt'.format(folder)
     fseries = folder + r'\sim_series.txt'
     series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     #
@@ -186,7 +190,7 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
         # print(lcl_df.tail().to_string())
         zmaps_series[var] = lcl_df.copy()
     #
-    #
+    # todo improve to avoid memory crash - import rasters on the fly - get max min from zmaps
     # load rasters from zmap files
     raster_series = dict()
     rasters_maxval = dict()
@@ -300,12 +304,12 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
 def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin', filename='shru', viewlabel=''):
     """
 
+    Function to get the SHRU raster map.
+
     :param flulc: string file path to lulc .asc raster file
     :param flulcparam: string file path to lulc parameters .txt file. Separator = ;
-
     :param fsoils: string path to soils.asc raster file
     :param fsoilsparam: string path to soils parameters .txt file. Separator = ;
-
     :param folder: string path to destination folder
     :param filename: string name of file
     :return: string file path
@@ -390,7 +394,7 @@ def map_slope(fdem, folder='C:/bin', filename='slope'):
     plot_map_view(slp, meta, ranges, mapid='slope', filename=filename, folder=folder, metadata=True)
     return export_file
 
-
+# deprecated:
 def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     """
     Derive the Topographical Wetness Index of TOPMODEL (Beven & Kirkby, 1979)
@@ -416,6 +420,29 @@ def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     ranges = (np.min(twi), np.max(twi))
     plot_map_view(twi, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
     return export_file
+
+
+def map_twito(ftwi, ffto, folder='C:/bin', filename='twito'):
+    """
+    Derive the TWIto raster map.
+    :param ftwi: string filepath to TWI asc raster map
+    :param ffto: string filepath to fTo asc raster map
+    :param folder: string filepath to output folder
+    :param filename: string of output file name
+    :return: string filepath to output asc raster map
+    """
+    from visuals import plot_map_view
+    # import
+    meta, twi = input.asc_raster(ftwi)
+    meta, fto = input.asc_raster(ffto)
+    # process
+    twito = twi + np.log(1 / fto)
+    # export
+    exp_file = output.asc_raster(twito, meta, folder, filename)
+    # plot
+    ranges = (np.min(twito), np.max(twito))
+    plot_map_view(twito, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
+    return exp_file
 
 
 def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder='C:/bin', filename='histograms',
