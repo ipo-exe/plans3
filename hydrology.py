@@ -596,34 +596,76 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
         #
         # ****** COMPUTE Flows for usage in next time step ******
         #
+        #
         # --- Canopy
-        # compute current TF - Throughfall (or "effective precipitation")
-        prec_i = ts_prec[t] * np.ones(shape=shape) # update PREC
-        ira_i = ts_ira[t] * fira_i # update IRA
+        #
+        #
+        # update PREC:
+        prec_i = ts_prec[t] * np.ones(shape=shape)
+        #
+        # update IRA:
+        ira_i = ts_ira[t] * fira_i
         ts_ira_out[t] = avg_2d(ira_i, basinshadow)
-        cpyin_i = prec_i + ira_i  # canopy total input
+        #
+        # canopy total input:
+        cpyin_i = prec_i + ira_i
+        #
+        # throughfall:
         tf_i = ((cpyin_i - (cpmax_i - cpy_i)) * (cpyin_i > (cpmax_i - cpy_i)))
         ts_tf[t] = avg_2d(var2d=tf_i, weight=basinshadow)
         #
         # compute current Evc from canopy:
-        pet_i = ts_pet[t] * np.ones(shape=shape)  # update PET
+        #
+        # update PET
+        pet_i = ts_pet[t] * np.ones(shape=shape)
         petfull_i = ts_pet[t] * np.ones(shape=shape)  # reserve PET for mapping
+        #
+        # interceptation
         icp_i = cpy_i + cpyin_i - tf_i
+        #
+        # evaporation from canopy:
         evc_i = (pet_i * (icp_i > pet_i)) + (icp_i * (icp_i <= pet_i))
         ts_evc[t] = avg_2d(var2d=evc_i, weight=basinshadow)  # compute average in the basin
         #
-        # --- Surface
+        # update pet
+        pet_i = pet_i - evc_i
+        #
+        #
+        #
+        # --- Saturated Root Zone
+        #
+        #
+        # potential tpgw:
+        p_tpgw_i = (erz_i - d_i) * ((erz_i - d_i) > 0)
+        #
+        # compute tpgw:
+        tpgw_i = (pet_i * (p_tpgw_i >= pet_i)) + (p_tpgw_i * (p_tpgw_i < pet_i))
+        ts_tpgw[t] = avg_2d(var2d=tpgw_i, weight=basinshadow)  # compute average in the basin
+        #
+        # update pet
+        pet_i = pet_i - tpgw_i
+        #
+        #
+        #
+        # --- Surface (runoff and infiltration)
+        #
+        #
+        # update IRI
+        iri_i = ts_iri[t] * firi_i
+        ts_iri_out[t] = avg_2d(iri_i, basinshadow)
+        #
+        # surface total input
+        sfsin_i = tf_i + iri_i
         #
         # compute current runoff
-        iri_i = ts_iri[t] * firi_i  # update IRI
-        ts_iri_out[t] = avg_2d(iri_i, basinshadow)
-        sfsin_i = tf_i + iri_i  # surface total input
         r_i = ((sfs_i + sfsin_i) - sfmax_i) * ((sfs_i + sfsin_i) > sfmax_i)
+        #
         # separate runoff
         rse_i = r_i * vsa_i  # Saturation excess runoff - Dunnean runoff
         rie_i = r_i * (vsa_i == 0.0) # Infiltration excess runoff - Hortonian runoff
         rc_i = 100 * (prec_i > 0) * (r_i / ((prec_i == 0) + prec_i))
-        # compute global runoff:
+        #
+        # compute global runoff components:
         ts_r[t] = avg_2d(var2d=r_i, weight=basinshadow)  # compute average in the basin
         ts_rse[t] = avg_2d(var2d=rse_i, weight=basinshadow)
         ts_rie[t] = avg_2d(var2d=rie_i, weight=basinshadow)
@@ -634,51 +676,60 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
             ts_r[b][t] = avg_2d(var2d=r_i, weight=basins_list[b])  # time series of Runoff as 2d array
         '''
         #
-        # compute surface depletion
-        pet_i = pet_i - evc_i  # update pet
+        # potential infiltration from surface:
+        p_sfs_inf_i = sfs_i * ksat_i
         #
-        # compute potential separate flows
-        p_evs_i = sfs_i * (pet_i / (ksat_i + pet_i + 1)) * ((ksat_i + pet_i) > 0)  # propotional to overall rate
-        p_sfs_inf_i = sfs_i * (ksat_i / (ksat_i + pet_i + 1)) * ((ksat_i + pet_i) > 0)  # proportional to overall rate
-        #
-        evs_i = (pet_i * (p_evs_i >= pet_i)) + (p_evs_i * (p_evs_i < pet_i))
-        ts_evs[t] = avg_2d(var2d=evs_i, weight=basinshadow)  # compute average in the basin
-        #
+        # potential infiltration from usaturated zone:
         p_unz_inf_i = (d_i - unz_i) * ((d_i - unz_i) > 0)
+        #
+        # compute surface depletion by infiltration:
         inf_i = (p_sfs_inf_i * (p_sfs_inf_i < p_unz_inf_i)) + (p_unz_inf_i * (p_sfs_inf_i >= p_unz_inf_i))
         ts_inf[t] = avg_2d(var2d=inf_i, weight=basinshadow)  # compute average in the basin
         #
-        # update PET
-        pet_i = pet_i - evs_i
+        #
         #
         # --- Unsaturated zone
-        # compute QV
+        #
+        #
+        # potential qv recharge rate without PET:
         p_qv_i = topmodel_qv(d=d_i, unz=unz_i, ksat=ksat_i)
+        #
+        # actual QV recharge rate with PET (proportional to ratio):
         qv_i = unz_i * (p_qv_i/ (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
         ts_qv[t] = avg_2d(var2d=qv_i, weight=basinshadow)  # compute average in the basin
         #
-        # compute tpun:
+        # compute potential tpun transpiration rate (proportional to ratio):
         p_tpun_i = unz_i * (pet_i / (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
+        #
+        # transpiration from the unsaturated zone
         tpun_i = (pet_i * (p_tpun_i >= pet_i)) + (p_tpun_i * (p_tpun_i < pet_i))
-
         ts_tpun[t] = avg_2d(var2d=tpun_i, weight=basinshadow)  # compute average in the basin
         #
         # update PET
         pet_i = pet_i - tpun_i
         #
-        # --- Saturated Root zone
-        # compute tpgw:
-        p_tpgw_i = (erz_i - d_i) * ((erz_i - d_i) > 0)  # potential tpgw
-        tpgw_i = (pet_i * (p_tpgw_i >= pet_i)) + (p_tpgw_i * (p_tpgw_i < pet_i))
-        ts_tpgw[t] = avg_2d(var2d=tpgw_i, weight=basinshadow)  # compute average in the basin
+        #
+        # --- Surface (evaporation)
+        #
+        #
+        # potential surface water
+        p_sfs_i = sfs_i + sfsin_i - r_i - inf_i
+        # evaporation from surface:
+        evs_i = (pet_i * (p_sfs_i >= pet_i)) + (p_sfs_i * (p_sfs_i < pet_i))
+        ts_evs[t] = avg_2d(var2d=evs_i, weight=basinshadow)  # compute average in the basin
+        #
         #
         # --- ET
+        #
         # compute ET
         et_i = evc_i + evs_i + tpun_i + tpgw_i
         ts_et[t] = avg_2d(var2d=et_i, weight=basinshadow)  # compute average in the basin
         #
         #
+        #
+        #
         # ****** UPDATE Global Water balance ******
+        #
         # global water balance
         ts_d[t] = ts_d[t - 1] + ts_qb[t - 1] - ts_qv[t - 1] + ts_tpgw[t - 1]
         #
@@ -687,8 +738,6 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
         #
         # Update Di
         d_i = topmodel_di(d=ts_d[t], twi=lamb_i, m=m, lamb=lamb)
-        #plt.imshow(d_i, cmap='jet')
-        #plt.show()
         #
         # compute VSA
         vsa_i = topmodel_vsai(di=d_i)
@@ -1026,7 +1075,11 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             lcl_c_qprec = lcl_q_sum / np.sum(sim_df['Prec'].values)
             lcl_c_qbprec = lcl_qb_sum / np.sum(sim_df['Prec'].values)
             cfc_obs = frequency(series=sobs)['Values']
-            cfc_sim = frequency(series=ssim)['Values']
+            try:
+                cfc_sim = frequency(series=ssim)['Values']
+            except ValueError:
+                print('Value Error found in simulated CFC')
+                cfc_sim = np.ones(shape=np.shape(cfc_obs))
             #
             # get metadata metrics
             lcl_nse = nse(obs=sobs, sim=ssim)

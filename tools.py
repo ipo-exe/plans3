@@ -394,7 +394,7 @@ def map_slope(fdem, folder='C:/bin', filename='slope'):
     plot_map_view(slp, meta, ranges, mapid='slope', filename=filename, folder=folder, metadata=True)
     return export_file
 
-# deprecated:
+
 def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     """
     Derive the Topographical Wetness Index of TOPMODEL (Beven & Kirkby, 1979)
@@ -419,6 +419,31 @@ def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     export_file = output.asc_raster(twi, meta, folder, filename)
     ranges = (np.min(twi), np.max(twi))
     plot_map_view(twi, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
+    return export_file
+
+
+def map_twi_hand(fslope, fcatcha, ffto, fhand, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, folder='C:/bin', filename='etwi'):
+    # import maps
+    meta, slope = input.asc_raster(fslope)
+    meta, catcha = input.asc_raster(fcatcha)
+    meta, fto = input.asc_raster(ffto)
+    meta, hand = input.asc_raster(fhand)
+    #
+    # process
+    twi_hand = geo.twi_hand(catcha=catcha,
+                            slope=slope,
+                            fto=fto,
+                            hand=hand,
+                            cellsize=meta['cellsize'],
+                            hand_hi=hand_hi,
+                            hand_lo=hand_lo,
+                            hand_w=hand_w,
+                            twi_w=twi_w)
+    # export data
+    export_file = output.asc_raster(twi_hand, meta, folder, filename)
+    # export plot
+    ranges = (np.min(twi_hand), np.max(twi_hand))
+    plot_map_view(twi_hand, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
     return export_file
 
 
@@ -2062,7 +2087,14 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # create the GLUE folder
     glue_folder = folder + '/' + 'GLUE'
     mkdir(glue_folder)
-    glue(fseries=fseries, fmodels=exp_file6, fhydroparam=fhydroparam, folder=glue_folder, wkpl=False)
+    glue(fseries=fseries,
+         fmodels=exp_file6,
+         fhydroparam=fhydroparam,
+         fshruparam=fshruparam,
+         fhistograms=fhistograms,
+         fbasinhists=fbasinhists,
+         fbasin=fbasin,
+         folder=glue_folder, wkpl=False)
     #
     #
     etpat_assessment = False
@@ -2336,40 +2368,8 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     #
     # compute posterior CDFs and posterior ranges (90%)
     # continue here:
-    hist_dct = dict()
-    clf_dct = dict()
-    prior_likelihood = np.ones(sampling_grid) / sampling_grid
-    print(prior_likelihood)
-    print(len(prior_likelihood))
-    for p in params:
-        lcl_rng = rng_dct['{}_rng'.format(p)]
-        lcl_grid = np.linspace(start=lcl_rng[0], stop=lcl_rng[1], num=sampling_grid + 1)
-        hist_raw_lst = list()
-        for i in range(1, len(lcl_grid)):
-            if i == 1:
-                lcl_df = behav_df.query('{} < {}'.format(p, lcl_grid[i]))
-            else:
-                lcl_df = behav_df.query('{} >= {} and {} < {}'.format(p, lcl_grid[i - 1], p, lcl_grid[i]))
-            lcl_val = np.max(lcl_df[likelihood].values)
-            hist_raw_lst.append(lcl_val)
-        hist_raw = np.array(hist_raw_lst)
-        print(len(hist_raw))
-        constant = np.sum(hist_raw * prior_likelihood)
-        #
-        #
-        # Bayes Theorem:
-        posterior_likelihood = hist_raw * prior_likelihood / constant
-        print(np.sum(posterior_likelihood))
-        #
-        clf_lst = list()
-        lcl_clf = 0
-        for i in range(len(posterior_likelihood)):
-            lcl_clf = lcl_clf + posterior_likelihood[i]
-            clf_lst.append(lcl_clf)
-        #plt.plot(lcl_grid[1:], clf_lst)
-        #plt.ylim((0, 1.1))
-        #plt.show()
-    #print(full_df.to_string())
+    print('contine here')
+
 
 
 

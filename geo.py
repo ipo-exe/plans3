@@ -961,6 +961,43 @@ def twi(catcha, grad, fto, cellsize, gradmin=0.0001):
     return np.log(catcha / (cellsize * fto * (grad + gradmin)))
 
 
+def twi_hand(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, gradmin=0.0001):
+    """
+
+    HAND enhanced TWI map method.
+
+    :param catcha: 2d array - cathment area in m2
+    :param slope: 2d array - slope in degrees
+    :param fto: 2d array - local transmissivity factor of basin average - unitless
+    :param hand: 2d array - Height Above Nearest Drainage
+    :param cellsize: float - cell size in meters
+    :param hand_hi: float - HAND higher threshold
+    :param hand_lo: float - HAND lower threshold
+    :param hand_w: float - HAND weight factor
+    :param twi_w: float - TWI weight factor
+    :param gradmin: float - minimun gradient threshold
+    :return: 2d numpy array of HAND-enhanced TWI map
+    """
+    # fuzify hand
+    hand_fuzz = fuzzy_transition(hand, a=hand_lo, b=hand_hi, ascending=False)
+    # get grad
+    grad_map = grad(slope)
+    # get twi:
+    twi_map = twi(catcha, grad_map, fto, cellsize=meta['cellsize'])
+    #
+    # fuzify twi
+    twi_lo = np.min(twi_map)
+    twi_hi = np.max(twi_map)
+    twi_fuzz = geo.fuzzy_transition(twi_map, a=twi_lo, b=twi_hi, ascending=True)
+    #
+    # compound twi:
+    twi_comp = hand_w * hand_fuzz + twi_w * twi_fuzz
+    #
+    # fuzify again to restore twi range
+    twi_hand_map = twi_hi * fuzzy_transition(twi_comp, a=np.min(twi_comp), b=np.max(twi_comp))
+    return twi_hand_map
+
+
 def usle_l(slope, cellsize):
     """
     Wischmeier & Smith (1978) L factor
