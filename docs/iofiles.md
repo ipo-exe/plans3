@@ -631,7 +631,7 @@ IdSHRU;               SHRUName; IdLULC; IdSoil;     LULCName; f_Canopy; f_RootDe
 - **I/O**: derived.
 - **File type**: raster map.
 - **Dataset type**: observed.
-- **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) added to the natural log of inverse transmissivity factor for the calibration basin.
+- **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) added to the natural log of inverse transmissivity factor for the AOI basin.
 - **Requirements**:
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).

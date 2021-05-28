@@ -124,6 +124,15 @@ def view_imported_map(filename, folder, aux_folder=''):
 
 
 def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=False):
+    """
+
+    :param ftwi: string filepath to twito
+    :param fshru:
+    :param folder:
+    :param frametype:
+    :param tui:
+    :return:
+    """
     from backend import get_all_lclvars
     from hydrology import map_back
     from visuals import pannel_local
