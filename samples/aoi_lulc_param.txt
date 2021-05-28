@@ -1,10 +1,10 @@
-IdLULC;     LULCName; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;  C_USLE; P_USLE;  ConvertTo;  ColorLULC
-     1;        Water;      0.0;         0.0;       1.6;   0.0;     0;     1.0;    1.0;       none;       blue
-     2;        Urban;      0.1;         1.0;       1.0;   0.0;     0;     0.1;    1.0;       none;       grey
-     3;       Forest;      1.0;         1.0;       1.0;   0.0;     0;  0.0001;    1.0;       none;  darkgreen
-     4;      Pasture;      0.5;         0.2;       0.7;   1.0;     0;    0.06;    1.0;  7 & 8 & 9;      khaki
-     5;        Crops;      0.4;         0.1;       0.4;   1.0;     1;     0.4;    1.0;  7 & 8 & 9;  goldenrod
-     6;      Wetland;      0.8;         0.6;       1.8;   0.0;     0;   0.001;    1.0;       none;       teal
-     7;   NBS-Forest;      0.9;         0.7;       0.9;   0.0;     0;   0.003;    1.0;       none;  limegreen
-     8;  NBS-Pasture;      0.6;        0.25;      0.75;   0.0;     0;    0.06;    0.3;       none;      olive
-     9;    NBS-Crops;      0.6;        0.15;       0.8;   0.5;     0;     0.4;    0.6;       none;       gold
+IdLULC;     LULCName; LULCAlias; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;           CanopySeason; f_CanopyBackg; C_USLE; P_USLE;  ConvertTo;  ColorLULC
+     1;        Water;         W;      0.0;         0.0;       1.6;   0.0;     0;                   none;           1.0;    1.0;    1.0;       none;       blue
+     2;        Urban;         U;      0.4;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;    0.1;    1.0;       none;       grey
+     3;       Forest;         F;      1.0;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7; 0.0001;    1.0;       none;  darkgreen
+     4;      Pasture;         P;      0.5;         0.2;       0.7;   1.0;     0;  Aug & Nov & Feb & Jun;           0.6;   0.06;    1.0;  7 & 8 & 9;      khaki
+     5;        Crops;         C;      0.4;         0.1;       0.4;   1.0;     1;  Aug & Nov & Feb & Jun;           0.1;    0.4;    1.0;  7 & 8 & 9;  goldenrod
+     6;      Wetland;        Wt;      0.8;         0.6;       1.8;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;  0.001;    1.0;       none;       teal
+     7;   NBS-Forest;       NbF;      0.9;         0.7;       0.9;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;  0.003;    1.0;       none;  limegreen
+     8;  NBS-Pasture;       NbP;      0.6;        0.25;      0.75;   0.0;     0;  Aug & Nov & Feb & Jun;           0.6;   0.06;    0.3;       none;      olive
+     9;    NBS-Crops;       NbC;      0.6;        0.15;       0.8;   0.5;     0;  Aug & Nov & Feb & Jun;           0.4;    0.4;    0.6;       none;       gold

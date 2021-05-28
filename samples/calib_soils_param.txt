@@ -1,6 +1,6 @@
-IdSoil;   SoilName; f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
-     1;   Alluvial;  1.0;     1.0;      0.3;   0.0021;        tan
-     2;  Colluvial;  1.0;     1.0;      0.3;    0.009;  goldenrod
-     3;   Residual;  1.0;     1.0;      0.3;   0.0042;     sienna
-     4;   Hydrosol;  1.0;    0.32;      0.3;   0.0021;      brown
-     5;    Neosols;  0.5;     1.0;      0.4;   0.0013;     maroon
+IdSoil;   SoilName; SoilAlias;  f_To;  f_Ksat;  Porosity;  K_USLE;  ColorSoil
+     1;   Alluvial;       All;   1.0;     1.0;      0.3;   0.0021;        tan
+     2;  Colluvial;       Col;   1.0;     1.0;      0.3;    0.009;  goldenrod
+     3;   Residual;       Res;   1.0;     1.0;      0.3;   0.0042;     sienna
+     4;   Hydrosol;       Hyd;   1.0;    0.32;      0.3;   0.0021;      brown
+     5;    Neosols;       Neo;   0.5;     1.0;      0.4;   0.0013;     maroon

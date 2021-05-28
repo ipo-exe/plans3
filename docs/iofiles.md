@@ -71,28 +71,30 @@ input | hydro_param | txt | csv data frame
 	 - Mandatory fields:
 		 - `IdLULC`: unique integer number of LULC class index.
 		 -  `LULCName`: one-word name of LULC class.
+		 -  `LULCAlias`: one-word alias of LULC class.
 		 - `f_Canopy`:  positive real number - unitless factor of reference effective canopy storage capacity.
 		 -  `f_Surface`: positive real  number - unitless factor reference effective surface storage capacity.
 		 - `f_RootDepth`: positive real  number - unitless factor of reference root zone depth.
 		 - `f_IRA`: positive real  number - unitless factor of irrigation input that is intercepted by canopy.
 		 -  `f_IRI`: positive real number - unitless factor of irrigation input that is not intercepted by canopy.
+		 - `CanopySeason`: list of four months aliases separated by `&` (ex: Sep & Nov & Feb & Jun). The months order must reflect the starting phases of canopy growth, peak, decay and dormancy.  If seasonality is not allowed must store `none` code.
+		 - `f_CanopyBackg`: positive real number lower or equal to 1.0 - unitless factor of canopy background value during dormancy period.
 		 - `C_USLE`: positive real number - unitless factor C of soil cover of USLE.
 		 -  `P_USLE`: positive real number - unitless factor P of conservation practices of USLE.
-	 - Optional fields:
 		 -  `ConvertTo`: list of LULC classes allowed to conversion separated by `&`. If conversion is not allowed must store `none` code.
 		 -  `ColorLULC`: CSS color name available in Matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdLULC;       LULCName;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;   C_USLE;  P_USLE;    ConvertTo;    ColorLULC
-     1;          Water;       0.0;          0.0;        1.6;    0.0;      0;      1.0;     1.0;         none;         blue
-     2;          Urban;       0.1;          1.0;        1.0;    0.0;      0;      0.1;     1.0;         none;         grey
-     3;         Forest;       1.0;          1.0;        1.0;    0.0;      0;   0.0001;     1.0;         none;    darkgreen
-     4;        Pasture;       0.5;          0.2;        0.7;    1.0;      0;     0.06;     1.0;    7 & 8 & 9;        khaki
-     5;          Crops;       0.4;          0.1;        0.4;    1.0;      1;      0.4;     1.0;    7 & 8 & 9;    goldenrod
-     6;        Wetland;       0.8;          0.6;        1.8;    0.0;      0;    0.001;     1.0;         none;         teal
-     7;     NBS-Forest;       0.9;          0.7;        0.9;    0.0;      0;    0.003;     1.0;         none;    limegreen
-     8;    NBS-Pasture;       0.6;         0.25;       0.75;    0.0;      0;     0.06;     0.3;         none;        olive
-     9;      NBS-Crops;       0.6;         0.15;        0.8;    0.5;      0;      0.4;     0.6;         none;         gold
+IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;             CanopySeason;  f_CanopyBackg;  C_USLE;  P_USLE;    ConvertTo;    ColorLULC
+     1;          Water;           W;       0.0;          0.0;        1.6;    0.0;      0;                     none;            1.0;     1.0;     1.0;         none;         blue
+     2;          Urban;           U;       0.4;          1.0;        1.0;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;     0.1;     1.0;         none;         grey
+     3;         Forest;           F;       1.0;          1.0;        1.0;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;  0.0001;     1.0;         none;    darkgreen
+     4;        Pasture;           P;       0.5;          0.2;        0.7;    1.0;      0;    Aug & Nov & Feb & Jun;            0.6;    0.06;     1.0;    7 & 8 & 9;        khaki
+     5;          Crops;           C;       0.4;          0.1;        0.4;    1.0;      1;    Aug & Nov & Feb & Jun;            0.1;     0.4;     1.0;    7 & 8 & 9;    goldenrod
+     6;        Wetland;          Wt;       0.8;          0.6;        1.8;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;   0.001;     1.0;         none;         teal
+     7;     NBS-Forest;         NbF;       0.9;          0.7;        0.9;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;   0.003;     1.0;         none;    limegreen
+     8;    NBS-Pasture;         NbP;       0.6;         0.25;       0.75;    0.0;      0;    Aug & Nov & Feb & Jun;            0.6;    0.06;     0.3;         none;        olive
+     9;      NBS-Crops;         NbC;       0.6;         0.15;        0.8;    0.5;      0;    Aug & Nov & Feb & Jun;            0.4;     0.4;     0.6;         none;         gold
 ```
 
 ## `aoi_lulc_series_input.txt`
@@ -171,6 +173,7 @@ sample file
 	 - Mandatory fields:
 		 -  `IdSoil`: unique integer number of soil class index.
 		 -  `SoilName`: one-word name of soil class.
+		 -  `SoilAlias`: one-word alias of soil class.
 		 - `f_To`:  positive real number - unitless factor of basin average effective soil transmissivity.
 		 - `f_Ksat`:  positive real number - unitless factor of reference effective saturated hydraulic conductivity.
 		 -  `Porosity`: positive real number - value of soil porosity.
@@ -179,12 +182,12 @@ sample file
 		 -  `ColoSoil`: CSS color name available in matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdSoil;     SoilName;  f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
-     1;     Alluvial;   1.0;      1.0;        0.3;   0.0021;          tan
-     2;    Colluvial;   1.0;      1.0;        0.3;    0.009;    goldenrod
-     3;     Residual;   1.0;      1.0;        0.3;   0.0042;       sienna
-     4;     Hydrosol;   1.0;     0.32;        0.3;   0.0021;        brown
-     5;      Neosols;   0.5;      1.0;        0.4;   0.0013;       maroon
+IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
+     1;     Alluvial;         All;    1.0;      1.0;        0.3;   0.0021;          tan
+     2;    Colluvial;         Col;    1.0;      1.0;        0.3;    0.009;    goldenrod
+     3;     Residual;         Res;    1.0;      1.0;        0.3;   0.0042;       sienna
+     4;     Hydrosol;         Hyd;    1.0;     0.32;        0.3;   0.0021;        brown
+     5;      Neosols;         Neo;    0.5;      1.0;        0.4;   0.0013;       maroon
 ```
 
 ## `aoi_twi.asc`
@@ -288,28 +291,30 @@ IdSoil;     SoilName;  f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
 	 - Mandatory fields:
 		 - `IdLULC`: unique integer number of LULC class index.
 		 -  `LULCName`: one-word name of LULC class.
+		 -  `LULCAlias`: one-word alias of LULC class.
 		 - `f_Canopy`:  positive real number - unitless factor of reference effective canopy storage capacity.
 		 -  `f_Surface`: positive real  number - unitless factor reference effective surface storage capacity.
 		 - `f_RootDepth`: positive real  number - unitless factor of reference root zone depth.
 		 - `f_IRA`: positive real  number - unitless factor of irrigation input that is intercepted by canopy.
 		 -  `f_IRI`: positive real number - unitless factor of irrigation input that is not intercepted by canopy.
+		 - `CanopySeason`: list of four months aliases separated by `&` (ex: Sep & Nov & Feb & Jun). The months order must reflect the starting phases of canopy growth, peak, decay and dormancy.  If seasonality is not allowed must store `none` code.
+		 - `f_CanopyBackg`: positive real number lower or equal to 1.0 - unitless factor of canopy background value during dormancy period.
 		 - `C_USLE`: positive real number - unitless factor C of soil cover of USLE.
 		 -  `P_USLE`: positive real number - unitless factor P of conservation practices of USLE.
-	 - Optional fields:
 		 -  `ConvertTo`: list of LULC classes allowed to conversion separated by `&`. If conversion is not allowed must store `none` code.
 		 -  `ColorLULC`: CSS color name available in Matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdLULC;       LULCName;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;   C_USLE;  P_USLE;    ConvertTo;    ColorLULC
-     1;          Water;       0.0;          0.0;        1.6;    0.0;      0;      1.0;     1.0;         none;         blue
-     2;          Urban;       0.1;          1.0;        1.0;    0.0;      0;      0.1;     1.0;         none;         grey
-     3;         Forest;       1.0;          1.0;        1.0;    0.0;      0;   0.0001;     1.0;         none;    darkgreen
-     4;        Pasture;       0.5;          0.2;        0.7;    1.0;      0;     0.06;     1.0;    7 & 8 & 9;        khaki
-     5;          Crops;       0.4;          0.1;        0.4;    1.0;      1;      0.4;     1.0;    7 & 8 & 9;    goldenrod
-     6;        Wetland;       0.8;          0.6;        1.8;    0.0;      0;    0.001;     1.0;         none;         teal
-     7;     NBS-Forest;       0.9;          0.7;        0.9;    0.0;      0;    0.003;     1.0;         none;    limegreen
-     8;    NBS-Pasture;       0.6;         0.25;       0.75;    0.0;      0;     0.06;     0.3;         none;        olive
-     9;      NBS-Crops;       0.6;         0.15;        0.8;    0.5;      0;      0.4;     0.6;         none;         gold
+IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;             CanopySeason;  f_CanopyBackg;  C_USLE;  P_USLE;    ConvertTo;    ColorLULC
+     1;          Water;           W;       0.0;          0.0;        1.6;    0.0;      0;                     none;            1.0;     1.0;     1.0;         none;         blue
+     2;          Urban;           U;       0.4;          1.0;        1.0;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;     0.1;     1.0;         none;         grey
+     3;         Forest;           F;       1.0;          1.0;        1.0;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;  0.0001;     1.0;         none;    darkgreen
+     4;        Pasture;           P;       0.5;          0.2;        0.7;    1.0;      0;    Aug & Nov & Feb & Jun;            0.6;    0.06;     1.0;    7 & 8 & 9;        khaki
+     5;          Crops;           C;       0.4;          0.1;        0.4;    1.0;      1;    Aug & Nov & Feb & Jun;            0.1;     0.4;     1.0;    7 & 8 & 9;    goldenrod
+     6;        Wetland;          Wt;       0.8;          0.6;        1.8;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;   0.001;     1.0;         none;         teal
+     7;     NBS-Forest;         NbF;       0.9;          0.7;        0.9;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;   0.003;     1.0;         none;    limegreen
+     8;    NBS-Pasture;         NbP;       0.6;         0.25;       0.75;    0.0;      0;    Aug & Nov & Feb & Jun;            0.6;    0.06;     0.3;         none;        olive
+     9;      NBS-Crops;         NbC;       0.6;         0.15;        0.8;    0.5;      0;    Aug & Nov & Feb & Jun;            0.4;     0.4;     0.6;         none;         gold
 ```
 
 ## `calib_series.txt`
@@ -374,6 +379,7 @@ IdLULC;       LULCName;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;   C
 	 - Mandatory fields:
 		 -  `IdSoil`: unique integer number of soil class index.
 		 -  `SoilName`: one-word name of soil class.
+		 -  `SoilAlias`: one-word alias of soil class.
 		 - `f_To`:  positive real number - unitless factor of basin average effective soil transmissivity.
 		 - `f_Ksat`:  positive real number - unitless factor of reference effective saturated hydraulic conductivity.
 		 -  `Porosity`: positive real number - value of soil porosity.
@@ -382,12 +388,12 @@ IdLULC;       LULCName;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;   C
 		 -  `ColoSoil`: CSS color name available in matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdSoil;     SoilName;  f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
-     1;     Alluvial;   1.0;      1.0;        0.3;   0.0021;          tan
-     2;    Colluvial;   1.0;      1.0;        0.3;    0.009;    goldenrod
-     3;     Residual;   1.0;      1.0;        0.3;   0.0042;       sienna
-     4;     Hydrosol;   1.0;     0.32;        0.3;   0.0021;        brown
-     5;      Neosols;   0.5;      1.0;        0.4;   0.0013;       maroon
+IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
+     1;     Alluvial;         All;    1.0;      1.0;        0.3;   0.0021;          tan
+     2;    Colluvial;         Col;    1.0;      1.0;        0.3;    0.009;    goldenrod
+     3;     Residual;         Res;    1.0;      1.0;        0.3;   0.0042;       sienna
+     4;     Hydrosol;         Hyd;    1.0;     0.32;        0.3;   0.0021;        brown
+     5;      Neosols;         Neo;    0.5;      1.0;        0.4;   0.0013;       maroon
 ```
 
 ## `calib_twi.asc`
