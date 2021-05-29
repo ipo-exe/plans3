@@ -998,6 +998,37 @@ def twi_hand(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand
     return twi_hand_map
 
 
+def twi_hand_short(twi, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, gradmin=0.0001):
+    """
+
+    HAND enhanced TWI map method. Short method.
+
+    :param twi: 2d array - TWI - Topographical Wetness Index
+    :param hand: 2d array - HAND - Height Above Nearest Drainage
+    :param cellsize: float - cell size in meters
+    :param hand_hi: float - HAND higher threshold
+    :param hand_lo: float - HAND lower threshold
+    :param hand_w: float - HAND weight factor
+    :param twi_w: float - TWI weight factor
+    :param gradmin: float - minimun gradient threshold
+    :return: 2d numpy array of HAND-enhanced TWI map
+    """
+    # fuzify hand
+    hand_fuzz = fuzzy_transition(hand, a=hand_lo, b=hand_hi, ascending=False)
+    #
+    # fuzify twi
+    twi_lo = np.min(twi)
+    twi_hi = np.max(twi)
+    twi_fuzz = geo.fuzzy_transition(twi, a=twi_lo, b=twi_hi, ascending=True)
+    #
+    # compound twi:
+    twi_comp = hand_w * hand_fuzz + twi_w * twi_fuzz
+    #
+    # fuzify again to restore twi range
+    twi_hand_map = twi_hi * fuzzy_transition(twi_comp, a=np.min(twi_comp), b=np.max(twi_comp))
+    return twi_hand_map
+
+
 def usle_l(slope, cellsize):
     """
     Wischmeier & Smith (1978) L factor
