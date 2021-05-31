@@ -918,12 +918,9 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         out_array = np.array(out_lst)
         return out_array.flatten()
     #
-    #
-    #
     # run setup
     runsize = generations * popsize * 2
     print('Runsize = {}'.format(runsize))
-    #
     #
     # extract observed data
     sobs = series['Q'].values
@@ -931,8 +928,6 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
     # get log10 of flow for calibration metrics
     loglim = 0.000001
     sobs_log = np.log10(sobs + (loglim * (sobs <= 0)))
-    #
-    #
     #
     # get OBS etpat zmap signal
     etpat_zmaps_nd = np.array(etpatzmaps)
@@ -959,7 +954,6 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
     #plt.plot(lcl_x, sobs_etpat)
     #plt.show()
     '''
-    #
     #
     # reset random state using time
     seed = int(str(datetime.now())[-6:])
@@ -1038,6 +1032,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
         #
         # loop in individuals
         for i in range(len(population)):
+            # todo something is wrong here:
             runstatus = 100 * counter / runsize
             counter = counter + 1
             #
@@ -1338,7 +1333,7 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
 
 
 def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, tui=False):
-
+    # todo docstring
     from analyst import frequency
 
     def stamped(g):
@@ -1354,6 +1349,8 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat,
             stamp = str(g)
         return stamp
 
+    if tui:
+        from tui import status
     #
     # set up
     n_ensem = len(models_df)
@@ -1373,7 +1370,7 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat,
     #
     # simulate every model:
     for i in range(n_ensem):
-        print('Running model {} of {}'.format(i + 1, n_ensem))
+        status(msg='Running model {} of {}'.format(i + 1, n_ensem))
         sim_dct = simulation(series=series,
                              shruparam=shruparam,
                              twibins=twibins,
@@ -1418,7 +1415,6 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat,
         lcl_freq = frequency(series=sim_grid_qb_t[t])
         lo_bound_qb[t] = lcl_freq['Values'][5]
         hi_bound_qb[t] = lcl_freq['Values'][95]
-    #
     #
     # built exports
     out_q_df = pd.DataFrame({'Date': series['Date'],

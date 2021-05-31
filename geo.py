@@ -951,6 +951,8 @@ def twi(catcha, grad, fto, cellsize, gradmin=0.0001):
 
     TWI =  ln ( a / To tanB )
 
+    Where a is the specific catchment area, To is the local transmissivity and tanB is the terrain gradient.
+
     :param catcha: 2d array - cathment area in m2
     :param grad: 2d array - gradient of terrain (tangent of slope) unitless
     :param fto: 2d array - local transmissivity factor of basin average - unitless
@@ -961,7 +963,21 @@ def twi(catcha, grad, fto, cellsize, gradmin=0.0001):
     return np.log(catcha / (cellsize * fto * (grad + gradmin)))
 
 
-def twi_hand(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, gradmin=0.0001):
+def twito(twi, fto):
+    """
+    Derive the complete TWI raster map by inserting the To (transmissivity) term to the TWI formula.
+
+    If TWI =  ln ( a / To tanB ), then
+    TWI =  ln ( a / tanB ) + ln ( 1 / To )
+
+    :param twi: 2d numpy array of TWI  map computed without the To term, i.e., only ln ( a / tanB )
+    :param fto: 2d numpy array of fTo raster map
+    :return: 2d numpy array of TWIto map
+    """
+    return twi + np.log(1 / fto)
+
+
+def twi_hand_long(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, gradmin=0.0001):
     """
 
     HAND enhanced TWI map method.
@@ -978,8 +994,6 @@ def twi_hand(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand
     :param gradmin: float - minimun gradient threshold
     :return: 2d numpy array of HAND-enhanced TWI map
     """
-    # fuzify hand
-    hand_fuzz = fuzzy_transition(hand, a=hand_lo, b=hand_hi, ascending=False)
     # get grad
     grad_map = grad(slope)
     # get twi:
@@ -988,9 +1002,12 @@ def twi_hand(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand
     # fuzify twi
     twi_lo = np.min(twi_map)
     twi_hi = np.max(twi_map)
-    twi_fuzz = geo.fuzzy_transition(twi_map, a=twi_lo, b=twi_hi, ascending=True)
+    twi_fuzz = fuzzy_transition(twi_map, a=twi_lo, b=twi_hi, ascending=True)
     #
-    # compound twi:
+    # fuzify hand
+    hand_fuzz = fuzzy_transition(hand, a=hand_lo, b=hand_hi, ascending=False)
+    #
+    # compound twi with hand:
     twi_comp = hand_w * hand_fuzz + twi_w * twi_fuzz
     #
     # fuzify again to restore twi range
@@ -1013,13 +1030,13 @@ def twi_hand_short(twi, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi
     :param gradmin: float - minimun gradient threshold
     :return: 2d numpy array of HAND-enhanced TWI map
     """
-    # fuzify hand
-    hand_fuzz = fuzzy_transition(hand, a=hand_lo, b=hand_hi, ascending=False)
-    #
     # fuzify twi
     twi_lo = np.min(twi)
     twi_hi = np.max(twi)
-    twi_fuzz = geo.fuzzy_transition(twi, a=twi_lo, b=twi_hi, ascending=True)
+    twi_fuzz = fuzzy_transition(twi, a=twi_lo, b=twi_hi, ascending=True)
+    #
+    # fuzify hand
+    hand_fuzz = fuzzy_transition(hand, a=hand_lo, b=hand_hi, ascending=False)
     #
     # compound twi:
     twi_comp = hand_w * hand_fuzz + twi_w * twi_fuzz

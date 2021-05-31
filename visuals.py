@@ -1609,14 +1609,14 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
         return expfile
 
 
-def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, filename='glue_ensemble', folder='C:/bin',):
+def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, baseflow=False, scale='log', suff='', filename='glue_ensemble', folder='C:/bin',):
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height
-    fig.suptitle('GLUE | Envoltória de 90% de confiança para modelos admissíveis')
+    fig.suptitle('GLUE | 90% confidence ensemble of behavioural models')
     gs = mpl.gridspec.GridSpec(2, 1, wspace=0.8, hspace=0.6)
     # plot prec
     ax1 = fig.add_subplot(gs[0, 0])
-    plt.title('Precipitação observada', loc='left')
+    plt.title('Observed precipitation', loc='left')
     plt.ylabel('mm/d')
     plt.plot(sim_df['Date'], sim_df['Prec'])
     plt.ylim(0, 1.1 * np.max(sim_df['Prec'].values))
@@ -1624,14 +1624,27 @@ def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, filename='glue_en
     # plt.xticks(locs, labels)
     # plot q
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
-    plt.title('Vazões simuladas - envoltória de 90% de confiança', loc='left')
+    plt.title('Simulated flow', loc='left')
     plt.ylabel('mm/d')
+    if baseflow:
+        label = '90% confidence ensemble (baseflow)'
+    else:
+        label = '90% confidence ensemble'
     plt.fill_between(x=ensemble_df['Date'], y1=ensemble_df['Lo_90'], y2=ensemble_df['Hi_90'],
-                     color='lightsteelblue', label='Envoltória de 90%')
-    plt.plot(ensemble_df['Date'], sim_df['Qobs'], color='tab:grey', label='Dados observados')
-    plt.plot(ensemble_df['Date'], sim_df['Q'], linestyle='dashed', color='tab:blue', label='Modelo de máxima verossimilhança')
+                     color='lightsteelblue', label=label)
+    plt.plot(ensemble_df['Date'], sim_df['Qobs'], color='tab:grey', label='Observed data')
+    if baseflow:
+        flow = sim_df['Qb']
+        label = 'Maximum Likelihood Model (baseflow)'
+    else:
+        flow = sim_df['Q']
+        label = 'Maximum Likelihood Model'
+    plt.plot(ensemble_df['Date'], flow, linestyle='dashed', color='tab:blue', label=label)
     plt.grid(grid)
-    #plt.yscale('log')
+    if scale == 'log':
+        plt.yscale(scale)
+    else:
+        plt.yscale('linear')
     plt.legend()
     # plt.xticks(locs, labels)
     #
@@ -1640,7 +1653,11 @@ def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, filename='glue_en
         plt.close(fig)
     else:
         # export file
-        filepath = folder + '/' + filename + '_' + suff + '.png'
+        if suff == '':
+            filepath = folder + '/' + filename + '.jpg'
+        else:
+            filepath = folder + '/' + filename + '_' + suff + '.jpg'
+
         plt.savefig(filepath)
         plt.close(fig)
         return filepath
