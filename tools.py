@@ -7,6 +7,46 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
 
+def maps_diagnostics(rasterfolder='C:/bin', folder='C:/bin', tui=False):
+    import time, datetime, os
+    if tui:
+        from tui import status
+        status('running map diagnostics')
+    #
+    # report setup
+    t0 = time.time()
+    report_lst = list()
+    report_lst.append('Execution timestamp: {}\n'.format(datetime.datetime.now()))
+    report_lst.append('Process: MAPS DIAGNOSTICS | MAPSDIAG\n')
+    input_files_df = pd.DataFrame({'Diagnostics folder': (rasterfolder,)})
+    report_lst.append(input_files_df.to_string(index=False))
+    #
+    files = list()
+    for file in os.listdir(rasterfolder):
+        if file.endswith('.asc'): # and file.startswith(suff):
+            files.append(file)
+    shape_lst = list()
+    sum_nan = list()
+    path_lst = list()
+    for fnm in files:
+        if tui:
+            status('file: {}'.format(fnm))
+        lcl_fpath = rasterfolder + '/' + fnm
+        path_lst.append(lcl_fpath)
+        meta, lcl_raster = input.asc_raster(lcl_fpath, dtype='float32')
+        shape_lst.append(str(np.shape(lcl_raster)))
+        sum_nan.append(np.sum(np.isnan(lcl_raster)))
+    def_df = pd.DataFrame({'File_Name':files, 'Shape_RxC': shape_lst, 'Sum_NaN':sum_nan, 'File':path_lst})
+    def_df = def_df.sort_values(by='File_Name')
+    #
+    report_lst.append('\n\nDiagnostics Results:\n')
+    report_lst.append(def_df.to_string(index=False))
+    #
+    tf = time.time()
+    report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
+    export_report(report_lst, filename='REPORT__maps_diagnostics', folder=folder, tui=tui)
+
+
 def view_imported_map(filename, folder, aux_folder=''):
     """
 
@@ -20,7 +60,7 @@ def view_imported_map(filename, folder, aux_folder=''):
 
     from input import dataframe_prepro
     from os import listdir
-    from visuals import plot_map_view, plot_calib_series, plot_qmap_view, plot_shrumap_view
+    from visuals import plot_map_view, plot_qmap_view, pannel_prec_q_logq, plot_shrumap_view
 
     def plot_lulc(fraster, fparams, filename, mapid='LULC'):
         lulc_param_df = pd.read_csv(fparams, sep=';', engine='python')
@@ -33,14 +73,18 @@ def view_imported_map(filename, folder, aux_folder=''):
     # get file path
     file = folder + '/' + filename
     #
-    quantmaps = ('aoi_dem.asc', 'aoi_catcha.asc', 'aoi_basin.asc',
-                 'calib_dem.asc', 'calib_catcha.asc', 'calib_basin.asc')
+    quantmaps = ('aoi_dem.asc', 'aoi_basin.asc', 'aoi_twi.asc', 'calib_twi.asc',
+                 'calib_dem.asc', 'calib_basin.asc')
     lulc_maps = ('aoi_lulc.asc', 'calib_lulc.asc')
     #
     # plot quant map
     if filename in set(quantmaps):
         mapid = filename.split('.')[0].split('_')[1]
-        meta, rmap = input.asc_raster(file)
+        if mapid == 'twi':
+            dtype = 'float32'
+        else:
+            dtype = 'int16'
+        meta, rmap = input.asc_raster(file, dtype=dtype)
         ranges = (np.min(rmap), np.max(rmap))
         plot_map_view(rmap, meta, ranges, mapid=mapid, filename=filename.split('.')[0], folder=folder, metadata=True)
     # plot calib lulc from raster file
@@ -120,7 +164,7 @@ def view_imported_map(filename, folder, aux_folder=''):
     elif filename == 'calib_series.txt':
         series_df = pd.read_csv(file, sep=';')
         series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
-        plot_calib_series(series_df, filename=filename.split('.')[0], folder=folder, show=False)
+        pannel_prec_q_logq(series_df['Date'], series_df['Prec'], series_df['Q'], filename=filename.split('.')[0], folder=folder, show=False)
 
 
 def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=False):
@@ -159,7 +203,7 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
     #
     #
     # load series
-    fseries = folder + r'\sim_series.txt'
+    fseries = folder + '/sim_series.txt'
     series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     #
     #
@@ -415,7 +459,7 @@ def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     # import data
     meta, slope = input.asc_raster(fslope)
     meta, catcha = input.asc_raster(fcatcha)
-    meta, fto = input.asc_raster(ffto)
+    meta, fto = input.asc_raster(ffto, dtype='float32')
     # process data
     grad = geo.grad(slope)
     twi = geo.twi(catcha, grad, fto, cellsize=meta['cellsize'])
@@ -445,10 +489,11 @@ def map_twi_hand_long(fslope, fcatcha, ffto, fhand, hand_hi=15.0, hand_lo=0.0, h
     :param filename: string of file name
     :return: string file path of output file
     """
+    from visuals import plot_map_view
     # import maps
     meta, slope = input.asc_raster(fslope)
     meta, catcha = input.asc_raster(fcatcha)
-    meta, fto = input.asc_raster(ffto)
+    meta, fto = input.asc_raster(ffto, dtype='float32')
     meta, hand = input.asc_raster(fhand)
     #
     # process
@@ -484,8 +529,9 @@ def map_twi_hand_short(ftwi, fhand, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1
     :param filename: string of file name
     :return: string file path of output file
     """
+    from visuals import plot_map_view
     # import maps
-    meta, twi = input.asc_raster(ftwi)
+    meta, twi = input.asc_raster(ftwi, dtype='float32')
     meta, hand = input.asc_raster(fhand)
     #
     # process
@@ -518,8 +564,8 @@ def map_twito(ftwi, ffto, folder='C:/bin', filename='twito'):
     """
     from visuals import plot_map_view
     # import
-    meta, twi = input.asc_raster(ftwi)
-    meta, fto = input.asc_raster(ffto)
+    meta, twi = input.asc_raster(ftwi, dtype='float32')
+    meta, fto = input.asc_raster(ffto, dtype='float32')
     # process
     twito = twi + np.log(1 / fto)
     # export
@@ -547,12 +593,12 @@ def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder
     # import shru raster
     if tui:
         status('loading shru raster')
-    meta, shru = input.asc_raster(fshru)
+    meta, shru = input.asc_raster(fshru, dtype='float32')
     #
     # import twi raster
     if tui:
         status('loading twi raster')
-    meta, twi = input.asc_raster(ftwi)
+    meta, twi = input.asc_raster(ftwi, dtype='float32')
     #
     if faoi == 'none':
         aoi = aoi = 1.0 + (twi * 0.0)
@@ -805,8 +851,8 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
     #
     if tui:
         status('loading rasters')
-    meta, twi = input.asc_raster(ftwi)
-    meta, shru = input.asc_raster(fshru)
+    meta, twi = input.asc_raster(ftwi, dtype='float32')
+    meta, shru = input.asc_raster(fshru, dtype='float32')
     #
     if tui:
         status('loading histograms')

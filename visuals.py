@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', fld_date='Date', filename='analyst', suff='',
@@ -314,7 +317,7 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
                  sup1_rng, sup2_rng, sup3_rng, sup4_rng,
                  mid1_rng, mid2_rng, mid3_rng, mid4_rng,
                  t, offset_back, offset_front, type='ET', filename='frame', folder='C:/bin',
-                 show=False, suff='', dpi=300, png=False):
+                 show=False, suff='', dpi=300, png=True):
     """
 
     Plot the local pannel frame
@@ -903,17 +906,6 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
         return filepath
 
 
-def plot_zmap3d(zmap, x, y):
-    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    X = np.arange(0, len(x), 1)
-    Y = np.arange(0, len(y), 1)
-    X, Y = np.meshgrid(Y, X)
-    Z = np.sin(R)
-    ax.plot_surface(X, Y, np.log10(count + 1), cmap='viridis', edgecolor='none')
-    ax.set_title('Surface plot')
-    plt.show()
-
-
 def plot_lulc_view(lulc, lulc_df, basin, meta, mapttl='lulc', filename='mapview', folder='C:/bin', metadata=False, show=False):
     from geo import reclassify, mask
     from matplotlib.colors import ListedColormap
@@ -1068,7 +1060,7 @@ def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1125,14 +1117,14 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='lulc', filename='map
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
 
 
 def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview', folder='C:/bin',
-                  metadata=True, show=False, integration=False, png=False):
+                  metadata=True, show=False, integration=False, png=True):
     """
 
     Plot a generic map view
@@ -1161,6 +1153,7 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
     map_dct = {'dem': ['BrBG_r', 'Elevation'],
                'slope': ['OrRd', 'Degrees'],
                'twi': ['YlGnBu', 'Index units'],
+               'twito': ['YlGnBu', 'Index units'],
                'fto': ['Blues', 'Index units'],
                'etpat': ['Greys_r', 'Index units'],
                'catcha': ['Blues', 'Sq. Meters (log10)'],
@@ -1267,7 +1260,7 @@ def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', fi
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1307,7 +1300,7 @@ def plot_obssim_zmaps(obs, sim, metric, ranges='local', rangesmetric='local', tt
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1418,7 +1411,7 @@ def plot_map_analyst(obs, sim, metric, obs_sig, sim_sig, metric_sig, metrics_dct
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1461,7 +1454,7 @@ def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, m1, m2, vmax=100, vmin=0, dgbl_m
     plt.axis('off')
     #
     #plt.show()
-    expfile = folder + '/' + filename + '.jpg'
+    expfile = folder + '/' + filename + '.png'
     plt.savefig(expfile)
     plt.close(fig)
 
@@ -1603,7 +1596,7 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1654,9 +1647,9 @@ def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, baseflow=False, s
     else:
         # export file
         if suff == '':
-            filepath = folder + '/' + filename + '.jpg'
+            filepath = folder + '/' + filename + '.png'
         else:
-            filepath = folder + '/' + filename + '_' + suff + '.jpg'
+            filepath = folder + '/' + filename + '_' + suff + '.png'
 
         plt.savefig(filepath)
         plt.close(fig)
@@ -1704,7 +1697,7 @@ def map_series(map_series1, map_series2, rng1, rng2, dates, ttl='Map Series', tt
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
@@ -1777,12 +1770,8 @@ def map_compare(obs, sim, err, obs_z, sim_z, err_z, obs_sg, sim_sg, err_sg, ttl=
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
-
-
-
-
 

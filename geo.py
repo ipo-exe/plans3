@@ -4,7 +4,6 @@ This is the PLANS 3 geoprocessing module
 
 '''
 
-
 def areas(array, cellsize, values, factor=1):
     """
     derive a list of areas in array based on a list of values
@@ -977,7 +976,7 @@ def twito(twi, fto):
     return twi + np.log(1 / fto)
 
 
-def twi_hand_long(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, gradmin=0.0001):
+def twi_hand_long(catcha, slope, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, gradmin=0.0001):
     """
 
     HAND enhanced TWI map method.
@@ -996,8 +995,9 @@ def twi_hand_long(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0,
     """
     # get grad
     grad_map = grad(slope)
-    # get twi:
-    twi_map = twi(catcha, grad_map, fto, cellsize=meta['cellsize'])
+    # get twi without fto heterogeneity:
+    fto = 1.0 * (grad_map * 0.0)
+    twi_map = twi(catcha, grad_map, fto, cellsize=cellsize)
     #
     # fuzify twi
     twi_lo = np.min(twi_map)
@@ -1015,7 +1015,7 @@ def twi_hand_long(catcha, slope, fto, hand, cellsize, hand_hi=15.0, hand_lo=0.0,
     return twi_hand_map
 
 
-def twi_hand_short(twi, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, gradmin=0.0001):
+def twi_hand_short(twi, hand, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1):
     """
 
     HAND enhanced TWI map method. Short method.
@@ -1027,7 +1027,6 @@ def twi_hand_short(twi, hand, cellsize, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi
     :param hand_lo: float - HAND lower threshold
     :param hand_w: float - HAND weight factor
     :param twi_w: float - TWI weight factor
-    :param gradmin: float - minimun gradient threshold
     :return: 2d numpy array of HAND-enhanced TWI map
     """
     # fuzify twi
