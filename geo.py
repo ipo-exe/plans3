@@ -255,6 +255,12 @@ def fill_sinks(dem, status=False):
 
 
 def flatten_clear(array, mask):
+    """
+    Flatten and clear a 2d numpy array using a mask pseudo-boolean array
+    :param array: field 2d numpy array
+    :param mask: mask pseudo-boolean 2d numpy array
+    :return: 1d numpy array of cleared values
+    """
     masked = np.copy(array)
     masked[mask == 0] = np.nan
     flatten = masked.flatten()
@@ -1129,4 +1135,64 @@ def write_wkt_polygon(x_long, y_lat):
         argument = argument + ', ' + vertex_lst[i]
     return 'Polygon (({}))'.format(argument)
 
+
+def zonalstats(field, zones):
+    """
+    Performs a zonal statistics over a 2d numpy array
+    :param field: 2d numpy array map of the field variable
+    :param zones: 2d numpy array map of the zones
+    :return: dictionary of the zonal statistics
+    """
+    # internal aux function
+    def lcl_flatten_clear(array, mask):
+        """
+        Flatten and clear a 2d numpy array using a mask pseudo-boolean array
+        :param array: field 2d numpy array
+        :param mask: mask pseudo-boolean 2d numpy array
+        :return: 1d numpy array of cleared values
+        """
+        masked = np.copy(array)
+        masked[mask == 0] = np.nan
+        flatten = masked.flatten()
+        cleared = masked[~np.isnan(masked)]
+        return cleared
+    #
+    # load lists
+    cnt_lst = list()
+    sum_lst = list()
+    avg_lst = list()
+    max_lst = list()
+    min_lst = list()
+    std_lst = list()
+    med_lst = list()
+    #
+    # loop in zones
+    zone_values = np.unique(zones)
+    for i in range(len(zone_values)):
+        #
+        # compute mask
+        lcl_mask = (field == zone_values[i]) * 1.0
+        #
+        # compute cleared array
+        lcl_cleared = lcl_flatten_clear(array=field, mask=lcl_mask)
+        #
+        # load stats to lists
+        cnt_lst.append(len(lcl_cleared))
+        sum_lst.append(np.sum(lcl_cleared))
+        avg_lst.append(np.mean(lcl_cleared))
+        max_lst.append(np.max(lcl_cleared))
+        min_lst.append(np.min(lcl_cleared))
+        std_lst.append(np.std(lcl_cleared))
+        med_lst.append(np.median(lcl_cleared))
+    # load to dict
+    out_dct = {'Zones':zone_values,
+            'Count':cnt_lst,
+            'Sum':sum_lst,
+            'Mean':avg_lst,
+            'Max':max_lst,
+            'Min':min_lst,
+            'SD':std_lst,
+            'Median':med_lst
+            }
+    return out_dct
 
