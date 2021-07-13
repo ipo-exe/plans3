@@ -1171,19 +1171,22 @@ def zonalstats(field, zones):
     for i in range(len(zone_values)):
         #
         # compute mask
-        lcl_mask = (field == zone_values[i]) * 1.0
+        lcl_mask = (zones == zone_values[i]) * 1.0
         #
         # compute cleared array
         lcl_cleared = lcl_flatten_clear(array=field, mask=lcl_mask)
-        #
-        # load stats to lists
-        cnt_lst.append(len(lcl_cleared))
-        sum_lst.append(np.sum(lcl_cleared))
-        avg_lst.append(np.mean(lcl_cleared))
-        max_lst.append(np.max(lcl_cleared))
-        min_lst.append(np.min(lcl_cleared))
-        std_lst.append(np.std(lcl_cleared))
-        med_lst.append(np.median(lcl_cleared))
+        if len(lcl_cleared) == 0:
+            pass
+        else:
+            #
+            # load stats to lists
+            cnt_lst.append(len(lcl_cleared))
+            sum_lst.append(np.sum(lcl_cleared))
+            avg_lst.append(np.mean(lcl_cleared))
+            max_lst.append(np.max(lcl_cleared))
+            min_lst.append(np.min(lcl_cleared))
+            std_lst.append(np.std(lcl_cleared))
+            med_lst.append(np.median(lcl_cleared))
     # load to dict
     out_dct = {'Zones':zone_values,
             'Count':cnt_lst,
