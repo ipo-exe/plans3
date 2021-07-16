@@ -1072,11 +1072,11 @@ def qualmap_analyst(fmap, fparams, faoi='full', type='lulc', folder='C:/bin', wk
         namefield = 'SoilName'
         colorfield = 'ColorSoil'
     # imports
-    meta, qmap = input.asc_raster(fmap)
+    meta, qmap = input.asc_raster(fmap, dtype='float32')
     param_df = pd.read_csv(fparams, sep=';')
     param_df = input.dataframe_prepro(param_df, strfields=str_fields)
     if faoi != 'full':
-        meta, aoi = input.asc_raster(faoi)
+        meta, aoi = input.asc_raster(faoi, dtype='float32')
     else:
         aoi = 1.0 + (0.0 * qmap)
     #
@@ -1097,7 +1097,7 @@ def qualmap_analyst(fmap, fparams, faoi='full', type='lulc', folder='C:/bin', wk
     #
     # Export pannel
     if type == 'lulc':
-        plot_lulc_view(qmap, param_df, areas_df, aoi, meta, show=True)
+        plot_lulc_view(qmap, param_df, areas_df, aoi, meta, folder=folder)
 
 
 def osa_series(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:/bin', tui=False, var=True, log=True):
@@ -1294,7 +1294,6 @@ def osa_map(fseries, fhistograms, type, var='ETPat', filename='obssim_maps_analy
         #plt.show()
         return maps_lst, signal_lst
 
-    #
     # report setup  # todo report
     t0 = time.time()
     report_lst = list()
@@ -1307,7 +1306,7 @@ def osa_map(fseries, fhistograms, type, var='ETPat', filename='obssim_maps_analy
     if tui:
         from tui import status
         status('performing obs vs. sim map analysis')
-    #
+
     # extract Dataframe
     def_df = pd.read_csv(fseries, sep=';', engine='python')
     def_df = dataframe_prepro(def_df, strfields='File_obs,File_sim,Date')
@@ -1339,7 +1338,6 @@ def osa_map(fseries, fhistograms, type, var='ETPat', filename='obssim_maps_analy
         axs[1].imshow(maps_sim_lst[i], cmap='Greys_r', vmax=1, vmin=0)
         axs[2].imshow(lcl_map_error, cmap='seismic', vmax=1.5, vmin=-1.5)
         plt.show()
-
 
         metric_maps.append(lcl_map_error)
         # signal error
@@ -1377,9 +1375,6 @@ def osa_map(fseries, fhistograms, type, var='ETPat', filename='obssim_maps_analy
     out_file1 = folder + '/{}_{}_map_analyst_local.txt'.format(var, type)
     out_df.to_csv(out_file1, sep=';', index=False)
     out_files.append(out_file1)
-    #
-    #
-    #
     #
     #
     # Export visuals

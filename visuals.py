@@ -1959,7 +1959,7 @@ def plot_lulc_view(lulc, lulcparam_df, areas_df, aoi, meta, mapttl='lulc', filen
         plt.show()
         plt.close(fig)
     else:
-        expfile = folder + '/' + filename + '.jpg'
+        expfile = folder + '/' + filename + '.png'
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
