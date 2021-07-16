@@ -1775,3 +1775,192 @@ def map_compare(obs, sim, err, obs_z, sim_z, err_z, obs_sg, sim_sg, err_sg, ttl=
         plt.close(fig)
         return expfile
 
+
+def plot_lulc_view(lulc, lulcparam_df, areas_df, aoi, meta, mapttl='lulc', filename='mapview', folder='C:/bin',
+                   metadata=False, show=False):
+    """
+    Plot LULC view analyst
+    :param lulc: 2d numpy array of LULC classes
+    :param lulcparam_df: pandas dataframe object of lulc parameters
+    :param areas_df: pandas dataframe object of areas
+    :param aoi: 2d numpy array of AOI
+    :param meta: metadata dictionary for maps
+    :param mapttl: string title
+    :param filename: string filename
+    :param folder: string path to output directory
+    :param metadata: boolean to plot metadata
+    :param show: boolean to show instead of saving
+    :return: none
+    """
+    from geo import reclassify, mask
+    from matplotlib.colors import ListedColormap
+    colors = lulcparam_df['ColorLULC'].values
+    names = lulcparam_df['LULCName'].values
+    ids = lulcparam_df['IdLULC'].values
+    ranges = [np.min(ids), np.max(ids)]
+    cmap = ListedColormap(colors)
+    #
+    fig = plt.figure(figsize=(14, 9))  # Width, Height
+    gs = mpl.gridspec.GridSpec(8, 13, wspace=0.5, hspace=0.5)
+    #
+    ax = fig.add_subplot(gs[:4, :4])
+    fmap = mask(lulc, aoi)
+    im = plt.imshow(fmap, cmap=cmap, vmin=ranges[0], vmax=ranges[1])
+    plt.title(mapttl)
+    plt.axis('off')
+    #
+    #
+    # canopy map
+    fmap = reclassify(lulc, upvalues=ids, classes=lulcparam_df['f_Canopy'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[4:6, 0:2])
+    im = plt.imshow(fmap, cmap='viridis_r')
+    plt.title('Canopy factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # Surface
+    fmap = reclassify(lulc, upvalues=ids, classes=lulcparam_df['f_Surface'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[4:6, 2:4])
+    im = plt.imshow(fmap, cmap='viridis_r', vmin=0)
+    plt.title('Surface factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # RD
+    fmap = reclassify(lulc, upvalues=ids, classes=lulcparam_df['f_RootDepth'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[4:6, 4:6])
+    im = plt.imshow(fmap, cmap='viridis_r', vmin=0)
+    plt.title('RootDepth factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # IRA
+    fmap = reclassify(lulc, upvalues=ids, classes=lulcparam_df['f_IRA'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[6:, 0:2])
+    im = plt.imshow(fmap, cmap='YlGnBu', vmin=0)
+    plt.title('IRA factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # IRI
+    fmap = reclassify(lulc, upvalues=ids, classes=lulcparam_df['f_IRI'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[6:, 2:4])
+    im = plt.imshow(fmap, cmap='YlGnBu', vmin=0)
+    plt.title('IRI factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # C USLE
+    fmap = reclassify(lulc, upvalues=ids, classes=lulcparam_df['C_USLE'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[6: , 4:6])
+    im = plt.imshow(fmap, cmap='BrBG_r', vmin=0)
+    plt.title('USLE C factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # P USLE
+    fmap = reclassify(lulc, upvalues=ids, classes=lulcparam_df['P_USLE'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[6: , 6:8])
+    im = plt.imshow(fmap, cmap='BrBG_r', vmin=0)
+    plt.title('USLE P factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    #
+    ax = fig.add_subplot(gs[:3, 5:6])
+    labels = lulcparam_df['LULCName']
+    y_pos = np.arange(len(labels))
+    bars = areas_df['Area_%'].values
+    ax.barh(y_pos, bars, align='center', color=colors)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('%')
+    ax.set_title('% areas', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 6:7])
+    y_pos = np.arange(len(labels))
+    bars = lulcparam_df['f_Canopy'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('f_Canopy', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 7:8])
+    y_pos = np.arange(len(labels))
+    bars = lulcparam_df['f_Surface'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('f_Surface', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 8:9])
+    y_pos = np.arange(len(labels))
+    bars = lulcparam_df['f_RootDepth'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('f_RootDepth', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 9:10])
+    y_pos = np.arange(len(labels))
+    bars = lulcparam_df['f_IRA'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('f_IRA', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 10:11])
+    y_pos = np.arange(len(labels))
+    bars = lulcparam_df['f_IRA'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('f_IRA', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 11:12])
+    y_pos = np.arange(len(labels))
+    bars = lulcparam_df['C_USLE'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('C_USLE', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 12:13])
+    y_pos = np.arange(len(labels))
+    bars = lulcparam_df['P_USLE'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('P_USLE', fontdict={'fontsize': 10})
+
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.jpg'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+

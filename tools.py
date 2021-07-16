@@ -1038,6 +1038,68 @@ def sdiag(fseries, filename='sim_diagnostics', folder='C:/bin', tui=False):
     return exp_file
 
 
+def qualmap_analyst(fmap, fparams, faoi='full', type='lulc', folder='C:/bin', wkpl=False, label=''):
+    """
+    Analyst of qualitative maps.
+    :param fmap: string file path to raster map .asc file
+    :param fparams: string file path to .txt map parameter file
+    :param faoi: string file path to aoi raster map .asc file OR default by pass code='full' for full extension
+    :param type: string code for type of map. Allowed types: 'lulc' and 'soils' . Default: 'lulc'
+    :param folder: string file path to output directory
+    :param wkpl: boolean to set the folder param as an workplace
+    :param label: string label for output file naming
+    :return:
+    """
+    from geo import areas
+    from visuals import plot_lulc_view
+    from backend import create_rundir
+    #
+    # Run Folder setup
+    if wkpl:  # if the passed folder is a workplace, create a sub folder within it
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'QMAP', wkplc=folder)
+    #
+    # type setup
+    if type == 'lulc':
+        str_fields = 'LULCName,ColorLULC,ConvertTo'
+        idfield = 'IdLULC'
+        namefield = 'LULCName'
+        colorfield = 'ColorLULC'
+    elif type == 'soils':
+        str_fields = 'SoilName,ColorSoil'
+        idfield = 'IdSoil'
+        namefield = 'SoilName'
+        colorfield = 'ColorSoil'
+    # imports
+    meta, qmap = input.asc_raster(fmap)
+    param_df = pd.read_csv(fparams, sep=';')
+    param_df = input.dataframe_prepro(param_df, strfields=str_fields)
+    if faoi != 'full':
+        meta, aoi = input.asc_raster(faoi)
+    else:
+        aoi = 1.0 + (0.0 * qmap)
+    #
+    # Compute areas
+    areas_m2 = areas(qmap, meta['cellsize'], values=param_df[idfield])
+    areas_ha = areas_m2 / (100 * 100)
+    areas_km2 = areas_m2 / (1000 * 1000)
+    areas_df = param_df[[idfield, namefield, colorfield]].copy()
+    areas_df['Area_m2'] = areas_m2
+    areas_df['Area_ha'] = areas_ha
+    areas_df['Area_km2'] = areas_km2
+    areas_df['Area_%'] = 100 * areas_m2 / np.sum(areas_m2)
+    print(areas_df.to_string())
+    #
+    # Export areas
+    exp_file1 = '{}/areas_{}.txt'.format(folder, type)
+    areas_df.to_csv(exp_file1, sep=';', index=False)
+    #
+    # Export pannel
+    if type == 'lulc':
+        plot_lulc_view(qmap, param_df, areas_df, aoi, meta, show=True)
+
+
 def osa_series(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:/bin', tui=False, var=True, log=True):
     """
     Observed vs. Simulated Analyst routine for series
@@ -1518,7 +1580,6 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     from hydrology import simulation, map_back
     from visuals import pannel_global
     from backend import create_rundir
-
 
     def extract_twi_avg(twibins, count):
         """
@@ -2441,9 +2502,6 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     # compute posterior CDFs and posterior ranges (90%)
     # continue here:
     print('contine here')
-
-
-
 
 
 
