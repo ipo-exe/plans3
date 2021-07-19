@@ -1081,7 +1081,7 @@ def qualmap_analyst(fmap, fparams, faoi='full', type='lulc', folder='C:/bin', wk
         aoi = 1.0 + (0.0 * qmap)
     #
     # Compute areas
-    areas_m2 = areas(qmap, meta['cellsize'], values=param_df[idfield])
+    areas_m2 = areas(qmap * aoi, meta['cellsize'], values=param_df[idfield])
     areas_ha = areas_m2 / (100 * 100)
     areas_km2 = areas_m2 / (1000 * 1000)
     areas_df = param_df[[idfield, namefield, colorfield]].copy()
