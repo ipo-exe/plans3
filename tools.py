@@ -2499,9 +2499,54 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     print('contine here')
 
 
+def sal_d_by_twi(ftwi1, ftwi2, m=10, dmax=100, size=100, label='', wkpl=False, folder='C:/bin'):
+    """
+    SAL of deficit by changing TWI
+    :param ftwi1: string filepath to .asc raster map of TWI 1
+    :param ftwi2: string filepath to .asc raster map of TWI 2
+    :param m: int of m parameter
+    :param dmax: int of max deficit
+    :param size: int size of SAL
+    :param label: string file label
+    :param wkpl: boolen to set the output folder as workplace
+    :param folder: string file path to output folder
+    :return: none
+    """
+    from hydrology import topmodel_di, topmodel_vsai
+    from visuals import sal_deficit_frame
+    from backend import create_rundir
 
+    def id_label(id):
+        if id < 10:
+            return '000' + str(id)
+        elif id >= 10 and id < 100:
+            return '00' + str(id)
+        elif id >= 100 and id < 1000:
+            return '0' + str(id)
+        elif id >= 1000 and id < 10000:
+            return  str(id)
 
+    # folder setup
+    if wkpl:  # if the passed folder is a workplace, create a sub folder
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'SAL_D_by_TWI', wkplc=folder)
 
+    # load twi maps
+    meta, twi1 = input.asc_raster(file=ftwi1, dtype='float32')
+    lamb1 = np.mean(twi1)
+    meta, twi2 = input.asc_raster(file=ftwi2, dtype='float32')
+    lamb2 = np.mean(twi2)
 
-
-
+    d = np.linspace(0, dmax, size)
+    for i in range(len(d)):
+        lcl_d = d[i]
+        print(i)
+        lcl_di_1 = topmodel_di(d=lcl_d, twi=twi1, m=m, lamb=lamb1)
+        lcl_di_2 = topmodel_di(d=lcl_d, twi=twi2, m=m, lamb=lamb2)
+        lcl_vsai_1 = topmodel_vsai(di=lcl_di_1)
+        lcl_vsai_2 = topmodel_vsai(di=lcl_di_2)
+        # plot frame
+        lcl_flnm = 'sal_d_by_twi__{}'.format(id_label(id=i))
+        sal_deficit_frame(dgbl=lcl_d, d1=lcl_di_1, d2=lcl_di_2, m1=m, m2=m, vsa1=lcl_vsai_1, vsa2=lcl_vsai_2,
+                          dgbl_max=dmax, filename=lcl_flnm, folder=folder, supttl='Sensitivity to TWI')
