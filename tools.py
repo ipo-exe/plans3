@@ -979,9 +979,9 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
     return exp_file
 
 
-def canopy_season(fseries, fshruparam, folder='C:/bin', filename='canopy_season'):
+def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'):
     """
-    Routine to compute SHRU canopy season factor pattern in terms of peak factor f_Canopy
+    Routine to compute SHRU canopy seasonal factor pattern series in terms of peak factor f_Canopy and stores it in a txt file
 
     :param fseries: string file path to txt file of time series. Must have a 'Date' field
     :param fshruparam: string file path to txt file of shry parameters file provided in the get_shru_param() tool
@@ -1637,7 +1637,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     return {'Folder':folder, 'CalibFolder':calibration_folder, 'ValidFolder':validation_folder, 'FullFolder':full_folder}
 
 
-def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, mapback=False,
+def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
         mapraster=False, mapvar='all', mapdates='all', integrate=False, qobs=False, folder='C:/bin',
         wkpl=False, label='',  tui=False):
     """
@@ -1751,6 +1751,11 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         status('loading SHRU parameters')
     shru_df = pd.read_csv(fshruparam, sep=';')
     shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
+    #
+    # canopy series pattern
+    if tui:
+        status('loading Canopy series pattern')
+    canopy_df = pd.read_csv(fcanopy, sep=';')
     #
     # extract count matrix (full map extension)
     if tui:

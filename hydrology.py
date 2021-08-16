@@ -438,7 +438,7 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
     #
     #
     # get local surface parameters
-    # local cpmax
+    # local full cpmax
     cpmax_i = cpmax * shruparam['f_Canopy'].values * np.ones(shape=shape, dtype='float32')
     # local sfmax
     sfmax_i = sfmax * shruparam['f_Surface'].values * np.ones(shape=shape, dtype='float32')

@@ -457,6 +457,7 @@ Parameter;    Set;    Min;    Max
 
 ioType | FileName | FileFormat | FileType
  :---  |  :---  |  :---  |  :--- 
+derived | aoi_canopy_series | txt | csv time series
 derived | aoi_fto | asc | raster map
 derived | aoi_lulc_series | txt | csv time series
 derived | aoi_shru_param | txt | csv data frame
@@ -464,6 +465,7 @@ derived | aoi_shru_series | txt | csv time series
 derived | aoi_slope | asc | raster map
 derived | aoi_twito | asc | raster map
 derived | calib_basin_histograms | txt | csv data frame
+derived | calib_canopy_series | txt | csv time series
 derived | calib_etpat_series | txt | csv time series
 derived | calib_etpat_zmaps | txt | csv time series
 derived | calib_fto | asc | raster map
@@ -472,6 +474,25 @@ derived | calib_shru | asc | raster map
 derived | calib_shru_param | txt | csv data frame
 derived | calib_slope | asc | raster map
 derived | calib_twito | asc | raster map
+
+## `aoi_canopy_series.txt`
+
+- **I/O**: derived.
+- **File type**: csv time series.
+- **Dataset type**: observed.
+- **Dataset description**: Daily time series of the canopy factor pattern. The factor is multiplied by the f_Canopy factor to compute seasonal canopy factor. 
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - Note: record gaps are allowed.
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 - `Month`: 3-char string of month alias (in english. Example: Jan, Feb, etc)
+- **Example**:
+```
+canopy_series
+```
 
 ## `aoi_fto.asc`
 
@@ -657,6 +678,25 @@ IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAli
 - **Example**:
 ```
 sample file
+```
+
+## `calib_canopy_series.txt`
+
+- **I/O**: derived.
+- **File type**: csv time series.
+- **Dataset type**: observed.
+- **Dataset description**: Daily time series of the canopy factor pattern. The factor is multiplied by the f_Canopy factor to compute seasonal canopy factor. 
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - Note: record gaps are allowed.
+	 - Mandatory fields:
+		 -  `Date`: date of record.
+		 - `Month`: 3-char string of month alias (in english. Example: Jan, Feb, etc)
+- **Example**:
+```
+canopy_series
 ```
 
 ## `calib_etpat_series.txt`
