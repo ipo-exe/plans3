@@ -412,7 +412,7 @@ def topmodel_vsai(di):
 #
 #
 # main functions
-def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c,
+def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c,
                lat, k, n, area, basinshadow, mapback=False, mapvar='all', mapdates='all', qobs=False, tui=False):
     # todo docstring
     # extract data input
@@ -440,6 +440,8 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
     # get local surface parameters
     # local full cpmax
     cpmax_i = cpmax * shruparam['f_Canopy'].values * np.ones(shape=shape, dtype='float32')
+    # get canopy seasonal factor timeseries:
+    ts_cp_season = canopy[:, 2:]  # skip date and month fields
     # local sfmax
     sfmax_i = sfmax * shruparam['f_Surface'].values * np.ones(shape=shape, dtype='float32')
     # local erz
@@ -610,7 +612,12 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
         cpyin_i = prec_i + ira_i
         #
         # compute throughfall (tf):
-        tf_i = ((cpyin_i - (cpmax_i - cpy_i)) * (cpyin_i > (cpmax_i - cpy_i)))
+        cpmax_season_i = cpmax_i * ts_cp_season[t]
+        plt.imshow(cpmax_i)
+        plt.show()
+        plt.imshow(cpmax_season_i)
+        plt.show()
+        tf_i = ((cpyin_i - (cpmax_season_i - cpy_i)) * (cpyin_i > (cpmax_season_i - cpy_i)))
         ts_tf[t] = avg_2d(var2d=tf_i, weight=basinshadow)
         #
         # compute current evaporation from canopy (evc):
@@ -809,9 +816,9 @@ def simulation(series, shruparam, twibins, countmatrix, lamb, qt0, m, qo, cpmax,
     return out_dct
 
 
-def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, m_range, qo_range, cpmax_range,
-                sfmax_range, erz_range, ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps,
-                tui=True, normalize=True, grid=500, generations=100, popsize=200, offsfrac=1,
+def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat, area, basinshadow,
+                m_range, qo_range, cpmax_range, sfmax_range, erz_range, ksat_range, c_range, k_range, n_range,
+                etpatdates, etpatzmaps, tui=True, normalize=True, grid=500, generations=100, popsize=200, offsfrac=1,
                 mutrate=0.5, puremutrate=0.8, cutfrac=0.33, tracefrac=0.1, tracepop=True, likelihood='NSE'):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
@@ -1049,7 +1056,8 @@ def calibration(series, shruparam, twibins, countmatrix, lamb, qt0, lat, area, b
             #
             #
             # run topmodel
-            sim_dct = simulation(series=series, shruparam=shruparam, twibins=twibins, countmatrix=countmatrix,
+            sim_dct = simulation(series=series, shruparam=shruparam, canopy=canopy,
+                                 twibins=twibins, countmatrix=countmatrix,
                                  lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
                                  ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8],
                                  area=area, basinshadow=basinshadow, tui=False,

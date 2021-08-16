@@ -996,8 +996,8 @@ def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'
     season_df = season_df[['Date']]
     # import parameters
     shru_df = pd.read_csv(fshruparam, sep=';')
-    shru_df = dataframe_prepro(shru_df,
-                               'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil')
+    aux_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
+    shru_df = dataframe_prepro(shru_df, aux_str)
     # insert month field in
     season_df['Month'] = season_df['Date'].dt.month_name(locale='English').str.slice(stop=3)
     #
@@ -1512,7 +1512,7 @@ def osa_map(fseries, fhistograms, type, var='ETPat', filename='obssim_maps_analy
     return {'Local':out_file1, 'Visuals':out_files}
 
 
-def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, mapback=False,
+def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
               mapraster=False, mapvar='all', mapdates='all', integrate=False, cutdatef=0.3, qobs=True,
               folder='C:/bin', wkpl=False, label='',tui=False):
     from backend import create_rundir
@@ -1571,7 +1571,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     if tui:
         status('running SLH for calibration period')
     calib_dct = slh(fseries=fcalib_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru,
+                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy,
                     mapback=mapback, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, integrate=integrate,
                     qobs=qobs, folder=calibration_folder, wkpl=False, label=label, tui=tui)
     fsim_calib = calib_dct['Series']
@@ -1589,7 +1589,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     if tui:
         status('running SLH for validation period')
     valid_dct = slh(fseries=fvalid_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, integrate=integrate,
+                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, integrate=integrate,
                     mapback=mapback, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, qobs=qobs,
                     folder=validation_folder, wkpl=False, label=label, tui=tui)
     fsim_valid = valid_dct['Series']
@@ -1605,7 +1605,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     if tui:
         status('running SLH for full period')
     full_dct = slh(fseries=ffull_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, integrate=integrate,
+                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, integrate=integrate,
                     mapback=False, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, qobs=qobs,
                     folder=full_folder, wkpl=False, label=label, tui=tui)
     fsim_full = full_dct['Series']
@@ -1651,6 +1651,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     :param fbasin: string filepath to basin raster map (asc file)
     :param ftwi: string filepath to twi raster map (asc file)
     :param fshru: string filepath to shru raster map (asc file)
+    :param fcanopy: string filepath to canopy seasonal factor series (txt file)
     :param mapback: boolean to map back variables
     :param mapraster: boolean to map back raster maps
     :param mapvar: string of variables to map. Pass concatenated by '-'. Ex: 'ET-TF-Inf'.
@@ -1750,7 +1751,8 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     if tui:
         status('loading SHRU parameters')
     shru_df = pd.read_csv(fshruparam, sep=';')
-    shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
+    aux_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
+    shru_df = dataframe_prepro(shru_df, aux_str)
     #
     # canopy series pattern
     if tui:
@@ -1790,8 +1792,8 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     init = time.time()
     if tui:
         status('running simulation')
-    sim_dct = simulation(series=series_df, shruparam=shru_df, twibins=twibins, countmatrix=count, lamb=lamb,
-                         qt0=qt0, m=m, qo=qo, cpmax=cpmax, sfmax=sfmax, erz=erz, ksat=ksat, c=c, lat=lat,
+    sim_dct = simulation(series=series_df, shruparam=shru_df, canopy=canopy_df, twibins=twibins, countmatrix=count,
+                         lamb=lamb, qt0=qt0, m=m, qo=qo, cpmax=cpmax, sfmax=sfmax, erz=erz, ksat=ksat, c=c, lat=lat,
                          k=k, n=n, area=area, basinshadow=basincount, tui=False, qobs=qobs, mapback=mapback,
                          mapvar=mapvar,
                          mapdates=mapdates)
@@ -2029,8 +2031,8 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     return out_dct
 
 
-def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fetpatzmaps,
-              fetpatseries, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all',
+def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
+              fetpatzmaps, fetpatseries, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all',
               qobs=True, cutdatef=0.3, generations=100, popsize=200, likelihood='NSE', label='', normalize=True):
     # todo docstring
     from hydrology import avg_2d, simulation, map_back, calibration
@@ -2154,7 +2156,13 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     if tui:
         status('loading SHRU parameters')
     shru_df = pd.read_csv(fshruparam, sep=';')
-    shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
+    aux_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
+    shru_df = dataframe_prepro(shru_df, aux_str)
+    #
+    # canopy series pattern
+    if tui:
+        status('loading Canopy series pattern')
+    canopy_df = pd.read_csv(fcanopy, sep=';')
     #
     #
     # extract count matrix (full map extension)
@@ -2300,7 +2308,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     #
     # run SLH for calibration basin, asking for mapping the ET:
     slh_dct = slh_calib(fseries=fseries, fhydroparam=fhydroparam_mlm, fshruparam=fshruparam,
-                        fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru,
+                        fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi,
+                        fshru=fshru, fcanopy=fcanopy,
                         mapback=True, mapraster=True, mapvar='ET', mapdates=etpat_dates_str_full,
                         qobs=True, tui=tui, folder=mlm_folder)
     # extract folders:
