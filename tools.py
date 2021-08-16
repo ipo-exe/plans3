@@ -971,12 +971,104 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
     shru_df = shru_df.join(soils_df.set_index('IdSoil'), on='IdSoil')
     # cross root zone:
     shru_df['f_EfRootZone'] = shru_df['Porosity'].values * shru_df['f_RootDepth'].values
-    print(shru_df.to_string())
+    #print(shru_df.to_string())
     #
     # export
     exp_file = folder + '/' + filename + '.txt'
     shru_df.to_csv(exp_file, sep=';', index=False)
     return exp_file
+
+
+def canopy_season(fseries, fshruparam, folder='C:/bin', filename='canopy_season'):
+    """
+    Routine to compute SHRU canopy season factor pattern in terms of peak factor f_Canopy
+
+    :param fseries: string file path to txt file of time series. Must have a 'Date' field
+    :param fshruparam: string file path to txt file of shry parameters file provided in the get_shru_param() tool
+    :param folder: string path to output folder
+    :param filename: string file name without extension
+    :return: string file path to txt file output
+    """
+    from resample import interpolate_gaps
+    # import series
+    season_df = pd.read_csv(fseries, sep=';')
+    season_df = dataframe_prepro(season_df, strf=False, date=True)
+    season_df = season_df[['Date']]
+    # import parameters
+    shru_df = pd.read_csv(fshruparam, sep=';')
+    shru_df = dataframe_prepro(shru_df,
+                               'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil')
+    # insert month field in
+    season_df['Month'] = season_df['Date'].dt.month_name(locale='English').str.slice(stop=3)
+    #
+    # loop across all shru classes
+    for i in range(len(shru_df)):
+        # access shru name
+        shru_nm = shru_df['SHRUAlias'].values[i]
+        print(shru_nm)
+        lcl_field = 'f_Canopy_{}'.format(shru_nm)
+        # access the season type
+        season = shru_df['CanopySeason'].values[i]
+        if season == 'none':
+            season_df[lcl_field] = np.ones(shape=np.shape(season_df['Date'].values))
+        else:
+            #
+            # get background parameter
+            cpy_bkg = shru_df['f_CanopyBackg'].values[i]
+            season = season.replace(' ', '').lower().split('&')
+            #
+            # create and empty numeric field
+            season_df[lcl_field] = np.zeros(shape=np.shape(season_df['Date'].values))
+            #
+            # insert dormancy period
+            flag = False
+            for t in range(len(season_df)):
+                if season_df['Month'].values[t].lower() == season[3]:
+                    flag = True
+                if flag:
+                    season_df[lcl_field].values[t] = cpy_bkg
+                if season_df['Month'].values[t].lower() == season[0]:
+                    flag = False
+            flag = False
+            for t in range(len(season_df) - 1, -1, -1):
+                if season_df['Month'].values[t].lower() == season[0]:
+                    flag = True
+                if flag:
+                    if season_df[lcl_field].values[t] != cpy_bkg:
+                        season_df[lcl_field].values[t] = cpy_bkg
+                if season_df['Month'].values[t].lower() == season[3]:
+                    flag = False
+            #
+            # insert peak period
+            flag = False
+            for t in range(len(season_df)):
+                if season_df['Month'].values[t].lower() == season[1]:
+                    flag = True
+                if flag:
+                    season_df[lcl_field].values[t] = 1.0
+                if season_df['Month'].values[t].lower() == season[2]:
+                    flag = False
+            flag = False
+            for t in range(len(season_df) - 1, -1, -1):
+                if season_df['Month'].values[t].lower() == season[2]:
+                    flag = True
+                if flag:
+                    if season_df[lcl_field].values[t] != 1.0:
+                        season_df[lcl_field].values[t] = 1.0
+                if season_df['Month'].values[t].lower() == season[1]:
+                    flag = False
+            # insert gaps:
+            season_df[lcl_field] = season_df[lcl_field].replace(0, np.nan)
+            #
+            # fill gaps in periods:
+            new_df = interpolate_gaps(season_df, var_field=lcl_field, size=365, type='linear')
+            season_df[lcl_field] = new_df['Interpolation']
+    #
+    # export
+    outfile = folder + '/' + filename + '.txt'
+    season_df.to_csv(outfile, sep=';', index=False)
+    print(season_df.head(60).to_string())
+    return outfile
 
 
 def sdiag(fseries, filename='sim_diagnostics', folder='C:/bin', tui=False):
