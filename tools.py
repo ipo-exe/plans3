@@ -941,10 +941,10 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
     """
     # extract data
     lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_df = dataframe_prepro(lulc_df, strfields='LULCName,ConvertTo,ColorLULC')
+    lulc_df = dataframe_prepro(lulc_df, strfields='LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC')
     #print(lulc_df.to_string())
     soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_df = dataframe_prepro(soils_df, strfields='SoilName,ColorSoil')
+    soils_df = dataframe_prepro(soils_df, strfields='SoilName,SoilAlias,ColorSoil')
     #print(soils_df.to_string())
     lulc_ids = lulc_df['IdLULC'].values
     soils_ids = soils_df['IdSoil'].values
@@ -952,21 +952,24 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
     # process
     shru_ids = list()
     shru_nm = list()
+    shru_al = list()
     shru_lulc_ids = list()
     shru_soils_ids = list()
     for i in range(len(lulc_ids)):
         for j in range(len(soils_ids)):
             lcl_shru_id = lulc_ids[i] * 100 + soils_ids[j]
             lcl_shru_nm = lulc_df['LULCName'].values[i] + '_' + soils_df['SoilName'].values[j]
+            lcl_shru_al = lulc_df['LULCAlias'].values[i] + '_' + soils_df['SoilAlias'].values[j]
             shru_ids.append(lcl_shru_id)
             shru_nm.append(lcl_shru_nm)
+            shru_al.append(lcl_shru_al)
             shru_lulc_ids.append(lulc_ids[i])
             shru_soils_ids.append(soils_ids[j])
-    shru_df = pd.DataFrame({'IdSHRU':shru_ids, 'SHRUName': shru_nm, 'IdLULC':shru_lulc_ids, 'IdSoil':shru_soils_ids})
-    #print(shru_df.to_string())
+    shru_df = pd.DataFrame({'IdSHRU':shru_ids, 'SHRUName': shru_nm, 'SHRUAlias': shru_al, 'IdLULC':shru_lulc_ids, 'IdSoil':shru_soils_ids})
+    # join parameters:
     shru_df = shru_df.join(lulc_df.set_index('IdLULC'), on='IdLULC')
-    #print(shru_df.to_string())
     shru_df = shru_df.join(soils_df.set_index('IdSoil'), on='IdSoil')
+    # cross root zone:
     shru_df['f_EfRootZone'] = shru_df['Porosity'].values * shru_df['f_RootDepth'].values
     print(shru_df.to_string())
     #
