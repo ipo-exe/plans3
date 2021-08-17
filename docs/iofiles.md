@@ -36,6 +36,8 @@ input | hydro_param | txt | csv data frame
 - **Dataset type**: observed.
 - **Dataset description**: Boolean raster map of the area of AOI (Area Of Interest) basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -52,6 +54,8 @@ input | hydro_param | txt | csv data frame
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of Digital Elevation Model (DEM) of the AOI basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -153,6 +157,8 @@ sample file
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of soils for the AOI (Area Of Interest) basin. Each soil class receives an index number defined in the soils_calib_param file. 
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -197,6 +203,8 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of the Topographic Wetness Index (TWI) for the AOI basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -212,6 +220,8 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 - **Dataset type**: observed.
 - **Dataset description**: Boolean raster map of the area of calibration basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -228,6 +238,8 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of Digital Elevation Model (DEM) of the calibration basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -271,6 +283,8 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of LULC (land use and land cover) for the calibration basin and calibration period. Each LULC class receives an index number defined in the lulc_calib_param file 
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -359,6 +373,8 @@ IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of soils for the calibration basin. Each soil class receives an index number defined in the soils_calib_param file. 
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -403,6 +419,8 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) for the calibration basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -501,6 +519,7 @@ canopy_series
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of local unitless factor of basin soil transmissivity `To` of AOI basin.
 - **Requirements**:
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -639,6 +658,8 @@ IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAli
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of terrain slope for the AOI basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -654,6 +675,8 @@ IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAli
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) added to the natural log of inverse transmissivity factor for the AOI basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -754,6 +777,7 @@ sample file
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of local unitless factor of basin soil transmissivity `To` of Calib basin.
 - **Requirements**:
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -797,6 +821,8 @@ TWI\SHRU; 101; 102; 103; 104; 105; 201; 202; 203; 204; 205;  301;   302;  303; 3
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of Surface Hydrologic Response Units (SHRU) for the calibration basin. Each SHRU class receives an index number defined in the shru_calib_param file. 
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -877,6 +903,8 @@ IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAli
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of terrain slope for the calibration basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -892,6 +920,8 @@ IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAli
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) added to the natural log of inverse transmissivity factor for the calibration basin.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -954,6 +984,8 @@ sample file
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of LULC of AOI basin in year YYYY.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -969,6 +1001,8 @@ sample file
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of SHRU of AOI basin in year YYYY. This file is extracted to the `shru` folder during the derivation of the `aoi_shru_sreies` file.
 - **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
@@ -984,6 +1018,7 @@ sample file
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of ET pattern of calibration basin in month YYYY-MM.
 - **Requirements**:
+	 - All grid cells must be filled (void cells are not allowed).
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
