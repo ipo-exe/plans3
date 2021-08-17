@@ -331,7 +331,7 @@ def main(root='default', importing=True):
                         # import menu loop
                         while True:
                             header(lcl_opt)
-                            inputfiles_df = files_df[files_df['Type'] == 'input']  #
+                            inputfiles_df = files_df[files_df['Type'] == 'input']
                             files_lst = list(inputfiles_df['File'])
                             status_lst = list(inputfiles_df['Status'])
                             lcl_lcl_opt = menu({lng[6]: files_lst, 'Status':status_lst}, title='', exitmsg=lng[10],
@@ -415,6 +415,13 @@ def main(root='default', importing=True):
                                         derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2],
                                                                                folder=projectdirs['Observed'],
                                                                                filename=lcl_filename, tui=True)
+                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
+                                        ok()
+                                    elif lcl_lcl_opt == 'calib_canopy_series.txt':
+                                        print('\n' + lng[31] + '...')
+                                        derivedfile = tools.canopy_series(filesp[0], filesp[1],
+                                                                          folder=projectdirs['Observed'],
+                                                                          filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'calib_basin_histograms.txt':

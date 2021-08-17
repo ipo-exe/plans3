@@ -80,11 +80,7 @@ def view_imported_map(filename, folder, aux_folder=''):
     # plot quant map
     if filename in set(quantmaps):
         mapid = filename.split('.')[0].split('_')[1]
-        if mapid == 'twi':
-            dtype = 'float32'
-        else:
-            dtype = 'int16'
-        meta, rmap = input.asc_raster(file, dtype=dtype)
+        meta, rmap = input.asc_raster(file)
         ranges = (np.min(rmap), np.max(rmap))
         plot_map_view(rmap, meta, ranges, mapid=mapid, filename=filename.split('.')[0], folder=folder, metadata=True)
     # plot calib lulc from raster file
@@ -94,7 +90,7 @@ def view_imported_map(filename, folder, aux_folder=''):
         if aux_filename in set(folder_files):
             fraster = '{}/{}'.format(folder, filename)
             fparam = '{}/{}'.format(folder, aux_filename)
-            plot_lulc(fraster=fraster, fparams=fparam, filename=filename.split('.')[0])
+            plot_lulc(fraster=fraster, fparams=fparam, filename='calib_lulc')
     # plot calib lulc from param file
     elif filename == 'calib_lulc_param.txt':
         folder_files = listdir(folder)
@@ -102,7 +98,7 @@ def view_imported_map(filename, folder, aux_folder=''):
         if 'calib_lulc.asc' in set(folder_files):
             fraster = '{}/{}'.format(folder, aux_filename)
             fparam = '{}/{}'.format(folder, filename)
-            plot_lulc(fraster=fraster, fparams=fparam, filename=aux_filename.split('.')[0])
+            plot_lulc(fraster=fraster, fparams=fparam, filename='calib_lulc')
     # plot calib soils from raster file
     elif filename == 'calib_soils.asc':
         folder_files = listdir(folder)
@@ -114,7 +110,7 @@ def view_imported_map(filename, folder, aux_folder=''):
             meta, rmap = input.asc_raster(file)
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
             plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
-                           mapid='Soils', ranges=ranges, filename=filename.split('.')[0], folder=folder)
+                           mapid='Soils', ranges=ranges, filename='calib_soils', folder=folder)
     # plot calib soils from param file
     elif filename == 'calib_soils_param.txt':
         folder_files = listdir(folder)
@@ -126,7 +122,7 @@ def view_imported_map(filename, folder, aux_folder=''):
             meta, rmap = input.asc_raster('{}/{}'.format(folder, aux_filename))
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
             plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
-                           mapid='Soils', ranges=ranges, filename=filename.split('.')[0], folder=folder)
+                           mapid='Soils', ranges=ranges, filename='calib_soils', folder=folder)
     # plot aoi lulc from series raster map
     elif filename.split('_')[0] == 'aoi' and filename.split('_')[1] == 'lulc':
         lcl_stamp = filename.split('.')[0].split('_')[2]
@@ -147,7 +143,7 @@ def view_imported_map(filename, folder, aux_folder=''):
             meta, rmap = input.asc_raster(file)
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
             plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
-                           mapid='Soils', ranges=ranges, filename=filename.split('.')[0], folder=folder)
+                           mapid='Soils', ranges=ranges, filename='aoi_soils', folder=folder)
     # plot aoi soils from param file
     elif filename == 'aoi_soils_param.txt':
         folder_files = listdir(folder)
@@ -159,7 +155,7 @@ def view_imported_map(filename, folder, aux_folder=''):
             meta, rmap = input.asc_raster('{}/{}'.format(folder, aux_filename))
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
             plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
-                           mapid='Soils', ranges=ranges, filename=filename.split('.')[0], folder=folder)
+                           mapid='Soils', ranges=ranges, filename='aoi_soils', folder=folder)
     # plot calib series
     elif filename == 'calib_series.txt':
         series_df = pd.read_csv(file, sep=';')
@@ -1641,6 +1637,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         mapraster=False, mapvar='all', mapdates='all', integrate=False, qobs=False, folder='C:/bin',
         wkpl=False, label='',  tui=False):
     """
+
     SLH - Stable LULC Hydrology routine
 
     :param fseries: string filepath to simulation series
@@ -1657,7 +1654,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     :param mapvar: string of variables to map. Pass concatenated by '-'. Ex: 'ET-TF-Inf'.
     Options: 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
     :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-21-01 & 21-22-01'
-    :param integrate: boolean to inclue variable integration over the simulation period
+    :param integrate: boolean to include variable integration over the simulation period
     :param qobs: boolean to inclue Qobs in visuals
     :param folder: string to folderpath
     :param wkpl: boolean to set folder as workplace

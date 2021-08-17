@@ -414,7 +414,37 @@ def topmodel_vsai(di):
 # main functions
 def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo, cpmax, sfmax, erz, ksat, c,
                lat, k, n, area, basinshadow, mapback=False, mapvar='all', mapdates='all', qobs=False, tui=False):
-    # todo docstring
+    """
+
+    Plans3 model simulation routine
+
+    :param series: pandas dataframe of input time series.
+    :param shruparam: pandas dataframe of SHRU hard parameters (a priori parameter factors)
+    :param canopy: pandas dataframe of SHRU canopy seasonal factor pattern time series.
+    :param twibins: 1d numpy array of TWI bins
+    :param countmatrix: pandas dataframe
+    :param lamb: float model parameter
+    :param qt0: float model parameter
+    :param m: float model parameter
+    :param qo: float model parameter
+    :param cpmax: float model parameter
+    :param sfmax: float model parameter
+    :param erz: float model parameter
+    :param ksat: float model parameter
+    :param c: float model parameter
+    :param lat: float model parameter
+    :param k: float model parameter
+    :param n: float model parameter
+    :param area: float model boundary condition
+    :param basinshadow: pandas dataframe of basin shadow matrix
+    :param mapback: boolean to map back variables
+    :param mapvar: string of variables to map. Pass concatenated by '-'. Ex: 'ET-TF-Inf'.
+    Options: 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA' or 'all'
+    :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-21-01 & 21-22-01'
+    :param qobs: boolean
+    :param tui: boolean for TUI displays
+    :return: output dictionary
+    """
     # extract data input
     ts_prec = series['Prec'].values
     ts_temp = series['Temp'].values
@@ -441,7 +471,7 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
     # local full cpmax
     cpmax_i = cpmax * shruparam['f_Canopy'].values * np.ones(shape=shape, dtype='float32')
     # get canopy seasonal factor timeseries:
-    ts_cp_season = canopy[:, 2:]  # skip date and month fields
+    ts_cp_season = canopy.values[:, 2:]  # skip date and month fields
     # local sfmax
     sfmax_i = sfmax * shruparam['f_Surface'].values * np.ones(shape=shape, dtype='float32')
     # local erz
