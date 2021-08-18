@@ -401,17 +401,18 @@ def get_mapid_byfile(filename):
 def get_input2calibhydro():
     files = ('calib_series.txt','hydro_param.txt', 'calib_shru_param.txt', 'calib_histograms.txt',
              'calib_basin_histograms.txt', 'calib_basin.asc', 'calib_twi.asc', 'calib_shru.asc',
-             'calib_etpat_zmaps.txt', 'calib_etpat_series.txt')
+             'calib_etpat_zmaps.txt', 'calib_etpat_series.txt', 'calib_canopy_series.txt')
     return files
 
 
 def get_input2simbhydro(aoi=True):
     if aoi:
         files = ('aoi_series.txt', 'hydro_param.txt', 'aoi_shru_param.txt', 'aoi_shru_series.txt',
-                 'aoi_basin.asc', 'aoi_twi.asc', 'aoi_shru.asc')
+                 'aoi_basin.asc', 'aoi_twi.asc', 'aoi_shru.asc', 'aoi_canopy_series.txt')
     else:
         files = ('calib_series.txt','hydro_param.txt', 'calib_shru_param.txt', 'calib_histograms.txt',
-                 'calib_basin_histograms.txt', 'calib_basin.asc', 'calib_twi.asc', 'calib_shru.asc')
+                 'calib_basin_histograms.txt', 'calib_basin.asc', 'calib_twi.asc', 'calib_shru.asc',
+                 'calib_canopy_series.txt')
     return files
 
 

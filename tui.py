@@ -556,9 +556,10 @@ def main(root='default', importing=True):
                             fbasin = folder + '/' + files_input[5]
                             ftwi = folder + '/' + files_input[6]
                             fshru = folder + '/' + files_input[7]
+                            fcanopy = folder + '/' + files_input[8]
                             out_dct = tools.slh_calib(fseries=fseries, fhydroparam=fhydroparam, fshruparam=fshruparam,
                                                       fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin,
-                                                      ftwi=ftwi, fshru=fshru, folder=projectdirs['Simulation'],
+                                                      ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, folder=projectdirs['Simulation'],
                                                       integrate=settings['Integrate'], wkpl=True, tui=True,
                                                       mapback=settings['Mapback'], mapraster=settings['Mapraster'],
                                                       label='calib')
@@ -624,6 +625,7 @@ def main(root='default', importing=True):
                                     fshru = folder + '/' + files_input[7]
                                     fetpatzmaps = folder + '/' + files_input[8]
                                     fetpatseries = folder + '/' + files_input[9]
+                                    fcanopy = folder + '/' + files_input[10]
                                     aux_str = 'calib_hydro' + '_' + likelihood
                                     #dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
                                     size_opts = ('Very Small - Size:10 Gens:2', 'Small - Size:25 Gens:5',
@@ -652,7 +654,7 @@ def main(root='default', importing=True):
                                                                  fbasin=fbasin,
                                                                  fetpatzmaps=fetpatzmaps,
                                                                  fetpatseries=fetpatseries,
-                                                                 ftwi=ftwi, fshru=fshru,
+                                                                 ftwi=ftwi, fshru=fshru, fcanopy=fcanopy,
                                                                  folder=projectdirs['Optimization'], label='calib',
                                                                  generations=generations, popsize=popsize,
                                                                  likelihood=likelihood, tui=True, mapback=False)

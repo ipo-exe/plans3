@@ -66,13 +66,12 @@ def nash_cascade(q, k, n):
     size = len(q)
     time = np.arange(0, size)
     nash = np.power((time / k), (n - 1)) * np.exp(- time / k) / (k * gamma(n))  # the Nash Cascade time function
-    nash_unit = nash/np.sum(nash)  # normalise to get the unit hydrograph
     for t in range(0, len(time)):
         lcl_q = q[t]
         if t == 0:
-            qs = lcl_q * nash_unit
+            qs = lcl_q * nash
         else:
-            qs[t:] = qs[t:] + lcl_q * nash_unit[:size - t]
+            qs[t:] = qs[t:] + lcl_q * nash[:size - t]
     return qs
 
 
@@ -470,8 +469,9 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
     # get local surface parameters
     # local full cpmax
     cpmax_i = cpmax * shruparam['f_Canopy'].values * np.ones(shape=shape, dtype='float32')
+    cpmax_season_i = np.ones(shape=shape)
     # get canopy seasonal factor timeseries:
-    ts_cp_season = canopy.values[:, 2:]  # skip date and month fields
+    ts_cp_season = np.array(canopy.values[:, 2:], dtype='float32')  # skip date and month fields
     # local sfmax
     sfmax_i = sfmax * shruparam['f_Surface'].values * np.ones(shape=shape, dtype='float32')
     # local erz
@@ -642,11 +642,7 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
         cpyin_i = prec_i + ira_i
         #
         # compute throughfall (tf):
-        cpmax_season_i = cpmax_i * ts_cp_season[t]
-        plt.imshow(cpmax_i)
-        plt.show()
-        plt.imshow(cpmax_season_i)
-        plt.show()
+        cpmax_season_i = cpmax_i * ts_cp_season[t]  # local seasonal canopy capacity
         tf_i = ((cpyin_i - (cpmax_season_i - cpy_i)) * (cpyin_i > (cpmax_season_i - cpy_i)))
         ts_tf[t] = avg_2d(var2d=tf_i, weight=basinshadow)
         #

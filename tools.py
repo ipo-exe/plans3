@@ -1001,7 +1001,7 @@ def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'
     for i in range(len(shru_df)):
         # access shru name
         shru_nm = shru_df['SHRUAlias'].values[i]
-        print(shru_nm)
+        #print(shru_nm)
         lcl_field = 'f_Canopy_{}'.format(shru_nm)
         # access the season type
         season = shru_df['CanopySeason'].values[i]
@@ -1053,6 +1053,7 @@ def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'
                         season_df[lcl_field].values[t] = 1.0
                 if season_df['Month'].values[t].lower() == season[1]:
                     flag = False
+            #
             # insert gaps:
             season_df[lcl_field] = season_df[lcl_field].replace(0, np.nan)
             #
@@ -1060,10 +1061,11 @@ def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'
             new_df = interpolate_gaps(season_df, var_field=lcl_field, size=365, type='linear')
             season_df[lcl_field] = new_df['Interpolation']
     #
+    season_df.fillna(1.0, inplace=True)
     # export
     outfile = folder + '/' + filename + '.txt'
     season_df.to_csv(outfile, sep=';', index=False)
-    print(season_df.head(60).to_string())
+    #print(season_df.tail(60).to_string())
     return outfile
 
 
