@@ -353,17 +353,17 @@ IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA
 		 -  `Flow`: mean daily flow at the basin outlet in m3/seconds (Note: Flow [m3/s] = Q [mm/day] * BasinArea [m2]/ (86400 [s/day] * 1000 [mm/m]) ).
 - **Example**:
 ```
-       Date;  Prec;   Temp;  IRA;  IRI;       Q;    Flow
- 2013-12-22;   0.0;  25.48;  0.0;  0.0;  0.3012;  2.9810
- 2013-12-23;  1.75;  24.64;  0.0;  0.0;  0.2724;  2.6957
- 2013-12-24;  0.35;  26.44;  0.0;  0.0;  0.2448;  2.4229
- 2013-12-25;   0.0;  27.68;  0.0;  0.0;  0.1815;  1.7967
- 2013-12-26;   0.0;  30.24;  0.0;  0.0;  0.4815;  4.7661
- 2013-12-27;   0.0;  27.68;  0.0;  0.0;  0.4118;  4.0755
- 2013-12-28;   2.7;   28.8;  0.0;  0.0;  0.3467;  3.4320
- 2013-12-29;   0.3;  29.96;  0.0;  0.0;  0.3012;  2.9810
- 2013-12-30;  24.9;   29.6;  0.0;  0.0;  0.2724;  2.6957
- 2013-12-31;  8.05;   27.6;  0.0;  0.0;  0.2448;  2.4229
+       Date;     Prec;   Temp;  IRA;  IRI;        Q;      Flow
+ 2014-12-22;   12.549;   20.0;  0.0;  0.0;  11.1073;  6.436433
+ 2014-12-23;  22.5405;  19.76;  0.0;  0.0;   5.0759;  2.941367
+ 2014-12-24;      0.0;  22.28;  0.0;  0.0;   2.8054;  1.625645
+ 2014-12-25;      0.0;  25.56;  0.0;  0.0;   2.4039;  1.393016
+ 2014-12-26;  22.6059;  25.96;  0.0;  0.0;   2.1184;  1.227540
+ 2014-12-27;  24.5076;  25.36;  0.0;  0.0;   9.1452;  5.299441
+ 2014-12-28;   5.1103;   23.0;  0.0;  0.0;    8.122;  4.706546
+ 2014-12-29;   3.4229;  25.88;  0.0;  0.0;    4.905;  2.842336
+ 2014-12-30;      0.0;  24.16;  0.0;  0.0;   3.2296;  1.871505
+ 2014-12-31;   0.1627;   26.8;  0.0;  0.0;   2.7368;  1.585944
 ```
 
 ## `calib_soils.asc`
@@ -458,16 +458,16 @@ IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K
 - **Example**:
 ```
 Parameter;    Set;    Min;    Max
-        m;   20.0;    1.0;   30.0
-       qo;    5.0;    0.1;   20.0
-    cpmax;   0.05;    0.1;   20.0
-    sfmax;   0.81;    0.1;   20.0
-      erz;   20.0;    0.1;   30.0
-     ksat;    5.0;    0.1;   10.0
-        c;   50.0;   20.0;  120.0
-      lat;  -30.0;  -30.0;  -30.0
-        k;    0.5;    0.1;    6.0
-        n;    1.1;    1.0;   10.0
+        m;   32.5;    1.0;   50.0
+       qo;    0.8;    0.5;    2.0
+    cpmax;   16.3;   10.0;   20.0
+    sfmax;   19.6;   10.0;    5.0
+      erz;  110.0;  100.0;  250.0
+     ksat;    5.9;    1.1;   10.0
+        c;   28.3;   25.0;  100.0
+      lat;  -30.1;  -30.0;  -30.0
+        k;    1.4;    1.0;    5.0
+        n;    3.0;    1.1;    5.0
 ```
 
 ---
@@ -481,7 +481,6 @@ derived | aoi_lulc_series | txt | csv time series
 derived | aoi_shru_param | txt | csv data frame
 derived | aoi_shru_series | txt | csv time series
 derived | aoi_slope | asc | raster map
-derived | aoi_twito | asc | raster map
 derived | calib_basin_histograms | txt | csv data frame
 derived | calib_canopy_series | txt | csv time series
 derived | calib_etpat_series | txt | csv time series
@@ -491,7 +490,6 @@ derived | calib_histograms | txt | csv data frame
 derived | calib_shru | asc | raster map
 derived | calib_shru_param | txt | csv data frame
 derived | calib_slope | asc | raster map
-derived | calib_twito | asc | raster map
 
 ## `aoi_canopy_series.txt`
 
@@ -668,23 +666,6 @@ IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAli
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "aoi_slope")
 
-## `aoi_twito.asc`
-
-- **I/O**: derived.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) added to the natural log of inverse transmissivity factor for the AOI basin.
-- **Requirements**:
-	 - Data type must be `Int16` (integer values only).
-	 - All grid cells must be filled (void cells are not allowed).
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: TWI units.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "aoi_twito")
-
 ## `calib_basin_histograms.txt`
 
 - **I/O**: derived.
@@ -700,7 +681,27 @@ IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAli
 	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
 - **Example**:
 ```
-sample file
+TWI\SHRU; 101; 102; 103; 104; 105; 201; 202; 203; 204; 205;  301;    302; 303;   304; 305;  401;  402; 403;  404; 405;  501;    502; 503;   504; 505; 601; 602; 603; 604; 605; 701; 702; 703; 704; 705; 801;  802; 803; 804; 805; 901;  902; 903; 904;  905
+    1.35;   0;   8;   0;   7;   0;   0;   0;   0;   0;   0;  131;  25467;   7;  2571;  34;    6;  885;   0;  236;   0;   92;  11634;   0;  3204;   7;   0;  28;   0;   5;   0;   0;   4;   0;   1;   0;   0;  105;   0;  71;   0;  16;  188;   0;  91;    0
+     2.7;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   59;    505;   2;   180;   1;    7;   37;   0;   18;   0;   83;    272;   1;   252;   3;   1;   1;   0;   8;   0;   3;   0;   0;   2;   0;   3;    8;   0;  18;   0;   6;    7;   0;   9;    0
+    4.05;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;  190;    490;   1;   211;   6;   31;   56;   0;   52;   0;  243;    269;   8;   268;   6;   4;   8;   0;  15;   0;  10;   2;   0;   2;   0;  16;    4;   0;  24;   0;   9;    5;   0;  12;    0
+     5.4;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;  153;    127;   0;    39;   0;   37;   13;   0;    8;   1;  254;     76;   0;   102;   1;   5;   2;   0;   6;   0;   4;   0;   0;   0;   0;   9;    0;   0;   7;   0;  13;    1;   0;   4;    0
+    6.75;   3;   0;   0;   0;   0;   0;   0;   0;   0;   0;  196;     79;   0;    39;   1;   48;    8;   0;    7;   0;  311;     44;   0;    49;   2;  15;   2;   0;   6;   0;  13;   1;   0;   1;   0;  15;    0;   0;   3;   0;   9;    1;   0;   1;    0
+     8.1;   7;   0;   0;   0;   0;   0;   0;   0;   0;   0;  691;     80;   0;    31;   0;  109;    3;   0;   14;   0;  955;     56;   1;    54;   1;  67;   0;   0;   3;   0;  13;   2;   0;   0;   0;  16;    0;   0;   1;   0;  61;    0;   0;   0;    0
+    9.45;   1;   0;   0;   0;   0;   0;   0;   0;   0;   0;  185;     14;   0;     9;   0;   44;    2;   0;    3;   0;  326;     10;   0;    21;   0;  34;   0;   0;   1;   0;  13;   0;   0;   0;   0;   8;    0;   0;   0;   0;  22;    0;   0;   0;    0
+    10.8;   1;   0;   0;   0;   0;   0;   0;   0;   0;   0;  127;      4;   0;     4;   0;   17;    3;   0;    0;   0;  229;      7;   0;    13;   0;  27;   0;   0;   0;   0;   6;   0;   0;   0;   0;   3;    0;   0;   1;   0;  12;    0;   0;   0;    0
+   12.15;   1;   0;   0;   0;   0;   0;   0;   0;   0;   0;  126;     17;   1;     8;   0;   31;    1;   0;    2;   0;  270;     15;   0;     9;   0;  26;   0;   0;   1;   0;   5;   0;   0;   0;   0;  10;    0;   0;   0;   0;   8;    0;   0;   0;    0
+    13.5;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   40;      7;   0;     2;   0;   11;    0;   0;    1;   0;  105;      5;   1;     2;   0;   7;   0;   0;   0;   0;   2;   0;   0;   0;   0;   3;    0;   0;   0;   0;   4;    0;   0;   0;    0
+   14.85;   1;   0;   0;   0;   0;   0;   0;   0;   0;   0;   55;      7;   0;     1;   0;   17;    0;   0;    0;   0;   91;      7;   0;     0;   0;   9;   0;   0;   0;   0;   9;   0;   0;   0;   0;   3;    0;   0;   0;   0;   7;    0;   0;   0;    0
+    16.2;   5;   0;   0;   0;   0;   0;   0;   0;   0;   0;   85;      6;   0;     0;   0;   32;    0;   0;    0;   0;  200;      6;   0;     1;   0;  31;   0;   0;   0;   0;  13;   0;   0;   0;   0;   7;    0;   0;   0;   0;   5;    0;   0;   0;    0
+   17.55;   2;   0;   0;   0;   0;   0;   0;   0;   0;   0;   44;      6;   0;     0;   0;    4;    1;   0;    0;   0;   57;      4;   0;     0;   0;   5;   0;   0;   0;   0;   6;   0;   0;   0;   0;   1;    0;   0;   0;   0;   2;    0;   0;   0;    0
+    18.9;   2;   0;   0;   0;   0;   0;   0;   0;   0;   0;   43;      2;   0;     0;   0;    7;    0;   0;    0;   0;   49;      0;   0;     0;   0;  11;   0;   0;   0;   0;   8;   0;   0;   0;   0;   0;    0;   0;   0;   0;   2;    0;   0;   0;    0
+   20.25;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   68;      5;   0;     2;   0;   15;    0;   0;    0;   0;  125;      7;   0;     0;   0;  11;   0;   0;   0;   0;   8;   0;   0;   0;   0;   1;    0;   0;   0;   0;   3;    0;   0;   0;    0
+    21.6;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   49;      2;   0;     0;   0;    9;    0;   0;    0;   0;   46;      3;   0;     0;   0;   2;   0;   0;   0;   0;   8;   0;   0;   0;   0;   0;    0;   0;   0;   0;   4;    0;   0;   0;    0
+   22.95;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   63;      1;   0;     0;   0;    4;    0;   0;    0;   0;   70;      0;   0;     0;   0;   6;   0;   0;   0;   0;   3;   0;   0;   0;   0;   1;    0;   0;   0;   0;   2;    0;   0;   0;    0
+    24.3;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   82;      0;   0;     0;   0;    2;    0;   0;    0;   0;   70;      1;   0;     0;   0;  17;   0;   0;   0;   0;   2;   0;   0;   0;   0;   3;    0;   0;   0;   0;   9;    0;   0;   0;    0
+   25.65;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   15;      0;   0;     0;   0;    1;    0;   0;    0;   0;   19;      0;   0;     0;   0;   8;   0;   0;   0;   0;   1;   0;   0;   0;   0;   0;    0;   0;   0;   0;   0;    0;   0;   0;    0
+    27.0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    8;      0;   0;     0;   0;    3;    0;   0;    0;   0;   32;      0;   0;     0;   0;   6;   0;   0;   0;   0;   4;   0;   0;   0;   0;   0;    0;   0;   0;   0;   0;    0;   0;   0;    0
 ```
 
 ## `calib_canopy_series.txt`
@@ -801,17 +802,27 @@ sample file
 	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
 - **Example**:
 ```
-TWI\SHRU; 101; 102; 103; 104; 105; 201; 202; 203; 204; 205;  301;   302;  303; 304;  305; 401; 402; 403; 404; 405; 501;  502;  503;  504; 505; 601; 602; 603; 604; 605; 701; 702; 703; 704; 705; 801; 802; 803; 804; 805; 901; 902; 903; 904;  905
-  5.2092;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;  153;   386;  472;   0;   11;   0;   5;   0;   0;   0;  10;   91;   67;    0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
-  6.8357;   0;   4;   0;   1;   0;   0;   0;   0;   0;   0;  267;  1617;  736;  85;  159;   0;  99;  53;  13;   4;  20;  799;  213;  129;  19;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
-  8.4622;   0;   0;   0;   5;   0;   0;   0;   0;   0;   0;  121;   465;  133;  57;   28;   0;  17;   8;  12;   3;   6;  335;   40;  127;   4;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
- 10.0886;   0;   0;   0;   4;   0;   0;   0;   0;   0;   0;   39;   146;   14;  23;    0;   0;   1;   4;   4;   0;   4;   94;    8;   28;   2;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
- 11.7151;   0;   1;   0;   1;   0;   0;   0;   0;   0;   0;   48;    90;    8;  29;    0;   0;   3;   0;   8;   0;   7;   37;    7;   57;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
- 13.3416;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   60;    44;    1;  11;    0;   0;   1;   0;   0;   0;   3;   18;    0;   14;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
- 14.9681;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   54;     9;    1;   7;    0;   0;   0;   0;   0;   0;   7;    3;    0;   19;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
- 16.5946;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   12;    10;    0;   8;    0;   0;   0;   0;   0;   0;   0;    6;    0;   21;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
- 18.2211;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    5;     1;    0;   0;    0;   0;   0;   0;   0;   0;   0;    0;    0;   12;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
- 19.8476;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    7;     0;    0;   0;    0;   0;   0;   0;   0;   0;   2;    0;    0;    0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    0
+TWI\SHRU; 101; 102; 103; 104; 105; 201; 202; 203; 204; 205;   301;    302;  303;   304;  305;  401;   402; 403;  404; 405;   501;    502;   503;   504;  505; 601; 602; 603; 604; 605; 701; 702; 703; 704; 705; 801;  802; 803; 804; 805; 901;  902; 903; 904;  905
+    1.35;   0;  11;  29;   9;   0;   0;   1;  98;   4;   2;   201;  49448;  611;  5980;  886;   18;  1733;  77;  714;  20;   156;  20091;  1560;  5940;  358;   0;  28;   0;   5;   0;   0;   4;   0;   1;   0;   0;  105;   0;  71;   0;  16;  188;   0;  91;    0
+     2.7;   0;   0;   5;   0;   0;   0;   0;  26;   4;   0;   122;    943;  124;   395;   66;   25;    85;  28;   98;   0;   135;    476;   312;   586;   25;   1;   1;   0;   8;   0;   3;   0;   0;   2;   0;   3;    8;   0;  18;   0;   6;    7;   0;   9;    0
+    4.05;   3;   0;   2;   0;   0;   5;   0;  19;   9;   0;   422;    873;  178;   501;   62;  104;    89;  37;  172;   2;   442;    435;   466;   596;   18;   4;   8;   0;  15;   0;  10;   2;   0;   2;   0;  16;    4;   0;  24;   0;   9;    5;   0;  12;    0
+     5.4;   7;   0;   2;   2;   0;  12;   0;   2;   2;   0;   367;    211;   30;   131;    9;  110;    20;  13;   50;   3;   549;    107;   123;   198;    5;   5;   2;   0;   6;   0;   4;   0;   0;   0;   0;   9;    0;   0;   7;   0;  13;    1;   0;   4;    0
+    6.75;  10;   0;   1;   5;   0;   8;   0;   1;   0;   0;   515;    144;   19;    85;    2;  152;    13;   8;   24;   1;   735;     67;    77;    97;    5;  15;   2;   0;   6;   0;  13;   1;   0;   1;   0;  15;    0;   0;   3;   0;   9;    1;   0;   1;    0
+     8.1;  34;   0;   0;   3;   0;  34;   0;   4;   1;   0;  1881;    139;   13;    74;    6;  352;     7;  12;   32;   0;  2318;     81;    84;   107;    3;  67;   0;   0;   3;   0;  13;   2;   0;   0;   0;  16;    0;   0;   1;   0;  61;    0;   0;   0;    0
+    9.45;  15;   0;   0;   1;   0;   8;   0;   0;   1;   0;   678;     20;    2;    27;    1;  164;     3;   6;   11;   0;  1000;     18;    30;    38;    1;  34;   0;   0;   1;   0;  13;   0;   0;   0;   0;   8;    0;   0;   0;   0;  22;    0;   0;   0;    0
+    10.8;   6;   0;   0;   1;   0;   8;   0;   0;   0;   0;   442;     11;    3;     9;    1;   86;     3;   0;    2;   0;   631;     11;    24;    17;    0;  27;   0;   0;   0;   0;   6;   0;   0;   0;   0;   3;    0;   0;   1;   0;  12;    0;   0;   0;    0
+   12.15;  19;   0;   0;   1;   0;   8;   0;   0;   0;   0;   436;     19;    2;    24;    2;  132;     1;   6;   12;   0;   773;     23;    32;    16;    1;  26;   0;   0;   1;   0;   5;   0;   0;   0;   0;  10;    0;   0;   0;   0;   8;    0;   0;   0;    0
+    13.5;   6;   0;   0;   0;   0;   4;   0;   0;   0;   0;   145;      9;    0;    10;    0;   41;     0;   0;    3;   0;   278;      8;     9;     5;    1;   7;   0;   0;   0;   0;   2;   0;   0;   0;   0;   3;    0;   0;   0;   0;   4;    0;   0;   0;    0
+   14.85;   5;   0;   0;   0;   0;   2;   0;   0;   0;   0;   159;      7;    0;     3;    1;   67;     0;   0;    3;   0;   448;      8;    10;     4;    0;   9;   0;   0;   0;   0;   9;   0;   0;   0;   0;   3;    0;   0;   0;   0;   7;    0;   0;   0;    0
+    16.2;  19;   0;   0;   0;   0;   5;   0;   0;   0;   0;   329;     14;    1;     1;    0;  139;     0;   1;    2;   0;   779;      7;     9;     5;    2;  31;   0;   0;   0;   0;  13;   0;   0;   0;   0;   7;    0;   0;   0;   0;   5;    0;   0;   0;    0
+   17.55;   2;   0;   0;   0;   0;   5;   0;   0;   0;   0;   126;      6;    0;     0;    0;   42;     2;   0;    0;   0;   304;      7;     6;     1;    0;   5;   0;   0;   0;   0;   6;   0;   0;   0;   0;   1;    0;   0;   0;   0;   2;    0;   0;   0;    0
+    18.9;   4;   0;   0;   0;   0;   5;   0;   0;   0;   0;   152;      3;    0;     0;    0;   60;     0;   0;    0;   0;   283;      2;     0;     0;    0;  11;   0;   0;   0;   0;   8;   0;   0;   0;   0;   0;    0;   0;   0;   0;   2;    0;   0;   0;    0
+   20.25;   7;   0;   0;   0;   0;   4;   0;   0;   0;   0;   232;     11;    2;     3;    0;   87;     0;   0;    0;   0;   480;      8;     0;     0;    0;  11;   0;   0;   0;   0;   8;   0;   0;   0;   0;   1;    0;   0;   0;   0;   3;    0;   0;   0;    0
+    21.6;   1;   0;   0;   0;   0;   0;   0;   0;   0;   0;   100;      2;    0;     1;    0;   32;     0;   0;    0;   0;   125;      3;     0;     0;    0;   2;   0;   0;   0;   0;   8;   0;   0;   0;   0;   0;    0;   0;   0;   0;   4;    0;   0;   0;    0
+   22.95;   4;   0;   0;   0;   0;   3;   0;   0;   0;   0;   104;      1;    0;     0;    0;   34;     0;   0;    0;   0;   164;      1;     0;     0;    0;   6;   0;   0;   0;   0;   3;   0;   0;   0;   0;   1;    0;   0;   0;   0;   2;    0;   0;   0;    0
+    24.3;   6;   0;   0;   0;   0;   2;   0;   0;   0;   0;   150;      2;    0;     0;    0;   19;     0;   0;    0;   0;   156;      3;     0;     0;    0;  17;   0;   0;   0;   0;   2;   0;   0;   0;   0;   3;    0;   0;   0;   0;   9;    0;   0;   0;    0
+   25.65;   0;   0;   0;   0;   0;   0;   0;   0;   0;   0;    36;      0;    0;     0;    0;    5;     0;   0;    0;   0;    41;      1;     0;     0;    0;   8;   0;   0;   0;   0;   1;   0;   0;   0;   0;   0;    0;   0;   0;   0;   0;    0;   0;   0;    0
+    27.0;  23;   0;   0;   0;   0;   0;   0;   0;   0;   0;    39;      0;    0;     0;    0;    4;     0;   0;    0;   0;    62;      0;     0;     0;    0;   6;   0;   0;   0;   0;   4;   0;   0;   0;   0;   0;    0;   0;   0;   0;   0;    0;   0;   0;    0
 ```
 
 ## `calib_shru.asc`
@@ -848,52 +859,52 @@ TWI\SHRU; 101; 102; 103; 104; 105; 201; 202; 203; 204; 205;  301;   302;  303; 3
 		 -  `f_EfRootZone`: positive real number - factor of reference effective root zone depth in mm, computed as `Porosity` x  `f_RootDepth`.
 - **Example**:
 ```
-IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAlias; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;           CanopySeason; f_CanopyBackg;  C_USLE; P_USLE;  ConvertTo;  ColorLULC;   SoilName; SoilAlias; f_To; f_Ksat; Porosity;  K_USLE;  ColorSoil;  f_EfRootZone
-   101;         Water_Alluvial;     W_All;      1;      1;        Water;         W;      0.0;         0.0;       1.6;   0.0;     0;                   none;           1.0;     1.0;    1.0;       none;       blue;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.000
-   102;        Water_Colluvial;     W_Col;      1;      2;        Water;         W;      0.0;         0.0;       1.6;   0.0;     0;                   none;           1.0;     1.0;    1.0;       none;       blue;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.000
-   103;         Water_Residual;     W_Res;      1;      3;        Water;         W;      0.0;         0.0;       1.6;   0.0;     0;                   none;           1.0;     1.0;    1.0;       none;       blue;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.000
-   104;         Water_Hydrosol;     W_Hyd;      1;      4;        Water;         W;      0.0;         0.0;       1.6;   0.0;     0;                   none;           1.0;     1.0;    1.0;       none;       blue;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.000
-   105;          Water_Neosols;     W_Neo;      1;      5;        Water;         W;      0.0;         0.0;       1.6;   0.0;     0;                   none;           1.0;     1.0;    1.0;       none;       blue;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.000
-   201;         Urban_Alluvial;     U_All;      2;      1;        Urban;         U;      0.4;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;     0.1;    1.0;       none;       grey;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.300
-   202;        Urban_Colluvial;     U_Col;      2;      2;        Urban;         U;      0.4;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;     0.1;    1.0;       none;       grey;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.300
-   203;         Urban_Residual;     U_Res;      2;      3;        Urban;         U;      0.4;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;     0.1;    1.0;       none;       grey;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.300
-   204;         Urban_Hydrosol;     U_Hyd;      2;      4;        Urban;         U;      0.4;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;     0.1;    1.0;       none;       grey;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.300
-   205;          Urban_Neosols;     U_Neo;      2;      5;        Urban;         U;      0.4;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;     0.1;    1.0;       none;       grey;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.400
-   301;        Forest_Alluvial;     F_All;      3;      1;       Forest;         F;      1.0;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;  0.0001;    1.0;       none;  darkgreen;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.300
-   302;       Forest_Colluvial;     F_Col;      3;      2;       Forest;         F;      1.0;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;  0.0001;    1.0;       none;  darkgreen;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.300
-   303;        Forest_Residual;     F_Res;      3;      3;       Forest;         F;      1.0;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;  0.0001;    1.0;       none;  darkgreen;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.300
-   304;        Forest_Hydrosol;     F_Hyd;      3;      4;       Forest;         F;      1.0;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;  0.0001;    1.0;       none;  darkgreen;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.300
-   305;         Forest_Neosols;     F_Neo;      3;      5;       Forest;         F;      1.0;         1.0;       1.0;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;  0.0001;    1.0;       none;  darkgreen;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.400
-   401;       Pasture_Alluvial;     P_All;      4;      1;      Pasture;         P;      0.5;         0.2;       0.7;   1.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    1.0;  7 & 8 & 9;      khaki;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.060
-   402;      Pasture_Colluvial;     P_Col;      4;      2;      Pasture;         P;      0.5;         0.2;       0.7;   1.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    1.0;  7 & 8 & 9;      khaki;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.060
-   403;       Pasture_Residual;     P_Res;      4;      3;      Pasture;         P;      0.5;         0.2;       0.7;   1.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    1.0;  7 & 8 & 9;      khaki;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.060
-   404;       Pasture_Hydrosol;     P_Hyd;      4;      4;      Pasture;         P;      0.5;         0.2;       0.7;   1.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    1.0;  7 & 8 & 9;      khaki;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.060
-   405;        Pasture_Neosols;     P_Neo;      4;      5;      Pasture;         P;      0.5;         0.2;       0.7;   1.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    1.0;  7 & 8 & 9;      khaki;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.080
-   501;         Crops_Alluvial;     C_All;      5;      1;        Crops;         C;      0.4;         0.1;       0.4;   1.0;     1;  Aug & Nov & Feb & Jun;           0.1;     0.4;    1.0;  7 & 8 & 9;  goldenrod;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.030
-   502;        Crops_Colluvial;     C_Col;      5;      2;        Crops;         C;      0.4;         0.1;       0.4;   1.0;     1;  Aug & Nov & Feb & Jun;           0.1;     0.4;    1.0;  7 & 8 & 9;  goldenrod;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.030
-   503;         Crops_Residual;     C_Res;      5;      3;        Crops;         C;      0.4;         0.1;       0.4;   1.0;     1;  Aug & Nov & Feb & Jun;           0.1;     0.4;    1.0;  7 & 8 & 9;  goldenrod;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.030
-   504;         Crops_Hydrosol;     C_Hyd;      5;      4;        Crops;         C;      0.4;         0.1;       0.4;   1.0;     1;  Aug & Nov & Feb & Jun;           0.1;     0.4;    1.0;  7 & 8 & 9;  goldenrod;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.030
-   505;          Crops_Neosols;     C_Neo;      5;      5;        Crops;         C;      0.4;         0.1;       0.4;   1.0;     1;  Aug & Nov & Feb & Jun;           0.1;     0.4;    1.0;  7 & 8 & 9;  goldenrod;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.040
-   601;       Wetland_Alluvial;    Wt_All;      6;      1;      Wetland;        Wt;      0.8;         0.6;       1.8;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.001;    1.0;       none;       teal;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.180
-   602;      Wetland_Colluvial;    Wt_Col;      6;      2;      Wetland;        Wt;      0.8;         0.6;       1.8;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.001;    1.0;       none;       teal;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.180
-   603;       Wetland_Residual;    Wt_Res;      6;      3;      Wetland;        Wt;      0.8;         0.6;       1.8;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.001;    1.0;       none;       teal;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.180
-   604;       Wetland_Hydrosol;    Wt_Hyd;      6;      4;      Wetland;        Wt;      0.8;         0.6;       1.8;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.001;    1.0;       none;       teal;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.180
-   605;        Wetland_Neosols;    Wt_Neo;      6;      5;      Wetland;        Wt;      0.8;         0.6;       1.8;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.001;    1.0;       none;       teal;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.240
-   701;    NBS-Forest_Alluvial;   NbF_All;      7;      1;   NBS-Forest;       NbF;      0.9;         0.7;       0.9;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.003;    1.0;       none;  limegreen;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.210
-   702;   NBS-Forest_Colluvial;   NbF_Col;      7;      2;   NBS-Forest;       NbF;      0.9;         0.7;       0.9;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.003;    1.0;       none;  limegreen;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.210
-   703;    NBS-Forest_Residual;   NbF_Res;      7;      3;   NBS-Forest;       NbF;      0.9;         0.7;       0.9;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.003;    1.0;       none;  limegreen;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.210
-   704;    NBS-Forest_Hydrosol;   NbF_Hyd;      7;      4;   NBS-Forest;       NbF;      0.9;         0.7;       0.9;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.003;    1.0;       none;  limegreen;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.210
-   705;     NBS-Forest_Neosols;   NbF_Neo;      7;      5;   NBS-Forest;       NbF;      0.9;         0.7;       0.9;   0.0;     0;  Aug & Nov & Feb & Jun;           0.7;   0.003;    1.0;       none;  limegreen;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.280
-   801;   NBS-Pasture_Alluvial;   NbP_All;      8;      1;  NBS-Pasture;       NbP;      0.6;        0.25;      0.75;   0.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    0.3;       none;      olive;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.075
-   802;  NBS-Pasture_Colluvial;   NbP_Col;      8;      2;  NBS-Pasture;       NbP;      0.6;        0.25;      0.75;   0.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    0.3;       none;      olive;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.075
-   803;   NBS-Pasture_Residual;   NbP_Res;      8;      3;  NBS-Pasture;       NbP;      0.6;        0.25;      0.75;   0.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    0.3;       none;      olive;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.075
-   804;   NBS-Pasture_Hydrosol;   NbP_Hyd;      8;      4;  NBS-Pasture;       NbP;      0.6;        0.25;      0.75;   0.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    0.3;       none;      olive;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.075
-   805;    NBS-Pasture_Neosols;   NbP_Neo;      8;      5;  NBS-Pasture;       NbP;      0.6;        0.25;      0.75;   0.0;     0;  Aug & Nov & Feb & Jun;           0.6;    0.06;    0.3;       none;      olive;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.100
-   901;     NBS-Crops_Alluvial;   NbC_All;      9;      1;    NBS-Crops;       NbC;      0.6;        0.15;       0.8;   0.5;     0;  Aug & Nov & Feb & Jun;           0.4;     0.4;    0.6;       none;       gold;   Alluvial;       All;  1.0;    1.0;      0.3;  0.0021;        tan;         0.045
-   902;    NBS-Crops_Colluvial;   NbC_Col;      9;      2;    NBS-Crops;       NbC;      0.6;        0.15;       0.8;   0.5;     0;  Aug & Nov & Feb & Jun;           0.4;     0.4;    0.6;       none;       gold;  Colluvial;       Col;  1.0;    1.0;      0.3;   0.009;  goldenrod;         0.045
-   903;     NBS-Crops_Residual;   NbC_Res;      9;      3;    NBS-Crops;       NbC;      0.6;        0.15;       0.8;   0.5;     0;  Aug & Nov & Feb & Jun;           0.4;     0.4;    0.6;       none;       gold;   Residual;       Res;  1.0;    1.0;      0.3;  0.0042;     sienna;         0.045
-   904;     NBS-Crops_Hydrosol;   NbC_Hyd;      9;      4;    NBS-Crops;       NbC;      0.6;        0.15;       0.8;   0.5;     0;  Aug & Nov & Feb & Jun;           0.4;     0.4;    0.6;       none;       gold;   Hydrosol;       Hyd;  1.0;   0.32;      0.3;  0.0021;      brown;         0.045
-   905;      NBS-Crops_Neosols;   NbC_Neo;      9;      5;    NBS-Crops;       NbC;      0.6;        0.15;       0.8;   0.5;     0;  Aug & Nov & Feb & Jun;           0.4;     0.4;    0.6;       none;       gold;    Neosols;       Neo;  0.5;    1.0;      0.4;  0.0013;     maroon;         0.060
+IdSHRU;                          SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAlias; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;           CanopySeason; f_CanopyBackg;  C_USLE; P_USLE; ConvertTo;  ColorLULC;              SoilName; SoilAlias; f_To; f_Ksat; Porosity;  K_USLE;       ColorSoil;  f_EfRootZone
+   101;                    Water_Alluvial;     W_All;      1;      1;        Water;         W;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           1.0;     0.0;    1.0;      none;       blue;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.000
+   102;        Water_SerraGeral-Colluvial;     W_SGC;      1;      2;        Water;         W;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           1.0;     0.0;    1.0;      none;       blue;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.000
+   103;           Water_Botucatu-Residual;     W_BoR;      1;      3;        Water;         W;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           1.0;     0.0;    1.0;      none;       blue;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.000
+   104;         Water_SerraGeral-Residual;     W_SRR;      1;      4;        Water;         W;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           1.0;     0.0;    1.0;      none;       blue;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.000
+   105;          Water_Botucatu-Colluvial;     W_BoC;      1;      5;        Water;         W;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           1.0;     0.0;    1.0;      none;       blue;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.000
+   201;                    Urban_Alluvial;     U_All;      2;      1;        Urban;         U;      0.3;         0.3;       0.3;   0.0;   0.0;                   none;           1.0;     0.5;    1.0;      none;       grey;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.060
+   202;        Urban_SerraGeral-Colluvial;     U_SGC;      2;      2;        Urban;         U;      0.3;         0.3;       0.3;   0.0;   0.0;                   none;           1.0;     0.5;    1.0;      none;       grey;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.060
+   203;           Urban_Botucatu-Residual;     U_BoR;      2;      3;        Urban;         U;      0.3;         0.3;       0.3;   0.0;   0.0;                   none;           1.0;     0.5;    1.0;      none;       grey;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.120
+   204;         Urban_SerraGeral-Residual;     U_SRR;      2;      4;        Urban;         U;      0.3;         0.3;       0.3;   0.0;   0.0;                   none;           1.0;     0.5;    1.0;      none;       grey;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.030
+   205;          Urban_Botucatu-Colluvial;     U_BoC;      2;      5;        Urban;         U;      0.3;         0.3;       0.3;   0.0;   0.0;                   none;           1.0;     0.5;    1.0;      none;       grey;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.150
+   301;                   Forest_Alluvial;     F_All;      3;      1;       Forest;         F;      1.0;         1.0;       1.0;   0.0;   0.0;                   none;           1.0;  0.0001;    1.0;      none;  darkgreen;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.200
+   302;       Forest_SerraGeral-Colluvial;     F_SGC;      3;      2;       Forest;         F;      1.0;         1.0;       1.0;   0.0;   0.0;                   none;           1.0;  0.0001;    1.0;      none;  darkgreen;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.200
+   303;          Forest_Botucatu-Residual;     F_BoR;      3;      3;       Forest;         F;      1.0;         1.0;       1.0;   0.0;   0.0;                   none;           1.0;  0.0001;    1.0;      none;  darkgreen;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.400
+   304;        Forest_SerraGeral-Residual;     F_SRR;      3;      4;       Forest;         F;      1.0;         1.0;       1.0;   0.0;   0.0;                   none;           1.0;  0.0001;    1.0;      none;  darkgreen;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.100
+   305;         Forest_Botucatu-Colluvial;     F_BoC;      3;      5;       Forest;         F;      1.0;         1.0;       1.0;   0.0;   0.0;                   none;           1.0;  0.0001;    1.0;      none;  darkgreen;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.500
+   401;                  Pasture_Alluvial;     P_All;      4;      1;      Pasture;         P;     0.62;        0.62;      0.62;   0.0;   0.0;  Jul & Sep & Nov & Jun;           0.6;     0.1;    1.0;     8 & 3;  limegreen;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.124
+   402;      Pasture_SerraGeral-Colluvial;     P_SGC;      4;      2;      Pasture;         P;     0.62;        0.62;      0.62;   0.0;   0.0;  Jul & Sep & Nov & Jun;           0.6;     0.1;    1.0;     8 & 3;  limegreen;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.124
+   403;         Pasture_Botucatu-Residual;     P_BoR;      4;      3;      Pasture;         P;     0.62;        0.62;      0.62;   0.0;   0.0;  Jul & Sep & Nov & Jun;           0.6;     0.1;    1.0;     8 & 3;  limegreen;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.248
+   404;       Pasture_SerraGeral-Residual;     P_SRR;      4;      4;      Pasture;         P;     0.62;        0.62;      0.62;   0.0;   0.0;  Jul & Sep & Nov & Jun;           0.6;     0.1;    1.0;     8 & 3;  limegreen;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.062
+   405;        Pasture_Botucatu-Colluvial;     P_BoC;      4;      5;      Pasture;         P;     0.62;        0.62;      0.62;   0.0;   0.0;  Jul & Sep & Nov & Jun;           0.6;     0.1;    1.0;     8 & 3;  limegreen;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.310
+   501;               Crops-Conv_Alluvial;   CrC_All;      5;      1;   Crops-Conv;       CrC;     0.65;        0.65;      0.65;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.1;     0.4;    1.0;     8 & 3;  goldenrod;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.130
+   502;   Crops-Conv_SerraGeral-Colluvial;   CrC_SGC;      5;      2;   Crops-Conv;       CrC;     0.65;        0.65;      0.65;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.1;     0.4;    1.0;     8 & 3;  goldenrod;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.130
+   503;      Crops-Conv_Botucatu-Residual;   CrC_BoR;      5;      3;   Crops-Conv;       CrC;     0.65;        0.65;      0.65;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.1;     0.4;    1.0;     8 & 3;  goldenrod;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.260
+   504;    Crops-Conv_SerraGeral-Residual;   CrC_SRR;      5;      4;   Crops-Conv;       CrC;     0.65;        0.65;      0.65;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.1;     0.4;    1.0;     8 & 3;  goldenrod;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.065
+   505;     Crops-Conv_Botucatu-Colluvial;   CrC_BoC;      5;      5;   Crops-Conv;       CrC;     0.65;        0.65;      0.65;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.1;     0.4;    1.0;     8 & 3;  goldenrod;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.325
+   601;               Crops-Rice_Alluvial;   CrR_All;      6;      1;   Crops-Rice;       CrR;     0.65;        0.65;      0.65;   0.0;   1.0;  Sep & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;      khaki;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.130
+   602;   Crops-Rice_SerraGeral-Colluvial;   CrR_SGC;      6;      2;   Crops-Rice;       CrR;     0.65;        0.65;      0.65;   0.0;   1.0;  Sep & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;      khaki;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.130
+   603;      Crops-Rice_Botucatu-Residual;   CrR_BoR;      6;      3;   Crops-Rice;       CrR;     0.65;        0.65;      0.65;   0.0;   1.0;  Sep & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;      khaki;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.260
+   604;    Crops-Rice_SerraGeral-Residual;   CrR_SRR;      6;      4;   Crops-Rice;       CrR;     0.65;        0.65;      0.65;   0.0;   1.0;  Sep & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;      khaki;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.065
+   605;     Crops-Rice_Botucatu-Colluvial;   CrR_BoC;      6;      5;   Crops-Rice;       CrR;     0.65;        0.65;      0.65;   0.0;   1.0;  Sep & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;      khaki;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.325
+   701;              Crops-Pivot_Alluvial;   CrP_All;      7;      1;  Crops-Pivot;       CrP;     0.65;        0.65;      0.65;   1.0;   0.0;  Aug & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;       gold;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.130
+   702;  Crops-Pivot_SerraGeral-Colluvial;   CrP_SGC;      7;      2;  Crops-Pivot;       CrP;     0.65;        0.65;      0.65;   1.0;   0.0;  Aug & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;       gold;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.130
+   703;     Crops-Pivot_Botucatu-Residual;   CrP_BoR;      7;      3;  Crops-Pivot;       CrP;     0.65;        0.65;      0.65;   1.0;   0.0;  Aug & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;       gold;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.260
+   704;   Crops-Pivot_SerraGeral-Residual;   CrP_SRR;      7;      4;  Crops-Pivot;       CrP;     0.65;        0.65;      0.65;   1.0;   0.0;  Aug & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;       gold;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.065
+   705;    Crops-Pivot_Botucatu-Colluvial;   CrP_BoC;      7;      5;  Crops-Pivot;       CrP;     0.65;        0.65;      0.65;   1.0;   0.0;  Aug & Nov & Feb & Apr;           0.7;     0.4;    1.0;      none;       gold;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.325
+   801;                NBS-Crops_Alluvial;   NbC_All;      8;      1;    NBS-Crops;       NbC;      0.7;         0.7;       0.7;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.6;    0.06;    0.3;      none;      olive;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.140
+   802;    NBS-Crops_SerraGeral-Colluvial;   NbC_SGC;      8;      2;    NBS-Crops;       NbC;      0.7;         0.7;       0.7;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.6;    0.06;    0.3;      none;      olive;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.140
+   803;       NBS-Crops_Botucatu-Residual;   NbC_BoR;      8;      3;    NBS-Crops;       NbC;      0.7;         0.7;       0.7;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.6;    0.06;    0.3;      none;      olive;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.280
+   804;     NBS-Crops_SerraGeral-Residual;   NbC_SRR;      8;      4;    NBS-Crops;       NbC;      0.7;         0.7;       0.7;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.6;    0.06;    0.3;      none;      olive;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.070
+   805;      NBS-Crops_Botucatu-Colluvial;   NbC_BoC;      8;      5;    NBS-Crops;       NbC;      0.7;         0.7;       0.7;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.6;    0.06;    0.3;      none;      olive;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.350
+   901;                   Mining_Alluvial;     M_All;      9;      1;       Mining;         M;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           0.4;     0.8;    1.0;      none;     sienna;              Alluvial;       All;  0.1;    0.5;      0.2;  0.0021;  lightsteelblue;         0.000
+   902;       Mining_SerraGeral-Colluvial;     M_SGC;      9;      2;       Mining;         M;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           0.4;     0.8;    1.0;      none;     sienna;  SerraGeral-Colluvial;       SGC;  0.1;    0.3;      0.2;   0.009;            gray;         0.000
+   903;          Mining_Botucatu-Residual;     M_BoR;      9;      3;       Mining;         M;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           0.4;     0.8;    1.0;      none;     sienna;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.4;  0.0042;      lightcoral;         0.000
+   904;        Mining_SerraGeral-Residual;     M_SRR;      9;      4;       Mining;         M;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           0.4;     0.8;    1.0;      none;     sienna;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.1;   0.009;       lightgray;         0.000
+   905;         Mining_Botucatu-Colluvial;     M_BoC;      9;      5;       Mining;         M;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           0.4;     0.8;    1.0;      none;     sienna;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.5;  0.0042;           brown;         0.000
 ```
 
 ## `calib_slope.asc`
@@ -912,23 +923,6 @@ IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAli
 - **Example**:
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/slope.PNG "calib_slope")
-
-## `calib_twito.asc`
-
-- **I/O**: derived.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of the Topographic Wetness Index (`TWI`) added to the natural log of inverse transmissivity factor for the calibration basin.
-- **Requirements**:
-	 - Data type must be `Int16` (integer values only).
-	 - All grid cells must be filled (void cells are not allowed).
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: TWI units.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twito")
 
 ---
 # extracted files

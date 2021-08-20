@@ -359,7 +359,9 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
     #
     # import data
     metalulc, lulc = input.asc_raster(flulc)
+    #print(np.shape(lulc))
     metasoils, soils = input.asc_raster(fsoils)
+    #print(np.shape(soils))
     lulc_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
     lulc_param_df = dataframe_prepro(lulc_param_df, 'LULCName,ConvertTo,ColorLULC')
     soils_param_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
