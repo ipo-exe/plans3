@@ -438,7 +438,9 @@ def main(root='default', importing=True):
                                         derivedfile = tools.compute_zmap_series(filesp[0], filesp[1], filesp[2],
                                                                                 filesp[3], var='etpat',
                                                                                 folder=projectdirs['Observed'],
-                                                                                filename=lcl_filename, tui=True)
+                                                                                filename=lcl_filename,
+                                                                                dtype='float32',
+                                                                                tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'aoi_lulc_series.txt':
@@ -452,11 +454,14 @@ def main(root='default', importing=True):
                                         ok()
                                     elif lcl_lcl_opt == 'calib_etpat_series.txt':
                                         print('\n' + lng[31] + '...')
+                                        normalize = False  # todo dialog menu
                                         derivedfile = tools.import_etpat_series(filesp[0],
                                                                                 rasterfolder=projectdirs['ETpat'],
                                                                                 folder=projectdirs['Observed'],
                                                                                 filename=lcl_filename,
-                                                                                rasterfilename='calib_etpat', tui=True)
+                                                                                rasterfilename='calib_etpat',
+                                                                                normalize=normalize,
+                                                                                tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'aoi_shru_series.txt':

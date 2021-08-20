@@ -381,7 +381,7 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
     plot_shrumap_view(lulc, soils, metalulc, shru_df, filename=filename, folder=folder,
                       metadata=True, ttl=title)
     # export data
-    export_file = output.asc_raster(shru_map, metalulc, folder, filename)
+    export_file = output.asc_raster(shru_map, metalulc, folder, filename, dtype='int16')
     return export_file
 
 
@@ -730,7 +730,7 @@ def import_etpat_series(finputseries, rasterfolder='C:/bin', folder='C:/bin', fi
         rasters_lst = list()
         for i in range(len(dates)):
             src = files[i]
-            meta, lcl_raster = input.asc_raster(src)
+            meta, lcl_raster = input.asc_raster(src, dtype='float32')
             rasters_lst.append(lcl_raster)
         rasters = np.array(rasters_lst)
         if tui:
@@ -755,17 +755,17 @@ def import_etpat_series(finputseries, rasterfolder='C:/bin', folder='C:/bin', fi
         exp_df.to_csv(exp_file, sep=';', index=False)
         #
         # view
-        view_rasters(exp_file, mapvar='ETpat', mapid='etpat', vmin=0, vmax=1, tui=tui)
+        view_rasters(exp_file, mapvar='ETpat', mapid='etpat', vmin=0, vmax=1, tui=tui, dtype='float32')
     else:
         # just import rasters
         exp_file = import_map_series(fmapseries=finputseries, rasterfolder=rasterfolder, folder=folder, rasterfilename=rasterfilename, view=False)
         #
         # view
-        view_rasters(exp_file, mapvar='ET', mapid='flow_v', vmin=0, vmax=10, tui=tui)
+        view_rasters(exp_file, mapvar='ET', mapid='flow_v', vmin=0, vmax=10, tui=tui, dtype='float32')
     return exp_file
 
 
-def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='local', tui=False):
+def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='local', tui=False, dtype='int16'):
     """
     Batch routine to plot raster maps from map series file
 
@@ -794,7 +794,7 @@ def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='loc
         lcl_filename = lcl_filename.split('.')[0]
         lcl_folder = os.path.dirname(files[i])
         # open map
-        meta, lcl_map = input.asc_raster(files[i])
+        meta, lcl_map = input.asc_raster(files[i], dtype=dtype)
         # set range
         if vmin == 'local':
             v_min = np.min(lcl_map)
@@ -811,7 +811,7 @@ def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='loc
 
 
 def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var_zmap_series', folder='C:/bin',
-                        tui=False):
+                        tui=False, dtype='int16'):
     """
     Batch routine to compute zmaps from raster series
 
@@ -867,7 +867,7 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
         lcl_filenm = os.path.basename(files[i])
         lcl_new_filename = 'zmap_' +  var + '_' + dates[i]
         # get raster
-        meta, lcl_var = input.asc_raster(files[i])
+        meta, lcl_var = input.asc_raster(files[i], dtype=dtype)
         lcl_zmap = built_zmap(varmap=lcl_var, twi=twi, shru=shru, twibins=twibins, shrubins=shrubins)
         exp_file = output.zmap(zmap=lcl_zmap, twibins=twibins, shrubins=shrubins, folder=lcl_folder, filename=lcl_new_filename)
         new_files.append(exp_file)
@@ -2248,7 +2248,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         init = time.time()
         print('\n\t**** Calibration Protocol ****\n')
         status('running calibration')
-    cal_dct = calibration(series=calib_df, shruparam=shru_df, twibins=twibins, countmatrix=count,
+    cal_dct = calibration(series=calib_df, shruparam=shru_df, twibins=twibins, countmatrix=count, canopy=canopy_df,
                           lamb=lamb, qt0=qt0, lat=lat, area=area, basinshadow=basincount,
                           m_range=rng_dct['m_rng'],
                           qo_range=rng_dct['qo_rng'],

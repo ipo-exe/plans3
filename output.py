@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def asc_raster(array, meta, folder, filename):
+def asc_raster(array, meta, folder, filename, dtype='float32'):
     """
     Function for exporting an .ASC raster file.
     :param array: 2d numpy array
@@ -16,6 +16,7 @@ def asc_raster(array, meta, folder, filename):
 
     :param folder: string of directory path
     :param filename: string of file without extension
+    :param dtype: string code of data type
     :return: full file name (path and extension) string
     """
     meta_lbls = ('ncols', 'nrows', 'xllcorner', 'yllcorner', 'cellsize', 'NODATA_value')
@@ -27,15 +28,16 @@ def asc_raster(array, meta, folder, filename):
     # print(exp_lst)
     #
     # data constructor loop:
-    for i in range(len(array)):
+    def_array = np.array(array, dtype=dtype)
+    for i in range(len(def_array)):
         # replace np.nan to no data values
-        lcl_row_sum = np.sum((np.isnan(array[i])) * 1)
+        lcl_row_sum = np.sum((np.isnan(def_array[i])) * 1)
         if lcl_row_sum > 0:
             #print('Yeas')
-            for j in range(len(array[i])):
-                if np.isnan(array[i][j]):
-                    array[i][j] = int(ndv)
-        str_join = ' ' + ' '.join(np.array(array[i], dtype='str')) + '\n'
+            for j in range(len(def_array[i])):
+                if np.isnan(def_array[i][j]):
+                    def_array[i][j] = int(ndv)
+        str_join = ' ' + ' '.join(np.array(def_array[i], dtype='str')) + '\n'
         exp_lst.append(str_join)
 
     flenm = folder + '/' + filename + '.asc'

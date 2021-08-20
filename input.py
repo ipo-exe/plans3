@@ -25,7 +25,7 @@ def asc_raster(file, nan=False, dtype='int16'):
     A function to import .ASC raster files
     :param file: string of file path with the '.asc' extension
     :param nan: boolean to convert nan values to np.nan
-    :param dtype: string code to data type
+    :param dtype: string code to data type. Options: 'int16', 'int32', 'float32' etc
     :return: 1) metadata dictionary and 2) numpy 2d array
     """
     def_f = open(file)
