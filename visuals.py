@@ -1158,8 +1158,12 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
                'etpat': ['Greys_r', 'Index units'],
                'catcha': ['Blues', 'Sq. Meters (log10)'],
                'basin': ['Greys', 'Boolean'],
-               'flow':[earthcm, 'mm/d', 'mm'], 'flow_v':[jetcm, 'mm/d', 'mm'], 'stock':[viridiscm, 'mm', 'mm'],
-               'deficit':['jet', 'mm', 'mm'], 'VSA':['Blues', 'Boolean', '%'], 'RC':['YlOrRd', '%', '%']}
+               'flow':[earthcm, 'mm/d', 'mm'], 
+               'flow_v':[jetcm, 'mm/d', 'mm'], 
+               'stock':[viridiscm, 'mm', 'mm'],
+               'deficit':['jet', 'mm', 'mm'], 
+               'VSA':['Blues', 'Boolean', '%'], 
+               'RC':['YlOrRd', '%', '%']}
     #
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)

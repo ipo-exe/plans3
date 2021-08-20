@@ -402,6 +402,7 @@ def main(root='default', importing=True):
                                                                       filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
+                                    # Derive SHRU
                                     elif lcl_lcl_opt == 'calib_shru.asc':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.map_shru(filesp[0], filesp[1], filesp[2],
@@ -410,6 +411,7 @@ def main(root='default', importing=True):
                                                                      filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
+                                    # Derive Histograms
                                     elif lcl_lcl_opt == 'calib_histograms.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2],
@@ -455,8 +457,6 @@ def main(root='default', importing=True):
                                                                                 folder=projectdirs['Observed'],
                                                                                 filename=lcl_filename,
                                                                                 rasterfilename='calib_etpat', tui=True)
-                                        tools.view_rasters(derivedfile, mapvar='ETpat', mapid='etpat',
-                                                           vmin=0, vmax=1, tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'aoi_shru_series.txt':

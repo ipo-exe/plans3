@@ -111,6 +111,7 @@ def built_zmap(varmap, twi, shru, twibins, shrubins, nodata=-1.0):
     :param nodata: float of standard no data value
     :return: 2d numpy array of variable ZMAP
     """
+    # first mask by the nodata value
     aoivar = 1.0 * (varmap != nodata)
     zmap = np.zeros(shape=(len(twibins), len(shrubins)))
     for i in range(len(zmap)):
@@ -124,7 +125,8 @@ def built_zmap(varmap, twi, shru, twibins, shrubins, nodata=-1.0):
             if np.sum(lcl_mask) == 0.0:  # not found any local HRU within the AOI of var
                 zmap[i][j] = nodata
             else:
-                zmap[i][j] = np.sum(varmap * lcl_mask) / np.sum(lcl_mask)  # mean variable value at the local HRU mask
+                # take the mean variable value at the local HRU mask
+                zmap[i][j] = np.sum(varmap * lcl_mask) / np.sum(lcl_mask)  
     return zmap
 
 
@@ -966,18 +968,13 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
     # get OBS etpat zmap signal
     etpat_zmaps_nd = np.array(etpatzmaps)
     #
-    # compute signals
+    # compute ETpat signals
     sobs_etpat_lst = list()
     for e in range(len(etpat_zmaps_nd)):
-        #plt.imshow(etpat_zmaps_nd[e])
-        #plt.show()
         lcl_mask = 1 + (etpat_zmaps_nd[e] * 0.0)
         lcl_sobs_etpat = flatten_clear(etpat_zmaps_nd[e], mask=lcl_mask, nodata=-1)
         lcl_x = np.arange(0, len(lcl_sobs_etpat))
-        #plt.plot(lcl_x, lcl_sobs_etpat)
-        #plt.show()
         sobs_etpat_lst.append(lcl_sobs_etpat)
-
     '''
     etpat_zmaps_masks = 1.0 * (etpat_zmaps_nd != -1.0)
     #plt.imshow(etpat_zmaps_nd[0])
@@ -1158,18 +1155,19 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
             et_zmaps_nd = np.array(sim_dct['Maps']['ET'])
             lcl_etpat_scores_lst = list()
             for e in range(len(et_zmaps_nd)):
-                # fuzzify ET
-                lcl_sim_et_zmap = et_zmaps_nd[e]
-                lcl_et_mean = np.mean(lcl_sim_et_zmap)
-                lcl_et_sd = np.std(lcl_sim_et_zmap)
-                a_value = lcl_et_mean - 2 * lcl_et_sd
-                b_value = lcl_et_mean + 2 * lcl_et_sd
+                if normalize: # fuzzify sim ET zmap                    
+                    lcl_sim_et_zmap = et_zmaps_nd[e]
+                    lcl_et_mean = np.mean(lcl_sim_et_zmap)
+                    lcl_et_sd = np.std(lcl_sim_et_zmap)
+                    a_value = lcl_et_mean - 2 * lcl_et_sd
+                    b_value = lcl_et_mean + 2 * lcl_et_sd
+                    #
+                    # extract the zmap of the ET Pattern based on the fuzzy senoidal transition
+                    lcl_sim_etpat_zmap = fuzzy_transition(lcl_sim_et_zmap, a_value, b_value, type='senoid')
+                else:  # take just the sim ET zmap
+                    lcl_sim_etpat_zmap = et_zmaps_nd[e]
                 #
-                # extract the zmap of the ET Pattern based on the fuzzy senoidal transition
-                lcl_sim_etpat_zmap = fuzzy_transition(lcl_sim_et_zmap, a_value, b_value, type='senoid')
-                #
-                #
-                # get a mask for the zmap based on the observed zmap
+                # get a mask for the simulated zmap based on the observed zmap
                 lcl_mask = 1 * (etpat_zmaps_nd[e] != -1)
                 # compute the local simulated etpat signal
                 lcl_ssim_etpat = flatten_clear(lcl_sim_etpat_zmap, mask=lcl_mask, nodata=-1)

@@ -656,7 +656,7 @@ def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder
     return exp_file
 
 
-def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filename='map_series', rasterfilename='map', viewtype='lulc'):
+def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filename='map_series', rasterfilename='map', view=True):
     """
     import map series data set
     :param fmapseries: string for the input time series data frame. Must have 'Date' and 'File" as fields
@@ -686,7 +686,8 @@ def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filena
         new_files.append(dst)
         #
         # plot view
-        view_imported_map(lcl_filenm, rasterfolder, folder)
+        if view:
+            view_imported_map(lcl_filenm, rasterfolder, folder)
     #
     # export data
     exp_df = pd.DataFrame({'Date':dates, 'File':new_files})
@@ -706,61 +707,59 @@ def import_etpat_series(finputseries, rasterfolder='C:/bin', folder='C:/bin', fi
     :param filename: string name of output map series file
     :param rasterfilename: raster file name (date is appended)
     :param nodata: float of no data
-    :param normalize: boolean to normalize the full map series
+    :param normalize: boolean to normalize the maps (ET pat). Otherwise Et pat is considered the observed ET, 
     :param tui: boolean to printouts
     :return: string file path to map series file
     """
-    if tui:
-        from tui import status
-        status('importing dataframe')
-    # import data
-    map_series_df = pd.read_csv(finputseries, sep=';', engine='python')
-    map_series_df = dataframe_prepro(dataframe=map_series_df, strfields='Date,File')
-    dates = map_series_df['Date'].values
-    files = map_series_df['File'].values
-    #print(files)
-    #
-    # process data
-    if tui:
-        status('importing rasters')
-    # load all rasters
-    rasters_lst = list()
-    for i in range(len(dates)):
-        src = files[i]
-        #print(src)
-        #print(type(src))
-        meta, lcl_raster = input.asc_raster(src)
-        rasters_lst.append(lcl_raster)
-    rasters = np.array(rasters_lst)
     if normalize:
+        if tui:
+            from tui import status
+            status('importing dataframe')
+        # import data
+        map_series_df = pd.read_csv(finputseries, sep=';', engine='python')
+        map_series_df = dataframe_prepro(dataframe=map_series_df, strfields='Date,File')
+        dates = map_series_df['Date'].values
+        files = map_series_df['File'].values
+        #
+        # process data
+        if tui:
+            status('importing rasters')
+        # load all rasters
+        rasters_lst = list()
+        for i in range(len(dates)):
+            src = files[i]
+            meta, lcl_raster = input.asc_raster(src)
+            rasters_lst.append(lcl_raster)
+        rasters = np.array(rasters_lst)
         if tui:
             status('normalizing rasters')
         from hydrology import flatten_clear
         from geo import fuzzy_transition
         for e in range(len(rasters)):
             a_value = np.min(rasters[e])
-            #print(a_value)
             b_value = np.max(rasters[e])
-            #print(b_value)
             rasters[e] = fuzzy_transition(rasters[e], a=a_value, b=b_value, type='senoid')
-    #
-    # export data
-    if tui:
-        status('exporting rasters')
-    new_files = list()
-    for i in  range(len(dates)):
-        lcl_date = dates[i]
-        lcl_filename = rasterfilename + '_' + lcl_date
-        #plt.imshow(rasters[i])
-        #plt.show()
-        lcl_file = output.asc_raster(rasters[i], meta, folder=rasterfolder, filename=lcl_filename)
-        new_files.append(lcl_file)
-    #
-    if tui:
-        status('exporting series')
-    exp_df = pd.DataFrame({'Date': dates, 'File': new_files})
-    exp_file = folder + '/' + filename + '.txt'
-    exp_df.to_csv(exp_file, sep=';', index=False)
+        #
+        # export data
+        new_files = list()
+        for i in  range(len(dates)):
+            lcl_date = dates[i]
+            lcl_filename = rasterfilename + '_' + lcl_date
+            lcl_file = output.asc_raster(rasters[i], meta, folder=rasterfolder, filename=lcl_filename)
+            new_files.append(lcl_file)
+        #
+        exp_df = pd.DataFrame({'Date': dates, 'File': new_files})
+        exp_file = folder + '/' + filename + '.txt'
+        exp_df.to_csv(exp_file, sep=';', index=False)
+        #
+        # view
+        view_rasters(exp_file, mapvar='ETpat', mapid='etpat', vmin=0, vmax=1, tui=tui)
+    else:
+        # just import rasters
+        exp_file = import_map_series(fmapseries=finputseries, rasterfolder=rasterfolder, folder=folder, rasterfilename=rasterfilename, view=False)
+        #
+        # view
+        view_rasters(exp_file, mapvar='ET', mapid='flow_v', vmin=0, vmax=10, tui=tui)
     return exp_file
 
 
@@ -865,7 +864,7 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
         lcl_folder = os.path.dirname(files[i])
         lcl_filenm = os.path.basename(files[i])
         lcl_new_filename = 'zmap_' +  var + '_' + dates[i]
-        #
+        # get raster
         meta, lcl_var = input.asc_raster(files[i])
         lcl_zmap = built_zmap(varmap=lcl_var, twi=twi, shru=shru, twibins=twibins, shrubins=shrubins)
         exp_file = output.zmap(zmap=lcl_zmap, twibins=twibins, shrubins=shrubins, folder=lcl_folder, filename=lcl_new_filename)
