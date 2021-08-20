@@ -320,15 +320,15 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 - **Example**:
 ```
 IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;             CanopySeason;  f_CanopyBackg;  C_USLE;  P_USLE;    ConvertTo;    ColorLULC
-     1;          Water;           W;       0.0;          0.0;        1.6;    0.0;      0;                     none;            1.0;     1.0;     1.0;         none;         blue
-     2;          Urban;           U;       0.4;          1.0;        1.0;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;     0.1;     1.0;         none;         grey
-     3;         Forest;           F;       1.0;          1.0;        1.0;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;  0.0001;     1.0;         none;    darkgreen
-     4;        Pasture;           P;       0.5;          0.2;        0.7;    1.0;      0;    Aug & Nov & Feb & Jun;            0.6;    0.06;     1.0;    7 & 8 & 9;        khaki
-     5;          Crops;           C;       0.4;          0.1;        0.4;    1.0;      1;    Aug & Nov & Feb & Jun;            0.1;     0.4;     1.0;    7 & 8 & 9;    goldenrod
-     6;        Wetland;          Wt;       0.8;          0.6;        1.8;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;   0.001;     1.0;         none;         teal
-     7;     NBS-Forest;         NbF;       0.9;          0.7;        0.9;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;   0.003;     1.0;         none;    limegreen
-     8;    NBS-Pasture;         NbP;       0.6;         0.25;       0.75;    0.0;      0;    Aug & Nov & Feb & Jun;            0.6;    0.06;     0.3;         none;        olive
-     9;      NBS-Crops;         NbC;       0.6;         0.15;        0.8;    0.5;      0;    Aug & Nov & Feb & Jun;            0.4;     0.4;     0.6;         none;         gold
+     1;          Water;           W;       0.0;          0.0;        0.0;    0.0;    0.0;                     none;            1.0;     0.0;     1.0;         none;         blue
+     2;          Urban;           U;       0.3;          0.3;        0.3;    0.0;    0.0;                     none;            1.0;     0.5;     1.0;         none;         grey
+     3;         Forest;           F;       1.0;          1.0;        1.0;    0.0;    0.0;                     none;            1.0;  0.0001;     1.0;         none;    darkgreen
+     4;        Pasture;           P;      0.62;         0.62;       0.62;    0.0;    0.0;    Jul & Sep & Nov & Jun;            0.6;     0.1;     1.0;        8 & 3;    limegreen
+     5;     Crops-Conv;         CrC;      0.65;         0.65;       0.65;    0.0;    0.0;    Aug & Nov & Feb & Apr;            0.1;     0.4;     1.0;        8 & 3;    goldenrod
+     6;     Crops-Rice;         CrR;      0.65;         0.65;       0.65;    0.0;    1.0;    Sep & Nov & Feb & Apr;            0.7;     0.4;     1.0;         none;        khaki
+     7;    Crops-Pivot;         CrP;      0.65;         0.65;       0.65;    1.0;    0.0;    Aug & Nov & Feb & Apr;            0.7;     0.4;     1.0;         none;         gold
+     8;      NBS-Crops;         NbC;       0.7;          0.7;        0.7;    0.0;    0.0;    Aug & Nov & Feb & Apr;            0.6;    0.06;     0.3;         none;        olive
+     9;         Mining;           M;       0.0;          0.0;        0.0;    0.0;    0.0;                     none;            0.4;     0.8;     1.0;         none;       sienna
 ```
 
 ## `calib_series.txt`
@@ -404,12 +404,12 @@ IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA
 		 -  `ColoSoil`: CSS color name available in matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    ColorSoil
-     1;     Alluvial;         All;    1.0;      1.0;        0.3;   0.0021;          tan
-     2;    Colluvial;         Col;    1.0;      1.0;        0.3;    0.009;    goldenrod
-     3;     Residual;         Res;    1.0;      1.0;        0.3;   0.0042;       sienna
-     4;     Hydrosol;         Hyd;    1.0;     0.32;        0.3;   0.0021;        brown
-     5;      Neosols;         Neo;    0.5;      1.0;        0.4;   0.0013;       maroon
+IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K_USLE;        ColorSoil
+     1;                Alluvial;         All;    0.1;      0.5;        0.2;    0.0021;   lightsteelblue
+     2;    SerraGeral-Colluvial;         SGC;    0.1;      0.3;        0.2;     0.009;             gray
+     3;       Botucatu-Residual;         BoR;    1.0;      0.9;        0.4;    0.0042;       lightcoral
+     4;     SerraGeral-Residual;         SRR;    0.1;      0.1;        0.1;     0.009;        lightgray
+     5;      Botucatu-Colluvial;         BoC;    1.0;      1.0;        0.5;    0.0042;            brown
 ```
 
 ## `calib_twi.asc`
@@ -1018,7 +1018,7 @@ sample file
 - **Dataset type**: observed.
 - **Dataset description**: Raster map of ET pattern of calibration basin in month YYYY-MM.
 - **Requirements**:
-	 - All grid cells must be filled (void cells are not allowed).
+	 - Void cells must store `-1` value.
 	 - Must match the same size (rows and columns) of other related raster maps.
 	 - CRS must be projected (coordinates in meters).
 	 - Grid cells must be squared.
