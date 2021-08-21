@@ -1045,9 +1045,6 @@ def twi_hand_short(twi, hand, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1):
     # OLD CODE
     # compound twi:
     twi_comp = hand_w * hand_fuzz + twi_w * twi_fuzz
-    import matplotlib.pyplot as plt
-    plt.imshow(twi_comp)
-    plt.show()
     #
     # fuzify again to restore twi range
     htwi = np.max(twi) * fuzzy_transition(twi_comp, a=np.min(twi_comp), b=np.max(twi_comp), ascending=True, type='linear')

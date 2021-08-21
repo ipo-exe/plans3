@@ -174,6 +174,7 @@ def extract_sim_diagnostics(simseries, vars='all'):
     diags = dict()
     diags['Parameter'] = parameters
     for v in variables:
+        print(v)
         # get vector
         lcl_v = simseries[v].values
         if v in set(stocks) or v in set(vnonwater):
@@ -734,8 +735,9 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
         qv_i = unz_i * (p_qv_i/ (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
         ts_qv[t] = avg_2d(var2d=qv_i, weight=basinshadow)  # compute average in the basin
         #
-        # compute potential tpun transpiration rate (proportional to ratio):
-        p_tpun_i = unz_i * (pet_i / (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
+        # compute potential tpun transpiration rate (gated by erz_i and proportional to ratio):
+        p_tpun_i = unz_i * (unz_i <= erz_i) + erz_i * (unz_i > erz_i)
+        p_tpun_i = p_tpun_i * (pet_i / (pet_i + p_qv_i + 1)) * ((pet_i + p_qv_i) > 0)  # + 1 to avoid division by zero
         #
         # transpiration from the unsaturated zone
         tpun_i = (pet_i * (p_tpun_i >= pet_i)) + (p_tpun_i * (p_tpun_i < pet_i))
