@@ -549,8 +549,6 @@ def main(root='default', importing=True):
                             #
                             # SETTINGS
                             settings = settings_simulation(lng[6])
-
-
                             files_input = backend.get_input2simbhydro(aoi=False)
                             folder = projectdirs['Observed']
                             fseries = folder + '/' + files_input[0]

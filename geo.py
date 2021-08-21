@@ -1036,19 +1036,22 @@ def twi_hand_short(twi, hand, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1):
     :return: 2d numpy array of HAND-enhanced TWI map
     """
     # fuzify twi
-    twi_lo = np.min(twi)
+    twi_lo = 0.0 # np.min(twi)
     twi_hi = np.max(twi)
-    twi_fuzz = fuzzy_transition(twi, a=twi_lo, b=twi_hi, ascending=True)
+    twi_fuzz = fuzzy_transition(twi, a=twi_lo, b=twi_hi, ascending=True )
     #
     # fuzify hand
-    hand_fuzz = fuzzy_transition(hand, a=hand_lo, b=hand_hi, ascending=False)
-    #
+    hand_fuzz = fuzzy_transition(hand, a=hand_lo, b=hand_hi, ascending=False )
+    # OLD CODE
     # compound twi:
     twi_comp = hand_w * hand_fuzz + twi_w * twi_fuzz
+    import matplotlib.pyplot as plt
+    plt.imshow(twi_comp)
+    plt.show()
     #
     # fuzify again to restore twi range
-    twi_hand_map = twi_hi * fuzzy_transition(twi_comp, a=np.min(twi_comp), b=np.max(twi_comp))
-    return twi_hand_map
+    htwi = np.max(twi) * fuzzy_transition(twi_comp, a=np.min(twi_comp), b=np.max(twi_comp), ascending=True, type='linear')
+    return htwi
 
 
 def usle_l(slope, cellsize):
