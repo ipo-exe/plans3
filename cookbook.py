@@ -492,3 +492,66 @@ def plot_gens_evolution(folder='C:/bin'):
         exp = '{}/{}'.format(folder, filename)
         plt.savefig(exp)
 
+
+def demo_create_benchmark_series():
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    fseries = r"C:\000_myFiles\myDrive\Plans3\demo\datasets\observed\calib_series.txt"
+    df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    plt.plot(df['Date'], df['Prec'])
+    plt.plot(df['Date'], df['Temp'])
+    plt.show()
+
+    # let dry
+    df1 = df.copy()
+    df1['Prec'] = 0.0
+    df1['Temp'] = -5
+    fseries_1 = 'C:/bin/demo/series_letdry.txt'
+    df1.to_csv(fseries_1, sep=';', index=False)
+    plt.plot(df1['Date'], df1['Prec'])
+    plt.plot(df1['Date'], df1['Temp'])
+    plt.show()
+
+    # let dry + 10d pulse of 50 mm
+    df2 = df1.copy()
+    for i in range(10):
+        df2['Prec'].values[200 + i] = 5
+    fseries_2 = 'C:/bin/demo/series_10dpulse_50mm.txt'
+    df2.to_csv(fseries_2, sep=';', index=False)
+    plt.plot(df2['Date'], df2['Prec'])
+    plt.plot(df2['Date'], df2['Temp'])
+    plt.show()
+
+    # let dry + 100d pulse of 100 mm
+    df2 = df1.copy()
+    for i in range(100):
+        df2['Prec'].values[200 + i] = 5
+    fseries_2 = 'C:/bin/demo/series_100dpulse_100mm.txt'
+    df2.to_csv(fseries_2, sep=';', index=False)
+    plt.plot(df2['Date'], df2['Prec'])
+    plt.plot(df2['Date'], df2['Temp'])
+    plt.show()
+
+    # let dry + 10d pulse of 100 mm + ET
+    df2 = df1.copy()
+    for i in range(100):
+        df2['Prec'].values[200 + i] = 15
+    fseries_2 = 'C:/bin/demo/series_10dpulse_150mm_ET.txt'
+    df2['Temp'] = df['Temp']
+    df2.to_csv(fseries_2, sep=';', index=False)
+    plt.plot(df2['Date'], df2['Prec'])
+    plt.plot(df2['Date'], df2['Temp'])
+    plt.show()
+
+    # let dry + 10d pulse of real rain + ET
+    df2 = df1.copy()
+    for i in range(100):
+        df2['Prec'].values[200 + i] = df['Prec'].values[200 + i]
+    fseries_2 = 'C:/bin/demo/series_10dpulse_real_ET.txt'
+    df2['Temp'] = df['Temp']
+    df2.to_csv(fseries_2, sep=';', index=False)
+    plt.plot(df2['Date'], df2['Prec'])
+    plt.plot(df2['Date'], df2['Temp'])
+    plt.show()

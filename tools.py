@@ -163,7 +163,8 @@ def view_imported_map(filename, folder, aux_folder=''):
         pannel_prec_q_logq(series_df['Date'], series_df['Prec'], series_df['Q'], filename=filename.split('.')[0], folder=folder, show=False)
 
 
-def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=False):
+def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zmapfolder='', frametype='all', filter_date=False,
+                         date_init='2011-01-01', date_end = '2011-04-01', tui=False):
     """
 
     Export frames of local variables
@@ -171,7 +172,6 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
     :param ftwi: string filepath to twi raster map
     :param fshru: string filepath to twi raster map
     :param folder: string filepath to simulation/output folder. The folder must contain all series files:
-
     'sim_series.txt' and all 'sim_zmaps_series_VAR.txt' VAR files
 
     :param frametype: string code to frametypes. options: 'all', 'ET', 'Qv' and 'R"
@@ -191,8 +191,8 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
     #
     #
     # set view port
-    upper_y = 200
-    lower_x = 300
+    upper_y = 0
+    lower_x = 0
     size = 150
     twi = twi[upper_y: upper_y + size, lower_x: lower_x + size]
     shru = shru[upper_y: upper_y + size, lower_x: lower_x + size]
@@ -204,10 +204,10 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
     #
     #
     # filter dates (remove this)
-    date_init = '2011-01-01'
-    date_end = '2012-01-01'
-    query_str = 'Date > "{}" and Date < "{}"'.format(date_init, date_end)
-    series = series.query(query_str)
+
+    if filter_date:
+        query_str = 'Date > "{}" and Date < "{}"'.format(date_init, date_end)
+        series = series.query(query_str)
     #
     dates_labels = pd.to_datetime(series['Date'], format='%Y%m%d')
     dates_labels = dates_labels.astype('str')
@@ -226,7 +226,8 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
     for var in vars:
         lcl_file = '{}/sim_zmaps_series_{}.txt'.format(folder, var)  # next will be sim_zmaps_series_{}.txt
         lcl_df = pd.read_csv(lcl_file, sep=';', parse_dates=['Date'])
-        #lcl_df = lcl_df.query(query_str)
+        if filter_date:
+            lcl_df = lcl_df.query(query_str)
         # print(lcl_df.tail().to_string())
         zmaps_series[var] = lcl_df.copy()
     #
@@ -242,6 +243,10 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
             status('computing raster maps of {} ... '.format(var))
         for i in range(len(series)):
             lcl_file = lcl_df['File'].values[i]
+            if chagezmapfolder:
+                aux_lst = lcl_file.split('/')
+                lcl_file = zmapfolder + '/' + aux_lst[len(aux_lst -1)]
+                print(lcl_file)
             lcl_zmap, ybins, xbins = input.zmap(lcl_file)
             lcl_raster = map_back(lcl_zmap, a1=twi, a2=shru, bins1=ybins, bins2=xbins)
             #plt.imshow(lcl_raster)
@@ -254,8 +259,8 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
         if tui:
             status('{} maps loaded'.format(len(raster_nd)))
     #
-    offsetback = 15
-    offsetfront = 60
+    offsetback = 10
+    offsetfront = 10
     #
     # plot ET pannels:
     if frametype == 'all' or frametype == 'ET':
@@ -336,7 +341,7 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', frametype='all', tui=Fals
                          mid1_rng=(0, rasters_maxval['TF']),
                          mid2_rng=(0, rasters_maxval['TF']),
                          mid3_rng=(0, rasters_maxval['TF']),
-                         mid4_rng=(0, rasters_maxval['TF']),
+                         mid4_rng=(0, 1.0),
                          t=t, type=star, show=False, offset_back=offsetback, offset_front=offsetfront,
                          folder=lcl_folder)
 
@@ -1664,6 +1669,11 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     :param label: string label
     :param tui: boolean to TUI display
     :return: dictionary with keys to output filepaths
+                out_dct =  {'Series':exp_file1,
+                            'Histograms':exp_file2,
+                            'Parameters':exp_file3,
+                            'Pannel':exp_file4,
+                            'Folder':folder}
     """
     import time, datetime
     from shutil import copyfile
