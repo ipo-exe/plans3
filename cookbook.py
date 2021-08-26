@@ -15,7 +15,7 @@ def watch_maps_byzmaps():
     folder_output = 'C:/bin'
     #
     # directory of input data
-    folder_input = 'C:/Plans3/demo/datasets/observed'
+    folder_input =  'C:/000_myFiles/myDrive/Plans3/demo/datasets/observed'
     # files paths to raster maps
     ftwi = folder_input + '/' + 'calib_twi.asc'
     fshru = folder_input + '/' + 'calib_shru.asc'
@@ -26,21 +26,22 @@ def watch_maps_byzmaps():
     meta, shru = input.asc_raster(fshru)
     meta, basin = input.asc_raster(fbasin)
     #
-    # directory of simulated data r'C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-19-18-04-14\bestset\calibration_period' #
-    folder_sim = 'C:/Plans3/demo/runbin/simulation/calib_SLH_2021-04-21-07-25-42'
+    # directory of simulated data
+    folder_sim = r"C:\bin\demo\full_SLH_2021-08-26-12-38-53\calibration_period"
     # simulated time series
     file = folder_sim + '/' + 'sim_series.txt'
     # import time series
     df_series = pd.read_csv(file, sep=';')
     #
     # define here list of variable maps
-    varmaps = ['ET']
-    size = 300  # define how many frames to watch
+    varmaps = ['D']
+    size = 360  # define how many frames to watch
+    start = 160
     #
     # loop in variables
     for v in varmaps:
         # assumed file in simulation
-        file = folder_sim + '/' + 'sim_zmaps_{}.txt'.format(v)  # open map series
+        file = folder_sim + '/' + 'sim_zmaps_series_{}.txt'.format(v)  # open map series
         # import map series
         df = pd.read_csv(file, sep=';')
         # extract min and max values from series (global average values)
@@ -51,8 +52,8 @@ def watch_maps_byzmaps():
         for i in range(size):
             print('frame {}'.format(i))
             # extract local Z-Map file path and date
-            lcl_file = df['File'].values[i]
-            lcl_date = df['Date'].values[i]
+            lcl_file = df['File'].values[i + start]
+            lcl_date = df['Date'].values[i + start]
             # import Z-Map
             zmap, hist_twi, hist_shru = input.zmap(file=lcl_file)
             # Map back to raster
@@ -80,40 +81,6 @@ def watch_maps_byzmaps():
             # PLOT
             plot_map_view(mp, meta, ranges=(v_min, v_max), mapid=mapid, mapttl='{} | {}'.format(v, lcl_date),
                           show=False, metadata=False, folder=folder_output, filename='{}_{}'.format(v, lcl_date))
-
-
-def create_etpat_input():
-    import pandas as pd
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from scipy.ndimage import gaussian_filter
-    import input, output
-
-    # directory of input data
-    folder_input = 'C:/Plans3/demo/datasets/observed'
-    file = folder_input + '/calib_etpat_series_input_old.txt'
-    output_folder = 'C:/Plans3/demo/datasets/observed/bin'
-    df = pd.read_csv(file, sep=';')
-    df = input.dataframe_prepro(df, strfields='Date,File')
-    print(df)
-    # files paths to raster maps
-    ftwi = folder_input + '/' + 'calib_twi.asc'
-    #
-    # import raster maps
-    meta, twi = input.asc_raster(ftwi)
-    new_files = list()
-    for i in range(len(df)):
-        randim = np.random.random(size=np.shape(twi))
-        filter = gaussian_filter(randim, sigma=8)
-        raster = twi + (500 * filter)
-        filename = 'input_etpat_' + df['Date'].values[i]
-        filer = output.asc_raster(raster, meta, folder=output_folder, filename=filename)
-        new_files.append(filer)
-        #plt.imshow(twi + (500 * filter))
-        #plt.show()
-    df['File'] = new_files
-    out = folder_input + '/calib_etpat_series_input_2.txt'
-    df.to_csv(out, sep=';', index=False)
 
 
 def visual_map_analyst():
@@ -555,3 +522,62 @@ def demo_create_benchmark_series():
     plt.plot(df2['Date'], df2['Prec'])
     plt.plot(df2['Date'], df2['Temp'])
     plt.show()
+
+
+def insert_irrigation(folder='C:/bin'):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from scipy.ndimage import gaussian_filter
+    fseries = r"C:\000_myFiles\myDrive\Plans3\demo\datasets\observed\calib_series.txt"
+    df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    #
+    # irrigation by aspersion:
+    pulse_ira = 100  # total mm per batch
+    peak_ira = '01-15' # month and day
+    size_ira = 40 # number of days
+    sigma_ira = size_ira / 6
+    for i in range(len(df)):
+        if str(df['Date'].values[i])[5:10] == peak_ira:
+            df['IRA'].values[i] = pulse_ira
+    #plt.plot(df['Date'], df['IRA'])
+    #plt.show()
+    print(df['IRA'].sum())
+    ira = np.zeros(shape=len(df))
+    ira = gaussian_filter(df['IRA'].values, sigma=sigma_ira)
+    df['IRA'] = ira
+    #plt.plot(df['Date'], df['IRA'])
+    #plt.show()
+    print(df['IRA'].sum())
+    #
+    #
+    # irrigation by inundation:
+    pulse_iri = 100  # total mm per batch
+    start_iri = '10-15'  # month and day
+    size_iri = 100  # number of days
+    sigma_iri = 3
+    fed = False
+    counter = 0
+    for i in range(len(df)):
+        if str(df['Date'].values[i])[5:10] == start_iri:
+            fed = True
+        if counter > size_iri:
+            fed = False
+            counter = 0
+        if fed:
+            df['IRI'].values[i] = pulse_iri / size_iri
+            counter = counter + 1
+    # plt.plot(df['Date'], df['IRA'])
+    # plt.show()
+    print(df['IRI'].sum())
+    iri = np.zeros(shape=len(df))
+    iri = gaussian_filter(df['IRI'].values, sigma=sigma_iri)
+    df['IRI'] = iri
+    plt.plot(df['Date'], df['IRI'])
+    plt.plot(df['Date'], df['IRA'])
+    plt.show()
+    print(df['IRI'].sum())
+    outfile = folder + '/series_with_irrigation.txt'
+    df.to_csv(outfile, sep=';', index=False)
+
+#watch_maps_byzmaps()

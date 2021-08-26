@@ -639,7 +639,7 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
         #
         # update IRA:
         ira_i = ts_ira[t] * fira_i
-        ts_ira_out[t] = avg_2d(ira_i, basinshadow)
+        ts_ira_out[t] = avg_2d(ira_i, basinshadow) # get effective ira
         #
         # canopy total input:
         cpyin_i = prec_i + ira_i
@@ -687,7 +687,7 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
         #
         # update irrigation by inundation (IRI):
         iri_i = ts_iri[t] * firi_i
-        ts_iri_out[t] = avg_2d(iri_i, basinshadow)
+        ts_iri_out[t] = avg_2d(iri_i, basinshadow) # get effective IRI
         #
         # compute surface total input:
         sfsin_i = tf_i + iri_i
@@ -824,8 +824,10 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
     exp_df = pd.DataFrame({'Date':series['Date'].values,
                            'Prec':series['Prec'].values,
                            'Temp':series['Temp'].values,
-                           'IRA': ts_ira_out,
-                           'IRI': ts_iri_out,
+                           'IRA': ts_ira,
+                           'IRI': ts_iri,
+                           'EIRA': ts_ira_out,
+                           'EIRI': ts_iri_out,
                            'PET':ts_pet,
                            'D':ts_d, 'Cpy':ts_cpy, 'TF':ts_tf,
                            'Sfs':ts_sfs, 'R':ts_r, 'RSE': ts_rse,

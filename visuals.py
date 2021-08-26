@@ -390,7 +390,7 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
                   'Irrigation by\ninundation (mm/d)',
                   'Total irrigation\ninput (mm/d)',
                   'Infiltration\n(mm/d)', 'Canopy\nwater stock (mm)',
-                  'Surface\nwater stock (mm)', 'Soil\nwater stock (mm)')
+                  'Surface\nwater stock (mm)', 'Vadoze zone\nwater stock (mm)')
         suptitle = 'Recharge to groundwater Pannel | {}'.format(dates_labels.values[t])
         series_label = 'Recharge\nmm/d'
         star_color = 'teal'
@@ -687,7 +687,10 @@ def pannel_prec_q_logq(t, prec, q, grid=True, folder='C:/bin', filename='pannel_
         plt.close(fig)
     else:
         # export file
-        filepath = folder + '/' + filename + '_' + suff + '.png'
+        if suff == '':
+            filepath = folder + '/' + filename + '.png'
+        else:
+            filepath = folder + '/' + filename + '_' + suff + '.png'
         plt.savefig(filepath)
         plt.close(fig)
         return filepath

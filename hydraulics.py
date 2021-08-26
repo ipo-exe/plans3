@@ -174,3 +174,8 @@ def section_segments(df_section, stage_field='StageId', x_field='X', y_field='Y'
                                 'AN': an_lst,
                                 'P': p_list})
     return segments_df
+
+
+
+
+
