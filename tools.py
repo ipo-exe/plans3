@@ -763,7 +763,8 @@ def import_etpat_series(finputseries, rasterfolder='C:/bin', folder='C:/bin', fi
         view_rasters(exp_file, mapvar='ETpat', mapid='etpat', vmin=0, vmax=1, tui=tui, dtype='float32')
     else:
         # just import rasters
-        exp_file = import_map_series(fmapseries=finputseries, rasterfolder=rasterfolder, folder=folder, rasterfilename=rasterfilename, view=False)
+        exp_file = import_map_series(fmapseries=finputseries, filename='calib_etpat_series', rasterfolder=rasterfolder,
+                                     folder=folder, rasterfilename=rasterfilename, view=False)
         #
         # view
         view_rasters(exp_file, mapvar='ET', mapid='flow_v', vmin=0, vmax=10, tui=tui, dtype='float32')
