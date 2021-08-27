@@ -1,10 +1,11 @@
-IdLULC;     LULCName; LULCAlias; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;           CanopySeason; f_CanopyBackg; C_USLE; P_USLE;  ConvertTo;  ColorLULC
-     1;        Water;         W;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           1.0;    0.0;    1.0;       none;       blue
-     2;        Urban;         U;      0.3;         0.3;       0.3;   0.0;   0.0;                   none;           1.0;    0.5;    1.0;       none;       grey
-     3;       Forest;         F;      1.0;         1.0;       1.0;   0.0;   0.0;                   none;           1.0; 0.0001;    1.0;       none;  darkgreen
-     4;      Pasture;         P;     0.62;        0.62;      0.62;   0.0;   0.0;  Jul & Sep & Nov & Jun;           0.6;    0.1;    1.0;      8 & 3;  limegreen
-     5;   Crops-Conv;       CrC;     0.65;        0.65;      0.65;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.1;    0.4;    1.0;      8 & 3;  goldenrod
-     6;   Crops-Rice;       CrR;     0.65;        0.65;      0.65;   0.0;   1.0;  Sep & Nov & Feb & Apr;           0.7;    0.4;    1.0;       none;      khaki
-     7;  Crops-Pivot;       CrP;     0.65;        0.65;      0.65;   1.0;   0.0;  Aug & Nov & Feb & Apr;           0.7;    0.4;    1.0;       none;       gold
-     8;    NBS-Crops;       NbC;      0.7;         0.7;       0.7;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.6;   0.06;    0.3;       none;      olive
-     9;       Mining;         M;      0.0;         0.0;       0.0;   0.0;   0.0;                   none;           0.4;    0.8;    1.0;       none;     sienna
+IdLULC;     LULCName; LULCAlias; f_Canopy; f_RootDepth; f_Surface; f_Pervious; f_IRA; f_IRI;           CanopySeason; f_CanopyBackg; C_USLE; P_USLE;  ConvertTo;  ColorLULC
+     1;        Water;         W;      0.0;         0.0;       5.0;        0.0;   0.0;   0.0;                   none;           1.0;    0.0;    1.0;       none;       blue
+     2;        Urban;         U;      0.3;         0.3;       0.3;        0.6;   0.0;   0.0;                   none;           1.0;    0.5;    1.0;       none;       grey
+     3;       Forest;         F;      1.0;         1.0;       1.0;        1.0;   0.0;   0.0;                   none;           1.0; 0.0001;    1.0;       none;  darkgreen
+     4;      Pasture;         P;     0.62;        0.62;      0.62;        1.0;   0.0;   0.0;  Jul & Sep & Nov & Jun;           0.6;    0.1;    1.0;      8 & 3;  limegreen
+     5;   Crops-Conv;       CrC;     0.65;        0.65;      0.65;        1.0;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.1;    0.4;    1.0;      8 & 3;  goldenrod
+     6;   Crops-Rice;       CrR;     0.65;        0.65;      0.65;        0.1;   0.0;   1.0;  Sep & Nov & Feb & Apr;           0.7;    0.4;    1.0;       none;      khaki
+     7;  Crops-Pivot;       CrP;     0.65;        0.65;      0.65;        1.0;   1.0;   0.0;  Aug & Nov & Feb & Apr;           0.7;    0.4;    1.0;       none;       gold
+     8;    NBS-Crops;       NbC;      0.7;         0.7;       0.7;        1.0;   0.0;   0.0;  Aug & Nov & Feb & Apr;           0.6;   0.06;    0.3;       none;      olive
+     9;       Mining;         M;      0.0;         0.0;       0.0;        0.0;   0.0;   0.0;                   none;           0.4;    0.8;    1.0;       none;     sienna
+	10;        Roads;         R;      0.0;         0.0;       0.0;        0.5;   0.0;   0.0;                   none;           0.4;    1.0;    1.0;       none;      black

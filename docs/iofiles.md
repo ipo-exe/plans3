@@ -79,6 +79,7 @@ input | hydro_param | txt | csv data frame
 		 - `f_Canopy`:  positive real number - unitless factor of reference effective canopy storage capacity.
 		 -  `f_Surface`: positive real  number - unitless factor reference effective surface storage capacity.
 		 - `f_RootDepth`: positive real  number - unitless factor of reference root zone depth.
+		 - `f_Pervious`:  positive real number lower or equal to 1.0 - unitless factor of soil perviousness (1 = 100% pervious).
 		 - `f_IRA`: positive real  number - unitless factor of irrigation input that is intercepted by canopy.
 		 -  `f_IRI`: positive real number - unitless factor of irrigation input that is not intercepted by canopy.
 		 - `CanopySeason`: list of four months aliases separated by `&` (ex: Sep & Nov & Feb & Jun). The months order must reflect the starting phases of canopy growth, peak, decay and dormancy.  If seasonality is not allowed must store `none` code.
@@ -89,16 +90,17 @@ input | hydro_param | txt | csv data frame
 		 -  `ColorLULC`: CSS color name available in Matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;             CanopySeason;  f_CanopyBackg;  C_USLE;  P_USLE;    ConvertTo;    ColorLULC
-     1;          Water;           W;       0.0;          0.0;        1.6;    0.0;      0;                     none;            1.0;     1.0;     1.0;         none;         blue
-     2;          Urban;           U;       0.4;          1.0;        1.0;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;     0.1;     1.0;         none;         grey
-     3;         Forest;           F;       1.0;          1.0;        1.0;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;  0.0001;     1.0;         none;    darkgreen
-     4;        Pasture;           P;       0.5;          0.2;        0.7;    1.0;      0;    Aug & Nov & Feb & Jun;            0.6;    0.06;     1.0;    7 & 8 & 9;        khaki
-     5;          Crops;           C;       0.4;          0.1;        0.4;    1.0;      1;    Aug & Nov & Feb & Jun;            0.1;     0.4;     1.0;    7 & 8 & 9;    goldenrod
-     6;        Wetland;          Wt;       0.8;          0.6;        1.8;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;   0.001;     1.0;         none;         teal
-     7;     NBS-Forest;         NbF;       0.9;          0.7;        0.9;    0.0;      0;    Aug & Nov & Feb & Jun;            0.7;   0.003;     1.0;         none;    limegreen
-     8;    NBS-Pasture;         NbP;       0.6;         0.25;       0.75;    0.0;      0;    Aug & Nov & Feb & Jun;            0.6;    0.06;     0.3;         none;        olive
-     9;      NBS-Crops;         NbC;       0.6;         0.15;        0.8;    0.5;      0;    Aug & Nov & Feb & Jun;            0.4;     0.4;     0.6;         none;         gold
+IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_Pervious;  f_IRA;  f_IRI;             CanopySeason;  f_CanopyBackg;  C_USLE;  P_USLE;    ConvertTo;    ColorLULC
+     1;          Water;           W;       0.0;          0.0;        5.0;         0.0;    0.0;    0.0;                     none;            1.0;     0.0;     1.0;         none;         blue
+     2;          Urban;           U;       0.3;          0.3;        0.3;         0.6;    0.0;    0.0;                     none;            1.0;     0.5;     1.0;         none;         grey
+     3;         Forest;           F;       1.0;          1.0;        1.0;         1.0;    0.0;    0.0;                     none;            1.0;  0.0001;     1.0;         none;    darkgreen
+     4;        Pasture;           P;      0.62;         0.62;       0.62;         1.0;    0.0;    0.0;    Jul & Sep & Nov & Jun;            0.6;     0.1;     1.0;        8 & 3;    limegreen
+     5;     Crops-Conv;         CrC;      0.65;         0.65;       0.65;         1.0;    0.0;    0.0;    Aug & Nov & Feb & Apr;            0.1;     0.4;     1.0;        8 & 3;    goldenrod
+     6;     Crops-Rice;         CrR;      0.65;         0.65;       0.65;         0.1;    0.0;    1.0;    Sep & Nov & Feb & Apr;            0.7;     0.4;     1.0;         none;        khaki
+     7;    Crops-Pivot;         CrP;      0.65;         0.65;       0.65;         1.0;    1.0;    0.0;    Aug & Nov & Feb & Apr;            0.7;     0.4;     1.0;         none;         gold
+     8;      NBS-Crops;         NbC;       0.7;          0.7;        0.7;         1.0;    0.0;    0.0;    Aug & Nov & Feb & Apr;            0.6;    0.06;     0.3;         none;        olive
+     9;         Mining;           M;       0.0;          0.0;        0.0;         0.0;    0.0;    0.0;                     none;            0.4;     0.8;     1.0;         none;       sienna
+    10;          Roads;           R;       0.0;          0.0;        0.0;         0.5;    0.0;    0.0;                     none;            0.4;     1.0;     1.0;         none;        black
 ```
 
 ## `aoi_lulc_series_input.txt`
@@ -309,6 +311,7 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 		 - `f_Canopy`:  positive real number - unitless factor of reference effective canopy storage capacity.
 		 -  `f_Surface`: positive real  number - unitless factor reference effective surface storage capacity.
 		 - `f_RootDepth`: positive real  number - unitless factor of reference root zone depth.
+		 - `f_Pervious`:  positive real number lower or equal to 1.0 - unitless factor of soil perviousness (1 = 100% pervious).
 		 - `f_IRA`: positive real  number - unitless factor of irrigation input that is intercepted by canopy.
 		 -  `f_IRI`: positive real number - unitless factor of irrigation input that is not intercepted by canopy.
 		 - `CanopySeason`: list of four months aliases separated by `&` (ex: Sep & Nov & Feb & Jun). The months order must reflect the starting phases of canopy growth, peak, decay and dormancy.  If seasonality is not allowed must store `none` code.
@@ -319,16 +322,17 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 		 -  `ColorLULC`: CSS color name available in Matplotlib (ex: `blue`) or hex code of color (ex: `#5234eb`).
 - **Example**:
 ```
-IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_IRA;  f_IRI;             CanopySeason;  f_CanopyBackg;  C_USLE;  P_USLE;    ConvertTo;    ColorLULC
-     1;          Water;           W;       0.0;          0.0;        0.0;    0.0;    0.0;                     none;            1.0;     0.0;     1.0;         none;         blue
-     2;          Urban;           U;       0.3;          0.3;        0.3;    0.0;    0.0;                     none;            1.0;     0.5;     1.0;         none;         grey
-     3;         Forest;           F;       1.0;          1.0;        1.0;    0.0;    0.0;                     none;            1.0;  0.0001;     1.0;         none;    darkgreen
-     4;        Pasture;           P;      0.62;         0.62;       0.62;    0.0;    0.0;    Jul & Sep & Nov & Jun;            0.6;     0.1;     1.0;        8 & 3;    limegreen
-     5;     Crops-Conv;         CrC;      0.65;         0.65;       0.65;    0.0;    0.0;    Aug & Nov & Feb & Apr;            0.1;     0.4;     1.0;        8 & 3;    goldenrod
-     6;     Crops-Rice;         CrR;      0.65;         0.65;       0.65;    0.0;    1.0;    Sep & Nov & Feb & Apr;            0.7;     0.4;     1.0;         none;        khaki
-     7;    Crops-Pivot;         CrP;      0.65;         0.65;       0.65;    1.0;    0.0;    Aug & Nov & Feb & Apr;            0.7;     0.4;     1.0;         none;         gold
-     8;      NBS-Crops;         NbC;       0.7;          0.7;        0.7;    0.0;    0.0;    Aug & Nov & Feb & Apr;            0.6;    0.06;     0.3;         none;        olive
-     9;         Mining;           M;       0.0;          0.0;        0.0;    0.0;    0.0;                     none;            0.4;     0.8;     1.0;         none;       sienna
+IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_Pervious;  f_IRA;  f_IRI;             CanopySeason;  f_CanopyBackg;  C_USLE;  P_USLE;    ConvertTo;    ColorLULC
+     1;          Water;           W;       0.0;          0.0;        5.0;         0.0;    0.0;    0.0;                     none;            1.0;     0.0;     1.0;         none;         blue
+     2;          Urban;           U;       0.3;          0.3;        0.3;         0.6;    0.0;    0.0;                     none;            1.0;     0.5;     1.0;         none;         grey
+     3;         Forest;           F;       1.0;          1.0;        1.0;         1.0;    0.0;    0.0;                     none;            1.0;  0.0001;     1.0;         none;    darkgreen
+     4;        Pasture;           P;      0.62;         0.62;       0.62;         1.0;    0.0;    0.0;    Jul & Sep & Nov & Jun;            0.6;     0.1;     1.0;        8 & 3;    limegreen
+     5;     Crops-Conv;         CrC;      0.65;         0.65;       0.65;         1.0;    0.0;    0.0;    Aug & Nov & Feb & Apr;            0.1;     0.4;     1.0;        8 & 3;    goldenrod
+     6;     Crops-Rice;         CrR;      0.65;         0.65;       0.65;         0.1;    0.0;    1.0;    Sep & Nov & Feb & Apr;            0.7;     0.4;     1.0;         none;        khaki
+     7;    Crops-Pivot;         CrP;      0.65;         0.65;       0.65;         1.0;    1.0;    0.0;    Aug & Nov & Feb & Apr;            0.7;     0.4;     1.0;         none;         gold
+     8;      NBS-Crops;         NbC;       0.7;          0.7;        0.7;         1.0;    0.0;    0.0;    Aug & Nov & Feb & Apr;            0.6;    0.06;     0.3;         none;        olive
+     9;         Mining;           M;       0.0;          0.0;        0.0;         0.0;    0.0;    0.0;                     none;            0.4;     0.8;     1.0;         none;       sienna
+    10;          Roads;           R;       0.0;          0.0;        0.0;         0.5;    0.0;    0.0;                     none;            0.4;     1.0;     1.0;         none;        black
 ```
 
 ## `calib_series.txt`
