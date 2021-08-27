@@ -574,6 +574,7 @@ canopy_series
 		 -  All fields of LULC parameters file.
 		 -  All fields of Soils parameter file.
 		 -  `f_EfRootZone`: positive real number - factor of reference effective root zone depth in mm, computed as `Porosity` x  `f_RootDepth`.
+		 -  `f_Inf`: positive real number - factor of reference effective daily infiltration capacity in mm/d, computed as `f_Ksat` x  `f_Pervious`.
 - **Example**:
 ```
 IdSHRU;               SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAlias; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;           CanopySeason; f_CanopyBackg;  C_USLE; P_USLE;  ConvertTo;  ColorLULC;   SoilName; SoilAlias; f_To; f_Ksat; Porosity;  K_USLE;  ColorSoil;  f_EfRootZone
@@ -861,6 +862,7 @@ TWI\SHRU; 101; 102; 103; 104; 105; 201; 202; 203; 204; 205;   301;    302;  303;
 		 -  All fields of LULC parameters file.
 		 -  All fields of Soils parameter file.
 		 -  `f_EfRootZone`: positive real number - factor of reference effective root zone depth in mm, computed as `Porosity` x  `f_RootDepth`.
+		 -  `f_Inf`: positive real number - factor of reference effective daily infiltration capacity in mm/d, computed as `f_Ksat` x  `f_Pervious`.
 - **Example**:
 ```
 IdSHRU;                          SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCName; LULCAlias; f_Canopy; f_RootDepth; f_Surface; f_IRA; f_IRI;           CanopySeason; f_CanopyBackg;  C_USLE; P_USLE; ConvertTo;  ColorLULC;              SoilName; SoilAlias; f_To; f_Ksat; Porosity;  K_USLE;       ColorSoil;  f_EfRootZone
