@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-import input, output, geo
-from output import export_report
-from input import dataframe_prepro
-import matplotlib.pyplot as plt
-from scipy.ndimage.filters import gaussian_filter
+import inp, out, geo
+from out import export_report
+from inp import dataframe_prepro
+#import matplotlib.pyplot as plt
+#from scipy.ndimage.filters import gaussian_filter
 
 
 def maps_diagnostics(rasterfolder='C:/bin', folder='C:/bin', tui=False):
@@ -33,7 +33,7 @@ def maps_diagnostics(rasterfolder='C:/bin', folder='C:/bin', tui=False):
             status('file: {}'.format(fnm))
         lcl_fpath = rasterfolder + '/' + fnm
         path_lst.append(lcl_fpath)
-        meta, lcl_raster = input.asc_raster(lcl_fpath, dtype='float32')
+        meta, lcl_raster = inp.asc_raster(lcl_fpath, dtype='float32')
         shape_lst.append(str(np.shape(lcl_raster)))
         sum_nan.append(np.sum(np.isnan(lcl_raster)))
     def_df = pd.DataFrame({'File_Name':files, 'Shape_RxC': shape_lst, 'Sum_NaN':sum_nan, 'File':path_lst})
@@ -58,14 +58,14 @@ def view_imported_map(filename, folder, aux_folder=''):
     :return: none
     """
 
-    from input import dataframe_prepro
+    from inp import dataframe_prepro
     from os import listdir
     from visuals import plot_map_view, plot_qmap_view, pannel_prec_q_logq, plot_shrumap_view
 
     def plot_lulc(fraster, fparams, filename, mapid='LULC'):
         lulc_param_df = pd.read_csv(fparams, sep=';', engine='python')
         lulc_param_df = dataframe_prepro(lulc_param_df, 'LULCName,ConvertTo,ColorLULC')
-        meta, rmap = input.asc_raster(fraster)
+        meta, rmap = inp.asc_raster(fraster)
         ranges = (np.min(lulc_param_df['IdLULC']), np.max(lulc_param_df['IdLULC']))
         plot_qmap_view(rmap, meta, colors=lulc_param_df['ColorLULC'].values, names=lulc_param_df['LULCName'].values,
                        mapid=mapid, ranges=ranges, filename=filename, folder=folder)
@@ -80,7 +80,7 @@ def view_imported_map(filename, folder, aux_folder=''):
     # plot quant map
     if filename in set(quantmaps):
         mapid = filename.split('.')[0].split('_')[1]
-        meta, rmap = input.asc_raster(file)
+        meta, rmap = inp.asc_raster(file)
         ranges = (np.min(rmap), np.max(rmap))
         plot_map_view(rmap, meta, ranges, mapid=mapid, filename=filename.split('.')[0], folder=folder, metadata=True)
     # plot calib lulc from raster file
@@ -107,7 +107,7 @@ def view_imported_map(filename, folder, aux_folder=''):
             flulcparam = '{}/{}'.format(folder, aux_filename)
             soils_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
             soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
-            meta, rmap = input.asc_raster(file)
+            meta, rmap = inp.asc_raster(file)
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
             plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
                            mapid='Soils', ranges=ranges, filename='calib_soils', folder=folder)
@@ -119,7 +119,7 @@ def view_imported_map(filename, folder, aux_folder=''):
             flulcparam = '{}/{}'.format(folder, filename)
             soils_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
             soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
-            meta, rmap = input.asc_raster('{}/{}'.format(folder, aux_filename))
+            meta, rmap = inp.asc_raster('{}/{}'.format(folder, aux_filename))
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
             plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
                            mapid='Soils', ranges=ranges, filename='calib_soils', folder=folder)
@@ -140,7 +140,7 @@ def view_imported_map(filename, folder, aux_folder=''):
             flulcparam = '{}/{}'.format(folder, aux_filename)
             soils_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
             soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
-            meta, rmap = input.asc_raster(file)
+            meta, rmap = inp.asc_raster(file)
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
             plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
                            mapid='Soils', ranges=ranges, filename='aoi_soils', folder=folder)
@@ -152,7 +152,7 @@ def view_imported_map(filename, folder, aux_folder=''):
             flulcparam = '{}/{}'.format(folder, filename)
             soils_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
             soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
-            meta, rmap = input.asc_raster('{}/{}'.format(folder, aux_filename))
+            meta, rmap = inp.asc_raster('{}/{}'.format(folder, aux_filename))
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
             plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
                            mapid='Soils', ranges=ranges, filename='aoi_soils', folder=folder)
@@ -186,8 +186,8 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
         from tui import status
     #
     # load heavy inputs
-    meta, twi = input.asc_raster(ftwi)
-    meta, shru = input.asc_raster(fshru)
+    meta, twi = inp.asc_raster(ftwi)
+    meta, shru = inp.asc_raster(fshru)
     #
     #
     # set view port
@@ -247,7 +247,7 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
                 aux_lst = lcl_file.split('/')
                 lcl_file = zmapfolder + '/' + aux_lst[len(aux_lst -1)]
                 print(lcl_file)
-            lcl_zmap, ybins, xbins = input.zmap(lcl_file)
+            lcl_zmap, ybins, xbins = inp.zmap(lcl_file)
             lcl_raster = map_back(lcl_zmap, a1=twi, a2=shru, bins1=ybins, bins2=xbins)
             #plt.imshow(lcl_raster)
             #plt.show()
@@ -363,9 +363,9 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
 
     #
     # import data
-    metalulc, lulc = input.asc_raster(flulc)
+    metalulc, lulc = inp.asc_raster(flulc)
     #print(np.shape(lulc))
-    metasoils, soils = input.asc_raster(fsoils)
+    metasoils, soils = inp.asc_raster(fsoils)
     #print(np.shape(soils))
     lulc_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
     lulc_param_df = dataframe_prepro(lulc_param_df, 'LULCName,ConvertTo,ColorLULC')
@@ -386,7 +386,7 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
     plot_shrumap_view(lulc, soils, metalulc, shru_df, filename=filename, folder=folder,
                       metadata=True, ttl=title)
     # export data
-    export_file = output.asc_raster(shru_map, metalulc, folder, filename, dtype='int16')
+    export_file = out.asc_raster(shru_map, metalulc, folder, filename, dtype='int16')
     return export_file
 
 
@@ -403,7 +403,7 @@ def map_fto(fsoils, fsoilsparam, folder='C:/bin', filename='fto'):
     """
     from visuals import plot_map_view
     # import data
-    meta, soils = input.asc_raster(fsoils)
+    meta, soils = inp.asc_raster(fsoils)
     soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
     soils_df = dataframe_prepro(soils_df, strfields='SoilName,ColorSoil')
     # process data
@@ -411,7 +411,7 @@ def map_fto(fsoils, fsoilsparam, folder='C:/bin', filename='fto'):
     #plt.imshow(fto)
     #plt.show()
     # export data
-    export_file = output.asc_raster(fto, meta, folder, filename)
+    export_file = out.asc_raster(fto, meta, folder, filename)
     ranges = (np.min(fto), np.max(fto))
     plot_map_view(fto, meta, ranges, mapid='fto', filename=filename, folder=folder, metadata=True)
     return export_file
@@ -427,7 +427,7 @@ def map_slope(fdem, folder='C:/bin', filename='slope'):
     """
     from visuals import plot_map_view
     # import data
-    meta, dem = input.asc_raster(fdem)
+    meta, dem = inp.asc_raster(fdem)
     #plt.imshow(dem)
     #plt.show()
     # process data
@@ -436,7 +436,7 @@ def map_slope(fdem, folder='C:/bin', filename='slope'):
     #plt.show()
     #
     # export
-    export_file = output.asc_raster(slp, meta, folder, filename)
+    export_file = out.asc_raster(slp, meta, folder, filename)
     ranges = (np.min(slp), np.max(slp))
     plot_map_view(slp, meta, ranges, mapid='slope', filename=filename, folder=folder, metadata=True)
     return export_file
@@ -460,16 +460,16 @@ def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     """
     from visuals import plot_map_view
     # import data
-    meta, slope = input.asc_raster(fslope)
-    meta, catcha = input.asc_raster(fcatcha)
-    meta, fto = input.asc_raster(ffto, dtype='float32')
+    meta, slope = inp.asc_raster(fslope)
+    meta, catcha = inp.asc_raster(fcatcha)
+    meta, fto = inp.asc_raster(ffto, dtype='float32')
     # process data
     grad = geo.grad(slope)
     twi = geo.twi(catcha, grad, fto, cellsize=meta['cellsize'])
     #plt.imshow(twi)
     #plt.show()
     # export data
-    export_file = output.asc_raster(twi, meta, folder, filename)
+    export_file = out.asc_raster(twi, meta, folder, filename)
     ranges = (np.min(twi), np.max(twi))
     plot_map_view(twi, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
     return export_file
@@ -494,10 +494,10 @@ def map_twi_hand_long(fslope, fcatcha, ffto, fhand, hand_hi=15.0, hand_lo=0.0, h
     """
     from visuals import plot_map_view
     # import maps
-    meta, slope = input.asc_raster(fslope)
-    meta, catcha = input.asc_raster(fcatcha)
-    meta, fto = input.asc_raster(ffto, dtype='float32')
-    meta, hand = input.asc_raster(fhand)
+    meta, slope = inp.asc_raster(fslope)
+    meta, catcha = inp.asc_raster(fcatcha)
+    meta, fto = inp.asc_raster(ffto, dtype='float32')
+    meta, hand = inp.asc_raster(fhand)
     #
     # process
     twi_hand = geo.twi_hand_long(catcha=catcha,
@@ -510,7 +510,7 @@ def map_twi_hand_long(fslope, fcatcha, ffto, fhand, hand_hi=15.0, hand_lo=0.0, h
                                  hand_w=hand_w,
                                  twi_w=twi_w)
     # export data
-    export_file = output.asc_raster(twi_hand, meta, folder, filename)
+    export_file = out.asc_raster(twi_hand, meta, folder, filename)
     # export plot
     ranges = (np.min(twi_hand), np.max(twi_hand))
     plot_map_view(twi_hand, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
@@ -534,8 +534,8 @@ def map_twi_hand_short(ftwi, fhand, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1
     """
     from visuals import plot_map_view
     # import maps
-    meta, twi = input.asc_raster(ftwi, dtype='float32')
-    meta, hand = input.asc_raster(fhand)
+    meta, twi = inp.asc_raster(ftwi, dtype='float32')
+    meta, hand = inp.asc_raster(fhand)
     #
     # process
     twi_hand = geo.twi_hand_short(twi=twi,
@@ -546,7 +546,7 @@ def map_twi_hand_short(ftwi, fhand, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1
                                   hand_w=hand_w,
                                   twi_w=twi_w)
     # export data
-    export_file = output.asc_raster(twi_hand, meta, folder, filename)
+    export_file = out.asc_raster(twi_hand, meta, folder, filename)
     # export plot
     ranges = (np.min(twi_hand), np.max(twi_hand))
     plot_map_view(twi_hand, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
@@ -567,12 +567,12 @@ def map_twito(ftwi, ffto, folder='C:/bin', filename='twito'):
     """
     from visuals import plot_map_view
     # import
-    meta, twi = input.asc_raster(ftwi, dtype='float32')
-    meta, fto = input.asc_raster(ffto, dtype='float32')
+    meta, twi = inp.asc_raster(ftwi, dtype='float32')
+    meta, fto = inp.asc_raster(ffto, dtype='float32')
     # process
     twito = twi + np.log(1 / fto)
     # export
-    exp_file = output.asc_raster(twito, meta, folder, filename)
+    exp_file = out.asc_raster(twito, meta, folder, filename)
     # plot
     ranges = (np.min(twito), np.max(twito))
     plot_map_view(twito, meta, ranges, mapid='twi', filename=filename, folder=folder, metadata=True)
@@ -596,12 +596,12 @@ def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder
     # import shru raster
     if tui:
         status('loading shru raster')
-    meta, shru = input.asc_raster(fshru, dtype='float32')
+    meta, shru = inp.asc_raster(fshru, dtype='float32')
     #
     # import twi raster
     if tui:
         status('loading twi raster')
-    meta, twi = input.asc_raster(ftwi, dtype='float32')
+    meta, twi = inp.asc_raster(ftwi, dtype='float32')
     #
     if faoi == 'none':
         aoi = aoi = 1.0 + (twi * 0.0)
@@ -609,7 +609,7 @@ def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder
         # import twi raster
         if tui:
             status('loading aoi raster')
-        meta, aoi = input.asc_raster(faoi)
+        meta, aoi = inp.asc_raster(faoi)
     #
     if tui:
         end = time.time()
@@ -735,7 +735,7 @@ def import_etpat_series(finputseries, rasterfolder='C:/bin', folder='C:/bin', fi
         rasters_lst = list()
         for i in range(len(dates)):
             src = files[i]
-            meta, lcl_raster = input.asc_raster(src, dtype='float32')
+            meta, lcl_raster = inp.asc_raster(src, dtype='float32')
             rasters_lst.append(lcl_raster)
         rasters = np.array(rasters_lst)
         if tui:
@@ -752,7 +752,7 @@ def import_etpat_series(finputseries, rasterfolder='C:/bin', folder='C:/bin', fi
         for i in  range(len(dates)):
             lcl_date = dates[i]
             lcl_filename = rasterfilename + '_' + lcl_date
-            lcl_file = output.asc_raster(rasters[i], meta, folder=rasterfolder, filename=lcl_filename)
+            lcl_file = out.asc_raster(rasters[i], meta, folder=rasterfolder, filename=lcl_filename)
             new_files.append(lcl_file)
         #
         exp_df = pd.DataFrame({'Date': dates, 'File': new_files})
@@ -800,7 +800,7 @@ def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='loc
         lcl_filename = lcl_filename.split('.')[0]
         lcl_folder = os.path.dirname(files[i])
         # open map
-        meta, lcl_map = input.asc_raster(files[i], dtype=dtype)
+        meta, lcl_map = inp.asc_raster(files[i], dtype=dtype)
         # set range
         if vmin == 'local':
             v_min = np.min(lcl_map)
@@ -830,7 +830,7 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
     :param tui: boolean to tui display
     :return: string file path to map series txt file
     """
-    from output import zmap
+    from out import zmap
     from hydrology import built_zmap
     import os
 
@@ -854,8 +854,8 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
     #
     if tui:
         status('loading rasters')
-    meta, twi = input.asc_raster(ftwi, dtype='float32')
-    meta, shru = input.asc_raster(fshru, dtype='float32')
+    meta, twi = inp.asc_raster(ftwi, dtype='float32')
+    meta, shru = inp.asc_raster(fshru, dtype='float32')
     #
     if tui:
         status('loading histograms')
@@ -873,9 +873,9 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
         lcl_filenm = os.path.basename(files[i])
         lcl_new_filename = 'zmap_' +  var + '_' + dates[i]
         # get raster
-        meta, lcl_var = input.asc_raster(files[i], dtype=dtype)
+        meta, lcl_var = inp.asc_raster(files[i], dtype=dtype)
         lcl_zmap = built_zmap(varmap=lcl_var, twi=twi, shru=shru, twibins=twibins, shrubins=shrubins)
-        exp_file = output.zmap(zmap=lcl_zmap, twibins=twibins, shrubins=shrubins, folder=lcl_folder, filename=lcl_new_filename)
+        exp_file = out.zmap(zmap=lcl_zmap, twibins=twibins, shrubins=shrubins, folder=lcl_folder, filename=lcl_new_filename)
         new_files.append(exp_file)
     #
     # export data
@@ -1172,11 +1172,11 @@ def qualmap_analyst(fmap, fparams, faoi='full', type='lulc', folder='C:/bin', wk
         namefield = 'SoilName'
         colorfield = 'ColorSoil'
     # imports
-    meta, qmap = input.asc_raster(fmap, dtype='float32')
+    meta, qmap = inp.asc_raster(fmap, dtype='float32')
     param_df = pd.read_csv(fparams, sep=';')
-    param_df = input.dataframe_prepro(param_df, strfields=str_fields)
+    param_df = inp.dataframe_prepro(param_df, strfields=str_fields)
     if faoi != 'full':
-        meta, aoi = input.asc_raster(faoi, dtype='float32')
+        meta, aoi = inp.asc_raster(faoi, dtype='float32')
     else:
         aoi = 1.0 + (0.0 * qmap)
     #
@@ -1382,10 +1382,10 @@ def osa_map(fseries, fhistograms, type, var='ETPat', filename='obssim_maps_analy
             map_file = dataframe[fld].values[i]
             #print(map_file)
             if type == 'zmap':
-                lcl_map, ybins, xbins = input.zmap(map_file)
+                lcl_map, ybins, xbins = inp.zmap(map_file)
                 signal = extract_map_signal(lcl_map, count, nodata=0)
             elif type == 'raster':
-                meta, lcl_map = input.asc_raster(map_file)
+                meta, lcl_map = inp.asc_raster(map_file)
                 signal = flatten_clear(array=lcl_map, mask=(1 + (lcl_map * 0.0)), nodata=-1)
             maps_lst.append(lcl_map)
             signal_lst.append(signal)
@@ -1531,7 +1531,6 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         calib_df = dataframe.query('Date < "{}"'.format(cut_date))
         valid_df = dataframe.query('Date >= "{}"'.format(cut_date))
         return calib_df, valid_df, cut_date
-
     #
     # Run Folder setup
     if tui:
@@ -1555,7 +1554,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         status('importing series')
     series_df = pd.read_csv(fseries, sep=';')
     series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
-    # delete this after
+    #
     ##### series_df = series_df.query('Date >= "2011-01-01" and Date < "2011-07-01"')
     calib_df, valid_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef)
     #
@@ -1587,7 +1586,8 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # run OSA for calibration period
     if tui:
         status('running OSA for calibration period')
-    osa_files1 = osa_series(fseries=fsim_calib, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder=calibration_folder, tui=tui)
+    osa_files1 = osa_series(fseries=fsim_calib, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
+                            folder=calibration_folder, tui=tui)
     #
     #
     # run SLH for validation period
@@ -1603,7 +1603,8 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         status('running SDIAG for validation period')
     sdiag_file2 = sdiag(fseries=fsim_valid, folder=validation_folder, tui=tui)
     # run OSA for validation period
-    osa_files2 = osa_series(fseries=fsim_valid, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder=validation_folder, tui=tui)
+    osa_files2 = osa_series(fseries=fsim_valid, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
+                            folder=validation_folder, tui=tui)
     #
     #
     # run SLH for full period
@@ -1619,7 +1620,8 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         status('running SDIAG for full period')
     sdiag_file3 = sdiag(fseries=fsim_full, folder=full_folder, tui=tui)
     # run OSA for full period
-    osa_files3 = osa_series(fseries=fsim_full, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder=full_folder, tui=tui)
+    osa_files3 = osa_series(fseries=fsim_full, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
+                            folder=full_folder, tui=tui)
     #
     # exports
     if tui:
@@ -1678,7 +1680,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     """
     import time, datetime
     from shutil import copyfile
-    from input import zmap
+    from inp import zmap
     from hydrology import simulation, map_back
     from visuals import pannel_global
     from backend import create_rundir
@@ -1743,20 +1745,19 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     #
     if tui:
         status('loading hydrology parameters')
-    hydroparam_df = pd.read_csv(fhydroparam, sep=';')
-    hydroparam_df = dataframe_prepro(hydroparam_df, 'Parameter')
+    hydroparam_dct, hydroparam_df = inp.hydroparams(fhydroparam=fhydroparam)
     #
     # extract set values
-    m = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Set'].values[0]
-    qo = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Set'].values[0]
-    cpmax = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Set'].values[0]
-    sfmax = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Set'].values[0]
-    erz = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Set'].values[0]
-    ksat = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Set'].values[0]
-    c = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Set'].values[0]
-    lat = hydroparam_df[hydroparam_df['Parameter'] == 'lat']['Set'].values[0]
-    k = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Set'].values[0]
-    n = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Set'].values[0]
+    m = hydroparam_dct['m']['Set']
+    qo = hydroparam_dct['qo']['Set']
+    cpmax = hydroparam_dct['cpmax']['Set']
+    sfmax = hydroparam_dct['sfmax']['Set']
+    erz = hydroparam_dct['erz']['Set']
+    ksat = hydroparam_dct['ksat']['Set']
+    c = hydroparam_dct['c']['Set']
+    lat = hydroparam_dct['lat']['Set']
+    k = hydroparam_dct['k']['Set']
+    n = hydroparam_dct['n']['Set']
     #
     # Shru parameters
     if tui:
@@ -1783,7 +1784,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     # get basin boundary conditions
     if tui:
         status('loading boundary basin conditions')
-    meta = input.asc_raster_meta(fbasin)  # get just the metadata
+    meta = inp.asc_raster_meta(fbasin)  # get just the metadata
     area = np.sum(basincount) * meta['cellsize'] * meta['cellsize']
     qt0 = 0.01  # fixed
     if qobs:
@@ -1854,7 +1855,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
             status('exporting variable maps')
         from os import mkdir
         from backend import get_all_lclvars
-        from output import zmap
+        from out import zmap
         #
         if mapraster or integrate:
             from hydrology import map_back
@@ -1863,10 +1864,10 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
             # heavy imports
             if tui:
                 status('importing twi raster')
-            meta, twi = input.asc_raster(ftwi)
+            meta, twi = inp.asc_raster(ftwi)
             if tui:
                 status('importing shru raster')
-            meta, shru = input.asc_raster(fshru)
+            meta, shru = inp.asc_raster(fshru)
         if integrate:
             # make integration directory
             int_folder = folder + '/integration'
@@ -1929,7 +1930,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                 mp = map_back(integration, a1=twi, a2=shru, bins1=twibins, bins2=shrubins)
                 # export raster map
                 lcl_filename = 'raster_integral_{}'.format(var)
-                lcl_file = output.asc_raster(mp, meta, int_folder, lcl_filename)
+                lcl_file = out.asc_raster(mp, meta, int_folder, lcl_filename)
                 intmaps_files.append(lcl_file)
                 # export raster view
                 mapid = get_mapid(var)
@@ -1974,7 +1975,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                     mp = map_back(zmatrix=mapped[var][t], a1=twi, a2=shru, bins1=twibins, bins2=shrubins)
                     #
                     # export raster map
-                    lcl_file = output.asc_raster(mp, meta, lcl_folder, lcl_filename)
+                    lcl_file = out.asc_raster(mp, meta, lcl_folder, lcl_filename)
                     lcl_files.append(lcl_file)
                     #
                     # export raster view
@@ -2080,42 +2081,19 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         return count_matrix, twi_bins, shru_ids
 
     def extract_ranges(fhydroparam):
-        hydroparam_df = pd.read_csv(fhydroparam, sep=';')
-        hydroparam_df = dataframe_prepro(hydroparam_df, 'Parameter')
+        dct, hydroparam_df = inp.hydroparams(fhydroparam=fhydroparam)
         #
         # extract set range values
-        m_min = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Min'].values[0]
-        qo_min = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Min'].values[0]
-        cpmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Min'].values[0]
-        sfmax_min = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Min'].values[0]
-        erz_min = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Min'].values[0]
-        ksat_min = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Min'].values[0]
-        c_min = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Min'].values[0]
-        k_min = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Min'].values[0]
-        n_min = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Min'].values[0]
-        #
-        #
-        m_max = hydroparam_df[hydroparam_df['Parameter'] == 'm']['Max'].values[0]
-        qo_max = hydroparam_df[hydroparam_df['Parameter'] == 'qo']['Max'].values[0]
-        cpmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'cpmax']['Max'].values[0]
-        sfmax_max = hydroparam_df[hydroparam_df['Parameter'] == 'sfmax']['Max'].values[0]
-        erz_max = hydroparam_df[hydroparam_df['Parameter'] == 'erz']['Max'].values[0]
-        ksat_max = hydroparam_df[hydroparam_df['Parameter'] == 'ksat']['Max'].values[0]
-        c_max = hydroparam_df[hydroparam_df['Parameter'] == 'c']['Max'].values[0]
-        k_max = hydroparam_df[hydroparam_df['Parameter'] == 'k']['Max'].values[0]
-        n_max = hydroparam_df[hydroparam_df['Parameter'] == 'n']['Max'].values[0]
-        lat = hydroparam_df[hydroparam_df['Parameter'] == 'lat']['Max'].values[0]
-        #
         out_dct = {'Params_df':hydroparam_df,
-                   'm_rng': (m_min, m_max),
-                   'qo_rng': (qo_min, qo_max),
-                   'cpmax_rng': (cpmax_min, cpmax_max),
-                   'sfmax_rng': (sfmax_min, sfmax_max),
-                   'erz_rng': (erz_min, erz_max),
-                   'ksat_rng': (ksat_min, ksat_max),
-                   'c_rng': (c_min, c_max),
-                   'k_rng': (k_min, k_max),
-                   'n_rng': (n_min, n_max),
+                   'm_rng': (dct['m']['Min'], dct['m']['Max']),
+                   'qo_rng': (dct['qo']['Min'], dct['qo']['Max']),
+                   'cpmax_rng': (dct['cpmax']['Min'], dct['cpmax']['Max']),
+                   'sfmax_rng': (dct['sfmax']['Min'], dct['sfmax']['Max']),
+                   'erz_rng': (dct['erz']['Min'], dct['erz']['Max']),
+                   'ksat_rng': (dct['ksat']['Min'], dct['ksat']['Max']),
+                   'c_rng': (dct['c']['Min'], dct['c']['Max']),
+                   'k_rng': (dct['k']['Min'], dct['k']['Max']),
+                   'n_rng': (dct['n']['Min'], dct['n']['Max']),
                    'lat':lat}
         return out_dct
 
@@ -2222,7 +2200,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     etpat_zmaps_obs_calib = list()
     for i in range(len(etpat_zmaps_obs_calib_df)):
         zmap_file = etpat_zmaps_obs_calib_df['File'].values[i]
-        zmap, ybins, xbins = input.zmap(zmap_file)
+        zmap, ybins, xbins = inp.zmap(zmap_file)
         etpat_zmaps_obs_calib.append(zmap)
     #
     # extract etpat raster map series for calibration
@@ -2240,7 +2218,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # get boundary conditions
     if tui:
         status('loading boundary conditions')
-    meta = input.asc_raster_meta(fbasin)
+    meta = inp.asc_raster_meta(fbasin)
     area = np.sum(basincount) * meta['cellsize'] * meta['cellsize']
     qt0 = 0.01  # fixed
     if qobs:
@@ -2437,7 +2415,7 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     from visuals import glue_scattergram
     from hydrology import ensemble
     from visuals import glue_ensemble
-    import input
+    import inp
 
     def extract_ranges(fhydroparam):
         hydroparam_df = pd.read_csv(fhydroparam, sep=';')
@@ -2537,7 +2515,7 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     # get boundary conditions
     if tui:
         status('loading boundary conditions')
-    meta = input.asc_raster_meta(fbasin)
+    meta = inp.asc_raster_meta(fbasin)
     area = np.sum(basincount) * meta['cellsize'] * meta['cellsize']
     qt0 = 0.01  # fixed
     if qobs:
@@ -2653,9 +2631,9 @@ def sal_d_by_twi(ftwi1, ftwi2, m=10, dmax=100, size=100, label='', wkpl=False, f
         folder = create_rundir(label=label + 'SAL_D_by_TWI', wkplc=folder)
 
     # load twi maps
-    meta, twi1 = input.asc_raster(file=ftwi1, dtype='float32')
+    meta, twi1 = inp.asc_raster(file=ftwi1, dtype='float32')
     lamb1 = np.mean(twi1)
-    meta, twi2 = input.asc_raster(file=ftwi2, dtype='float32')
+    meta, twi2 = inp.asc_raster(file=ftwi2, dtype='float32')
     lamb2 = np.mean(twi2)
 
     d = np.linspace(0, dmax, size)

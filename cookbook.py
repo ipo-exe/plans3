@@ -4,7 +4,7 @@ def watch_maps_byzmaps():
     Cookbook to watch maps from a simulation run
     :return:
     """
-    import tools, input, geo
+    import tools, inp, geo
     import pandas as pd
     import numpy as np
     import matplotlib.pyplot as plt
@@ -22,9 +22,9 @@ def watch_maps_byzmaps():
     fbasin = folder_input + '/' + 'calib_basin.asc'
     #
     # import raster maps
-    meta, twi = input.asc_raster(ftwi)
-    meta, shru = input.asc_raster(fshru)
-    meta, basin = input.asc_raster(fbasin)
+    meta, twi = inp.asc_raster(ftwi)
+    meta, shru = inp.asc_raster(fshru)
+    meta, basin = inp.asc_raster(fbasin)
     #
     # directory of simulated data
     folder_sim = r"C:\bin\demo\full_SLH_2021-08-26-12-38-53\calibration_period"
@@ -55,7 +55,7 @@ def watch_maps_byzmaps():
             lcl_file = df['File'].values[i + start]
             lcl_date = df['Date'].values[i + start]
             # import Z-Map
-            zmap, hist_twi, hist_shru = input.zmap(file=lcl_file)
+            zmap, hist_twi, hist_shru = inp.zmap(file=lcl_file)
             # Map back to raster
             mp = map_back(zmatrix=zmap, a1=twi, a2=shru, bins1=hist_twi, bins2=hist_shru)
             # mask it by basin
@@ -84,7 +84,7 @@ def watch_maps_byzmaps():
 
 
 def visual_map_analyst():
-    import input, analyst
+    import inp, analyst
     from visuals import  plot_map_analyst
     import numpy as np
     from scipy.ndimage import gaussian_filter
@@ -100,8 +100,8 @@ def visual_map_analyst():
     fsim = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-13-04-49\bestset\calibration_period\sim_ETPat\raster_ETPat_2012-10-01.asc"
     #
     # import raster maps
-    meta, obs = input.asc_raster(fobs)
-    meta, sim = input.asc_raster(fsim)
+    meta, obs = inp.asc_raster(fobs)
+    meta, sim = inp.asc_raster(fsim)
     metric = analyst.error(obs, sim)
 
     obs_signal = obs.flatten()
@@ -117,8 +117,8 @@ def visual_map_analyst():
 
 
 def demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps_analyst', folder='C:/bin', tui=True):
-    from input import dataframe_prepro
-    import input
+    from inp import dataframe_prepro
+    import inp
     import pandas as pd
     import numpy as np
     #
@@ -132,9 +132,9 @@ def demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps_a
         for i in range(len(dataframe)):
             map_file = dataframe[fld].values[i]
             if type == 'zmap':
-                map, ybins, xbins = input.zmap(map_file)
+                map, ybins, xbins = inp.zmap(map_file)
             elif type == 'raster':
-                meta, map = input.asc_raster(map_file)
+                meta, map = inp.asc_raster(map_file)
             signal = map.flatten()
             maps_lst.append(map)
             signal_lst.append(signal)
@@ -237,14 +237,14 @@ def demo_watch():
     import pandas as pd
     import matplotlib.pyplot as plt
     from visuals import pannel_local
-    import input
+    import inp
     from hydrology import map_back
     folder ='C:/Plans3/demo/datasets/observed'
     ftwi = '{}/calib_twi.asc'.format(folder)
     fshru = '{}/calib_shru.asc'.format(folder)
 
-    meta, twi = input.asc_raster(ftwi)
-    meta, shru = input.asc_raster(fshru)
+    meta, twi = inp.asc_raster(ftwi)
+    meta, shru = inp.asc_raster(fshru)
 
     folder = r"C:\Plans3\demo\runbin\simulation\calib_SLH_2021-04-25-14-32-52\calibration_period"
     fseries = folder  + r'\sim_series.txt'
@@ -282,7 +282,7 @@ def demo_watch():
         print('computing raster maps of {} ... '.format(var))
         for i in range(len(series)):
             lcl_file = lcl_df['File'].values[i]
-            lcl_zmap, ybins, xbins = input.zmap(lcl_file)
+            lcl_zmap, ybins, xbins = inp.zmap(lcl_file)
             lcl_raster = map_back(lcl_zmap, a1=twi, a2=shru, bins1=ybins, bins2=xbins)
             raster_list.append(lcl_raster)
         raster_nd = np.array(raster_list)
@@ -365,7 +365,7 @@ def diags():
 def plot_sal_frames():
     import numpy as np
     from visuals import sal_deficit_frame
-    from input import asc_raster
+    from inp import asc_raster
     from hydrology import topmodel_di, topmodel_vsai, avg_2d
 
     def stamped(g):

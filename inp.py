@@ -129,3 +129,24 @@ def zmap(file, yfield='TWI\SHRU'):
     # extract ZMAP
     zmap = dataframe.values
     return zmap, twi_bins, shru_bins
+
+
+def hydroparams(fhydroparam):
+    """
+    Import the hydrology reference parameters to a dictionary.
+    :param fhydroparam: hydro_param txt filepath
+    :return: dictionary of dictionaries of parameters Set, Min and Max and pandas dataframe
+    """
+    hydroparam_df = pd.read_csv(fhydroparam, sep=';')
+    hydroparam_df = dataframe_prepro(hydroparam_df, 'Parameter')
+    #
+    fields = ('Set', 'Min', 'Max')
+    params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'lat', 'k', 'n')
+    # built dict
+    hydroparams_dct = dict()
+    for p in params:
+        lcl_dct = dict()
+        for f in fields:
+            lcl_dct[f] = hydroparam_df[hydroparam_df['Parameter'] == p][f].values[0]
+        hydroparams_dct[p] = lcl_dct
+    return hydroparams_dct, hydroparam_df
