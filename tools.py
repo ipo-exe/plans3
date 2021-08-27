@@ -974,6 +974,8 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
     shru_df = shru_df.join(soils_df.set_index('IdSoil'), on='IdSoil')
     # cross root zone:
     shru_df['f_EfRootZone'] = shru_df['Porosity'].values * shru_df['f_RootDepth'].values
+    # cross infiltration capacity:
+    shru_df['f_Inf'] = shru_df['f_Ksat'].values * shru_df['f_Pervious'].values
     #print(shru_df.to_string())
     #
     # export
