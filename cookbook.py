@@ -27,15 +27,15 @@ def watch_maps_byzmaps():
     meta, basin = inp.asc_raster(fbasin)
     #
     # directory of simulated data
-    folder_sim = r"C:\bin\demo\full_SLH_2021-08-26-12-38-53\calibration_period"
+    folder_sim = 'C:/bin/demo/SLH_2021-08-27-08-51-05/calibration_period'
     # simulated time series
     file = folder_sim + '/' + 'sim_series.txt'
     # import time series
     df_series = pd.read_csv(file, sep=';')
     #
     # define here list of variable maps
-    varmaps = ['D']
-    size = 360  # define how many frames to watch
+    varmaps = ['Sfs']
+    size = 100  # define how many frames to watch
     start = 160
     #
     # loop in variables
@@ -57,7 +57,7 @@ def watch_maps_byzmaps():
             # import Z-Map
             zmap, hist_twi, hist_shru = inp.zmap(file=lcl_file)
             # Map back to raster
-            mp = map_back(zmatrix=zmap, a1=twi, a2=shru, bins1=hist_twi, bins2=hist_shru)
+            mp = map_back(zmatrix=zmap, a1=twi[:160, :160], a2=shru[:160, :160], bins1=hist_twi, bins2=hist_shru)
             # mask it by basin
             #mp = geo.mask(mp, basin)
             #
@@ -580,4 +580,4 @@ def insert_irrigation(folder='C:/bin'):
     outfile = folder + '/series_with_irrigation.txt'
     df.to_csv(outfile, sep=';', index=False)
 
-#watch_maps_byzmaps()
+

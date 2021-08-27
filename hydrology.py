@@ -481,6 +481,8 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
     erz_i = erz * shruparam['f_EfRootZone'].values * np.ones(shape=shape, dtype='float32')
     # local ksat
     ksat_i = ksat * shruparam['f_Ksat'].values * np.ones(shape=shape, dtype='float32')
+    # local infcap
+    infcap_i = ksat * shruparam['f_Inf'].values * np.ones(shape=shape, dtype='float32')
     # local ira factor
     fira_i = shruparam['f_IRA'].values * np.ones(shape=shape, dtype='float32')
     # local iri factor
@@ -714,7 +716,7 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
         # --- Infiltration
         #
         # potential infiltration rate allowed by the surface water content:
-        p_sfs_inf_i = (sfs_i * (sfs_i < ksat_i)) + (ksat_i * (sfs_i >= ksat_i))
+        p_sfs_inf_i = (sfs_i * (sfs_i < infcap_i)) + (infcap_i * (sfs_i >= infcap_i))
         #
         # potential infiltration allowed by the usaturated zone water content:
         p_unz_inf_i = (d_i - unz_i) * ((d_i - unz_i) > 0)
