@@ -15,28 +15,28 @@ def watch_maps_byzmaps():
     folder_output = 'C:/bin'
     #
     # directory of input data
-    folder_input =  'C:/000_myFiles/myDrive/Plans3/demo/datasets/observed'
+    folder_input =  'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
     # files paths to raster maps
-    ftwi = folder_input + '/' + 'calib_twi.asc'
-    fshru = folder_input + '/' + 'calib_shru.asc'
-    fbasin = folder_input + '/' + 'calib_basin.asc'
+    ftwi = folder_input + '/' + '__calib_twi_window.asc'
+    fshru = folder_input + '/' + '__calib_shru_window.asc'
+    ##fbasin = folder_input + '/' + 'calib_basin.asc'
     #
     # import raster maps
     meta, twi = inp.asc_raster(ftwi)
     meta, shru = inp.asc_raster(fshru)
-    meta, basin = inp.asc_raster(fbasin)
+    ##meta, basin = inp.asc_raster(fbasin)
     #
     # directory of simulated data
-    folder_sim = 'C:/bin/demo/SLH_2021-08-27-08-51-05/calibration_period'
+    folder_sim = 'C:/bin/sacre/SLH_2021-09-01-06-14-59/calibration_period' 
     # simulated time series
     file = folder_sim + '/' + 'sim_series.txt'
     # import time series
     df_series = pd.read_csv(file, sep=';')
     #
     # define here list of variable maps
-    varmaps = ['Sfs']
-    size = 100  # define how many frames to watch
-    start = 160
+    varmaps = ['RSE']
+    size = 200  # define how many frames to watch
+    start = 1
     #
     # loop in variables
     for v in varmaps:
@@ -57,7 +57,7 @@ def watch_maps_byzmaps():
             # import Z-Map
             zmap, hist_twi, hist_shru = inp.zmap(file=lcl_file)
             # Map back to raster
-            mp = map_back(zmatrix=zmap, a1=twi[:160, :160], a2=shru[:160, :160], bins1=hist_twi, bins2=hist_shru)
+            mp = map_back(zmatrix=zmap, a1=twi, a2=shru, bins1=hist_twi, bins2=hist_shru)
             # mask it by basin
             #mp = geo.mask(mp, basin)
             #

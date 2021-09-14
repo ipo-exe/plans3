@@ -1,3 +1,38 @@
+''' 
+UFRGS - Universidade Federal do Rio Grande do Sul
+IPH - Instituto de Pesquisas Hidráulicas
+WARP - Research Group in Water Resources Management and Planning
+Porto Alegre, Rio Grande do Sul, Brazil
+
+plans - planning nature-based solutions
+Version: 3.0
+
+This software is under the GNU GPL3.0 license
+
+Source code repository: https://github.com/ipo-exe/plans3/
+Authors: Ipora Possantti: https://github.com/ipo-exe
+
+This file is under LICENSE: GNU General Public License v3.0
+Permissions:
+    Commercial use
+    Modification
+    Distribution
+    Patent use
+    Private use 
+Limitations:
+    Liability
+    Warranty 
+Conditions:
+    License and copyright notice
+    State changes
+    Disclose source
+    Same license 
+
+Module description:
+This module stores all basic analyst functions of plans3. 
+Input parameters are all strings and booleans.
+'''
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -68,7 +103,8 @@ def nnse(obs, sim):
 
 def kge(obs, sim):
     """
-    Kling-Gupta Efficiency (KGE) coeficient
+    Kling-Gupta Efficiency (KGE) coeficient Gupta et al. (2009)
+
     :param obs: numpy array of Observerd data
     :param sim: numpy array of Simulated data
     :return: float of KGE
