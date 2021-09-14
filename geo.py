@@ -1,8 +1,38 @@
-import numpy as np
 '''
-This is the PLANS 3 geoprocessing module
+UFRGS - Universidade Federal do Rio Grande do Sul
+IPH - Instituto de Pesquisas Hidráulicas
+WARP - Research Group in Water Resources Management and Planning
+Porto Alegre, Rio Grande do Sul, Brazil
 
+plans - planning nature-based solutions
+Version: 3.0
+
+This software is under the GNU GPL3.0 license
+
+Source code repository: https://github.com/ipo-exe/plans3/
+Authors: Ipora Possantti: https://github.com/ipo-exe
+
+This file is under LICENSE: GNU General Public License v3.0
+Permissions:
+    Commercial use
+    Modification
+    Distribution
+    Patent use
+    Private use
+Limitations:
+    Liability
+    Warranty
+Conditions:
+    License and copyright notice
+    State changes
+    Disclose source
+    Same license
+
+Module description:
+This is the PLANS 3 geoprocessing raster module.
 '''
+import numpy as np
+
 
 def areas(array, cellsize, values, factor=1):
     """
@@ -42,27 +72,6 @@ def xmap(map1, map2, map1ids, map2ids, map1f=100, map2f=1):
             lcl_xmap = (map1 == map1ids[i]) * (map2 == map2ids[j]) * xmap_value
             xmap = xmap + lcl_xmap
     return xmap
-
-
-def cn(lulc, soils, cnvalues, lulcclasses, soilclasses):
-    """
-    derive the CN map based on LULC and Soils groups
-    :param lulc: lulc 2d array
-    :param soils: soils 2d array
-    :param cnvalues: array of CN values for A, B, C and D soils (2d array) in the order of lulc classes
-    :param lulcclasses: array of lulc classes values
-    :param soilclasses: array of soil classses values
-    :return: 2d array of CN
-    """
-    soilclasses = soilclasses * 100
-    cn_class = (100 * soils) + lulc
-    cn_map = lulc * 0.0
-    for i in range(len(soilclasses)):
-        for j in range(len(lulcclasses)):
-            lcl_class = soilclasses[i] + lulcclasses[j]
-            lcl_cn = cnvalues[i][j]
-            cn_map = cn_map + (cn_class == lcl_class) * lcl_cn
-    return cn_map
 
 
 def downstream_coordinates(dir, x, y):
