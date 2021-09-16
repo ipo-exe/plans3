@@ -2,6 +2,22 @@ import pandas as pd
 import numpy as np
 
 
+def project_rain(t=1440, r=10, a=992.24, b=0.1, c=9.79, d=0.72):
+    """
+
+    :param t: float - rain duration in minutes
+    :param r: float - return period in years
+    :param a: float - parameter a
+    :param b: float - parameter b
+    :param c: float - parameter c
+    :param d: float - parameter d
+    :return: rain intensity in mm/hr
+    """
+
+    return a * np.power(r, b) / np.power((t + c), d)
+
+
+
 def area_trapezoidal(y, b, m):
     return (b + m * y) * y
 

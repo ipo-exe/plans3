@@ -866,17 +866,9 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
     :return: string file path to map series txt file
     """
     from out import zmap
+    from inp import histograms
     from hydrology import built_zmap
     import os
-
-    def extract_histdata(fhistograms):
-        dataframe = pd.read_csv(fhistograms, sep=';')
-        dataframe = dataframe_prepro(dataframe, strf=False)
-        dataframe = dataframe.set_index(dataframe.columns[0])
-        shru_ids = dataframe.columns.astype('int')
-        twi_bins = dataframe.index.values
-        count_matrix = dataframe.values
-        return count_matrix, twi_bins, shru_ids
     #
     # import data
     if tui:
@@ -894,7 +886,7 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
     #
     if tui:
         status('loading histograms')
-    count, twibins, shrubins = extract_histdata(fhistograms=fhistograms)
+    count, twibins, shrubins = histograms(fhistograms=fhistograms)
     #
     # process data
     if tui:

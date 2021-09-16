@@ -150,3 +150,18 @@ def hydroparams(fhydroparam):
             lcl_dct[f] = hydroparam_df[hydroparam_df['Parameter'] == p][f].values[0]
         hydroparams_dct[p] = lcl_dct
     return hydroparams_dct, hydroparam_df
+
+
+def histograms(fhistograms):
+    """
+    Extract the histogram data
+    :param fhistograms: string filepath to the txt file of histograms
+    :return: 2d numpy array of count matrix, 1d numpy array of twi bins and 1d array of SHRU bins
+    """
+    dataframe = pd.read_csv(fhistograms, sep=';')
+    dataframe = dataframe_prepro(dataframe, strf=False)
+    dataframe = dataframe.set_index(dataframe.columns[0])
+    shru_ids = dataframe.columns.astype('int')
+    twi_bins = dataframe.index.values
+    count_matrix = dataframe.values
+    return count_matrix, twi_bins, shru_ids
