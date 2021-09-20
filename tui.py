@@ -661,8 +661,7 @@ def main(root='default', importing=True):
                                     ftwi = folder + '/' + files_input[6]
                                     fshru = folder + '/' + files_input[7]
                                     fetpatzmaps = folder + '/' + files_input[8]
-                                    fetpatseries = folder + '/' + files_input[9]
-                                    fcanopy = folder + '/' + files_input[10]
+                                    fcanopy = folder + '/' + files_input[9]
                                     aux_str = 'calib_hydro' + '_' + likelihood
                                     #dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
                                     size_opts = ('Very Small - Size:10 Gens:2', 'Small - Size:25 Gens:5',
@@ -690,7 +689,6 @@ def main(root='default', importing=True):
                                                                  fbasinhists=fbasinhists,
                                                                  fbasin=fbasin,
                                                                  fetpatzmaps=fetpatzmaps,
-                                                                 fetpatseries=fetpatseries,
                                                                  ftwi=ftwi, fshru=fshru, fcanopy=fcanopy,
                                                                  folder=projectdirs['Optimization'], label='calib',
                                                                  generations=generations, popsize=popsize,

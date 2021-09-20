@@ -2074,7 +2074,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
 
 
 def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
-              fetpatzmaps, fetpatseries, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all',
+              fetpatzmaps, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all',
               qobs=True, cutdatef=0.3, generations=100, popsize=200, likelihood='NSE', label='', normalize=True):
     # todo docstring
     from inp import histograms
@@ -2116,7 +2116,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                    'c_rng': (dct['c']['Min'], dct['c']['Max']),
                    'k_rng': (dct['k']['Min'], dct['k']['Max']),
                    'n_rng': (dct['n']['Min'], dct['n']['Max']),
-                   'lat':lat}
+                   'lat':dct['lat']['Set']}
         return out_dct
 
     def extract_twi_avg(twibins, count):

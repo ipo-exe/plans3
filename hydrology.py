@@ -884,8 +884,8 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
 
 def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat, area, basinshadow,
                 m_range, qo_range, cpmax_range, sfmax_range, erz_range, ksat_range, c_range, k_range, n_range,
-                etpatdates, etpatzmaps, tui=True, normalize=True, grid=500, generations=100, popsize=200, offsfrac=1,
-                mutrate=0.5, puremutrate=0.8, cutfrac=0.33, tracefrac=0.1, tracepop=True, likelihood='NSE'):
+                etpatdates, etpatzmaps, tui=True, normalize=False, grid=500, generations=100, popsize=200, offsfrac=1,
+                mutrate=0.5, puremutrate=0.8, cutfrac=0.33, tracefrac=0.1, tracepop=True, likelihood='NSE', nodata=-1):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
     from analyst import nse, kge, rmse, pbias, frequency, error
@@ -994,7 +994,8 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
     #
     # run setup
     runsize = generations * popsize * 2
-    print('Runsize = {}'.format(runsize))
+    if tui:
+        print('Runsize = {}'.format(runsize))
     #
     # extract observed data
     sobs = series['Q'].values
@@ -1003,26 +1004,27 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
     loglim = 0.000001
     sobs_log = np.log10(sobs + (loglim * (sobs <= 0)))
     #
-    # get OBS etpat zmap signal
-    etpat_zmaps_nd = np.array(etpatzmaps)
+    # get OBS etpat zmaps
+    sobs_etpat = np.array(etpatzmaps)
+    sobs_etpat_mask = 1.0 * (sobs_etpat != nodata)
+    sobs_etpat_mean = np.sum(sobs_etpat * (sobs_etpat != -1)) / np.sum(sobs_etpat_mask)
+    # get the squared weighte error of the mean
+    we_mean_etpat = sobs_etpat * 0.0
+    for i in range(len(we_mean_etpat)):
+        we_mean_etpat[i] = (sobs_etpat[i] - sobs_etpat_mean) * countmatrix / np.sum(countmatrix)
+    swe_mean_etpat = np.power(we_mean_etpat, 2)
+    # get the masked sum of SWE Mean
+    sum_swe_mean_etpat = np.sum(swe_mean_etpat * sobs_etpat_mask)
     #
-    # compute ETpat signals
-    sobs_etpat_lst = list()
-    for e in range(len(etpat_zmaps_nd)):
-        lcl_mask = 1 + (etpat_zmaps_nd[e] * 0.0)
-        lcl_sobs_etpat = flatten_clear(etpat_zmaps_nd[e], mask=lcl_mask, nodata=-1)
-        lcl_x = np.arange(0, len(lcl_sobs_etpat))
-        sobs_etpat_lst.append(lcl_sobs_etpat)
-    '''
-    etpat_zmaps_masks = 1.0 * (etpat_zmaps_nd != -1.0)
-    #plt.imshow(etpat_zmaps_nd[0])
-    #plt.show()
-    sobs_etpat = clear_full_signal(etpat_zmaps_nd, masks=etpat_zmaps_masks, nodata=-1.0)
-    sobs_etpat = sobs_etpat / np.max(sobs_etpat)  # normalize pattern by max value
-    lcl_x = np.arange(0, len(sobs_etpat))
-    #plt.plot(lcl_x, sobs_etpat)
-    #plt.show()
-    '''
+    # get weights
+    w_flow = len(sobs)  # weight of flow
+    w_etpat = len(sobs_etpat)
+
+    if tui:
+        print('ETPat series shape: {}'.format(np.shape(sobs_etpat)))
+        print('Flow weight: {}'.format(w_flow))
+        print('EtPat weight: {}'.format(w_etpat))
+    #
     #
     # reset random state using time
     seed = int(str(datetime.now())[-6:])
@@ -1059,6 +1061,8 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
                                        puremutrate=puremutrate, cutfrac=cutfrac)
         # recruit new population
         population = recruitment(parents, offspring)
+        if tui:
+            print('Population size = {}'.format(len(population)))
         #
         #
         if tui:
@@ -1190,40 +1194,29 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
             #
             #
             # extract ET array:
-            et_zmaps_nd = np.array(sim_dct['Maps']['ET'])
-            lcl_etpat_scores_lst = list()
-            for e in range(len(et_zmaps_nd)):
-                if normalize: # fuzzify sim ET zmap                    
-                    lcl_sim_et_zmap = et_zmaps_nd[e]
-                    lcl_et_mean = np.mean(lcl_sim_et_zmap)
-                    lcl_et_sd = np.std(lcl_sim_et_zmap)
-                    a_value = lcl_et_mean - 2 * lcl_et_sd
-                    b_value = lcl_et_mean + 2 * lcl_et_sd
-                    #
-                    # extract the zmap of the ET Pattern based on the fuzzy senoidal transition
-                    lcl_sim_etpat_zmap = fuzzy_transition(lcl_sim_et_zmap, a_value, b_value, type='senoid')
-                else:  # take just the sim ET zmap
-                    lcl_sim_etpat_zmap = et_zmaps_nd[e]
-                #
-                # get a mask for the simulated zmap based on the observed zmap
-                lcl_mask = 1 * (etpat_zmaps_nd[e] != -1)
-                # compute the local simulated etpat signal
-                lcl_ssim_etpat = flatten_clear(lcl_sim_etpat_zmap, mask=lcl_mask, nodata=-1)
-                # get NSE of signals
-                lcl_sg_etpat_score = nse(obs=sobs_etpat_lst[e], sim=lcl_ssim_etpat)
-                # append to list
-                lcl_etpat_scores_lst.append(lcl_sg_etpat_score)
+            if normalize:
+                ssim_et = np.array(sim_dct['Maps']['ET'])
+                ssim_etpat = ssim_et * 0.0
+                for e in range(len(ssim_et)):
+                    # linear normalization for each date
+                    ssim_etpat[e] = fuzzy_transition(ssim_et[e], np.min(ssim_et[e]), np.max(ssim_et[e]), type='senoid')
+            else:
+                ssim_etpat = np.array(sim_dct['Maps']['ET'])
+            we_sim_etpat = ssim_et * 0.0
+            for e in range(len(we_sim_etpat)):
+                we_sim_etpat[e] = (sobs_etpat[e] - ssim_etpat[e]) * countmatrix / np.sum(countmatrix)
+            swe_sim_etpat = np.power(we_sim_etpat, 2)
+            # get the masked sum of SWE Mean
+            sum_swe_sim_etpat = np.sum(swe_sim_etpat * sobs_etpat_mask)
             #
-            # get fitness score for etpat based on the mean value of list
-            lcl_etpat_score = np.mean(lcl_etpat_scores_lst)
+            # get the ETpat score (NSE)
+            lcl_etpat_score = 1 - (sum_swe_sim_etpat / sum_swe_mean_etpat)
             #
             #
             #
             # COMPUTE GLOBAL SCORE:
-            w_flow = len(sobs)  # weight of flow
-            w_etpat = len(etpatzmaps[0]) * len(etpatzmaps)  # weight of etpat
-            dx = (1 - lcl_flow_score)
-            dy = (1 - lcl_etpat_score) * (w_etpat / w_flow)
+            dy = (1 - lcl_flow_score)
+            dx = (1 - lcl_etpat_score) * (w_etpat / w_flow)
             euclid_d = np.sqrt(np.power(dx, 2) + np.power(dy, 2))  # euclidean distance
             #
             #
@@ -1236,7 +1229,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
             # printing
             if tui:
                 print('Status: {:8.4f} % | Set '.format(runstatus), end='\t')
-                print('{:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f} {:7.3f}'.format(pset[0], pset[1],
+                print('{:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f}'.format(pset[0], pset[1],
                                                                                                        pset[2], pset[3],
                                                                                                        pset[4], pset[5],
                                                                                                        pset[6], pset[7],
@@ -1337,6 +1330,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
         #
         # Selection of mating pool (Parents) - N largest score values
         df_parents_rank = df_population_rank.nlargest(len(parents), columns=['Score'])
+        #print(df_parents_rank.head(10).to_string())
         #
         # Extract parents
         parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
