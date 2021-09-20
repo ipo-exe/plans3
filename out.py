@@ -48,7 +48,16 @@ def asc_raster(array, meta, folder, filename, dtype='float32'):
 
 
 def zmap(zmap, twibins, shrubins, index_lbl='TWI\SHRU', folder='C:/bin', filename='zmap'):
-    # todo docstring
+    """
+    Export a zmap file
+    :param zmap: 2d numpy array of zmap
+    :param twibins: 1d numpy array of TWI classes
+    :param shrubins: 1d numpy array of SHRU classes
+    :param index_lbl: string of index label
+    :param folder: output folder
+    :param filename: file name without extension
+    :return: output file path
+    """
     exp_file = folder + '/' + filename + '.txt'
     lcl_exp_df = pd.DataFrame(zmap, index=twibins, columns=shrubins)
     lcl_exp_df.to_csv(exp_file, sep=';', index_label=index_lbl)

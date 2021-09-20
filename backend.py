@@ -571,7 +571,6 @@ def importfile(src, dst):
     copyfile(src=src, dst=dst)
 
 
-
 def nowsep(p0='-'):
     import datetime
     def_now = datetime.datetime.now()
@@ -590,3 +589,16 @@ def create_rundir(label='', wkplc='C:'):
     dir_nm = wkplc + '/' + label + '_' + nowsep()
     os.mkdir(dir_nm)
     return dir_nm
+
+
+def get_stringfields(filename):
+    """
+    get the string fields in a string for dataframe pre processing
+    :param filename: string of filename with extension
+    :return: string of string fields
+    """
+    def_str = ''
+    if filename == 'calib_shru_param.txt':
+        def_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
+    return def_str
+

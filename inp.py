@@ -108,7 +108,7 @@ def asc_raster_list(file, filefield='File', sep=';'):
     return meta_lst, array_lst
 
 
-def zmap(file, yfield='TWI\SHRU'):
+def zmap(file, yfield='TWI\SHRU', nodata=-1):
     """
     Import a zmap to a 2d numpy array and respective 1d arrays of histogram values (it is a 2D histogram)
     :param file: string filepath to zmap file
@@ -127,7 +127,7 @@ def zmap(file, yfield='TWI\SHRU'):
     # get twi bins
     twi_bins = dataframe.index.values
     # extract ZMAP
-    zmap = dataframe.values
+    zmap = (dataframe.values * (dataframe.values != nodata)) + (nodata * (dataframe.values == nodata))
     return zmap, twi_bins, shru_bins
 
 
