@@ -35,6 +35,9 @@ import pandas as pd
 import matplotlib.pyplot as plt  # todo remove this after release
 
 # auxiliar functions
+import analyst
+
+
 def avg_2d(var2d, weight):
     """
     average raster value based on weight mask
@@ -1006,16 +1009,6 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
     #
     # get OBS etpat zmaps
     sobs_etpat = np.array(etpatzmaps)
-    sobs_etpat_mask = 1.0 * (sobs_etpat != nodata)
-    sobs_etpat_mean = np.sum(sobs_etpat * (sobs_etpat != -1)) / np.sum(sobs_etpat_mask)
-    # get the squared weighte error of the mean
-    we_mean_etpat = sobs_etpat * 0.0
-    for i in range(len(we_mean_etpat)):
-        we_mean_etpat[i] = (sobs_etpat[i] - sobs_etpat_mean) * countmatrix / np.sum(countmatrix)
-    swe_mean_etpat = np.power(we_mean_etpat, 2)
-    # get the masked sum of SWE Mean
-    sum_swe_mean_etpat = np.sum(swe_mean_etpat * sobs_etpat_mask)
-    #
     # get weights
     w_flow = len(sobs)  # weight of flow
     w_etpat = len(sobs_etpat)
@@ -1033,7 +1026,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
         print('Random Seed: {}'.format(seed))
     #
     #
-    # bounds setup  # todo improve function of scales
+    # bounds setup
     lowerbound = np.array((np.min(m_range), np.min(qo_range), np.min(cpmax_range), np.min(sfmax_range),
                            np.min(erz_range), np.min(ksat_range), np.min(c_range), np.min(k_range), np.min(n_range)))
     upperbound = np.array((np.max(m_range), np.max(qo_range), np.max(cpmax_range), np.max(sfmax_range),
@@ -1068,7 +1061,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
         if tui:
             print('Population: {} KB       '.format(getsizeof(population)))
             print('                   | Set  ', end='\t  ')
-            print('{:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7} {:7}'.format('m', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n'))
+            print('{:8} {:8} {:8} {:8} {:8} {:8} {:8} {:8} {:8}'.format('m', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n'))
         #
         # fit new population
         ids_lst = list()
@@ -1202,15 +1195,11 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
                     ssim_etpat[e] = fuzzy_transition(ssim_et[e], np.min(ssim_et[e]), np.max(ssim_et[e]), type='senoid')
             else:
                 ssim_etpat = np.array(sim_dct['Maps']['ET'])
-            we_sim_etpat = ssim_et * 0.0
-            for e in range(len(we_sim_etpat)):
-                we_sim_etpat[e] = (sobs_etpat[e] - ssim_etpat[e]) * countmatrix / np.sum(countmatrix)
-            swe_sim_etpat = np.power(we_sim_etpat, 2)
-            # get the masked sum of SWE Mean
-            sum_swe_sim_etpat = np.sum(swe_sim_etpat * sobs_etpat_mask)
+            #
+            etpat_analysis = analyst.zmaps(obs=sobs_etpat, sim=ssim_etpat, count=countmatrix, nodata=nodata, full_return=False)
             #
             # get the ETpat score (NSE)
-            lcl_etpat_score = 1 - (sum_swe_sim_etpat / sum_swe_mean_etpat)
+            lcl_etpat_score = etpat_analysis['NSE_ZMap_Series']
             #
             #
             #

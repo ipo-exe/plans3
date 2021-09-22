@@ -161,3 +161,63 @@ def frequency(series):
     prob = freq/np.sum(freq)  # estimate probs.
     out_dct = {'Percentiles': ptles, 'Exeedance':exeed, 'Frequency': freq, 'Probability': prob, 'Values':cfc}
     return out_dct
+
+
+def zmaps(obs, sim, count, nodata=-1, full_return=False):
+    """
+    Analyst of a series of ZMaps
+    :param obs: 3d numpy array of observed zmaps
+    :param sim: 3d numpy array of simulated zmaps
+    :param count: 2d numpy array of couting matrix (2d histogram)
+    :param nodata: float nodata value in observed zmap
+    :param full_return: boolean to set full return
+    :return: dictionary of output objects
+    """
+    obs_mask = 1.0 * (obs != nodata)  # get mask
+    #
+    # deploy series arrays
+    obs_wmean_series = np.zeros(shape=(len(obs)))
+    sim_wmean_series = np.zeros(shape=(len(obs)))
+    # compute series averages
+    for i in range(len(obs)):
+        obs_wmean_series[i] = np.sum(obs[i] * obs_mask[i] * count / np.sum(count))
+        sim_wmean_series[i] = np.sum(sim[i] * obs_mask[i] * count / np.sum(count))
+    obs_mean = np.mean(obs_wmean_series)
+    # now compute error series
+    e_wmean_series = error(obs=obs_wmean_series, sim=sim_wmean_series)
+    se_wmean_series = sq_error(obs=obs_wmean_series, sim=sim_wmean_series)
+    nse_wmean = nse(obs=obs_wmean_series, sim=sim_wmean_series)
+    #
+    # get the square of the weighed mean error
+    we_mean = obs * 0.0
+    we_sim = obs * 0.0
+    for i in range(len(we_mean)):
+        we_mean[i] = (obs[i] - obs_mean) * count / np.sum(count)
+        we_sim[i] = (obs[i] - sim[i]) * count / np.sum(count)
+    swe_mean = np.power(we_mean, 2)
+    swe_sim = np.power(we_sim, 2)
+    #
+    # compute NSE
+    nse_zmaps = 1 - (np.sum(swe_sim * obs_mask) / np.sum(swe_mean * obs_mask))
+    if full_return:
+        out_dct = {'Obs_Mean_Series':obs_wmean_series,
+                   'Sim_Mean_Series':sim_wmean_series,
+                   'Error_Mean_Series':e_wmean_series,
+                   'SE_Mean_Series':se_wmean_series,
+                   'NSE_Mean_Series':nse_wmean,
+                   'Count':count,
+                   'Error_ZMap_Series':we_sim,
+                   'SE_ZMap_Series':swe_sim,
+                   'NSE_ZMap_Series':nse_zmaps}
+    else:
+        out_dct = {'NSE_ZMap_Series':nse_zmaps, 'NSE_Mean_Series':nse_wmean,}
+    return out_dct
+
+
+
+
+
+
+
+
+

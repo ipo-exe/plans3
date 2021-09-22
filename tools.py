@@ -1385,165 +1385,102 @@ def osa_series(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:
     export_report(report_lst, filename='REPORT__analyst', folder=folder, tui=tui)
     return (exp_file1, exp_file2, exp_file3, exp_file4)
 
-# todo revise
-def osa_map(fseries, fhistograms, type, var='ETPat', filename='obssim_maps_analyst', folder='C:/bin', tui=True):
+
+def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, var='ETPat', folder='C:/bin', tui=True, nodata=-1):
     import time, datetime
-    from os import mkdir
     import analyst
-    from hydrology import extract_map_signal
-    from visuals import plot_map_analyst
-
-    def extract_histdata(fhistograms):
-        dataframe = pd.read_csv(fhistograms, sep=';')
-        dataframe = dataframe_prepro(dataframe, strf=False)
-        dataframe = dataframe.set_index(dataframe.columns[0])
-        shru_ids = dataframe.columns.astype('int')
-        twi_bins = dataframe.index.values
-        count_matrix = dataframe.values
-        return count_matrix, twi_bins, shru_ids
-
-    def extract_series_data(dataframe, count, fld, type='raster'):
-        if type == 'raster':
-            from hydrology import flatten_clear
-        maps_lst = list()
-        signal_lst = list()
-        for i in range(len(dataframe)):
-            map_file = dataframe[fld].values[i]
-            #print(map_file)
-            if type == 'zmap':
-                lcl_map, ybins, xbins = inp.zmap(map_file)
-                signal = extract_map_signal(lcl_map, count, nodata=0)
-            elif type == 'raster':
-                meta, lcl_map = inp.asc_raster(map_file)
-                signal = flatten_clear(array=lcl_map, mask=(1 + (lcl_map * 0.0)), nodata=-1)
-            maps_lst.append(lcl_map)
-            signal_lst.append(signal)
-        #lcl_x = np.arange(0, len(full_signal))
-        #plt.plot(lcl_x, full_signal)
-        #plt.show()
-        return maps_lst, signal_lst
-
-    # report setup  # todo report
+    from inp import histograms
+    from visuals import plot_osa_zmaps_mean_series
+    #
+    # report setup
     t0 = time.time()
     report_lst = list()
     report_lst.append('Execution timestamp: {}\n'.format(datetime.datetime.now()))
-    report_lst.append('Process: OBS-SIM MAP ANALYST\n')
-    input_files_df = pd.DataFrame({'Input files': (fseries,)})
+    report_lst.append('Process: OBS-SIM ZMAP ANALYST | OSA_ZMAPS\n')
+    input_files_df = pd.DataFrame({'Input files': (fobs_series, fsim_series, fhistograms)})
     report_lst.append(input_files_df.to_string(index=False))
-    out_files = list()
     #
     if tui:
         from tui import status
-        status('performing obs vs. sim map analysis')
+        status('performing obs vs. sim analysis for zmaps')
 
-    # extract Dataframe
-    def_df = pd.read_csv(fseries, sep=';', engine='python')
-    def_df = dataframe_prepro(def_df, strfields='File_obs,File_sim,Date')
-    #
-    count, twibins, shrubins = extract_histdata(fhistograms=fhistograms)
-    #
-    maps_obs_lst, signal_obs_lst = extract_series_data(def_df, count, 'File_obs', type=type)
-    maps_sim_lst, signal_sim_lst = extract_series_data(def_df,  count, 'File_sim', type=type)
-    #
-    # 3) compute local map metrics and append to a new dataframe
-    map_errors = list()
-    map_sqerr = list()
-    map_rmse = list()
-    map_nse = list()
-    map_kge = list()
-    map_r = list()
-    metric_maps = list()
-    metric_signal = list()
-    for i in range(len(def_df)):
-        print('MAP {}'.format(i + 1))
-        lcl_x = np.arange(len(signal_obs_lst[i]))
-        #plt.plot(lcl_x, signal_obs_lst[i])
-        #plt.plot(lcl_x, signal_sim_lst[i])
-        #plt.show()
-        # Mapped error
-        lcl_map_error = analyst.error(obs=maps_obs_lst[i], sim=maps_sim_lst[i])
-        fig, axs = plt.subplots(1, 3, figsize=(9, 3))
-        axs[0].imshow(maps_obs_lst[i], cmap='Greys_r', vmax=1, vmin=0)
-        axs[1].imshow(maps_sim_lst[i], cmap='Greys_r', vmax=1, vmin=0)
-        axs[2].imshow(lcl_map_error, cmap='seismic', vmax=1.5, vmin=-1.5)
-        plt.show()
-
-        metric_maps.append(lcl_map_error)
-        # signal error
-        lcl_signal_error = analyst.error(obs=signal_obs_lst[i], sim=signal_sim_lst[i])
-        metric_signal.append(lcl_signal_error)
-        # mean signal error
-        map_errors.append(np.mean(lcl_signal_error))
-        # sq signal error
-        lcl_sqerr = analyst.sq_error(obs=signal_obs_lst[i], sim=signal_sim_lst[i])
-        map_sqerr.append(np.mean(lcl_sqerr))
-        # RMSE of signals
-        lcl_rmse = analyst.rmse(obs=signal_obs_lst[i], sim=signal_sim_lst[i])
-        map_rmse.append(lcl_rmse)
-        # NSE of signals
-        lcl_nse = analyst.nse(obs=signal_obs_lst[i], sim=signal_sim_lst[i])
-        map_nse.append(lcl_nse)
-        # KGE of signals
-        lcl_kge = analyst.kge(obs=signal_obs_lst[i], sim=signal_sim_lst[i])
-        map_kge.append(lcl_kge)
-        #
-        #lcl_r = analyst.linreg(obs=np.append([1], signal_obs_lst[i]), sim=np.append([1], signal_sim_lst[i]))['R']
-        #map_r.append(lcl_r)
-    #
-    # built data frame
-    def_df['Error'] = map_errors
-    def_df['SqErr'] = map_sqerr
-    def_df['RMSE'] = map_rmse
-    def_df['NSE'] = map_nse
-    #def_df['KGE'] = map_kge
-    #def_df['R'] = map_r
-    out_df = def_df[['Date', 'Error', 'SqErr', 'RMSE', 'NSE', 'File_obs', 'File_sim']]
+    # extract input data
     #
     #
-    # Export dataframe
-    out_file1 = folder + '/{}_{}_map_analyst_local.txt'.format(var, type)
-    out_df.to_csv(out_file1, sep=';', index=False)
-    out_files.append(out_file1)
-    #
-    #
-    # Export visuals
+    # extract count matrix (full map extension)
     if tui:
-        status('exporting map visuals')
-    map_vmin = 0.0  # np.min((maps_obs_lst, maps_obs_lst))
-    map_vmax = np.max((maps_obs_lst, maps_obs_lst))
-    ranges = (map_vmin, map_vmax)
-    map_metric_vmin = np.min(metric_maps)
-    map_metric_vmax = np.max(metric_maps)
-    mapmax = np.max((np.abs(map_metric_vmin), np.abs(map_metric_vmax)))
-    metricranges = (-mapmax, mapmax)
-    visual_dir = folder + '/{}_{}_map_analyst_visuals'.format(var, type)
-    mkdir(visual_dir)
-    for i in range(len(out_df)):
-        lcl_date = out_df['Date'].values[i]
-        lcl_filename = '{}_{}_map_analyst_local_{}'.format(var, type, lcl_date)
-        lcl_ttl = '{} | {}'.format(var, lcl_date)
-        metrics_dct = {'Error': out_df['Error'].values[i],
-                       'SqErr': out_df['SqErr'].values[i],
-                       'RMSE': out_df['RMSE'].values[i],
-                       'NSE': out_df['NSE'].values[i],
-                       'KGE': out_df['KGE'].values[i],
-                       'R': out_df['R'].values[i]}
-        lcl_out = plot_map_analyst(obs=maps_obs_lst[i], sim=maps_sim_lst[i], metric=metric_maps[i],
-                                     obs_sig=signal_obs_lst[i], sim_sig=signal_sim_lst[i], ranges=ranges,
-                                     metricranges=metricranges, metric_sig=metric_signal[i], metrics_dct=metrics_dct,
-                                     filename=lcl_filename, folder=visual_dir, ttl=lcl_ttl)
-        out_files.append(lcl_out)
-        if tui:
-            status('exporting visual of {}'.format(lcl_ttl))
+        status('loading histograms')
+    count, twibins, shrubins = histograms(fhistograms=fhistograms)
     #
+    if tui:
+        status('loading ZMAPS')
+    # Import Observed Zmaps dataframe series
+    zmaps_obs_df = pd.read_csv(fobs_series, sep=';')
+    zmaps_obs_df = dataframe_prepro(zmaps_obs_df, strfields='File', date=True)
+    #
+    # Import Simulated Zmaps dataframe series
+    zmaps_sim_df = pd.read_csv(fsim_series, sep=';')
+    zmaps_sim_df = dataframe_prepro(zmaps_sim_df, strfields='File', date=True)
+    #
+    # Match dates
+    obssim_df = pd.merge(zmaps_obs_df, zmaps_sim_df, how='inner', on='Date', suffixes=('_obs', '_sim'))
+    # remove this after testing
+    obssim_df['File_sim'] = obssim_df['File_sim'].str.replace('./drive/MyDrive/', 'C:/000_myFiles/myDrive/')
+    #print(obssim_df.to_string())
+    #
+    # now load zmaps
+    obs_zmaps = list()
+    sim_zmaps = list()
+    for i in range(len(obssim_df)):
+        zmap_file = obssim_df['File_obs'].values[i]
+        zmap, ybins, xbins = inp.zmap(zmap_file)
+        obs_zmaps.append(zmap)
+        zmap_file = obssim_df['File_sim'].values[i]
+        zmap, ybins, xbins = inp.zmap(zmap_file)
+        sim_zmaps.append(zmap)
+    obs_zmaps = np.array(obs_zmaps)
+    sim_zmaps = np.array(sim_zmaps)
+    #
+    #
+    # load series
+    # extract Dataframe
+    series_df = pd.read_csv(fseries, sep=';', engine='python')
+    series_df = dataframe_prepro(series_df, strf=False, date=True)
+
     tf = time.time()
-    output_df = pd.DataFrame({'Output files': out_files})
+    if tui:
+        status('loading enlapsed time: {:.3f} seconds'.format(tf - t0))
+    #
+    #
+    # Analysis
+    analyst_dct = analyst.zmaps(obs=obs_zmaps, sim=sim_zmaps, count=count, nodata=nodata, full_return=True)
+    analyst_df = pd.DataFrame({'Date': obssim_df['Date'],
+                               'Obs_Mean_Series': analyst_dct['Obs_Mean_Series'],
+                               'Sim_Mean_Series': analyst_dct['Sim_Mean_Series'],
+                               'Error_Mean_Series': analyst_dct['Error_Mean_Series'],
+                               'SE_Mean_Series': analyst_dct['SE_Mean_Series'],
+                               'NSE_Mean_Series': analyst_dct['NSE_Mean_Series'],
+                               'NSE_ZMap_Series': analyst_dct['NSE_ZMap_Series'],
+                               'File_obs':obssim_df['File_obs'],
+                               'File_sim':obssim_df['File_sim']})
+    #
+    report_lst.append('\n\nAnalyst Parameter Results:\n\n')
+    report_lst.append(analyst_df.to_string(index=False))
+    report_lst.append('\n\n')
+
+    plot_osa_zmaps_mean_series(analyst_df, series_df, show=True)
+
+    exp_file1 = 'ok'
+    exp_file2 = 'ok'
+    exp_file3 = 'ok'
+    exp_file4 = 'ok'
+    # final exports
+    tf = time.time()
+    output_df = pd.DataFrame({'Output files': (exp_file1, exp_file2, exp_file3, exp_file4)})
     report_lst.append(output_df.to_string(index=False))
     report_lst.append('\n\n')
     report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
-    export_report(report_lst, filename='REPORT__{}_{}_map_analyst'.format(var, type), folder=folder, tui=tui)
-    #
-    return {'Local':out_file1, 'Visuals':out_files}
+    export_report(report_lst, filename='REPORT__analyst_zmaps', folder=folder, tui=tui)
 
 
 def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
@@ -1617,6 +1554,10 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         status('running OSA for calibration period')
     osa_files1 = osa_series(fseries=fsim_calib, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
                             folder=calibration_folder, tui=tui)
+    if mapback and 'ET' in mapvar:
+        if tui:
+            status('running ZMAP OSA for calibration period')
+            print('code missing')
     #
     #
     # run SLH for validation period
@@ -1632,8 +1573,14 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         status('running SDIAG for validation period')
     sdiag_file2 = sdiag(fseries=fsim_valid, folder=validation_folder, tui=tui)
     # run OSA for validation period
+    if tui:
+        status('running OSA for validation period')
     osa_files2 = osa_series(fseries=fsim_valid, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
                             folder=validation_folder, tui=tui)
+    if mapback and 'ET' in mapvar:
+        if tui:
+            status('running ZMAP OSA for validation period')
+            print('code missing')
     #
     #
     # run SLH for full period
@@ -1649,8 +1596,14 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         status('running SDIAG for full period')
     sdiag_file3 = sdiag(fseries=fsim_full, folder=full_folder, tui=tui)
     # run OSA for full period
+    if tui:
+        status('running OSA for full period')
     osa_files3 = osa_series(fseries=fsim_full, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
                             folder=full_folder, tui=tui)
+    if mapback and 'ET' in mapvar:
+        if tui:
+            status('running ZMAP OSA for full period')
+            print('code missing')
     #
     # exports
     if tui:
@@ -2232,6 +2185,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         zmap_file = etpat_zmaps_obs_calib_df['File'].values[i]
         zmap, ybins, xbins = inp.zmap(zmap_file)
         etpat_zmaps_obs_calib.append(zmap)
+    etpat_zmaps_obs_calib = np.array(etpat_zmaps_obs_calib)
     #
     #
     end = time.time()

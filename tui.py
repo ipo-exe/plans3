@@ -664,8 +664,9 @@ def main(root='default', importing=True):
                                     fcanopy = folder + '/' + files_input[9]
                                     aux_str = 'calib_hydro' + '_' + likelihood
                                     #dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
-                                    size_opts = ('Very Small - Size:10 Gens:2', 'Small - Size:25 Gens:5',
-                                                 'Medium - Size:250 Gens:5', 'Large - Size:300 Gens:10')
+                                    size_opts = ('Very Small - Size:10 Gens:3', 'Small - Size:25 Gens:5',
+                                                 'Medium - Size:250 Gens:5', 'Large - Size:500 Gens:10',
+                                                 'Very Large - Size:2000 Gens:10')
                                     scale = menu({'Scale': size_opts}, exitkey='d', title='Genetic Algorithm Scale',
                                                  exitmsg='Use default (Small)', msg=lng[5],
                                                  keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
@@ -673,7 +674,7 @@ def main(root='default', importing=True):
                                     generations = 3
                                     if scale == size_opts[0]:
                                         popsize = 10
-                                        generations = 2
+                                        generations = 3
                                     elif scale == size_opts[1]:
                                         popsize = 25
                                         generations = 5
@@ -681,7 +682,10 @@ def main(root='default', importing=True):
                                         popsize = 250
                                         generations = 5
                                     elif scale == size_opts[3]:
-                                        popsize = 300
+                                        popsize = 500
+                                        generations = 10
+                                    elif scale == size_opts[4]:
+                                        popsize = 2000
                                         generations = 10
                                     calibfiles = tools.calibrate(fseries=fseries, fhydroparam=fhydroparam,
                                                                  fshruparam=fshruparam,

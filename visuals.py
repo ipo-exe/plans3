@@ -2005,3 +2005,27 @@ def plot_lulc_view(lulc, lulcparam_df, areas_df, aoi, meta, mapttl='lulc', filen
         plt.close(fig)
         return expfile
 
+
+def plot_osa_zmaps_mean_series(analyst_df, var_df, var='ET', grid=False, folder='C:/bin', filename='zmaps_mean_series', show=True):
+    #
+    fig = plt.figure(figsize=(16, 8))  # Width, Height
+    gs = mpl.gridspec.GridSpec(1, 1, wspace=0.8, hspace=0.6)
+
+    ax1 = fig.add_subplot(gs[0, 0])
+    plt.title('Precipitation', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(var_df['Date'], var_df[var], color='tab:blue', label='Simulated Variable')
+    plt.plot(analyst_df['Date'], analyst_df['Obs_Mean_Series'], 'o', color='tab:gray', label='Observed Zmap Mean')
+    plt.plot(analyst_df['Date'], analyst_df['Sim_Mean_Series'], 'o', color='navy', label='Simulated Zmap Mean')
+    plt.grid(grid)
+    plt.legend(loc='upper left', ncol=1, framealpha=1, fancybox=False)
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
