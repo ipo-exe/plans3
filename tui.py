@@ -594,11 +594,21 @@ def main(root='default', importing=True):
                             ftwi = folder + '/' + files_input[6]
                             fshru = folder + '/' + files_input[7]
                             fcanopy = folder + '/' + files_input[8]
-                            out_dct = tools.slh_calib(fseries=fseries, fhydroparam=fhydroparam, fshruparam=fshruparam,
-                                                      fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin,
-                                                      ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, folder=projectdirs['Simulation'],
-                                                      integrate=settings['Integrate'], wkpl=True, tui=True,
-                                                      mapback=settings['Mapback'], mapraster=settings['Mapraster'],
+                            out_dct = tools.slh_calib(fseries=fseries,
+                                                      fhydroparam=fhydroparam,
+                                                      fshruparam=fshruparam,
+                                                      fhistograms=fhistograms,
+                                                      fbasinhists=fbasinhists,
+                                                      fbasin=fbasin,
+                                                      ftwi=ftwi,
+                                                      fshru=fshru,
+                                                      fcanopy=fcanopy,
+                                                      folder=projectdirs['Simulation'],
+                                                      integrate=settings['Integrate'],
+                                                      wkpl=True,
+                                                      tui=True,
+                                                      mapback=settings['Mapback'],
+                                                      mapraster=settings['Mapraster'],
                                                       label='calib')
                             # todo post a checker here
                             print(settings['Frametype'])
@@ -696,7 +706,8 @@ def main(root='default', importing=True):
                                                                  ftwi=ftwi, fshru=fshru, fcanopy=fcanopy,
                                                                  folder=projectdirs['Optimization'], label='calib',
                                                                  generations=generations, popsize=popsize,
-                                                                 likelihood=likelihood, tui=True, mapback=False)
+                                                                 likelihood=likelihood, tui=True, mapback=False,
+                                                                 normalize=False)
                                     print('\nRun files sucessfully created at:\n{}\n'.format(calibfiles['Folder']))
                                     ok()
                     #

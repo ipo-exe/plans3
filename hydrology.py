@@ -209,7 +209,6 @@ def extract_sim_diagnostics(simseries, vars='all'):
     diags = dict()
     diags['Parameter'] = parameters
     for v in variables:
-        print(v)
         # get vector
         lcl_v = simseries[v].values
         if v in set(stocks) or v in set(vnonwater):
@@ -1011,7 +1010,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
     sobs_etpat = np.array(etpatzmaps)
     # get weights
     w_flow = len(sobs)  # weight of flow
-    w_etpat = len(sobs_etpat)
+    w_etpat = len(sobs_etpat)  # weight of et
 
     if tui:
         print('ETPat series shape: {}'.format(np.shape(sobs_etpat)))
@@ -1199,7 +1198,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
             etpat_analysis = analyst.zmaps(obs=sobs_etpat, sim=ssim_etpat, count=countmatrix, nodata=nodata, full_return=False)
             #
             # get the ETpat score (NSE)
-            lcl_etpat_score = etpat_analysis['NSE_ZMap_Series']
+            lcl_etpat_score = etpat_analysis['NSE_Mean_Series'] # etpat_analysis['NSE_ZMap_Series']
             #
             #
             #

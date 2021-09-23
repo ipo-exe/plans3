@@ -182,6 +182,10 @@ def zmaps(obs, sim, count, nodata=-1, full_return=False):
     for i in range(len(obs)):
         obs_wmean_series[i] = np.sum(obs[i] * obs_mask[i] * count / np.sum(count))
         sim_wmean_series[i] = np.sum(sim[i] * obs_mask[i] * count / np.sum(count))
+    #import matplotlib.pyplot as plt
+    #plt.plot(np.arange(start=0, stop=len(obs_wmean_series)), obs_wmean_series)
+    #plt.plot(np.arange(start=0, stop=len(obs_wmean_series)), sim_wmean_series)
+    #plt.show()
     obs_mean = np.mean(obs_wmean_series)
     # now compute error series
     e_wmean_series = error(obs=obs_wmean_series, sim=sim_wmean_series)
@@ -210,7 +214,7 @@ def zmaps(obs, sim, count, nodata=-1, full_return=False):
                    'SE_ZMap_Series':swe_sim,
                    'NSE_ZMap_Series':nse_zmaps}
     else:
-        out_dct = {'NSE_ZMap_Series':nse_zmaps, 'NSE_Mean_Series':nse_wmean,}
+        out_dct = {'NSE_ZMap_Series':nse_zmaps, 'NSE_Mean_Series':nse_wmean}
     return out_dct
 
 

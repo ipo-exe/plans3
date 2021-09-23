@@ -1,5 +1,5 @@
-
-def watch_maps_byzmaps():
+# OK
+def demo_watch_by_zmaps():
     """
     Cookbook to watch maps from a simulation run
     :return:
@@ -12,7 +12,7 @@ def watch_maps_byzmaps():
     from visuals import plot_map_view
     #
     # define output directory
-    folder_output = 'C:/bin'
+    folder_output = 'C:/bin/sacre/views'
     #
     # directory of input data
     folder_input =  'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
@@ -27,16 +27,16 @@ def watch_maps_byzmaps():
     ##meta, basin = inp.asc_raster(fbasin)
     #
     # directory of simulated data
-    folder_sim = 'C:/bin/sacre/SLH_2021-09-01-06-14-59/calibration_period' 
+    folder_sim = 'C:/bin/sacre/SLH_2021-09-22-18-52-21'
     # simulated time series
     file = folder_sim + '/' + 'sim_series.txt'
     # import time series
     df_series = pd.read_csv(file, sep=';')
     #
     # define here list of variable maps
-    varmaps = ['RSE']
-    size = 200  # define how many frames to watch
-    start = 1
+    varmaps = ['ET', 'Tpgw']
+    size = 50  # define how many frames to watch
+    start = 1360
     #
     # loop in variables
     for v in varmaps:
@@ -45,8 +45,13 @@ def watch_maps_byzmaps():
         # import map series
         df = pd.read_csv(file, sep=';')
         # extract min and max values from series (global average values)
-        v_min = np.min(df_series[v].values[:size])
-        v_max = np.max(df_series[v].values[:size])
+        v_min = 0 #np.min(df_series[v].values[:size])
+        if v == 'D':
+            v_max = 100
+        elif v == 'VSA':
+            v_max = 1
+        else:
+            v_max = np.max(df_series[v].values[:size])
         #
         # loop in each frame
         for i in range(size):
@@ -82,7 +87,7 @@ def watch_maps_byzmaps():
             plot_map_view(mp, meta, ranges=(v_min, v_max), mapid=mapid, mapttl='{} | {}'.format(v, lcl_date),
                           show=False, metadata=False, folder=folder_output, filename='{}_{}'.format(v, lcl_date))
 
-
+# todo revise
 def visual_map_analyst():
     import inp, analyst
     from visuals import  plot_map_analyst
@@ -115,7 +120,7 @@ def visual_map_analyst():
     plot_map_analyst(obs, sim, metric, obs_signal, sim_signal, metric_signal, ranges=ranges, metricranges=metricranges,
                      metrics_dct=metrics_dct)
 
-
+# todo revise
 def demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps_analyst', folder='C:/bin', tui=True):
     from inp import dataframe_prepro
     import inp
@@ -232,7 +237,7 @@ def demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps_a
                                     filename=lcl_filename, folder=folder, ttl=lcl_ttl)
 
 
-def demo_watch():
+def demo_watch_pannels():
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -314,13 +319,87 @@ def demo_watch():
                      t=t, type='ET', show=True, offset_back=offsetback, offset_front=offsetfront)
 
 
-def demo_simulation():
+def demo_slh():
+    """
+    Simulation demo routine
+    :return:
+    """
     from tools import slh
     import backend
     import pandas as pd
 
+    # define output workplace
+    outfolder = 'C:/bin/sacre'
+    # define observed datasets folder
+    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    # get input files
     files_input = backend.get_input2simbhydro(aoi=False)
-    folder = 'C:/Plans3/demo/datasets/observed'
+    fseries ='{}/{}'.format(folder, files_input[0])
+    fhydroparam = r"C:\bin\sacre\SLH_2021-09-22-18-38-13\sim_parameters.txt" #'{}/{}'.format(folder, files_input[1])
+    fshruparam = '{}/{}'.format(folder, files_input[2])
+    fhistograms = '{}/{}'.format(folder, files_input[3])
+    fbasinhists = '{}/{}'.format(folder, files_input[4])
+    fbasin = '{}/{}'.format(folder, files_input[5])
+    ftwi = '{}/{}'.format(folder, files_input[6])
+    fshru = '{}/{}'.format(folder, files_input[7])
+    fcanopy = '{}/{}'.format(folder, files_input[8])
+    #
+    # map back settings
+    vars = 'IRI-IRA'
+    mapdates = 'all'
+    mapback = True
+    if mapback:
+        # define the variables to map back
+        # Options 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA' or 'all'
+        vars = 'all'
+        # define the range of dates to map back
+        date_init = '2011-01-01'
+        date_end = '2012-01-01'
+        series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+        query_str = 'Date >= "{}" and Date < "{}"'.format(date_init, date_end)
+        #series = series.query(query_str)
+        if len(series) == 0:  # no dates in range
+            mapback = False
+            print('No dates in range')
+        else:
+            mapdates = ' & '.join(series['Date'].astype('str'))
+    # integration settings:
+    integrate = False
+    # raster mapping settings:
+    mapraster = False
+    #
+    # call function
+    out_dct = slh(fseries=fseries,
+                  fhydroparam=fhydroparam,
+                  fshruparam=fshruparam,
+                  fhistograms=fhistograms,
+                  fbasinhists=fbasinhists,
+                  fbasin=fbasin,
+                  ftwi=ftwi,
+                  fshru=fshru,
+                  fcanopy=fcanopy,
+                  folder=outfolder,
+                  wkpl=True,
+                  tui=True,
+                  mapback=mapback,
+                  mapraster=mapraster,
+                  mapvar=vars,
+                  integrate=integrate,
+                  mapdates=mapdates,
+                  qobs=True)
+
+
+def demo_slh_calib():
+    from tools import slh_calib
+    import backend
+    import pandas as pd
+
+    # define output workplace
+    outfolder = 'C:/bin/sacre'
+    # define observed datasets folder
+    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    # get input files
+    files_input = backend.get_input2simbhydro(aoi=False)
     fseries ='{}/{}'.format(folder, files_input[0])
     fhydroparam = '{}/{}'.format(folder, files_input[1])
     fshruparam = '{}/{}'.format(folder, files_input[2])
@@ -329,39 +408,96 @@ def demo_simulation():
     fbasin = '{}/{}'.format(folder, files_input[5])
     ftwi = '{}/{}'.format(folder, files_input[6])
     fshru = '{}/{}'.format(folder, files_input[7])
+    fcanopy = '{}/{}'.format(folder, files_input[8])
+    #
 
-    series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
-    date_init = '2011-01-01'
-    date_end = '2012-01-01'
-    query_str = 'Date >= "{}" and Date < "{}"'.format(date_init, date_end)
-    series = series.query(query_str)
-
-    vars = 'IRI-IRA'
-    #vars = 'all'
-
+    #
+    # map back settings
+    vars = 'ET'
+    mapback = True
+    #
+    # import also the etpat series to extract the dates
+    fetpatseries = '{}/calib_etpat_zmaps_note.txt'.format(folder)
+    series = pd.read_csv(fetpatseries, sep=';', parse_dates=['Date'])
     mapdates = ' & '.join(series['Date'].astype('str'))
-    #mapdates = 'all'
-    #print(mapdates)
-    outfolder = 'C:/bin'
-    out_dct = slh(fseries=fseries, fhydroparam=fhydroparam, fshruparam=fshruparam,
-                  fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin,
-                  ftwi=ftwi, fshru=fshru, folder=outfolder,
-                  wkpl=True,
-                  tui=True,
-                  mapback=True,
-                  mapraster=True,
-                  mapvar=vars, integrate=True,
-                  mapdates=mapdates, qobs=True)
+    #
+    # integration settings:
+    integrate = False
+    # raster mapping settings:
+    mapraster = False
+    #
+    # call function
+    out_dct = slh_calib(fseries=fseries,
+                        fhydroparam=fhydroparam,
+                        fshruparam=fshruparam,
+                        fhistograms=fhistograms,
+                        fbasinhists=fbasinhists,
+                        fbasin=fbasin,
+                        ftwi=ftwi,
+                        fshru=fshru,
+                        fcanopy=fcanopy,
+                        folder=outfolder,
+                        wkpl=True,
+                        tui=True,
+                        mapback=mapback,
+                        mapraster=False,
+                        mapvar=vars,
+                        integrate=False,
+                        mapdates=mapdates,
+                        qobs=True,
+                        label='CALIB')
 
 
-def diags():
-    import pandas as pd
-    from tools import sdiag
-    fseries = r"C:\Plans3\pardo\runbin\simulation\calib_SLH_2021-04-30-09-27-27\calibration_period\sim_series.txt"
-    series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
-    sdiag(fseries, tui=True)
+def demo_calibration():
+    import backend
+    from tools import calibrate
 
+    # define the output workplace folder
+    outfolder = 'C:/bin/sacre'
 
+    # get folder of observed datasets
+    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+
+    # get observed datasets standard names
+    files_input = backend.get_input2calibhydro()
+    fseries = folder + '/' + files_input[0]
+    fhydroparam = folder + '/' + files_input[1]
+    fshruparam = folder + '/' + files_input[2]
+    fhistograms = folder + '/' + files_input[3]
+    fbasinhists = folder + '/' + files_input[4]
+    fbasin = folder + '/' + files_input[5]
+    ftwi = folder + '/' + files_input[6]
+    fshru = folder + '/' + files_input[7]
+    fetpatzmaps = folder + '/' + 'calib_etpat_zmaps_note.txt' #files_input[8]
+    fcanopy = folder + '/' + files_input[9]
+
+    # Options: 'NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias', 'RMSE-CFC', 'RMSElog-CFC'
+
+    likelihood = 'KGElog'
+    generations = 3
+    popsize = 20
+
+    calibfiles = calibrate(fseries=fseries,
+                           fhydroparam=fhydroparam,
+                           fshruparam=fshruparam,
+                           fhistograms=fhistograms,
+                           fbasinhists=fbasinhists,
+                           fbasin=fbasin,
+                           fetpatzmaps=fetpatzmaps,
+                           ftwi=ftwi,
+                           fshru=fshru,
+                           fcanopy=fcanopy,
+                           folder=outfolder,
+                           label='calib',
+                           generations=generations,
+                           popsize=popsize,
+                           likelihood=likelihood,
+                           tui=True,
+                           normalize=False)
+
+    print('\nRun files sucessfully created at:\n{}\n'.format(calibfiles['Folder']))
+
+# todo revise
 def plot_sal_frames():
     import numpy as np
     from visuals import sal_deficit_frame
@@ -380,7 +516,6 @@ def plot_sal_frames():
         else:
             stamp = str(g)
         return stamp
-
 
     meta, twi = asc_raster('./samples/calib_twi.asc')
 
@@ -417,7 +552,7 @@ def plot_sal_frames():
                           dgbl_max=np.max(d_nd), filename=filename)
         count = count + 1
 
-
+# todo revise
 def plot_gens_evolution(folder='C:/bin'):
     import pandas as pd
     import numpy as np
@@ -459,7 +594,7 @@ def plot_gens_evolution(folder='C:/bin'):
         exp = '{}/{}'.format(folder, filename)
         plt.savefig(exp)
 
-
+# todo revise
 def demo_create_benchmark_series():
     import numpy as np
     import pandas as pd
@@ -523,8 +658,8 @@ def demo_create_benchmark_series():
     plt.plot(df2['Date'], df2['Temp'])
     plt.show()
 
-
-def insert_irrigation(folder='C:/bin'):
+# todo revise
+def __insert_irrigation(folder='C:/bin'):
     import pandas as pd
     import matplotlib.pyplot as plt
     import numpy as np

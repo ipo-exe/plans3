@@ -1483,149 +1483,6 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, var='ETPat', folde
     export_report(report_lst, filename='REPORT__analyst_zmaps', folder=folder, tui=tui)
 
 
-def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
-              mapraster=False, mapvar='all', mapdates='all', integrate=False, cutdatef=0.3, qobs=True,
-              folder='C:/bin', wkpl=False, label='',tui=False):
-    from backend import create_rundir
-    from visuals import pannel_calib_valid
-    from os import mkdir
-
-    def extract_calib_valid(dataframe, fvalid=0.333):
-        size = len(dataframe)
-        cut_id = int(size * (1 - fvalid))
-        cut_date = dataframe['Date'].values[cut_id]
-        calib_df = dataframe.query('Date < "{}"'.format(cut_date))
-        valid_df = dataframe.query('Date >= "{}"'.format(cut_date))
-        return calib_df, valid_df, cut_date
-    #
-    # Run Folder setup
-    if tui:
-        from tui import status
-        status('setting folders')
-    if wkpl:  # if the passed folder is a workplace, create a sub folder
-        if label != '':
-            label = label + '_'
-        folder = create_rundir(label=label + 'SLH', wkplc=folder)
-    #
-    # set up output folders
-    calibration_folder = folder + '/calibration_period'
-    mkdir(calibration_folder)
-    validation_folder = folder + '/validation_period'
-    mkdir(validation_folder)
-    full_folder = folder + '/full_period'
-    mkdir(full_folder)
-    #
-    # import series and split
-    if tui:
-        status('importing series')
-    series_df = pd.read_csv(fseries, sep=';')
-    series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
-    #
-    ##### series_df = series_df.query('Date >= "2011-01-01" and Date < "2011-07-01"')
-    calib_df, valid_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef)
-    #
-    # export separate series:
-    if tui:
-        status('splitting series')
-    fcalib_series = folder + '/' + 'input_series_calibration_period.txt'
-    calib_df.to_csv(fcalib_series, sep=';', index=False)
-    #
-    fvalid_series = folder + '/' + 'input_series_validation_period.txt'
-    valid_df.to_csv(fvalid_series, sep=';', index=False)
-    #
-    ffull_series = folder + '/' + 'input_series_full_period.txt'
-    series_df.to_csv(ffull_series, sep=';', index=False)
-    #
-    #
-    # run SLH for calibration period
-    if tui:
-        status('running SLH for calibration period')
-    calib_dct = slh(fseries=fcalib_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy,
-                    mapback=mapback, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, integrate=integrate,
-                    qobs=qobs, folder=calibration_folder, wkpl=False, label=label, tui=tui)
-    fsim_calib = calib_dct['Series']
-    # run SDIAG for calibration period
-    if tui:
-        status('running SDIAG for calibration period')
-    sdiag_file1 = sdiag(fseries=fsim_calib, folder=calibration_folder, tui=tui)
-    # run OSA for calibration period
-    if tui:
-        status('running OSA for calibration period')
-    osa_files1 = osa_series(fseries=fsim_calib, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
-                            folder=calibration_folder, tui=tui)
-    if mapback and 'ET' in mapvar:
-        if tui:
-            status('running ZMAP OSA for calibration period')
-            print('code missing')
-    #
-    #
-    # run SLH for validation period
-    if tui:
-        status('running SLH for validation period')
-    valid_dct = slh(fseries=fvalid_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, integrate=integrate,
-                    mapback=mapback, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, qobs=qobs,
-                    folder=validation_folder, wkpl=False, label=label, tui=tui)
-    fsim_valid = valid_dct['Series']
-    # run SDIAG for valid period
-    if tui:
-        status('running SDIAG for validation period')
-    sdiag_file2 = sdiag(fseries=fsim_valid, folder=validation_folder, tui=tui)
-    # run OSA for validation period
-    if tui:
-        status('running OSA for validation period')
-    osa_files2 = osa_series(fseries=fsim_valid, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
-                            folder=validation_folder, tui=tui)
-    if mapback and 'ET' in mapvar:
-        if tui:
-            status('running ZMAP OSA for validation period')
-            print('code missing')
-    #
-    #
-    # run SLH for full period
-    if tui:
-        status('running SLH for full period')
-    full_dct = slh(fseries=ffull_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, integrate=integrate,
-                    mapback=False, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, qobs=qobs,
-                    folder=full_folder, wkpl=False, label=label, tui=tui)
-    fsim_full = full_dct['Series']
-    # run SDIAG for full period
-    if tui:
-        status('running SDIAG for full period')
-    sdiag_file3 = sdiag(fseries=fsim_full, folder=full_folder, tui=tui)
-    # run OSA for full period
-    if tui:
-        status('running OSA for full period')
-    osa_files3 = osa_series(fseries=fsim_full, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
-                            folder=full_folder, tui=tui)
-    if mapback and 'ET' in mapvar:
-        if tui:
-            status('running ZMAP OSA for full period')
-            print('code missing')
-    #
-    # exports
-    if tui:
-        status('exporting pannel')
-    full = osa_files3[0]
-    cal = osa_files1[0]
-    val = osa_files2[0]
-    freq = osa_files3[1]
-    pfull = osa_files3[2]
-    pcal = osa_files1[2]
-    pval = osa_files2[2]
-    df_full = pd.read_csv(full, sep=';', parse_dates=['Date'])
-    df_cal = pd.read_csv(cal, sep=';', parse_dates=['Date'])
-    df_val = pd.read_csv(val, sep=';', parse_dates=['Date'])
-    df_freq = pd.read_csv(freq, sep=';')
-    p_full = pd.read_csv(pfull, sep=';')
-    p_cal = pd.read_csv(pcal, sep=';')
-    p_val = pd.read_csv(pval, sep=';')
-    pannel_calib_valid(df_full, df_cal, df_val, df_freq, p_full, p_cal, p_val, folder=folder)
-    return {'Folder':folder, 'CalibFolder':calibration_folder, 'ValidFolder':validation_folder, 'FullFolder':full_folder}
-
-
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
         mapraster=False, mapvar='all', mapdates='all', integrate=False, qobs=False, folder='C:/bin',
         wkpl=False, label='',  tui=False):
@@ -1823,6 +1680,11 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     exp_file3 = folder + '/' + 'sim_parameters.txt'
     copyfile(src=fhydroparam, dst=exp_file3)
     #
+    #
+    if tui:
+        status('running simulation diagnostics')
+    sdiag_file1 = sdiag(fseries=exp_file1, folder=folder, tui=tui)
+    #
     # export visual pannel
     if tui:
         status('exporting visual results')
@@ -2003,7 +1865,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
     #
     # output files report
-    outfiles = [exp_file1, exp_file2, exp_file3, exp_file4]
+    outfiles = [exp_file1, exp_file2, exp_file3, sdiag_file1, exp_file4]
     output_df = pd.DataFrame({'Main output files': outfiles})
     report_lst.append(output_df.to_string(index=False))
     report_lst.append('\n')
@@ -2026,10 +1888,196 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     return out_dct
 
 
+def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
+              mapraster=False, mapvar='all', mapdates='all', integrate=False, cutdatef=0.3, qobs=True,
+              folder='C:/bin', wkpl=False, label='',tui=False):
+    """
+
+    SLH for a calibration series (qobs is known in series)
+
+    :param fseries: string filepath to simulation series
+    :param fhydroparam: string filepath to parameters csv (txt file)
+    :param fshruparam: string filepath to shru parameters csv (txt file)
+    :param fhistograms: string filepath to histograms csv (txt file)
+    :param fbasinhists: string filepath to basin histograms csv (txt file)
+    :param fbasin: string filepath to basin raster map (asc file)
+    :param ftwi: string filepath to twi raster map (asc file)
+    :param fshru: string filepath to shru raster map (asc file)
+    :param fcanopy: string filepath to canopy seasonal factor series (txt file)
+    :param mapback: boolean to map back variables
+    :param mapraster: boolean to map back raster maps
+    :param mapvar: string of variables to map. Pass concatenated by '-'. Ex: 'ET-TF-Inf'.
+    Options: 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+    :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-21-01 & 21-22-01'
+    :param integrate: boolean to include variable integration over the simulation period
+    :param cutdatef: float fraction (0 to 1) of the validation period
+    :param qobs: boolean to inclue Qobs in visuals
+    :param folder: string to folderpath
+    :param wkpl: boolean to set folder as workplace
+    :param label: string label
+    :param tui: boolean to TUI display
+    :return:
+    """
+    from backend import create_rundir
+    from visuals import pannel_calib_valid
+    from os import mkdir
+
+    def extract_calib_valid(dataframe, fvalid=0.333):
+        size = len(dataframe)
+        cut_id = int(size * (1 - fvalid))
+        cut_date = dataframe['Date'].values[cut_id]
+        calib_df = dataframe.query('Date < "{}"'.format(cut_date))
+        valid_df = dataframe.query('Date >= "{}"'.format(cut_date))
+        return calib_df, valid_df, cut_date
+    #
+    # Run Folder setup
+    if tui:
+        from tui import status
+        status('setting folders')
+    if wkpl:  # if the passed folder is a workplace, create a sub folder
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'SLH', wkplc=folder)
+    #
+    # set up output folders
+    calibration_folder = folder + '/calibration_period'
+    mkdir(calibration_folder)
+    validation_folder = folder + '/validation_period'
+    mkdir(validation_folder)
+    full_folder = folder + '/full_period'
+    mkdir(full_folder)
+    #
+    # import series and split
+    if tui:
+        status('importing series')
+    series_df = pd.read_csv(fseries, sep=';')
+    series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
+    #
+    ##### series_df = series_df.query('Date >= "2011-01-01" and Date < "2011-07-01"')
+    calib_df, valid_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef)
+    #
+    # export separate series:
+    if tui:
+        status('splitting series')
+    fcalib_series = folder + '/' + 'input_series_calibration_period.txt'
+    calib_df.to_csv(fcalib_series, sep=';', index=False)
+    #
+    fvalid_series = folder + '/' + 'input_series_validation_period.txt'
+    valid_df.to_csv(fvalid_series, sep=';', index=False)
+    #
+    ffull_series = folder + '/' + 'input_series_full_period.txt'
+    series_df.to_csv(ffull_series, sep=';', index=False)
+    #
+    #
+    # run SLH for calibration period
+    if tui:
+        status('running SLH for calibration period')
+    calib_dct = slh(fseries=fcalib_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
+                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy,
+                    mapback=mapback, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, integrate=integrate,
+                    qobs=qobs, folder=calibration_folder, wkpl=False, label=label, tui=tui)
+    fsim_calib = calib_dct['Series']
+    # run OSA for calibration period
+    if tui:
+        status('running OSA for calibration period')
+    osa_files1 = osa_series(fseries=fsim_calib, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
+                            folder=calibration_folder, tui=tui)
+    if mapback and 'ET' in mapvar:
+        if tui:
+            status('running ZMAP OSA for calibration period')
+            print('code missing')
+    #
+    #
+    # run SLH for validation period
+    if tui:
+        status('running SLH for validation period')
+    valid_dct = slh(fseries=fvalid_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
+                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, integrate=integrate,
+                    mapback=mapback, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, qobs=qobs,
+                    folder=validation_folder, wkpl=False, label=label, tui=tui)
+    fsim_valid = valid_dct['Series']
+    # run OSA for validation period
+    if tui:
+        status('running OSA for validation period')
+    osa_files2 = osa_series(fseries=fsim_valid, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
+                            folder=validation_folder, tui=tui)
+    if mapback and 'ET' in mapvar:
+        if tui:
+            status('running ZMAP OSA for validation period')
+            print('code missing')
+    #
+    #
+    # run SLH for full period
+    if tui:
+        status('running SLH for full period')
+    full_dct = slh(fseries=ffull_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
+                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, integrate=integrate,
+                    mapback=False, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, qobs=qobs,
+                    folder=full_folder, wkpl=False, label=label, tui=tui)
+    fsim_full = full_dct['Series']
+    # run OSA for full period
+    if tui:
+        status('running OSA for full period')
+    osa_files3 = osa_series(fseries=fsim_full, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
+                            folder=full_folder, tui=tui)
+    if mapback and 'ET' in mapvar:
+        if tui:
+            status('running ZMAP OSA for full period')
+            print('code missing')
+    #
+    # exports
+    if tui:
+        status('exporting pannel')
+    full = osa_files3[0]
+    cal = osa_files1[0]
+    val = osa_files2[0]
+    freq = osa_files3[1]
+    pfull = osa_files3[2]
+    pcal = osa_files1[2]
+    pval = osa_files2[2]
+    df_full = pd.read_csv(full, sep=';', parse_dates=['Date'])
+    df_cal = pd.read_csv(cal, sep=';', parse_dates=['Date'])
+    df_val = pd.read_csv(val, sep=';', parse_dates=['Date'])
+    df_freq = pd.read_csv(freq, sep=';')
+    p_full = pd.read_csv(pfull, sep=';')
+    p_cal = pd.read_csv(pcal, sep=';')
+    p_val = pd.read_csv(pval, sep=';')
+    pannel_calib_valid(df_full, df_cal, df_val, df_freq, p_full, p_cal, p_val, folder=folder)
+    return {'Folder':folder, 'CalibFolder':calibration_folder, 'ValidFolder':validation_folder, 'FullFolder':full_folder}
+
+
 def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
               fetpatzmaps, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all',
-              qobs=True, cutdatef=0.3, generations=100, popsize=200, likelihood='NSE', label='', normalize=True):
-    # todo docstring
+              qobs=True, cutdatef=0.3, generations=100, popsize=200, likelihood='NSE', label='', normalize=False):
+    """
+    Calibration tool
+    :param fseries: string filepath to input series txt file
+    :param fhydroparam: string filepath to parameters txt file
+    :param fshruparam: string filepath to shru parameters txt file
+    :param fhistograms: string filepath to histograms zmap txt file
+    :param fbasinhists: string filepath to basin histograms zmap txt file
+    :param fbasin: string filepath to basin asc file
+    :param ftwi: string filepath to twi asc file
+    :param fshru: string filepath to shru asc file
+    :param fcanopy: string filepath to canopy series txt file
+    :param fetpatzmaps: string filepath to etpat zmaps series txt file
+    :param folder: string filepath to workplace folder
+    :param tui: boolean for display
+    :param mapback: boolean to mapback during MLM simulation
+    :param mapvar: string code of variables to mapback during MLM simulation (see SLH docstring)
+    :param mapdates: string code of dates to mapback during MLM simulation (see SLH docstring)
+    :param qobs: boolean to inform qobs during MLM simulation
+    :param cutdatef: float cut date fraction (0 to 1) for validation period
+    :param generations: int number of generations to run the calibration
+    :param popsize: int number of models in each generation
+    :param likelihood: string code for Q calibration.
+
+    Options: 'NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias', 'RMSE-CFC', 'RMSElog-CFC'
+
+    :param label: string label to append in output folder
+    :param normalize: boolean to normalize ET values into an fuzzy ET pattern
+    :return: dictionary of run folder and files
+    """
     from inp import histograms
     from hydrology import avg_2d, simulation, map_back, calibration
     from visuals import pannel_global
@@ -2514,3 +2562,108 @@ def sal_d_by_twi(ftwi1, ftwi2, m=10, dmax=100, size=100, label='', wkpl=False, f
         lcl_flnm = 'sal_d_by_twi__{}'.format(id_label(id=i))
         sal_deficit_frame(dgbl=lcl_d, d1=lcl_di_1, d2=lcl_di_2, m1=m, m2=m, vsa1=lcl_vsai_1, vsa2=lcl_vsai_2,
                           dgbl_max=dmax, filename=lcl_flnm, folder=folder, supttl='Sensitivity to TWI')
+
+
+def sal_d_by_m(ftwi, m1=10, m2=500, dmax=100, size=100, label='', wkpl=False, folder='C:/bin'):
+    """
+    SAL of deficit by changing m
+    :param ftwi: string filepath to .asc raster map of TWI
+    :param m1: float of m parameter 1
+    :param m2: float of m parameter 2
+    :param dmax: int of max deficit
+    :param size: int size of SAL
+    :param label: string file label
+    :param wkpl: boolen to set the output folder as workplace
+    :param folder: string file path to output folder
+    :return: none
+    """
+    from hydrology import topmodel_di, topmodel_vsai
+    from visuals import sal_deficit_frame
+    from backend import create_rundir
+
+    def id_label(id):
+        if id < 10:
+            return '000' + str(id)
+        elif id >= 10 and id < 100:
+            return '00' + str(id)
+        elif id >= 100 and id < 1000:
+            return '0' + str(id)
+        elif id >= 1000 and id < 10000:
+            return  str(id)
+
+    # folder setup
+    if wkpl:  # if the passed folder is a workplace, create a sub folder
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'SAL_D_by_m__{}_{}'.format(str(int(m1)), str(int(m1))), wkplc=folder)
+
+    # load twi maps
+    meta, twi = inp.asc_raster(file=ftwi, dtype='float32')
+    # standard lambda:
+    lamb_mean = np.mean(twi)
+
+    d = np.linspace(0, dmax, size)
+    for i in range(len(d)):
+        lcl_d = d[i]
+        print(i)
+        lcl_di_1 = topmodel_di(d=lcl_d, twi=twi, m=m1, lamb=lamb_mean)
+        lcl_di_2 = topmodel_di(d=lcl_d, twi=twi, m=m2, lamb=lamb_mean)
+        lcl_vsai_1 = topmodel_vsai(di=lcl_di_1)
+        lcl_vsai_2 = topmodel_vsai(di=lcl_di_2)
+        # plot frame
+        lcl_flnm = 'sal_d_by_m__{}'.format(id_label(id=i))
+        sal_deficit_frame(dgbl=lcl_d, d1=lcl_di_1, d2=lcl_di_2, p1=m1, p2=m2, p_lbl='m', vsa1=lcl_vsai_1, vsa2=lcl_vsai_2,
+                          dgbl_max=dmax, filename=lcl_flnm, folder=folder, supttl='Sensitivity to m | lamb={}'.format(lamb_mean))
+
+
+def sal_d_by_lamb(ftwi, m=10, lamb1=5, lamb2=15, dmax=100, size=100, label='', wkpl=False, folder='C:/bin'):
+    """
+    SAL of deficit by changing Lambda
+    :param ftwi: string filepath to .asc raster map of TWI
+    :param lamb1: float of lamb parameter 1
+    :param lamb2: float of lamb parameter 2
+    :param dmax: int of max deficit
+    :param size: int size of SAL
+    :param label: string file label
+    :param wkpl: boolen to set the output folder as workplace
+    :param folder: string file path to output folder
+    :return: none
+    """
+    from hydrology import topmodel_di, topmodel_vsai
+    from visuals import sal_deficit_frame
+    from backend import create_rundir
+
+    def id_label(id):
+        if id < 10:
+            return '000' + str(id)
+        elif id >= 10 and id < 100:
+            return '00' + str(id)
+        elif id >= 100 and id < 1000:
+            return '0' + str(id)
+        elif id >= 1000 and id < 10000:
+            return  str(id)
+
+    # folder setup
+    if wkpl:  # if the passed folder is a workplace, create a sub folder
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'SAL_D_by_lamb__{}_{}'.format(str(int(lamb1)), str(int(lamb2))), wkplc=folder)
+
+    # load twi maps
+    meta, twi = inp.asc_raster(file=ftwi, dtype='float32')
+
+    d = np.linspace(0, dmax, size)
+    for i in range(len(d)):
+        lcl_d = d[i]
+        print(i)
+        lcl_di_1 = topmodel_di(d=lcl_d, twi=twi, m=m, lamb=lamb1)
+        lcl_di_2 = topmodel_di(d=lcl_d, twi=twi, m=m, lamb=lamb2)
+        #import matplotlib.pyplot as plt
+        #plt.imshow(lcl_di_2)
+        #plt.show()
+        lcl_vsai_1 = topmodel_vsai(di=lcl_di_1)
+        lcl_vsai_2 = topmodel_vsai(di=lcl_di_2)
+        # plot frame
+        lcl_flnm = 'sal_d_by_lamb__{}'.format(id_label(id=i))
+        sal_deficit_frame(dgbl=lcl_d, d1=lcl_di_1, d2=lcl_di_2, p1=lamb1, p2=lamb2, p_lbl='lamb', vsa1=lcl_vsai_1, vsa2=lcl_vsai_2,
+                          dgbl_max=dmax, vmax=4*dmax, filename=lcl_flnm, folder=folder, supttl='Sensitivity to lambda | m={}'.format(m))
