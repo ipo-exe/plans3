@@ -2658,9 +2658,6 @@ def sal_d_by_lamb(ftwi, m=10, lamb1=5, lamb2=15, dmax=100, size=100, label='', w
         print(i)
         lcl_di_1 = topmodel_di(d=lcl_d, twi=twi, m=m, lamb=lamb1)
         lcl_di_2 = topmodel_di(d=lcl_d, twi=twi, m=m, lamb=lamb2)
-        #import matplotlib.pyplot as plt
-        #plt.imshow(lcl_di_2)
-        #plt.show()
         lcl_vsai_1 = topmodel_vsai(di=lcl_di_1)
         lcl_vsai_2 = topmodel_vsai(di=lcl_di_2)
         # plot frame

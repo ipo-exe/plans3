@@ -442,15 +442,16 @@ IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K
 	 Data frame of hydrology parameter set and ranges. 
 	 Parameters are: 
 	 1) `m` - positive real value of effective transmissivity decay coefficient in mm; 
-	 2) `qo` -positive real value of maximal baseflow when D=0 in mm/d;  
-	 3) `cpmax` - positive real value of effective unitary canopy water storage capacity in mm; 
-	 4) `sfmax` - positive real value of effective unitary surface water storage capacity in mm;  
-	 5) `erz` - positive real value of effective unitary root zone depth in mm.  
-	 6) `ksat` - positive real value of effective unitary saturated hydraulic conductivity in mm/d; 
-	 7) `c` - positive real value of scaling parameter for PET model in Celcius;
-	 8) `lat` - real value of latitude in degrees for PET model;
-	 9) `k` - positive real value of Nash Cascade residence time in days; 
-	 10) `n` - positive real value of equivalent number of reservoirs in Nash Cascade;
+	 2) `lamb` -positive real value of the TWI threshold to compute local deficits (standard Topmodel is the averaged TWI) in TWI units; 
+	 3) `qo` -positive real value of maximal baseflow when D=0 in mm/d;  
+	 4) `cpmax` - positive real value of effective unitary canopy water storage capacity in mm; 
+	 5) `sfmax` - positive real value of effective unitary surface water storage capacity in mm;  
+	 6) `erz` - positive real value of effective unitary root zone depth in mm.  
+	 7) `ksat` - positive real value of effective unitary saturated hydraulic conductivity in mm/d; 
+	 8) `c` - positive real value of scaling parameter for PET model in Celcius;
+	 9) `lat` - real value of latitude in degrees for PET model;
+	 10) `k` - positive real value of Nash Cascade residence time in days; 
+	 11) `n` - positive real value of equivalent number of reservoirs in Nash Cascade;
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period  `.`.
@@ -463,6 +464,7 @@ IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K
 ```
 Parameter;    Set;    Min;    Max
         m;   32.5;    1.0;   50.0
+     lamb;    4.0;    1.0;   30.0
        qo;    0.8;    0.5;    2.0
     cpmax;   16.3;   10.0;   20.0
     sfmax;   19.6;   10.0;    5.0

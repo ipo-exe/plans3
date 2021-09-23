@@ -1,5 +1,6 @@
 Parameter;Set;Min;Max
 m;32.5;1.0;50.0
+lamb;4;1.0;30
 qo;0.8;0.5;2.0
 cpmax;16.3;10.0;20.0
 sfmax;19.6;10.0;5.0
