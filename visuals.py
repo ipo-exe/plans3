@@ -791,7 +791,7 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True, folder='C:/bin', file
 
 def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel_topmodel', suff=''):
     """
-    visualize the topmodel global variables in a single pannel
+    visualize the model global variables in a single pannel
     :param dataframe: pandas dataframe from hydrology.topmodel_sim()
     :param grid: boolean for grid
     :param folder: string to destination directory
@@ -814,9 +814,12 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     max_stocks = 1.2 * np.max((dataframe['Unz'].values, dataframe['Sfs'].values, dataframe['Cpy'].values))
     max_int_flow = 1.2 * np.max((dataframe['Inf'].values, dataframe['Qv'].values))
     qmin = 0.8 * np.min(dataframe['Q'].values)
+    qmax = 1.5 * np.max(dataframe['Q'].values)
     if qobs:
         qmin = 0.8 * np.min((dataframe['Q'].values, dataframe['Qobs'].values))
-    # 1
+        qmax = 1.5 * np.max((dataframe['Q'].values, dataframe['Qobs'].values))
+    #
+    # Prec
     ax = fig.add_subplot(gs[0, 0:col1])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['Prec'], label='Precipitation')
@@ -830,7 +833,8 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     plt.ylim(0, max_irr)
     plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
-    # 1
+    #
+    # PET
     ax = fig.add_subplot(gs[0, col2:])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['Temp'], 'tab:orange', label='Temperature')
@@ -842,7 +846,8 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     plt.ylabel('mm/d')
     plt.legend(loc='upper right', ncol=1, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
-    # 2
+    #
+    # Runoff
     ax = fig.add_subplot(gs[1, 0:col1])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['TF'], 'skyblue', label='Troughfall')
@@ -853,7 +858,8 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     plt.ylim(0, max_prec)
     plt.legend(loc='upper left', ncol=4, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
-    # 3
+    #
+    # ET
     ax = fig.add_subplot(gs[1, col2:])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['PET'], 'tab:grey', label='PET')
@@ -862,20 +868,21 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     plt.ylabel('mm/d')
     plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
-    # 3
+    #
+    # Flow
     ax = fig.add_subplot(gs[2, 0:col1])
     plt.grid(grid)
     if qobs:
         plt.plot(dataframe['Date'], dataframe['Qobs'], 'tab:grey', label='Observed data')
     plt.plot(dataframe['Date'], dataframe['Q'], 'tab:blue', label='Flow')
     plt.plot(dataframe['Date'], dataframe['Qb'], 'navy', label='Baseflow')
-    plt.ylim(qmin, 10 * max_prec)
+    plt.ylim(qmin, qmax)
     plt.ylabel('mm/d')
     plt.legend(loc='upper right', ncol=3, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
     plt.yscale('log')
-
-    # 3
+    #
+    # Ev
     ax = fig.add_subplot(gs[2, col2:])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['PET'], 'tab:grey', label='PET')
@@ -885,7 +892,8 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     plt.ylabel('mm/d')
     plt.legend(loc='upper right', ncol=3, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
-    # 3
+    #
+    # Inf
     ax = fig.add_subplot(gs[3, 0:col1])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['Inf'], 'tab:blue', label='Infiltration')
@@ -893,7 +901,8 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     plt.ylim(0, max_int_flow)
     plt.ylabel('mm/d')
     plt.legend(loc='upper left', ncol=2, framealpha=1, fancybox=False)
-    # 3
+    #
+    # Tp
     ax = fig.add_subplot(gs[3, col2:])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['PET'], 'tab:grey', label='PET')
@@ -903,7 +912,8 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     plt.ylabel('mm/d')
     plt.legend(loc='upper right', ncol=3, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
-    # 3
+    #
+    # D
     ax = fig.add_subplot(gs[4, 0:col1])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['D'], 'k', label='Groundwater stock deficit')
@@ -916,7 +926,8 @@ def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin',
     plt.ylabel('mm')
     plt.legend(loc='upper right', ncol=1, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
-    # 3
+    #
+    # Sfs
     ax = fig.add_subplot(gs[4, col2:])
     plt.grid(grid)
     plt.plot(dataframe['Date'], dataframe['Cpy'], 'limegreen', label='Canopy water stock')
@@ -1518,120 +1529,29 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
     fig = plt.figure(figsize=(14, 6), )  # Width, Height
     fig.suptitle('GLUE | Posterior scattergrams of behavioural models'
                  ' | Criteria: {} {} {} | N = {}'.format(likelihood, criteria, behaviroural, len(models_df)))
-    gs = mpl.gridspec.GridSpec(2, 5, wspace=0.45, hspace=0.45)
+    rows = 2
+    cols = 5
+    gs = mpl.gridspec.GridSpec(rows, cols, wspace=0.45, hspace=0.45)
     #
-    params = ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
-    units = ('mm', 'mm/d', 'mm', 'mm', 'mm', 'mm/d', '°C', 'days', 'stores units')
+    params = ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    units = ('mm', 'twi units', 'mm/d', 'mm', 'mm', 'mm', 'mm/d', '°C', 'days', 'stores units')
     #
     criteria_line = (models_df['m'].values * 0.0) + (behaviroural * 0.97)
     #
     ind = 0
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[0, 0])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
-    #
-    ind = 1
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[0, 1])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
-    #
-    ind = 2
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[0, 2])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
-    #
-    ind = 3
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[0, 3])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
-    #
-    ind = 4
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[0, 4])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
-    #
-    ind = 5
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[1, 0])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
-    #
-    ind = 6
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[1, 1])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
-    #
-    ind = 7
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[1, 2])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
-    #
-    ind = 8
-    lcl_prm = params[ind]
-    lcl_units = units[ind]
-    ax = fig.add_subplot(gs[1, 3])
-    plt.title('{}'.format(lcl_prm))
-    plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-    plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-    plt.ylabel('L[M|y]')
-    plt.xlabel('{}'.format(lcl_units))
-    plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-    plt.ylim((0, 1.1))
+    for i in range(rows):
+        for j in range(cols):
+            lcl_prm = params[ind]
+            lcl_units = units[ind]
+            ax = fig.add_subplot(gs[i, j])
+            plt.title('{}'.format(lcl_prm))
+            plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
+            plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+            plt.ylabel('L[M|y]')
+            plt.xlabel('{}'.format(lcl_units))
+            plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+            plt.ylim((0, 1.1))
+            ind = ind + 1
     #
     if show:
         plt.show()
@@ -1643,7 +1563,8 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
         return expfile
 
 
-def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, baseflow=False, scale='log', suff='', filename='glue_ensemble', folder='C:/bin',):
+def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, baseflow=False, scale='log', suff='',
+                  filename='glue_ensemble', folder='C:/bin',):
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     fig.suptitle('GLUE | 90% confidence ensemble of behavioural models')
@@ -1660,20 +1581,31 @@ def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, baseflow=False, s
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
     plt.title('Simulated flow', loc='left')
     plt.ylabel('mm/d')
+    #
+    # ensemble area
     if baseflow:
         label = '90% confidence ensemble (baseflow)'
     else:
         label = '90% confidence ensemble'
-    plt.fill_between(x=ensemble_df['Date'], y1=ensemble_df['Lo_90'], y2=ensemble_df['Hi_90'],
+    plt.fill_between(x=ensemble_df['Date'], y1=ensemble_df['Lo_5'], y2=ensemble_df['Hi_95'],
                      color='lightsteelblue', label=label)
+    #
+    # Observed data
     plt.plot(ensemble_df['Date'], sim_df['Qobs'], color='tab:grey', label='Observed data')
+    #
+    # ensemble mid 50%
+    if baseflow:
+        label = 'Ensemble median (baseflow)'
+    else:
+        label = 'Ensemble median'
+    plt.plot(ensemble_df['Date'], ensemble_df['Mid_50'], linestyle='dashed', color='navy', label=label)
     if baseflow:
         flow = sim_df['Qb']
         label = 'Maximum Likelihood Model (baseflow)'
     else:
         flow = sim_df['Q']
         label = 'Maximum Likelihood Model'
-    plt.plot(ensemble_df['Date'], flow, linestyle='dashed', color='tab:blue', label=label)
+    plt.plot(ensemble_df['Date'], flow, linestyle='dashed', color='maroon', label=label)
     plt.grid(grid)
     if scale == 'log':
         plt.yscale(scale)

@@ -884,9 +884,9 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
     return out_dct
 
 
-def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat, area, basinshadow,
-                m_range, qo_range, cpmax_range, sfmax_range, erz_range, ksat_range, c_range, k_range, n_range,
-                etpatdates, etpatzmaps, tui=True, normalize=False, grid=500, generations=100, popsize=200, offsfrac=1,
+def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area, basinshadow,
+                m_range, lamb_range, qo_range, cpmax_range, sfmax_range, erz_range, ksat_range, c_range, k_range, n_range,
+                etpatdates, etpatzmaps, tui=True, normalize=False, grid=1000, generations=10, popsize=200, offsfrac=1.0,
                 mutrate=0.5, puremutrate=0.8, cutfrac=0.33, tracefrac=0.1, tracepop=True, likelihood='NSE', nodata=-1):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
@@ -908,6 +908,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
         # generation loop:
         for g in range(len(traced)):
             m_lst = list()
+            lamb_lst = list()
             qo_lst = list()
             cpmax_lst = list()
             sfmax_lst = list()
@@ -922,14 +923,15 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
                 lcl_dna = traced[g]['DNAs'][i]
                 lcl_pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerb, ranges=ranges, gridsize=gridsize)
                 m_lst.append(lcl_pset[0])
-                qo_lst.append(lcl_pset[1])
-                cpmax_lst.append(lcl_pset[2])
-                sfmax_lst.append(lcl_pset[3])
-                erz_lst.append(lcl_pset[4])
-                ksat_lst.append(lcl_pset[5])
-                c_lst.append(lcl_pset[6])
-                k_lst.append(lcl_pset[7])
-                n_lst.append(lcl_pset[8])
+                lamb_lst.append(lcl_pset[1])
+                qo_lst.append(lcl_pset[2])
+                cpmax_lst.append(lcl_pset[3])
+                sfmax_lst.append(lcl_pset[4])
+                erz_lst.append(lcl_pset[5])
+                ksat_lst.append(lcl_pset[6])
+                c_lst.append(lcl_pset[7])
+                k_lst.append(lcl_pset[8])
+                n_lst.append(lcl_pset[9])
             #
             gen = np.ones(len(m_lst)) * g
             # built export dataframe
@@ -940,6 +942,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
                                    'FlowScore':traced[g]['FlowScores'],
                                    'EtpatScore':traced[g]['EtpatScores'],
                                    'm': m_lst,
+                                   'lamb':lamb_lst,
                                    'qo': qo_lst,
                                    'cpmax': cpmax_lst,
                                    'sfmax': sfmax_lst,
@@ -1026,18 +1029,16 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
     #
     #
     # bounds setup
-    lowerbound = np.array((np.min(m_range), np.min(qo_range), np.min(cpmax_range), np.min(sfmax_range),
+    lowerbound = np.array((np.min(m_range), np.min(lamb_range), np.min(qo_range), np.min(cpmax_range), np.min(sfmax_range),
                            np.min(erz_range), np.min(ksat_range), np.min(c_range), np.min(k_range), np.min(n_range)))
-    upperbound = np.array((np.max(m_range), np.max(qo_range), np.max(cpmax_range), np.max(sfmax_range),
+    upperbound = np.array((np.max(m_range), np.max(lamb_range), np.max(qo_range), np.max(cpmax_range), np.max(sfmax_range),
                            np.max(erz_range), np.max(ksat_range), np.max(c_range), np.max(k_range), np.max(n_range)))
     ranges = upperbound - lowerbound
     #
     #
     # Evolution setup
     nucleotides = tuple(np.arange(0, grid + 1))
-    parents = generate_population(nucleotides=(nucleotides,), genesizes=(9,), popsize=popsize)
-    #for e in parents:
-    #    print(e[0])
+    parents = generate_population(nucleotides=(nucleotides,), genesizes=(10,), popsize=popsize)
     trace = list()  # list to append best solutions
     if tracepop:
         trace_pop = list()
@@ -1059,8 +1060,8 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
         #
         if tui:
             print('Population: {} KB       '.format(getsizeof(population)))
-            print('                   | Set  ', end='\t  ')
-            print('{:8} {:8} {:8} {:8} {:8} {:8} {:8} {:8} {:8}'.format('m', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n'))
+            print('                   | Set  ', end='\t')
+            print('{:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8}'.format('m', 'lamb', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n'))
         #
         # fit new population
         ids_lst = list()
@@ -1112,13 +1113,31 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
             pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerbound, ranges=ranges, gridsize=grid)  # express the parameter set
             #
             #
-            # run topmodel
-            sim_dct = simulation(series=series, shruparam=shruparam, canopy=canopy,
-                                 twibins=twibins, countmatrix=countmatrix,
-                                 lamb=lamb, qt0=qt0, m=pset[0], qo=pset[1], cpmax=pset[2], sfmax=pset[3], erz=pset[4],
-                                 ksat=pset[5], c=pset[6], lat=lat, k=pset[7], n=pset[8],
-                                 area=area, basinshadow=basinshadow, tui=False,
-                                 qobs=True, mapback=True, mapvar='ET', mapdates=etpatdates)
+            # run model
+            sim_dct = simulation(series=series,
+                                 shruparam=shruparam,
+                                 canopy=canopy,
+                                 twibins=twibins,
+                                 countmatrix=countmatrix,
+                                 qt0=qt0,
+                                 m=pset[0],
+                                 lamb=pset[1],
+                                 qo=pset[2],
+                                 cpmax=pset[3],
+                                 sfmax=pset[4],
+                                 erz=pset[5],
+                                 ksat=pset[6],
+                                 c=pset[7],
+                                 lat=lat,
+                                 k=pset[8],
+                                 n=pset[9],
+                                 area=area,
+                                 basinshadow=basinshadow,
+                                 tui=False,
+                                 qobs=True,
+                                 mapback=True,
+                                 mapvar='ET',
+                                 mapdates=etpatdates)
             sim_df = sim_dct['Series']
             #
             # compute Flow sim data
@@ -1198,7 +1217,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
             etpat_analysis = analyst.zmaps(obs=sobs_etpat, sim=ssim_etpat, count=countmatrix, nodata=nodata, full_return=False)
             #
             # get the ETpat score (NSE)
-            lcl_etpat_score = etpat_analysis['NSE_Mean_Series'] # etpat_analysis['NSE_ZMap_Series']
+            lcl_etpat_score = etpat_analysis['NSE_ZMap_Series'] # etpat_analysis['NSE_ZMap_Series']
             #
             #
             #
@@ -1217,11 +1236,11 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
             # printing
             if tui:
                 print('Status: {:8.4f} % | Set '.format(runstatus), end='\t')
-                print('{:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f}'.format(pset[0], pset[1],
+                print('{:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f}'.format(pset[0], pset[1],
                                                                                                        pset[2], pset[3],
                                                                                                        pset[4], pset[5],
                                                                                                        pset[6], pset[7],
-                                                                                                       pset[8]), end='   ')
+                                                                                                       pset[8], pset[9]), end='   ')
                 print(' | Score: {:8.3f} | Flow: {:8.3f} | ETpat: {:8.3f}'.format(lcl_dna_score, lcl_flow_score, lcl_etpat_score))
             #
             #
@@ -1368,7 +1387,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
     pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges, gridsize=grid)
     if tui:
         print('\n\nMaximum Likelihood Model:')
-        tui_df = pd.DataFrame({'Parameter': ('m', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n'),
+        tui_df = pd.DataFrame({'Parameter': ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n'),
                                'Set': pset})
         print(tui_df.to_string())
         print('Score = {:.3f}'.format(last_score))
@@ -1385,8 +1404,22 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, lat,
     return out_dct
 
 
-def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat, area, basinshadow, tui=False):
-    # todo docstring
+def ensemble(series, models_df, shruparam, twibins, countmatrix, canopy_df, qt0, lat, area, basinshadow, tui=False):
+    """
+    Run the entire ensemble of models
+    :param series: pandas Dataframe of input series
+    :param models_df: pandas Dataframe of models (parameters in the fields)
+    :param shruparam: pandas Dataframe of shruparam (see simulation() routine)
+    :param twibins: same as in the simulation() routine
+    :param countmatrix: same as in the  simulation() routine
+    :param qt0: same as in the  simulation() routine
+    :param lat: same as in the  simulation() routine
+    :param area: same as in the  simulation() routine
+    :param basinshadow: same as in the  simulation() routine
+    :param tui: boolean to display
+    :return: dictionary of pandas dataframes with the Lower (5%), Mid (50%) and Upper (95%) of streamflow ('Q')
+     and baseflow ('Qb')
+    """
     from analyst import frequency
 
     def stamped(g):
@@ -1412,6 +1445,7 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat,
     sim_grid_qb = np.zeros(shape=(n_ensem, t_ensem))
     sim_ids = models_df['Id']
     m_vec = models_df['m'].values
+    lamb_vec = models_df['lamb'].values
     qo_vec = models_df['qo'].values
     cpmax_vec = models_df['cpmax'].values
     sfmax_vec = models_df['sfmax'].values
@@ -1423,15 +1457,17 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat,
     #
     # simulate every model:
     for i in range(n_ensem):
-        status(msg='Running model {} of {}'.format(i + 1, n_ensem))
+        if tui:
+            status(msg='Running model {} of {}'.format(i + 1, n_ensem))
         sim_dct = simulation(series=series,
                              shruparam=shruparam,
                              twibins=twibins,
                              countmatrix=countmatrix,
-                             lamb=lamb,
+                             lamb=lamb_vec[i],
                              qt0=qt0,
                              area=area,
                              basinshadow=basinshadow,
+                             canopy=canopy_df,
                              lat=lat,
                              m=m_vec[i],
                              qo=qo_vec[i],
@@ -1451,10 +1487,12 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat,
     sim_grid_q_t = np.transpose(sim_grid_q)
     sim_grid_qb_t = np.transpose(sim_grid_qb)
     #
-    # compute lo-hi bounds
+    # compute lo-mid-hi bounds
     lo_bound_q = np.zeros(shape=np.shape(series['Prec'].values))
+    mid_bound_q = np.zeros(shape=np.shape(series['Prec'].values))
     hi_bound_q = np.zeros(shape=np.shape(series['Prec'].values))
     lo_bound_qb = np.zeros(shape=np.shape(series['Prec'].values))
+    mid_bound_qb = np.zeros(shape=np.shape(series['Prec'].values))
     hi_bound_qb = np.zeros(shape=np.shape(series['Prec'].values))
     #
     for t in range(len(sim_grid_q_t)):
@@ -1462,23 +1500,27 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, lamb, qt0, lat,
         # full discharge
         lcl_freq = frequency(series=sim_grid_q_t[t])
         lo_bound_q[t] = lcl_freq['Values'][5]
+        mid_bound_q[t] = lcl_freq['Values'][50]
         hi_bound_q[t] = lcl_freq['Values'][95]
         #
         # baseflow
         lcl_freq = frequency(series=sim_grid_qb_t[t])
         lo_bound_qb[t] = lcl_freq['Values'][5]
+        mid_bound_qb[t] = lcl_freq['Values'][50]
         hi_bound_qb[t] = lcl_freq['Values'][95]
     #
     # built exports
     out_q_df = pd.DataFrame({'Date': series['Date'],
-                             'Lo_90': lo_bound_q,
-                             'Hi_90': hi_bound_q })
+                             'Lo_5': lo_bound_q,
+                             'Mid_50': mid_bound_q,
+                             'Hi_95': hi_bound_q })
     app_q_df = pd.DataFrame(sim_grid_q_t, columns=sim_ids)
     out_q_df = pd.concat([out_q_df, app_q_df], axis=1)
     # qb:
     out_qb_df = pd.DataFrame({'Date': series['Date'],
-                             'Lo_90': lo_bound_qb,
-                             'Hi_90': hi_bound_qb})
+                             'Lo_5': lo_bound_qb,
+                              'Mid_50': mid_bound_qb,
+                             'Hi_95': hi_bound_qb})
     app_qb_df = pd.DataFrame(sim_grid_qb_t, columns=sim_ids)
     out_qb_df = pd.concat([out_qb_df, app_qb_df], axis=1)
     #

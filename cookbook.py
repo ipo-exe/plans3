@@ -27,16 +27,16 @@ def demo_watch_by_zmaps():
     ##meta, basin = inp.asc_raster(fbasin)
     #
     # directory of simulated data
-    folder_sim = 'C:/bin/sacre/SLH_2021-09-22-18-52-21'
+    folder_sim = 'C:/bin/sacre/SLH_2021-09-23-18-16-31'
     # simulated time series
     file = folder_sim + '/' + 'sim_series.txt'
     # import time series
     df_series = pd.read_csv(file, sep=';')
     #
     # define here list of variable maps
-    varmaps = ['ET', 'Tpgw']
-    size = 50  # define how many frames to watch
-    start = 1360
+    varmaps = ['D', 'ET', 'VSA', 'Qv', 'Tpgw']
+    size = 20  # define how many frames to watch
+    start = 547
     #
     # loop in variables
     for v in varmaps:
@@ -47,11 +47,11 @@ def demo_watch_by_zmaps():
         # extract min and max values from series (global average values)
         v_min = 0 #np.min(df_series[v].values[:size])
         if v == 'D':
-            v_max = 100
+            v_max = np.max(df_series[v].values[start: start + size]) * 10
         elif v == 'VSA':
             v_max = 1
         else:
-            v_max = np.max(df_series[v].values[:size])
+            v_max = np.max(df_series[v].values[start: start + size])
         #
         # loop in each frame
         for i in range(size):
@@ -63,6 +63,9 @@ def demo_watch_by_zmaps():
             zmap, hist_twi, hist_shru = inp.zmap(file=lcl_file)
             # Map back to raster
             mp = map_back(zmatrix=zmap, a1=twi, a2=shru, bins1=hist_twi, bins2=hist_shru)
+            #import matplotlib.pyplot as plt
+            #plt.imshow(mp)
+            #plt.show()
             # mask it by basin
             #mp = geo.mask(mp, basin)
             #
@@ -87,236 +90,10 @@ def demo_watch_by_zmaps():
             plot_map_view(mp, meta, ranges=(v_min, v_max), mapid=mapid, mapttl='{} | {}'.format(v, lcl_date),
                           show=False, metadata=False, folder=folder_output, filename='{}_{}'.format(v, lcl_date))
 
-# todo revise
-def visual_map_analyst():
-    import inp, analyst
-    from visuals import  plot_map_analyst
-    import numpy as np
-    from scipy.ndimage import gaussian_filter
-    import matplotlib.pyplot as plt
-    # define output directory
-    folder_output = 'C:/bin'
-    #
-    # directory of input data
-    folder_input = 'C:/Plans3/demo/datasets/observed'
-    # files paths to raster maps
-    ftwi = folder_input + '/' + 'calib_twi.asc'
-    fobs = r"C:\Plans3\demo\datasets\observed\etpat\calib_etpat_2012-10-01.asc"
-    fsim = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-13-04-49\bestset\calibration_period\sim_ETPat\raster_ETPat_2012-10-01.asc"
-    #
-    # import raster maps
-    meta, obs = inp.asc_raster(fobs)
-    meta, sim = inp.asc_raster(fsim)
-    metric = analyst.error(obs, sim)
-
-    obs_signal = obs.flatten()
-    sim_signal = sim.flatten()
-    metric_signal = analyst.error(obs_signal, sim_signal)
-    #plt.imshow(metric, cmap='seismic')
-    #plt.show()
-    metrics_dct = {'Error': 666.666, 'SqErr': 666.666, 'RMSE': 666.666, 'NSE':666.3, 'KGE':666.666, 'R':666.666}
-    ranges = (0, 1)
-    metricranges = (-1, 1)
-    plot_map_analyst(obs, sim, metric, obs_signal, sim_signal, metric_signal, ranges=ranges, metricranges=metricranges,
-                     metrics_dct=metrics_dct)
-
-# todo revise
-def demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps_analyst', folder='C:/bin', tui=True):
-    from inp import dataframe_prepro
-    import inp
-    import pandas as pd
-    import numpy as np
-    #
-    import time, datetime
-    import analyst
-    from visuals import plot_map_analyst
-
-    def extract_series_data(dataframe, fld, type='raster'):
-        maps_lst = list()
-        signal_lst = list()
-        for i in range(len(dataframe)):
-            map_file = dataframe[fld].values[i]
-            if type == 'zmap':
-                map, ybins, xbins = inp.zmap(map_file)
-            elif type == 'raster':
-                meta, map = inp.asc_raster(map_file)
-            signal = map.flatten()
-            maps_lst.append(map)
-            signal_lst.append(signal)
-        full_signal = np.array(maps_lst).flatten()
-        return maps_lst, signal_lst, full_signal
-
-    # report setup
-    t0 = time.time()
-    report_lst = list()
-    report_lst.append('Execution timestamp: {}\n'.format(datetime.datetime.now()))
-    report_lst.append('Process: OBS-SIM DATA ANALYST\n')
-    input_files_df = pd.DataFrame({'Input files': (fseries,)})
-    report_lst.append(input_files_df.to_string(index=False))
-    #
-    if tui:
-        from tui import status
-        status('performing obs vs. sim map analysis')
-    #
-    # extract Dataframe
-    def_df = pd.read_csv(fseries, sep=';', engine='python')
-    def_df = dataframe_prepro(def_df, strfields='File_obs,File_sim,Date')
-    #
-    maps_obs_lst, signal_obs_lst, full_signal_obs = extract_series_data(def_df, 'File_obs', type=type)
-    maps_sim_lst, signal_sim_lst, full_signal_sim = extract_series_data(def_df, 'File_sim', type=type)
-    #
-    # 3) compute local map metrics and append to a new dataframe
-    map_errors = list()
-    map_sqerr = list()
-    map_rmse = list()
-    map_nse = list()
-    map_kge = list()
-    map_r = list()
-    metric_maps = list()
-    metric_signal = list()
-    for i in range(len(def_df)):
-        #
-        lcl_metric = analyst.error(maps_obs_lst[i], maps_sim_lst[i])
-        metric_maps.append(lcl_metric)
-        #
-        lcl_error = analyst.error(signal_obs_lst[i], signal_sim_lst[i])
-        metric_signal.append(lcl_error)
-        map_errors.append(np.mean(lcl_error))
-        #
-        lcl_sqerr = analyst.sq_error(signal_obs_lst[i], signal_sim_lst[i])
-        map_sqerr.append(np.mean(lcl_sqerr))
-        #
-        lcl_rmse = analyst.rmse(signal_obs_lst[i], signal_sim_lst[i])
-        map_rmse.append(lcl_rmse)
-        #
-        lcl_nse = analyst.nse(signal_obs_lst[i], signal_sim_lst[i])
-        map_nse.append(lcl_nse)
-        #
-        lcl_kge = analyst.kge(np.append([1], signal_obs_lst[i]), np.append([1], signal_sim_lst[i]) )
-        map_kge.append(lcl_kge)
-        #
-        lcl_r = analyst.linreg(np.append([1], signal_obs_lst[i]), np.append([1], signal_sim_lst[i]) )['R']
-        map_r.append(lcl_r)
-    #
-    # built data frame
-    def_df['Error'] = map_errors
-    def_df['SqErr'] = map_sqerr
-    def_df['RMSE'] = map_rmse
-    def_df['NSE'] = map_nse
-    def_df['KGE'] = map_kge
-    def_df['R'] = map_r
-    out_df = def_df[['Date', 'Error', 'SqErr', 'RMSE', 'NSE', 'KGE', 'R', 'File_obs', 'File_sim']]
-    #
-    #
-    # Export dataframe
-    out_file = folder + '/' + var + '_' + filename + '.txt'
-    out_df.to_csv(out_file, sep=';', index=False)
-    #
-    # Export visuals
-    map_vmin = 0.0 #np.min((maps_obs_lst, maps_obs_lst))
-    map_vmax = np.max((maps_obs_lst, maps_obs_lst))
-    ranges = (map_vmin, map_vmax)
-    map_metric_vmin = np.min(metric_maps)
-    map_metric_vmax = np.max(metric_maps)
-    mapmax = np.max((np.abs(map_metric_vmin), np.abs(map_metric_vmax)))
-    metricranges = (-mapmax, mapmax)
-    for i in range(len(out_df)):
-        print(i)
-        lcl_date = out_df['Date'].values[i]
-        lcl_filename = var + '_map_analyst_' + lcl_date
-        lcl_ttl = '{} | {}'.format(var, lcl_date)
-        metrics_dct = {'Error': out_df['Error'].values[i],
-                       'SqErr': out_df['SqErr'].values[i],
-                       'RMSE': out_df['RMSE'].values[i],
-                       'NSE':out_df['NSE'].values[i],
-                       'KGE':out_df['KGE'].values[i],
-                       'R':out_df['R'].values[i]}
-        vis_file = plot_map_analyst(obs=maps_obs_lst[i], sim=maps_sim_lst[i], metric=metric_maps[i],
-                                    obs_sig=signal_obs_lst[i], sim_sig=signal_sim_lst[i], ranges=ranges,
-                                    metricranges=metricranges, metric_sig=metric_signal[i], metrics_dct=metrics_dct,
-                                    filename=lcl_filename, folder=folder, ttl=lcl_ttl)
-
 
 def demo_watch_pannels():
-    import numpy as np
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    from visuals import pannel_local
-    import inp
-    from hydrology import map_back
-    folder ='C:/Plans3/demo/datasets/observed'
-    ftwi = '{}/calib_twi.asc'.format(folder)
-    fshru = '{}/calib_shru.asc'.format(folder)
+    from tools import export_local_pannels
 
-    meta, twi = inp.asc_raster(ftwi)
-    meta, shru = inp.asc_raster(fshru)
-
-    folder = r"C:\Plans3\demo\runbin\simulation\calib_SLH_2021-04-25-14-32-52\calibration_period"
-    fseries = folder  + r'\sim_series.txt'
-    series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
-
-    date_init = '2011-01-01'
-    date_end = '2011-05-01'
-    query_str = 'Date > "{}" and Date < "{}"'.format(date_init, date_end)
-    series = series.query(query_str)
-    print(len(series))
-    #vars = 'Cpy-Sfs-Unz-D-TF-Tpun-Tpgw-Evc-Evs-ET-R-Inf-RIE-RSE-IRA-IRI-Qv-VSA'.split('-')
-    # for QV vars = 'D-Qv-Inf-Cpy-IRA-IRI-Unz-Sfs'.split('-')
-    # for ET
-    vars = 'D-ET-IRA-IRI-Tpun-Tpgw-Evc-Evs-Qv-Inf-Cpy-Unz-Sfs-R-RIE-RSE-Qv-VSA'.split('-')
-    #for R vars = 'D-IRA-IRI-R-RIE-RSE-VSA-TF'.split('-')
-    #
-    #
-    # 1) load zmap series dataframes in a dict for each
-    zmaps_series = dict()
-    for var in vars:
-        lcl_file = '{}/sim_zmaps_series_{}.txt'.format(folder, var)  # next will be sim_zmaps_series_{}.txt
-        lcl_df = pd.read_csv(lcl_file, sep=';', parse_dates=['Date'])
-        lcl_df = lcl_df.query(query_str)
-        #print(lcl_df.tail().to_string())
-        zmaps_series[var] = lcl_df.copy()
-    #
-    #
-    # load rasters from zmap files
-    raster_series = dict()
-    rasters_maxval = dict()
-    rasters_minval = dict()
-    for var in vars:
-        lcl_df = zmaps_series[var]
-        raster_list = list()
-        print('computing raster maps of {} ... '.format(var))
-        for i in range(len(series)):
-            lcl_file = lcl_df['File'].values[i]
-            lcl_zmap, ybins, xbins = inp.zmap(lcl_file)
-            lcl_raster = map_back(lcl_zmap, a1=twi, a2=shru, bins1=ybins, bins2=xbins)
-            raster_list.append(lcl_raster)
-        raster_nd = np.array(raster_list)
-        raster_series[var] = raster_nd
-        rasters_minval[var] = np.min(raster_nd)
-        rasters_maxval[var] = np.max(raster_nd)
-        print('{} maps loaded'.format(len(raster_nd)))
-    #print(zmaps_series['R'].head().to_string())
-    #print(rasters_minval['R'])
-    #print(rasters_maxval['R'])
-    offsetback = 10
-    offsetfront = 40
-    prec_rng = (0, np.max(series['Prec'].values))
-    irri_rng = (0, np.max((series['IRA'].values, series['IRA'].values)))
-    for t in range(offsetback, len(series) - offsetfront -1):
-        print('t = {} | plotting date {}'.format(t, series['Date'].values[t]))
-        pannel_local(series, star=raster_series['ET'][t],
-                     deficit=raster_series['D'][t],
-                     sups=[raster_series['IRA'][t], raster_series['IRI'][t]],
-                     mids=[raster_series['Evc'][t], raster_series['Evs'][t],
-                           raster_series['Tpun'][t], raster_series['Tpgw'][t]],
-                     star_rng=(rasters_minval['ET'], rasters_maxval['ET']),
-                     deficit_rng=(rasters_minval['D'], rasters_maxval['D']),
-                     sup1_rng=prec_rng, sup2_rng=irri_rng, sup3_rng=irri_rng, sup4_rng=irri_rng,
-                     mid1_rng=(rasters_minval['ET'], rasters_maxval['ET']),
-                     mid2_rng=(rasters_minval['ET'], rasters_maxval['ET']),
-                     mid3_rng=(rasters_minval['ET'], rasters_maxval['ET']),
-                     mid4_rng=(rasters_minval['ET'], rasters_maxval['ET']),
-                     t=t, type='ET', show=True, offset_back=offsetback, offset_front=offsetfront)
 
 
 def demo_slh():
@@ -335,7 +112,7 @@ def demo_slh():
     # get input files
     files_input = backend.get_input2simbhydro(aoi=False)
     fseries ='{}/{}'.format(folder, files_input[0])
-    fhydroparam = r"C:\bin\sacre\SLH_2021-09-22-18-38-13\sim_parameters.txt" #'{}/{}'.format(folder, files_input[1])
+    fhydroparam = '{}/{}'.format(folder, files_input[1])
     fshruparam = '{}/{}'.format(folder, files_input[2])
     fhistograms = '{}/{}'.format(folder, files_input[3])
     fbasinhists = '{}/{}'.format(folder, files_input[4])
@@ -350,7 +127,6 @@ def demo_slh():
     mapback = True
     if mapback:
         # define the variables to map back
-        # Options 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA' or 'all'
         vars = 'all'
         # define the range of dates to map back
         date_init = '2011-01-01'
@@ -414,7 +190,7 @@ def demo_slh_calib():
     #
     # map back settings
     vars = 'ET'
-    mapback = True
+    mapback = False
     #
     # import also the etpat series to extract the dates
     fetpatseries = '{}/calib_etpat_zmaps_note.txt'.format(folder)
@@ -473,10 +249,9 @@ def demo_calibration():
 
     # Options: 'NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias', 'RMSE-CFC', 'RMSElog-CFC'
 
-    likelihood = 'KGElog'
-    generations = 3
-    popsize = 20
-
+    likelihood = 'KGE'
+    generations = 8
+    popsize = 500
     calibfiles = calibrate(fseries=fseries,
                            fhydroparam=fhydroparam,
                            fshruparam=fshruparam,
@@ -493,64 +268,50 @@ def demo_calibration():
                            popsize=popsize,
                            likelihood=likelihood,
                            tui=True,
-                           normalize=False)
+                           normalize=False
+                           )
 
     print('\nRun files sucessfully created at:\n{}\n'.format(calibfiles['Folder']))
 
-# todo revise
-def plot_sal_frames():
-    import numpy as np
-    from visuals import sal_deficit_frame
-    from inp import asc_raster
-    from hydrology import topmodel_di, topmodel_vsai, avg_2d
 
-    def stamped(g):
-        if g < 10:
-            stamp = '0000' + str(g)
-        elif g >= 10 and g < 100:
-            stamp = '000' + str(g)
-        elif g >= 100 and g < 1000:
-            stamp = '00' + str(g)
-        elif g >= 1000 and g < 10000:
-            stamp = '0' + str(g)
-        else:
-            stamp = str(g)
-        return stamp
+def demo_glue():
+    from backend import get_input2calibhydro
+    from tools import glue
 
-    meta, twi = asc_raster('./samples/calib_twi.asc')
 
-    lamb = avg_2d(twi, weight=(1 + (twi * 0)))
-    print(lamb)
-    m1 = 10
-    m2 = 30
-    d_nd = np.arange(0, 151)
-    print(d_nd)
-    d1_lst = list()
-    d2_lst = list()
-    for d in d_nd:
-        di1 = topmodel_di(d, twi, m=m1, lamb=lamb)
-        d1_lst.append(di1)
-        di2 = topmodel_di(d, twi, m=m2, lamb=lamb)
-        d2_lst.append(di2)
-    vmax = np.max((d1_lst, d2_lst))
-    print(vmax)
-    count = 0
-    for i in range(len(d1_lst)):
-        vsai1 = topmodel_vsai(d1_lst[i])
-        vsai2 = topmodel_vsai(d2_lst[i])
-        filename = 'SAL_d_frame_{}'.format(stamped(count))
-        print(filename)
-        sal_deficit_frame(d_nd[i], d1=d1_lst[i], vsa1=vsai1, d2=d2_lst[i], vsa2=vsai2, m1=m1, m2=m2, vmax=vmax, vmin=0,
-                          dgbl_max=np.max(d_nd), filename=filename)
-        count = count + 1
-    for i in range(len(d1_lst) - 1, -1, -1):
-        vsai1 = topmodel_vsai(d1_lst[i])
-        vsai2 = topmodel_vsai(d2_lst[i])
-        filename = 'SAL_d_frame_{}'.format(stamped(count))
-        print(filename)
-        sal_deficit_frame(d_nd[i], d1=d1_lst[i], vsa1=vsai1, d2=d2_lst[i], vsa2=vsai2, m1=m1, m2=m2, vmax=vmax, vmin=0,
-                          dgbl_max=np.max(d_nd), filename=filename)
-        count = count + 1
+
+    # get folder of observed datasets
+    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    # get observed datasets standard names
+    files_input = get_input2calibhydro()
+    fshruparam = folder + '/' + files_input[2]
+    fhistograms = folder + '/' + files_input[3]
+    fbasinhists = folder + '/' + files_input[4]
+    fbasin = folder + '/' + files_input[5]
+    ftwi = folder + '/' + files_input[6]
+    fshru = folder + '/' + files_input[7]
+    fcanopy = folder + '/' + files_input[9]
+
+    # calibration folder
+    calib_folder = 'C:/bin/sacre/00___calib_Hydrology_KGE_2021-09-24-07-14-07'
+    fseries = calib_folder + '/MLM/full_period/sim_series.txt'
+    fhydroparam = calib_folder + '/MLM/mlm_parameters.txt'
+    fmodels = calib_folder + '/generations/population.txt'
+
+    gluefiles = glue(fseries=fseries,
+                     fmodels=fmodels,
+                     fhydroparam=fhydroparam,
+                     fhistograms=fhistograms,
+                     fbasinhists=fbasinhists,
+                     fshruparam=fshruparam,
+                     fbasin=fbasin,
+                     fcanopy=fcanopy,
+                     nmodels=100,
+                     behavioural=0.6,
+                     folder=calib_folder,
+                     wkpl=True,
+                     tui=True)
+
 
 # todo revise
 def plot_gens_evolution(folder='C:/bin'):
@@ -714,5 +475,154 @@ def __insert_irrigation(folder='C:/bin'):
     print(df['IRI'].sum())
     outfile = folder + '/series_with_irrigation.txt'
     df.to_csv(outfile, sep=';', index=False)
+
+# todo revise
+def __visual_map_analyst():
+    import inp, analyst
+    from visuals import  plot_map_analyst
+    import numpy as np
+    from scipy.ndimage import gaussian_filter
+    import matplotlib.pyplot as plt
+    # define output directory
+    folder_output = 'C:/bin'
+    #
+    # directory of input data
+    folder_input = 'C:/Plans3/demo/datasets/observed'
+    # files paths to raster maps
+    ftwi = folder_input + '/' + 'calib_twi.asc'
+    fobs = r"C:\Plans3\demo\datasets\observed\etpat\calib_etpat_2012-10-01.asc"
+    fsim = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-13-04-49\bestset\calibration_period\sim_ETPat\raster_ETPat_2012-10-01.asc"
+    #
+    # import raster maps
+    meta, obs = inp.asc_raster(fobs)
+    meta, sim = inp.asc_raster(fsim)
+    metric = analyst.error(obs, sim)
+
+    obs_signal = obs.flatten()
+    sim_signal = sim.flatten()
+    metric_signal = analyst.error(obs_signal, sim_signal)
+    #plt.imshow(metric, cmap='seismic')
+    #plt.show()
+    metrics_dct = {'Error': 666.666, 'SqErr': 666.666, 'RMSE': 666.666, 'NSE':666.3, 'KGE':666.666, 'R':666.666}
+    ranges = (0, 1)
+    metricranges = (-1, 1)
+    plot_map_analyst(obs, sim, metric, obs_signal, sim_signal, metric_signal, ranges=ranges, metricranges=metricranges,
+                     metrics_dct=metrics_dct)
+
+# todo revise
+def __demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps_analyst', folder='C:/bin', tui=True):
+    from inp import dataframe_prepro
+    import inp
+    import pandas as pd
+    import numpy as np
+    #
+    import time, datetime
+    import analyst
+    from visuals import plot_map_analyst
+
+    def extract_series_data(dataframe, fld, type='raster'):
+        maps_lst = list()
+        signal_lst = list()
+        for i in range(len(dataframe)):
+            map_file = dataframe[fld].values[i]
+            if type == 'zmap':
+                map, ybins, xbins = inp.zmap(map_file)
+            elif type == 'raster':
+                meta, map = inp.asc_raster(map_file)
+            signal = map.flatten()
+            maps_lst.append(map)
+            signal_lst.append(signal)
+        full_signal = np.array(maps_lst).flatten()
+        return maps_lst, signal_lst, full_signal
+
+    # report setup
+    t0 = time.time()
+    report_lst = list()
+    report_lst.append('Execution timestamp: {}\n'.format(datetime.datetime.now()))
+    report_lst.append('Process: OBS-SIM DATA ANALYST\n')
+    input_files_df = pd.DataFrame({'Input files': (fseries,)})
+    report_lst.append(input_files_df.to_string(index=False))
+    #
+    if tui:
+        from tui import status
+        status('performing obs vs. sim map analysis')
+    #
+    # extract Dataframe
+    def_df = pd.read_csv(fseries, sep=';', engine='python')
+    def_df = dataframe_prepro(def_df, strfields='File_obs,File_sim,Date')
+    #
+    maps_obs_lst, signal_obs_lst, full_signal_obs = extract_series_data(def_df, 'File_obs', type=type)
+    maps_sim_lst, signal_sim_lst, full_signal_sim = extract_series_data(def_df, 'File_sim', type=type)
+    #
+    # 3) compute local map metrics and append to a new dataframe
+    map_errors = list()
+    map_sqerr = list()
+    map_rmse = list()
+    map_nse = list()
+    map_kge = list()
+    map_r = list()
+    metric_maps = list()
+    metric_signal = list()
+    for i in range(len(def_df)):
+        #
+        lcl_metric = analyst.error(maps_obs_lst[i], maps_sim_lst[i])
+        metric_maps.append(lcl_metric)
+        #
+        lcl_error = analyst.error(signal_obs_lst[i], signal_sim_lst[i])
+        metric_signal.append(lcl_error)
+        map_errors.append(np.mean(lcl_error))
+        #
+        lcl_sqerr = analyst.sq_error(signal_obs_lst[i], signal_sim_lst[i])
+        map_sqerr.append(np.mean(lcl_sqerr))
+        #
+        lcl_rmse = analyst.rmse(signal_obs_lst[i], signal_sim_lst[i])
+        map_rmse.append(lcl_rmse)
+        #
+        lcl_nse = analyst.nse(signal_obs_lst[i], signal_sim_lst[i])
+        map_nse.append(lcl_nse)
+        #
+        lcl_kge = analyst.kge(np.append([1], signal_obs_lst[i]), np.append([1], signal_sim_lst[i]) )
+        map_kge.append(lcl_kge)
+        #
+        lcl_r = analyst.linreg(np.append([1], signal_obs_lst[i]), np.append([1], signal_sim_lst[i]) )['R']
+        map_r.append(lcl_r)
+    #
+    # built data frame
+    def_df['Error'] = map_errors
+    def_df['SqErr'] = map_sqerr
+    def_df['RMSE'] = map_rmse
+    def_df['NSE'] = map_nse
+    def_df['KGE'] = map_kge
+    def_df['R'] = map_r
+    out_df = def_df[['Date', 'Error', 'SqErr', 'RMSE', 'NSE', 'KGE', 'R', 'File_obs', 'File_sim']]
+    #
+    #
+    # Export dataframe
+    out_file = folder + '/' + var + '_' + filename + '.txt'
+    out_df.to_csv(out_file, sep=';', index=False)
+    #
+    # Export visuals
+    map_vmin = 0.0 #np.min((maps_obs_lst, maps_obs_lst))
+    map_vmax = np.max((maps_obs_lst, maps_obs_lst))
+    ranges = (map_vmin, map_vmax)
+    map_metric_vmin = np.min(metric_maps)
+    map_metric_vmax = np.max(metric_maps)
+    mapmax = np.max((np.abs(map_metric_vmin), np.abs(map_metric_vmax)))
+    metricranges = (-mapmax, mapmax)
+    for i in range(len(out_df)):
+        print(i)
+        lcl_date = out_df['Date'].values[i]
+        lcl_filename = var + '_map_analyst_' + lcl_date
+        lcl_ttl = '{} | {}'.format(var, lcl_date)
+        metrics_dct = {'Error': out_df['Error'].values[i],
+                       'SqErr': out_df['SqErr'].values[i],
+                       'RMSE': out_df['RMSE'].values[i],
+                       'NSE':out_df['NSE'].values[i],
+                       'KGE':out_df['KGE'].values[i],
+                       'R':out_df['R'].values[i]}
+        vis_file = plot_map_analyst(obs=maps_obs_lst[i], sim=maps_sim_lst[i], metric=metric_maps[i],
+                                    obs_sig=signal_obs_lst[i], sim_sig=signal_sim_lst[i], ranges=ranges,
+                                    metricranges=metricranges, metric_sig=metric_signal[i], metrics_dct=metrics_dct,
+                                    filename=lcl_filename, folder=folder, ttl=lcl_ttl)
 
 
