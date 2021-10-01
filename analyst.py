@@ -37,6 +37,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import geo
+
 
 def error(obs, sim):
     """
@@ -163,65 +165,201 @@ def frequency(series):
     return out_dct
 
 
-def zmaps(obs, sim, count, nodata=-1, full_return=False):
+def zmaps(obs, sim, count, nodata=-1):
+    """
+    Compute the basics analysis of obs vs sim ZMAP
+
+    :param obs: 2d numpy array of observed zmap
+    :param sim: 2d numpy array of simulated zmap
+    :param count: 2d numpy array of counting matrix (2d histogram)
+    :param nodata: float of no data value
+    :return: dict of analyst products
+    """
+    # get full boolean mask
+    mask = (obs != nodata) * (sim != nodata) * (count > 0) * 1.0
+    # number of data points
+    n = np.sum(mask)
+    # map of errors
+    error_map = (obs * mask) - (sim * mask)
+    # map of squared errors
+    sq_error_map = error_map * error_map
+    #
+    # get signals
+    obs_sig = geo.flatten_clear(obs, mask)
+    sim_sig = geo.flatten_clear(sim, mask)
+    his_sig = geo.flatten_clear(count, mask)
+    # compute means
+    obs_mean = np.sum(obs_sig * his_sig) / np.sum(his_sig)
+    sim_mean = np.sum(sim_sig * his_sig) / np.sum(his_sig)
+    error_mean = error(obs_mean, sim_mean)
+    # compute weighted error
+    werror_map = error_map * count / np.sum(his_sig)
+    #
+    # compute error signals
+    error_sig = error(obs_sig, sim_sig)
+    sq_error_sig = sq_error(obs_sig, sim_sig)
+    # compute
+    werror_sig = geo.flatten_clear(werror_map, mask)
+    #
+    # compute metrics
+    mse_sig = mse(obs_sig, sim_sig)
+    w_mse_sig = np.mean(werror_sig * werror_sig)
+    w_rmse_sig = np.sqrt(w_mse_sig)
+    rmse_sig = rmse(obs_sig, sim_sig)
+    nse_sig = nse(obs_sig, sim_sig)
+    kge_sig = kge(obs_sig, sim_sig)
+    r_sig = linreg(obs_sig, sim_sig)
+
+    return {'Maps':{'Error': error_map, 'SqError':sq_error_map, 'WError':werror_map},
+            'Signals':{'Obs':obs_sig, 'Sim':sim_sig, 'Error':error_sig, 'SqError':sq_error_sig, 'Count':his_sig, 'WError':werror_sig},
+            'Metrics':{'N':n, 'MSE':mse_sig, 'RMSE':rmse_sig,
+                       'W-MSE':w_mse_sig, 'W-RMSE':w_rmse_sig,
+                       'NSE':nse_sig, 'R':r_sig['R'], 'KGE':kge_sig,
+                       'Mean-Obs':obs_mean, 'Mean-Sim':sim_mean, 'Mean-Error':error_mean}}
+
+
+def zmaps_lite(obs, sim, count, nodata=-1):
+    """
+    Compute the basics analysis of obs vs sim ZMAP no maps or signals returned
+
+    :param obs: 2d numpy array of observed zmap
+    :param sim: 2d numpy array of simulated zmap
+    :param count: 2d numpy array of counting matrix (2d histogram)
+    :param nodata: float of no data value
+    :return: dict of analyst products
+    """
+    # get full boolean mask
+    mask = (obs != nodata) * (sim != nodata) * (count > 0) * 1.0
+    # number of data points
+    n = np.sum(mask)
+    # get signals
+    obs_sig = geo.flatten_clear(obs, mask)
+    sim_sig = geo.flatten_clear(sim, mask)
+    his_sig = geo.flatten_clear(count, mask)
+    # compute means
+    obs_mean = np.sum(obs_sig * his_sig) / np.sum(his_sig)
+    sim_mean = np.sum(sim_sig * his_sig) / np.sum(his_sig)
+    error_mean = error(obs_mean, sim_mean)
+    # compute error signals
+    error_sig = error(obs_sig, sim_sig)
+    sq_error_sig = sq_error(obs_sig, sim_sig)
+    # compute
+    werror_sig = geo.flatten_clear(werror_map, mask)
+    #
+    # compute metrics
+    mse_sig = mse(obs_sig, sim_sig)
+    w_mse_sig = np.mean(werror_sig * werror_sig)
+    w_rmse_sig = np.sqrt(w_mse_sig)
+    rmse_sig = rmse(obs_sig, sim_sig)
+    nse_sig = nse(obs_sig, sim_sig)
+    kge_sig = kge(obs_sig, sim_sig)
+    r_sig = linreg(obs_sig, sim_sig)
+    #
+    return {'Metrics':{'N':n, 'MSE':mse_sig, 'RMSE':rmse_sig,
+                       'W-MSE':w_mse_sig, 'W-RMSE':w_rmse_sig,
+                       'NSE':nse_sig, 'R':r_sig['R'], 'KGE':kge_sig,
+                       'Mean-Obs':obs_mean, 'Mean-Sim':sim_mean, 'Mean-Error':error_mean}}
+
+
+def zmaps_series(obs, sim, count, nodata=-1, full_return=False):
     """
     Analyst of a series of ZMaps
     :param obs: 3d numpy array of observed zmaps
     :param sim: 3d numpy array of simulated zmaps
     :param count: 2d numpy array of couting matrix (2d histogram)
     :param nodata: float nodata value in observed zmap
-    :param full_return: boolean to set full return
+    :param full_return: boolean to set full return (maps and signals)
     :return: dictionary of output objects
     """
-    obs_mask = 1.0 * (obs != nodata)  # get mask
+    # deploy arrays
+    _n = np.zeros(len(obs))
+    _mse = np.zeros(len(obs))
+    _rmse = np.zeros(len(obs))
+    _w_mse = np.zeros(len(obs))
+    _w_rmse = np.zeros(len(obs))
+    _nse = np.zeros(len(obs))
+    _r = np.zeros(len(obs))
+    _kge = np.zeros(len(obs))
+    _mean_obs = np.zeros(len(obs))
+    _mean_sim = np.zeros(len(obs))
+    _mean_error = np.zeros(len(obs))
     #
-    # deploy series arrays
-    obs_wmean_series = np.zeros(shape=(len(obs)))
-    sim_wmean_series = np.zeros(shape=(len(obs)))
-    # compute series averages
-    for i in range(len(obs)):
-        obs_wmean_series[i] = np.sum(obs[i] * obs_mask[i] * count / np.sum(count))
-        sim_wmean_series[i] = np.sum(sim[i] * obs_mask[i] * count / np.sum(count))
-    #import matplotlib.pyplot as plt
-    #plt.plot(np.arange(start=0, stop=len(obs_wmean_series)), obs_wmean_series)
-    #plt.plot(np.arange(start=0, stop=len(obs_wmean_series)), sim_wmean_series)
-    #plt.show()
-    obs_mean = np.mean(obs_wmean_series)
-    # now compute error series
-    e_wmean_series = error(obs=obs_wmean_series, sim=sim_wmean_series)
-    se_wmean_series = sq_error(obs=obs_wmean_series, sim=sim_wmean_series)
-    nse_wmean = nse(obs=obs_wmean_series, sim=sim_wmean_series)
-    #
-    # get the square of the weighed mean error
-    we_mean = obs * 0.0
-    we_sim = obs * 0.0
-    for i in range(len(we_mean)):
-        we_mean[i] = (obs[i] - obs_mean) * count / np.sum(count)
-        we_sim[i] = (obs[i] - sim[i]) * count / np.sum(count)
-    swe_mean = np.power(we_mean, 2)
-    swe_sim = np.power(we_sim, 2)
-    #
-    # compute NSE
-    nse_zmaps = 1 - (np.sum(swe_sim * obs_mask) / np.sum(swe_mean * obs_mask))
     if full_return:
-        out_dct = {'Obs_Mean_Series':obs_wmean_series,
-                   'Sim_Mean_Series':sim_wmean_series,
-                   'Error_Mean_Series':e_wmean_series,
-                   'SE_Mean_Series':se_wmean_series,
-                   'NSE_Mean_Series':nse_wmean,
-                   'Count':count,
-                   'Error_ZMap_Series':we_sim,
-                   'SE_ZMap_Series':swe_sim,
-                   'NSE_ZMap_Series':nse_zmaps}
+        _maps_errors = np.zeros(shape=(len(obs), np.shape(obs[0])[0], np.shape(obs[0])[1]))
+        _maps_sqerrors = np.zeros(shape=(len(obs), np.shape(obs[0])[0], np.shape(obs[0])[1]))
+        _maps_werrors = np.zeros(shape=(len(obs), np.shape(obs[0])[0], np.shape(obs[0])[1]))
+        _sigs_obs = list()
+        _sigs_sim = list()
+        _sigs_error = list()
+        _sigs_sqerror = list()
+        _sigs_werror = list()
+        _sigs_hist = list()
+    # loop in maps
+    for i in range(len(obs)):
+        # analysis
+        if full_return:
+            lcl_dct = zmaps(obs[i], sim[i], count=count, nodata=nodata)
+            # retrieve from dict
+            _maps_errors[i] = lcl_dct['Maps']['Error']
+            _maps_sqerrors[i] = lcl_dct['Maps']['SqError']
+            _maps_werrors[i] = lcl_dct['Maps']['WError']
+            _sigs_obs.append(lcl_dct['Signals']['Obs'])
+            _sigs_sim.append(lcl_dct['Signals']['Sim'])
+            _sigs_error.append(lcl_dct['Signals']['Error'])
+            _sigs_sqerror.append(lcl_dct['Signals']['SqError'])
+            _sigs_werror.append(lcl_dct['Signals']['WError'])
+            _sigs_hist.append(lcl_dct['Signals']['Count'])
+        else:
+            lcl_dct = zmaps_lite(obs[i], sim[i], count=count, nodata=nodata)
+        #
+        # retrieve from local dict
+        _n[i] = lcl_dct['Metrics']['N']
+        _mse[i] = lcl_dct['Metrics']['MSE']
+        _rmse[i] = lcl_dct['Metrics']['RMSE']
+        _w_mse[i] = lcl_dct['Metrics']['W-MSE']
+        _w_rmse[i] = lcl_dct['Metrics']['W-RMSE']
+        _nse[i] = lcl_dct['Metrics']['NSE']
+        _r[i] = lcl_dct['Metrics']['R']
+        _kge[i] = lcl_dct['Metrics']['KGE']
+        _mean_obs[i] = lcl_dct['Metrics']['Mean-Obs']
+        _mean_sim[i] = lcl_dct['Metrics']['Mean-Sim']
+        _mean_error[i] = lcl_dct['Metrics']['Mean-Error']
+    if full_return:
+        return {'Metrics':
+                    {'N': _n,
+                     'MSE': _mse,
+                     'RMSE': _rmse,
+                     'W-MSE': _w_mse,
+                     'W-RMSE': _w_rmse,
+                     'NSE': _nse,
+                     'KGE': _kge,
+                     'R': _r,
+                     'Mean-Obs': _mean_obs,
+                     'Mean-Sim': _mean_sim,
+                     'Mean-Error': _mean_error},
+                'Maps':
+                    {'Error':_maps_errors,
+                     'SqError':_maps_sqerrors,
+                     'WError':_maps_werrors},
+                'Signals':
+                    {'Obs':_sigs_obs,
+                     'Sim':_sigs_sim,
+                     'Error':_sigs_error,
+                     'SqError':_sigs_sqerror,
+                     'WError':_sigs_werror,
+                     'Count':_sigs_hist}
+                }
     else:
-        out_dct = {'NSE_ZMap_Series':nse_zmaps, 'NSE_Mean_Series':nse_wmean}
-    return out_dct
-
-
-
-
-
-
-
-
-
+        return  {'Metrics':
+                    {'N': _n,
+                     'MSE': _mse,
+                     'RMSE': _rmse,
+                     'W-MSE': _w_mse,
+                     'W-RMSE': _w_rmse,
+                     'NSE': _nse,
+                     'KGE': _kge,
+                     'R': _r,
+                     'Mean-Obs': _mean_obs,
+                     'Mean-Sim': _mean_sim,
+                     'Mean-Error': _mean_error},
+                }

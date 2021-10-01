@@ -387,7 +387,7 @@ def main(root='default', importing=True):
                                     # update database
                                     files_df = backend.verify_observed_files(project_nm, rootdir)
                                     print('\n{}:\n{}\n'.format(lng[30], dst_filenm))
-                                    tools.view_imported_map(lcl_lcl_opt, folder=projectdirs['Observed'])
+                                    tools.view_imported_input(lcl_lcl_opt, folder=projectdirs['Observed'])
                                     ok()
                     #
                     # derive data

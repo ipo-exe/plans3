@@ -39,6 +39,24 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+def _custom_cmaps():
+    from matplotlib import cm
+    from matplotlib.colors import ListedColormap
+    #
+    earth_big = cm.get_cmap('gist_earth_r', 512)
+    earthcm = ListedColormap(earth_big(np.linspace(0.10, 0.95, 256)))
+    #
+    jet_big = cm.get_cmap('jet_r', 512)
+    jetcm = ListedColormap(jet_big(np.linspace(0.3, 0.75, 256)))
+    #
+    jet_big2 = cm.get_cmap('jet', 512)
+    jetcm2 = ListedColormap(jet_big2(np.linspace(0.1, 0.9, 256)))
+    #
+    viridis_big = cm.get_cmap('viridis_r', 512)
+    viridiscm = ListedColormap(viridis_big(np.linspace(0.05, 0.9)))
+    return {'flow_v':jetcm, 'D':jetcm2, 'flow':earthcm, 'stk':viridiscm}
+
+
 def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', fld_date='Date', filename='analyst', suff='',
                            folder='C:/bin', show=False, log=True, units='flow', title='Obs/Sim Analysis'):
     """
@@ -386,22 +404,14 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
     from matplotlib.colors import ListedColormap
     from pandas import to_datetime
     #
-    #
-    earth_big = cm.get_cmap('gist_earth_r', 512)
-    earthcm = ListedColormap(earth_big(np.linspace(0.10, 0.95, 256)))
-    jet_big = cm.get_cmap('jet_r', 512)
-    jetcm = ListedColormap(jet_big(np.linspace(0.3, 0.75, 256)))
-    jet_big2 = cm.get_cmap('jet', 512)
-    jetcm2 = ListedColormap(jet_big2(np.linspace(0.1, 0.9, 256)))
-    viridis_big = cm.get_cmap('viridis_r', 512)
-    viridiscm = ListedColormap(viridis_big(np.linspace(0.05, 0.9)))
+    cmaps = _custom_cmaps()
     #
     dates_labels = to_datetime(series['Date'], format='%Y%m%d')
     dates_labels = dates_labels.astype('str')
     #
     #
     if type == 'ET':
-        cmaps = (jetcm, jetcm2, 'Blues', 'BuPu', 'BuPu', 'BuPu', jetcm, jetcm, jetcm, jetcm)
+        cmaps = (cmaps['flow_v'], cmaps['D'], 'Blues', 'BuPu', 'BuPu', 'BuPu', cmaps['flow_v'], cmaps['flow_v'], cmaps['flow_v'], cmaps['flow_v'])
         titles = ('ET - Evapotranspiration (mm/d)',
                   'Groundwater\ndeficit (mm)',
                   'Precipitation\n(mm/d)',
@@ -415,7 +425,7 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
         lengend_lbl = 'ET'
         star_color = 'tab:red'
     elif type == 'Qv':
-        cmaps = (earthcm, jetcm2, 'Blues', 'BuPu', 'BuPu', 'BuPu', earthcm, viridiscm, viridiscm, viridiscm)
+        cmaps = (cmaps['flow'], cmaps['D'], 'Blues', 'BuPu', 'BuPu', 'BuPu', cmaps['flow'], cmaps['stk'], cmaps['stk'], cmaps['stk'])
         titles = ('Recharge (mm/d)',
                   'Groundwater\ndeficit (mm)',
                   'Precipitation\n(mm/d)',
@@ -429,7 +439,7 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
         star_color = 'teal'
         lengend_lbl = 'Recharge'
     elif type == 'R':
-        cmaps = (earthcm, jetcm2, 'Blues', 'BuPu', 'BuPu', 'BuPu', earthcm, earthcm, earthcm, 'Blues')
+        cmaps = (cmaps['flow'], cmaps['D'], 'Blues', 'BuPu', 'BuPu', 'BuPu', cmaps['flow'], cmaps['flow'], cmaps['flow'], 'Blues')
         titles = ('Runoff (mm/d)',
                   'Groundwater\ndeficit (mm)',
                   'Precipitation\n(mm/d)',
@@ -708,12 +718,89 @@ def pannel_prec_q_logq(t, prec, q, grid=True, folder='C:/bin', filename='pannel_
     ymax = np.max(y)
     ymin = np.min(y)
     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
-    plt.title('Flow', loc='left')
+    plt.title('Flow (log)', loc='left')
     plt.ylabel('mm/d')
     plt.plot(t, y)
     plt.ylim(0.9 * ymin, 1.1 * ymax)
     plt.yscale('log')
     plt.grid(grid)
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        if suff == '':
+            filepath = folder + '/' + filename + '.png'
+        else:
+            filepath = folder + '/' + filename + '_' + suff + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
+
+
+def pannel_calib_series(dataframe, grid=True, folder='C:/bin', filename='calib_series', suff='', show=False):
+    """
+    The calib series pannel
+    :param dataframe: pandas dataframe of the calib_serie.txt file
+    :param grid: boolean
+    :param folder: string - output folder path
+    :param filename: string - filename
+    :param suff: string - suffix
+    :param show: boolean - to show figure
+    :return: string - filepath
+    """
+    #
+    fig = plt.figure(figsize=(16, 10))  # Width, Height
+    gs = mpl.gridspec.GridSpec(5, 1, wspace=0.8, hspace=0.6)
+    #
+    # plot prec
+    var = 'Prec'
+    ax1 = fig.add_subplot(gs[0, 0])
+    plt.title('Flow', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(dataframe['Date'], dataframe[var])
+    plt.ylim(0, 1.1 * np.max(dataframe[var]))
+    plt.grid(grid)
+    #
+    # plot temp
+    var = 'Temp'
+    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
+    plt.title('Temperature', loc='left')
+    plt.ylabel('°C')
+    plt.plot(dataframe['Date'], dataframe[var], 'tab:orange')
+    plt.ylim(0, 1.1 * np.max(dataframe[var]))
+    plt.grid(grid)
+    #
+    # plot IRI and IRA
+    ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
+    plt.title('Irrigation', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(dataframe['Date'], dataframe['IRA'], 'orange', label='Irrigation by aspersion')
+    plt.plot(dataframe['Date'], dataframe['IRI'], 'green', label='Irrigation by inundation')
+    plt.ylabel('mm/d')
+    plt.ylim(0, 1.1 * np.max([dataframe['IRI'].values, dataframe['IRA'].values]))
+    plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
+    plt.grid(grid)
+    #
+    # plot q
+    var = 'Q'
+    ax4 = fig.add_subplot(gs[3, 0], sharex=ax1)
+    plt.title('Flow', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(dataframe['Date'], dataframe[var], 'tab:blue')
+    plt.ylim(0, 1.1 * np.max(dataframe[var]))
+    plt.grid(grid)
+    #
+    # plot log q
+    var = 'Q'
+    ax5 = fig.add_subplot(gs[4, 0], sharex=ax1)
+    plt.title('Flow (log)', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(dataframe['Date'], dataframe[var], 'tab:blue')
+    plt.ylim(0.5 * np.min(dataframe[var]), 1.1 * np.max(dataframe[var]))
+    plt.grid(grid)
+    plt.yscale('log')
     #
     if show:
         plt.show()
@@ -770,7 +857,7 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True, folder='C:/bin', file
     # plot log q
     ymin = np.min((y1, y2))
     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
-    plt.title('FLow', loc='left')
+    plt.title('Flow (log)', loc='left')
     plt.ylabel('mm/d')
     plt.plot(t, y1)
     plt.plot(t, y2)
@@ -789,7 +876,7 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True, folder='C:/bin', file
         return filepath
 
 
-def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel_topmodel', suff=''):
+def pannel_global(dataframe, qobs=False, grid=True, show=False, folder='C:/bin', filename='pannel', suff=''):
     """
     visualize the model global variables in a single pannel
     :param dataframe: pandas dataframe from hydrology.topmodel_sim()
@@ -1317,158 +1404,8 @@ def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', fi
         return expfile
 
 
-def plot_obssim_zmaps(obs, sim, metric, ranges='local', rangesmetric='local', ttl='title', show=False,
-                      filename='obssim_zmaps', folder='C:/bin'):
-    fig = plt.figure(figsize=(6, 6),)  # Width, Height
-    fig.suptitle('ZMAP | {}'.format(ttl))
-    gs = mpl.gridspec.GridSpec(3, 1, wspace=0.3, hspace=0.3)
-    if ranges == 'local':
-        v_min = np.min(np.array((obs, sim)))
-        v_max = np.max(np.array((obs, sim)))
-    else:
-        v_min = ranges[0]
-        v_max = ranges[1]
-    if rangesmetric == 'local':
-        v_min_m = np.min(metric)
-        v_max_m = np.max(metric)
-    else:
-        v_min_m = rangesmetric[0]
-        v_max_m = rangesmetric[1]
-    ax = fig.add_subplot(gs[0, 0])
-    im = plt.imshow(obs, cmap='Greys_r', vmin=v_min, vmax=v_max)
-    plt.title('Observed')
-    plt.axis('off')
-    ax = fig.add_subplot(gs[1, 0])
-    im = plt.imshow(sim, cmap='Greys_r', vmin=v_min, vmax=v_max)
-    plt.title('Simulated')
-    plt.axis('off')
-    ax = fig.add_subplot(gs[2, 0])
-    im = plt.imshow(metric, cmap='inferno', vmin=v_min_m, vmax=v_max_m)
-    plt.title('Abs Error')
-    plt.axis('off')
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        expfile = folder + '/' + filename + '.png'
-        plt.savefig(expfile)
-        plt.close(fig)
-        return expfile
-
-
-def plot_map_analyst(obs, sim, metric, obs_sig, sim_sig, metric_sig, metrics_dct, ranges='local', metricranges='local',
-                     ttl='title', filename='map_analyst', folder='C:/bin', show=False):
-    """
-
-    Plot a MAP analyst
-
-    :param obs: 2d numpy array of OBS map
-    :param sim: 2d numpy array of SIM map
-    :param metric: 2d numpy array of evaluation metric
-    :param obs_sig: 1d numpy array of OBS signal
-    :param sim_sig: 1d numpy array of SIM signal
-    :param metric_sig: 1d numpy array of signal of evaluation metric
-    :param metrics_dct: dictonary of global evaluation metrics
-    :param ranges: string or tuple of ranges of maps. Default: "local" to use local min max of OBS and SIM
-    :param metricranges: string or tuple of ranges of metric map. Default: "local" to use local min max of Metric map
-    :param ttl: string of superior title
-    :param filename: string of filename
-    :param folder: string filepath of export folder
-    :param show: boolean to show instead of saving. Default: False
-    :return: string of filepath
-    """
-    fig = plt.figure(figsize=(14, 7), )  # Width, Height
-    fig.suptitle(ttl)
-    gs = mpl.gridspec.GridSpec(6, 13, wspace=0.3, hspace=0.45)
-    #
-    x_sig = np.arange(0, len(obs_sig))
-    #
-    # ranges selector
-    if ranges != 'local':
-        vmin = ranges[0]
-        vmax = ranges[1]
-    else:
-        vmin = np.min((obs, sim))
-        vmax = np.max((obs, sim))
-    if metricranges != 'local':
-        metric_vmin = metricranges[0]
-        metric_vmax = metricranges[1]
-    else:
-        metric_vmin = np.min(metric)
-        metric_vmax = np.max(metric)
-    #
-    #
-    ax = fig.add_subplot(gs[0:3, 0:3])
-    im = plt.imshow(obs, cmap='Greys', vmin=vmin, vmax=vmax)
-    plt.title('Observed')
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    ax = fig.add_subplot(gs[0:3, 3:6])
-    im = plt.imshow(sim, cmap='Greys', vmin=vmin, vmax=vmax)
-    plt.title('Simulated')
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    ax = fig.add_subplot(gs[0:3, 7:10])
-    im = plt.imshow(metric, cmap='jet', vmin=metric_vmin, vmax=metric_vmax)
-    plt.title('Local Error')
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    ax = fig.add_subplot(gs[3:5, 0:10])
-    plt.plot(x_sig, obs_sig, label='Observed', c='tab:orange')
-    plt.plot(x_sig, sim_sig, label='Simulated', c='tab:blue', alpha=0.5)
-    plt.title('Map signal', loc='left')
-    plt.legend(loc='upper right', ncol=3)
-    plt.xlim((np.min(x_sig), np.max(x_sig)))
-    plt.ylim((vmin, 1.2 * vmax))
-    plt.xticks([])
-    plt.ylabel('Map units')
-    #
-    ax = fig.add_subplot(gs[5:6, 0:10])
-    plt.plot(x_sig, metric_sig, 'tab:red')
-    plt.xlim((np.min(x_sig), np.max(x_sig)))
-    plt.ylim(metric_vmin, metric_vmax)
-    plt.xlabel('Cell ID')
-    plt.ylabel('Error')
-    #
-    ax = fig.add_subplot(gs[3:5, 11:])
-    plt.scatter(obs_sig, sim_sig, c='tab:grey', s=15, alpha=0.1, edgecolors='none')
-    plt.plot([0, vmax], [0, vmax], 'tab:grey', linestyle='--', label='1:1')
-    plt.ylim((vmin, vmax))
-    plt.xlim((vmin, vmax))
-    plt.grid(True)
-    plt.legend(loc='upper left')
-    plt.ylabel('Signal Sim')
-    plt.xlabel('Signal Obs')
-    #
-    #
-    # metrics
-    ax = fig.add_subplot(gs[0:3, 10:])
-    x_offset = 0.36
-    plt.text(x_offset, 1, s='Map Global Metrics')
-    plt.text(x_offset, 0.9, s='Error: {:.2f}'.format(metrics_dct['Error']))
-    plt.text(x_offset, 0.84, s='Sq. Error: {:.2f}'.format(metrics_dct['SqErr']))
-    plt.text(x_offset, 0.78, s='RMSE: {:.2f}'.format(metrics_dct['RMSE']))
-    plt.text(x_offset, 0.5, s='Signal Global Metrics')
-    plt.text(x_offset, 0.4, s='NSE: {:.2f}'.format(metrics_dct['NSE']))
-    plt.text(x_offset, 0.34, s='KGE: {:.2f}'.format(metrics_dct['KGE']))
-    plt.text(x_offset, 0.28, s='R: {:.2f}'.format(metrics_dct['R']))
-    plt.axis('off')
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        expfile = folder + '/' + filename + '.png'
-        plt.savefig(expfile)
-        plt.close(fig)
-        return expfile
-    
-    
-def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, p1, p2, p_lbl='m', vmax=500, vmin=0, dgbl_max=100, filename='SAL_d_frame_X',
+def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, p1, p2, p_lbl='m', vmax=500, vmin=0, dgbl_max=100,
+                      filename='SAL_d_frame_X',
                       folder='C:/bin', supttl='Sensitivity to the m parameter'):
     fig = plt.figure(figsize=(10, 6), )  # Width, Height
     fig.suptitle(supttl)
@@ -1505,7 +1442,7 @@ def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, p1, p2, p_lbl='m', vmax=500, vmi
     plt.title('Global Deficit = {:.1f} mm'.format(dgbl), fontsize=10)
     plt.axis('off')
     #
-    #plt.show()
+    # plt.show()
     expfile = folder + '/' + filename + '.png'
     plt.savefig(expfile)
     plt.close(fig)
@@ -1564,7 +1501,7 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
 
 
 def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, baseflow=False, scale='log', suff='',
-                  filename='glue_ensemble', folder='C:/bin',):
+                  filename='glue_ensemble', folder='C:/bin', ):
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     fig.suptitle('GLUE | 90% confidence ensemble of behavioural models')
@@ -1627,126 +1564,6 @@ def glue_ensemble(sim_df, ensemble_df, grid=False, show=False, baseflow=False, s
         plt.savefig(filepath)
         plt.close(fig)
         return filepath
-
-
-def map_series(map_series1, map_series2, rng1, rng2, dates, ttl='Map Series', ttl_s1='Series 1', ttl_s2='Series 2',
-               filename='map_series', folder='C:/bin', show=False):
-    from matplotlib import cm
-    from matplotlib.colors import ListedColormap
-    jet_big = cm.get_cmap('jet_r', 512)
-    jetcm = ListedColormap(jet_big(np.linspace(0.3, 0.75, 256)))
-
-    fig = plt.figure(figsize=(16, 8), )  # Width, Height
-    fig.suptitle(ttl)
-    gs = mpl.gridspec.GridSpec(8, 21, wspace=0.5, hspace=0.3)
-    #
-    # plot series 1
-    vmin = rng1[0]
-    vmax = rng1[1]
-    for i in range(len(map_series1)):
-        lcl_x = i * 3
-        ax = fig.add_subplot(gs[0:4, lcl_x:lcl_x + 3])
-        vmin = np.percentile(map_series1[i], 5)
-        vmax = np.percentile(map_series1[i], 95)
-        im = plt.imshow(map_series1[i], cmap='hot_r', vmin=np.min(map_series1[i]), vmax=np.max(map_series1[i]))
-        plt.title('{} | {}'.format(ttl_s1, dates[i]), fontsize=10)
-        plt.colorbar(im, shrink=0.4)
-        plt.axis('off')
-    #
-    # plot series 2
-    vmin = rng2[0]
-    vmax = rng2[1]
-    for i in range(len(map_series2)):
-        lcl_x = i * 3
-        ax = fig.add_subplot(gs[4:, lcl_x:lcl_x + 3])
-        #vmin = np.percentile(map_series2[i], 5)
-        #vmax = np.percentile(map_series2[i], 95)
-        im = plt.imshow(map_series2[i], cmap=jetcm, vmin=vmin, vmax=vmax)
-        plt.title('{} | {}'.format(ttl_s2, dates[i]), fontsize=10)
-        plt.colorbar(im, shrink=0.4)
-        plt.axis('off')
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        expfile = folder + '/' + filename + '.png'
-        plt.savefig(expfile)
-        plt.close(fig)
-        return expfile
-
-
-def map_compare(obs, sim, err, obs_z, sim_z, err_z, obs_sg, sim_sg, err_sg, ttl='Date',
-                filename='map_compare', folder='C:/bin', show=False):
-    fig = plt.figure(figsize=(12, 10), )  # Width, Height
-    fig.suptitle(ttl)
-    gs = mpl.gridspec.GridSpec(10, 12, wspace=0.2, hspace=0.2)
-    #
-    ax = fig.add_subplot(gs[0:4, 0:3])
-    im = plt.imshow(obs, cmap='Greys', vmin=0, vmax=1)
-    plt.title('Observado', fontsize=10)
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    ax = fig.add_subplot(gs[0:4, 4:7])
-    im = plt.imshow(sim, cmap='Greys', vmin=0, vmax=1)
-    plt.title('Simulado', fontsize=10)
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    ax = fig.add_subplot(gs[0:4, 9:])
-    im = plt.imshow(err, cmap='seismic', vmin=-1.5, vmax=1.5)
-    plt.title('Erro local', fontsize=10)
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    #
-    ax = fig.add_subplot(gs[5:7, 0:3])
-    im = plt.imshow(obs_z, cmap='Greys', vmin=0, vmax=1)
-    plt.title('Obs. compactado', fontsize=10)
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    ax = fig.add_subplot(gs[5:7, 4:7])
-    im = plt.imshow(sim_z, cmap='Greys', vmin=0, vmax=1)
-    plt.title('Sim. compactado', fontsize=10)
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    ax = fig.add_subplot(gs[5:7, 9:])
-    im = plt.imshow(err_z, cmap='seismic', vmin=-1.5, vmax=1.5)
-    plt.title('Erro local', fontsize=10)
-    plt.colorbar(im, shrink=0.4)
-    plt.axis('off')
-    #
-    #
-    lcl_x = np.arange(len(obs_sg))
-    ax = fig.add_subplot(gs[8:, 0:3])
-    plt.plot(lcl_x, obs_sg, 'tab:blue')
-    plt.title('Sinal observado', fontsize=10)
-    plt.ylim((0, 1))
-    plt.xlabel('id')
-    #
-    ax = fig.add_subplot(gs[8:, 4:7])
-    plt.plot(lcl_x, sim_sg, 'tab:orange')
-    plt.title('Sinal simulado', fontsize=10)
-    plt.ylim((0, 1))
-    plt.xlabel('id')
-    #
-    ax = fig.add_subplot(gs[8:, 9:])
-    plt.plot(lcl_x, err_sg, 'tab:red')
-    plt.title('Erro local', fontsize=10)
-    plt.ylim((-1.5, 1.5))
-    plt.xlabel('id')
-    #
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        expfile = folder + '/' + filename + '.png'
-        plt.savefig(expfile)
-        plt.close(fig)
-        return expfile
 
 
 def plot_lulc_view(lulc, lulcparam_df, areas_df, aoi, meta, mapttl='lulc', filename='mapview', folder='C:/bin',
@@ -1937,7 +1754,191 @@ def plot_lulc_view(lulc, lulcparam_df, areas_df, aoi, meta, mapttl='lulc', filen
         plt.close(fig)
         return expfile
 
+#
+# problems:
+def plot_obssim_zmaps(obs, sim, metric, ranges='local', rangesmetric='local', ttl='title', show=False,
+                      filename='obssim_zmaps', folder='C:/bin'):
+    fig = plt.figure(figsize=(6, 6),)  # Width, Height
+    fig.suptitle('ZMAP | {}'.format(ttl))
+    gs = mpl.gridspec.GridSpec(3, 1, wspace=0.3, hspace=0.3)
+    if ranges == 'local':
+        v_min = np.min(np.array((obs, sim)))
+        v_max = np.max(np.array((obs, sim)))
+    else:
+        v_min = ranges[0]
+        v_max = ranges[1]
+    if rangesmetric == 'local':
+        v_min_m = np.min(metric)
+        v_max_m = np.max(metric)
+    else:
+        v_min_m = rangesmetric[0]
+        v_max_m = rangesmetric[1]
+    ax = fig.add_subplot(gs[0, 0])
+    im = plt.imshow(obs, cmap='Greys_r', vmin=v_min, vmax=v_max)
+    plt.title('Observed')
+    plt.axis('off')
+    ax = fig.add_subplot(gs[1, 0])
+    im = plt.imshow(sim, cmap='Greys_r', vmin=v_min, vmax=v_max)
+    plt.title('Simulated')
+    plt.axis('off')
+    ax = fig.add_subplot(gs[2, 0])
+    im = plt.imshow(metric, cmap='inferno', vmin=v_min_m, vmax=v_max_m)
+    plt.title('Abs Error')
+    plt.axis('off')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
 
+
+def plot_zmap_analyst(obs, sim, error, w_error, count, obs_sig, sim_sig, error_sig, w_error_sig, metrics_dct, ranges, metricranges,
+                      ttl='title', filename='zmap_analyst', folder='C:/bin', nodata=-1, show=False):
+    """
+
+    Plot a MAP analyst of zmaps
+
+    :param obs: 2d numpy array of OBS map
+    :param sim: 2d numpy array of SIM map
+    :param error: 2d numpy array of evaluation metric
+    :param w_error: 2d numpy array of weighted metric
+    :param count: 2d numpy array of couting matrix (histogram)
+    :param obs_sig: 1d numpy array of OBS signal
+    :param sim_sig: 1d numpy array of SIM signal
+    :param error_sig: 1d numpy array of signal of evaluation metric
+    :param metrics_dct: dictonary of global evaluation metrics
+    :param ranges: string or tuple of ranges of maps. Default: "local" to use local min max of OBS and SIM
+    :param metricranges: string or tuple of ranges of metric map. Default: "local" to use local min max of Metric map
+    :param ttl: string of superior title
+    :param filename: string of filename
+    :param folder: string filepath of export folder
+    :param show: boolean to show instead of saving. Default: False
+    :return: string of filepath
+    """
+    # get custom cmaps
+    cmaps = _custom_cmaps()
+    #
+    # deploy figure
+    fig = plt.figure(figsize=(14, 9), )  # Width, Height
+    fig.suptitle(ttl)
+    gs = mpl.gridspec.GridSpec(10, 13, wspace=0.3, hspace=1.0)
+    #
+    # deploy x of the signals
+    x_sig = np.arange(0, len(obs_sig))
+    #
+    # ranges selector
+    vmin = ranges[0]
+    vmax = ranges[1]
+    metric_vmin = metricranges[0]
+    metric_vmax = metricranges[1]
+    #
+    # no data mask
+    mask_obs = 1.0 * (obs != -1)
+    mask_obs[mask_obs == 0] = np.nan
+    #
+    # Observed map
+    ax = fig.add_subplot(gs[0:3, 0:3])
+    im = plt.imshow(obs * mask_obs, cmap=cmaps['flow_v'], vmin=vmin, vmax=vmax)
+    plt.title('Observed')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # Simulated map
+    ax = fig.add_subplot(gs[0:3, 3:6])
+    im = plt.imshow(sim * mask_obs, cmap=cmaps['flow_v'], vmin=vmin, vmax=vmax)
+    plt.title('Simulated')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # Local error map
+    ax = fig.add_subplot(gs[0:3, 7:10])
+    im = plt.imshow(error * mask_obs, cmap='jet', vmin=metric_vmin, vmax=metric_vmax)
+    plt.title('Local Error')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # Histogram map
+    ax = fig.add_subplot(gs[3:6, 0:3])
+    im = plt.imshow(count * mask_obs, cmap='viridis', vmin=0, vmax=np.max(count))
+    plt.title('Counting matrix')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # W-Error map
+    ax = fig.add_subplot(gs[3:6, 7:10])
+    im = plt.imshow(w_error * mask_obs, cmap='jet', vmin=-np.max(np.abs(w_error)), vmax=np.max(np.abs(w_error)))
+    plt.title('Weighted Local Error')
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # Signals
+    ax = fig.add_subplot(gs[6:8, 0:10])
+    plt.plot(x_sig, obs_sig, label='Observed', c='tab:orange')
+    plt.plot(x_sig, sim_sig, label='Simulated', c='tab:blue', alpha=0.5)
+    plt.title('Map signal', loc='left')
+    plt.legend(loc='upper right', ncol=3)
+    plt.xlim((np.min(x_sig), np.max(x_sig)))
+    plt.ylim((vmin, 1.2 * vmax))
+    plt.xticks([])
+    plt.ylabel('Map units')
+    #
+    # Errors
+    ax = fig.add_subplot(gs[8:, 0:10])
+    plt.plot(x_sig, error_sig, 'tab:red', label='Local Error')
+    plt.xlim((np.min(x_sig), np.max(x_sig)))
+    plt.ylim(metric_vmin, metric_vmax)
+    plt.xlabel('Cell ID')
+    plt.ylabel('Error')
+    plt.legend(loc='upper left', ncol=1, framealpha=1, fancybox=False)
+    ax2 = ax.twinx()
+    plt.plot(x_sig, w_error_sig, 'tab:grey', label='Weighted Error')
+    plt.ylabel('Error')
+    plt.ylim(-metric_vmin/20, metric_vmin/20)
+    plt.legend(loc='upper right', ncol=1, framealpha=1, fancybox=False)
+    #
+    # Scatter
+    ax = fig.add_subplot(gs[6:8, 11:])
+    plt.scatter(obs_sig, sim_sig, c='tab:grey', s=15, alpha=0.5, edgecolors='none')
+    plt.plot([0, vmax], [0, vmax], 'tab:grey', linestyle='--', label='1:1')
+    plt.ylim((vmin, vmax))
+    plt.xlim((vmin, vmax))
+    plt.grid(True)
+    plt.legend(loc='lower right')
+    plt.ylabel('Signal Sim')
+    plt.xlabel('Signal Obs')
+    #
+    # metrics text
+    ax = fig.add_subplot(gs[0:3, 10:])
+    x_offset = 0.36
+    plt.text(x_offset, 1, s='Global Metrics')
+    plt.text(x_offset, 0.9, s='N: {}'.format(metrics_dct['N']))
+    plt.text(x_offset, 0.8, s='MSE: {:.2f}'.format(metrics_dct['MSE']))
+    plt.text(x_offset, 0.7, s='W-MSE: {:.2f}'.format(metrics_dct['W-MSE']))
+    plt.text(x_offset, 0.6, s='RMSE: {:.2f}'.format(metrics_dct['RMSE']))
+    plt.text(x_offset, 0.5, s='W-RMSE: {:.2f}'.format(metrics_dct['W-RMSE']))
+    plt.text(x_offset, 0.4, s='NSE: {:.2f}'.format(metrics_dct['NSE']))
+    plt.text(x_offset, 0.3, s='KGE: {:.2f}'.format(metrics_dct['KGE']))
+    plt.text(x_offset, 0.2, s='R: {:.2f}'.format(metrics_dct['R']))
+    plt.text(x_offset, 0.0, s='Observed Mean:  {:.2f}'.format(metrics_dct['Mean-Obs']))
+    plt.text(x_offset, -0.1, s='Simulated Mean:  {:.2f}'.format(metrics_dct['Mean-Sim']))
+    plt.text(x_offset, -0.2, s='Error Mean:  {:.2f}'.format(metrics_dct['Mean-Error']))
+    plt.axis('off')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+    
+#
+# todo verify
 def plot_osa_zmaps_mean_series(analyst_df, var_df, var='ET', grid=False, folder='C:/bin', filename='zmaps_mean_series', show=True):
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height

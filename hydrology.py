@@ -250,7 +250,7 @@ def extract_sim_diagnostics(simseries, vars='all'):
 
 def map_back(zmatrix, a1, a2, bins1, bins2):
     """
-    Map back function using a Z-Matrix
+    Map back function using a Z-map
     :param zmatrix: 2d numpy array of z matrix of values
     :param a1: 2d numpy array reference array of rows (ex: TWI)
     :param a2: 2d numpy array reference array of columns  (ex: SHRU)
@@ -261,7 +261,9 @@ def map_back(zmatrix, a1, a2, bins1, bins2):
     # initiate map array
     map = np.zeros(shape=np.shape(a1))
     for i in range(len(zmatrix)):
+        # first iteration on bins
         if i == 0:
+            # define a boolean mask
             mask1 = (a1 <= bins1[i])
         else:
             mask1 = (a1 > bins1[i - 1]) * (a1 <= bins1[i])
@@ -270,7 +272,6 @@ def map_back(zmatrix, a1, a2, bins1, bins2):
                 mask2 = (a2 <= bins2[j])
             else:
                 mask2 = (a2 > bins2[j - 1]) * (a2 <= bins2[j])
-            # compute local map:
             lclmap = mask1 * mask2 * zmatrix[i][j]
             map = map + lclmap
     return map

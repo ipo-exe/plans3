@@ -127,12 +127,13 @@ def demo_slh():
     mapback = True
     if mapback:
         # define the variables to map back
-        vars = 'all'
+        vars = 'ET'
         # define the range of dates to map back
         date_init = '2011-01-01'
         date_end = '2012-01-01'
-        series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
-        query_str = 'Date >= "{}" and Date < "{}"'.format(date_init, date_end)
+        dates_series = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_etpat_zmaps_note.txt"
+        series = pd.read_csv(dates_series, sep=';', parse_dates=['Date'])
+        #query_str = 'Date >= "{}" and Date < "{}"'.format(date_init, date_end)
         #series = series.query(query_str)
         if len(series) == 0:  # no dates in range
             mapback = False
@@ -171,9 +172,9 @@ def demo_slh_calib():
     import pandas as pd
 
     # define output workplace
-    outfolder = 'C:/bin/sacre'
+    outfolder = 'C:/bin/ibira'
     # define observed datasets folder
-    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    folder = 'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
     # get input files
     files_input = backend.get_input2simbhydro(aoi=False)
     fseries ='{}/{}'.format(folder, files_input[0])
@@ -193,9 +194,10 @@ def demo_slh_calib():
     mapback = False
     #
     # import also the etpat series to extract the dates
-    fetpatseries = '{}/calib_etpat_zmaps_note.txt'.format(folder)
-    series = pd.read_csv(fetpatseries, sep=';', parse_dates=['Date'])
-    mapdates = ' & '.join(series['Date'].astype('str'))
+    ###fetpatseries = '{}/calib_etpat_zmaps_note.txt'.format(folder)
+    ###series = pd.read_csv(fetpatseries, sep=';', parse_dates=['Date'])
+    ###mapdates = ' & '.join(series['Date'].astype('str'))
+    mapdates = ''
     #
     # integration settings:
     integrate = False
@@ -277,9 +279,7 @@ def demo_calibration():
 def demo_glue():
     from backend import get_input2calibhydro
     from tools import glue
-
-
-
+    #
     # get folder of observed datasets
     folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
     # get observed datasets standard names
@@ -297,7 +297,6 @@ def demo_glue():
     fseries = calib_folder + '/MLM/full_period/sim_series.txt'
     fhydroparam = calib_folder + '/MLM/mlm_parameters.txt'
     fmodels = calib_folder + '/generations/population.txt'
-
     gluefiles = glue(fseries=fseries,
                      fmodels=fmodels,
                      fhydroparam=fhydroparam,
@@ -306,8 +305,9 @@ def demo_glue():
                      fshruparam=fshruparam,
                      fbasin=fbasin,
                      fcanopy=fcanopy,
-                     nmodels=100,
-                     behavioural=0.6,
+                     likelihood='NSE',
+                     nmodels=1000,
+                     behavioural=0.5,
                      folder=calib_folder,
                      wkpl=True,
                      tui=True)
@@ -425,11 +425,11 @@ def __insert_irrigation(folder='C:/bin'):
     import matplotlib.pyplot as plt
     import numpy as np
     from scipy.ndimage import gaussian_filter
-    fseries = r"C:\000_myFiles\myDrive\Plans3\demo\datasets\observed\calib_series.txt"
+    fseries = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\calib_series.txt"
     df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
     #
     # irrigation by aspersion:
-    pulse_ira = 100  # total mm per batch
+    pulse_ira = 0  # total mm per batch
     peak_ira = '01-15' # month and day
     size_ira = 40 # number of days
     sigma_ira = size_ira / 6
@@ -448,10 +448,10 @@ def __insert_irrigation(folder='C:/bin'):
     #
     #
     # irrigation by inundation:
-    pulse_iri = 100  # total mm per batch
-    start_iri = '10-15'  # month and day
-    size_iri = 100  # number of days
-    sigma_iri = 3
+    pulse_iri = 1200  # total mm per batch
+    start_iri = '10-01'  # month and day
+    size_iri = 5 * 30  # number of days
+    sigma_iri = 15
     fed = False
     counter = 0
     for i in range(len(df)):
@@ -473,41 +473,21 @@ def __insert_irrigation(folder='C:/bin'):
     plt.plot(df['Date'], df['IRA'])
     plt.show()
     print(df['IRI'].sum())
+    print(df['IRI'].sum()/6)
     outfile = folder + '/series_with_irrigation.txt'
     df.to_csv(outfile, sep=';', index=False)
 
 # todo revise
 def __visual_map_analyst():
-    import inp, analyst
-    from visuals import  plot_map_analyst
-    import numpy as np
-    from scipy.ndimage import gaussian_filter
-    import matplotlib.pyplot as plt
-    # define output directory
-    folder_output = 'C:/bin'
-    #
-    # directory of input data
-    folder_input = 'C:/Plans3/demo/datasets/observed'
-    # files paths to raster maps
-    ftwi = folder_input + '/' + 'calib_twi.asc'
-    fobs = r"C:\Plans3\demo\datasets\observed\etpat\calib_etpat_2012-10-01.asc"
-    fsim = r"C:\Plans3\demo\runbin\optimization\calib_hydro_KGElog_2021-04-21-13-04-49\bestset\calibration_period\sim_ETPat\raster_ETPat_2012-10-01.asc"
-    #
-    # import raster maps
-    meta, obs = inp.asc_raster(fobs)
-    meta, sim = inp.asc_raster(fsim)
-    metric = analyst.error(obs, sim)
+    from tools import osa_zmaps
+    fobs_series = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_etpat_zmaps_note.txt"
+    fsim_series = r"C:\bin\sacre\SLH_2021-09-28-12-46-33\sim_zmaps_series_ET.txt"
+    fhistograms = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_histograms.txt"
+    fseries = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_series.txt"
+    osa_zmaps(fobs_series, fsim_series, fhistograms, fseries)
 
-    obs_signal = obs.flatten()
-    sim_signal = sim.flatten()
-    metric_signal = analyst.error(obs_signal, sim_signal)
-    #plt.imshow(metric, cmap='seismic')
-    #plt.show()
-    metrics_dct = {'Error': 666.666, 'SqErr': 666.666, 'RMSE': 666.666, 'NSE':666.3, 'KGE':666.666, 'R':666.666}
-    ranges = (0, 1)
-    metricranges = (-1, 1)
-    plot_map_analyst(obs, sim, metric, obs_signal, sim_signal, metric_signal, ranges=ranges, metricranges=metricranges,
-                     metrics_dct=metrics_dct)
+
+
 
 # todo revise
 def __demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps_analyst', folder='C:/bin', tui=True):
@@ -518,7 +498,7 @@ def __demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps
     #
     import time, datetime
     import analyst
-    from visuals import plot_map_analyst
+    from visuals import plot_zmap_analyst
 
     def extract_series_data(dataframe, fld, type='raster'):
         maps_lst = list()
@@ -620,9 +600,9 @@ def __demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps
                        'NSE':out_df['NSE'].values[i],
                        'KGE':out_df['KGE'].values[i],
                        'R':out_df['R'].values[i]}
-        vis_file = plot_map_analyst(obs=maps_obs_lst[i], sim=maps_sim_lst[i], metric=metric_maps[i],
-                                    obs_sig=signal_obs_lst[i], sim_sig=signal_sim_lst[i], ranges=ranges,
-                                    metricranges=metricranges, metric_sig=metric_signal[i], metrics_dct=metrics_dct,
-                                    filename=lcl_filename, folder=folder, ttl=lcl_ttl)
+        vis_file = plot_zmap_analyst(obs=maps_obs_lst[i], sim=maps_sim_lst[i], error=metric_maps[i],
+                                     obs_sig=signal_obs_lst[i], sim_sig=signal_sim_lst[i], ranges=ranges,
+                                     metricranges=metricranges, error_sig=metric_signal[i], metrics_dct=metrics_dct,
+                                     filename=lcl_filename, folder=folder, ttl=lcl_ttl)
 
 

@@ -82,7 +82,7 @@ def maps_diagnostics(rasterfolder='C:/bin', folder='C:/bin', tui=False):
     export_report(report_lst, filename='REPORT__maps_diagnostics', folder=folder, tui=tui)
 
 
-def view_imported_map(filename, folder, aux_folder=''):
+def view_imported_input(filename, folder, aux_folder=''):
     """
 
     Function to view an imported map
@@ -95,7 +95,7 @@ def view_imported_map(filename, folder, aux_folder=''):
 
     from inp import dataframe_prepro
     from os import listdir
-    from visuals import plot_map_view, plot_qmap_view, pannel_prec_q_logq, plot_shrumap_view
+    from visuals import plot_map_view, plot_qmap_view, pannel_calib_series, plot_shrumap_view
 
     def plot_lulc(fraster, fparams, filename, mapid='LULC'):
         lulc_param_df = pd.read_csv(fparams, sep=';', engine='python')
@@ -195,7 +195,7 @@ def view_imported_map(filename, folder, aux_folder=''):
     elif filename == 'calib_series.txt':
         series_df = pd.read_csv(file, sep=';')
         series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
-        pannel_prec_q_logq(series_df['Date'], series_df['Prec'], series_df['Q'], filename=filename.split('.')[0], folder=folder, show=False)
+        pannel_calib_series(series_df, filename=filename.split('.')[0], folder=folder, show=False)
 
 
 def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zmapfolder='', frametype='all', filter_date=False,
@@ -729,7 +729,7 @@ def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filena
         #
         # plot view
         if view:
-            view_imported_map(lcl_filenm, rasterfolder, folder)
+            view_imported_input(lcl_filenm, rasterfolder, folder)
     #
     # export data
     exp_df = pd.DataFrame({'Date':dates, 'File':new_files})
@@ -1386,11 +1386,13 @@ def osa_series(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:
     return (exp_file1, exp_file2, exp_file3, exp_file4)
 
 
-def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, var='ETPat', folder='C:/bin', tui=True, nodata=-1):
+def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='ETPat', folder='C:/bin', tui=True,
+              nodata=-1, raster=False):
     import time, datetime
     import analyst
-    from inp import histograms
-    from visuals import plot_osa_zmaps_mean_series
+    from hydrology import map_back
+    from inp import histograms, asc_raster
+    from visuals import plot_zmap_analyst
     #
     # report setup
     t0 = time.time()
@@ -1406,11 +1408,13 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, var='ETPat', folde
 
     # extract input data
     #
-    #
     # extract count matrix (full map extension)
     if tui:
         status('loading histograms')
     count, twibins, shrubins = histograms(fhistograms=fhistograms)
+    #count = (count * 0.0) + 1
+    #print(np.shape(count))
+    #print('\n')
     #
     if tui:
         status('loading ZMAPS')
@@ -1424,9 +1428,6 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, var='ETPat', folde
     #
     # Match dates
     obssim_df = pd.merge(zmaps_obs_df, zmaps_sim_df, how='inner', on='Date', suffixes=('_obs', '_sim'))
-    # remove this after testing
-    obssim_df['File_sim'] = obssim_df['File_sim'].str.replace('./drive/MyDrive/', 'C:/000_myFiles/myDrive/')
-    #print(obssim_df.to_string())
     #
     # now load zmaps
     obs_zmaps = list()
@@ -1434,46 +1435,85 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, var='ETPat', folde
     for i in range(len(obssim_df)):
         zmap_file = obssim_df['File_obs'].values[i]
         zmap, ybins, xbins = inp.zmap(zmap_file)
+        #print(np.shape(zmap))
         obs_zmaps.append(zmap)
         zmap_file = obssim_df['File_sim'].values[i]
         zmap, ybins, xbins = inp.zmap(zmap_file)
+        #print(np.shape(zmap))
         sim_zmaps.append(zmap)
     obs_zmaps = np.array(obs_zmaps)
     sim_zmaps = np.array(sim_zmaps)
+    # get max values
+    vmax_zmaps = np.max([obs_zmaps, sim_zmaps])
     #
     #
     # load series
     # extract Dataframe
+    if tui:
+        status('loading series')
     series_df = pd.read_csv(fseries, sep=';', engine='python')
     series_df = dataframe_prepro(series_df, strf=False, date=True)
-
+    #
+    if raster:
+        if tui:
+            status('loading raster maps')
+        meta, shru = asc_raster(fshru, dtype='float32')
+        meta, twi = asc_raster(ftwi, dtype='float32')
+        obs_rmaps = np.zeros(shape=(len(obssim_df), np.shape(twi)[0], np.shape(twi)[1]))
+        sim_rmaps = np.zeros(shape=(len(obssim_df), np.shape(twi)[0], np.shape(twi)[1]))
+        for i in range(len(obssim_df)):
+            obs_rmaps[i] = map_back(obs_zmaps[i], twi, shru, twibins, shrubins)
+            sim_rmaps[i] = map_back(sim_zmaps[i], twi, shru, twibins, shrubins)
+    #
     tf = time.time()
     if tui:
         status('loading enlapsed time: {:.3f} seconds'.format(tf - t0))
     #
     #
     # Analysis
-    analyst_dct = analyst.zmaps(obs=obs_zmaps, sim=sim_zmaps, count=count, nodata=nodata, full_return=True)
-    analyst_df = pd.DataFrame({'Date': obssim_df['Date'],
-                               'Obs_Mean_Series': analyst_dct['Obs_Mean_Series'],
-                               'Sim_Mean_Series': analyst_dct['Sim_Mean_Series'],
-                               'Error_Mean_Series': analyst_dct['Error_Mean_Series'],
-                               'SE_Mean_Series': analyst_dct['SE_Mean_Series'],
-                               'NSE_Mean_Series': analyst_dct['NSE_Mean_Series'],
-                               'NSE_ZMap_Series': analyst_dct['NSE_ZMap_Series'],
-                               'File_obs':obssim_df['File_obs'],
-                               'File_sim':obssim_df['File_sim']})
+    if tui:
+        status('running series analyst')
+    a_dct = analyst.zmaps_series(obs=obs_zmaps, sim=sim_zmaps, count=1.0 * count, nodata=nodata, full_return=True)
+    # retrieve to dataframe
+    _aux_tpl = ('N', 'MSE', 'RMSE', 'W-MSE', 'W-RMSE', 'R', 'NSE', 'KGE', 'Mean-Obs', 'Mean-Sim', 'Mean-Error')
+    for m in _aux_tpl:
+        obssim_df[m] = a_dct['Metrics'][m]
+    exp_file1 = folder + '/' + 'analyst_zmaps_series.txt'
+    obssim_df.to_csv(exp_file1, sep=';', index=False)
+    '''
+    import matplotlib.pyplot as plt
+    plt.plot(series_df['Date'], series_df['ET'])
+    plt.plot(obssim_df['Date'], obssim_df['Mean-Obs'], 'o')
+    plt.plot(obssim_df['Date'], obssim_df['Mean-Sim'], 'o')
+    plt.show()
+    '''
     #
-    report_lst.append('\n\nAnalyst Parameter Results:\n\n')
-    report_lst.append(analyst_df.to_string(index=False))
-    report_lst.append('\n\n')
-
-    plot_osa_zmaps_mean_series(analyst_df, series_df, show=True)
-
-    exp_file1 = 'ok'
-    exp_file2 = 'ok'
-    exp_file3 = 'ok'
-    exp_file4 = 'ok'
+    # Visuals export
+    if tui:
+        status('exporting zmaps pannels')
+    for i in range(len(obssim_df)):
+        if tui:
+            status('::: zmaps pannel | {}'.format(obssim_df['Date'].astype(str).values[i]))
+        lcl_ttl = 'ET24h | {}'.format(obssim_df['Date'].astype(str).values[i])
+        lcl_dct = dict()
+        for m in _aux_tpl:
+            lcl_dct[m] = a_dct['Metrics'][m][i]
+        plot_zmap_analyst(obs=obs_zmaps[i],
+                          sim=sim_zmaps[i],
+                          count=count,
+                          error=a_dct['Maps']['Error'][i],
+                          w_error=a_dct['Maps']['WError'][i],
+                          obs_sig=a_dct['Signals']['Obs'][i],
+                          sim_sig=a_dct['Signals']['Sim'][i],
+                          error_sig=a_dct['Signals']['Error'][i],
+                          w_error_sig=a_dct['Signals']['WError'][i],
+                          ranges=(0, vmax_zmaps),
+                          metricranges=(-vmax_zmaps, vmax_zmaps),
+                          metrics_dct=lcl_dct,
+                          show=False,
+                          filename='et24h_zmap_analyst_{}'.format(obssim_df['Date'].astype(str).values[i]),
+                          ttl=lcl_ttl)
+    #
     # final exports
     tf = time.time()
     output_df = pd.DataFrame({'Output files': (exp_file1, exp_file2, exp_file3, exp_file4)})
