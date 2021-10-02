@@ -107,6 +107,12 @@ def kge(obs, sim):
     """
     Kling-Gupta Efficiency (KGE) coeficient Gupta et al. (2009)
 
+    KGE = 1 - sqroot( (r - 1)^2 + (sd_sim/sd_obs - 1)^2 + (m_sim/m_obs - 1)^2)
+
+    - Correlation
+    - Dispersion
+    - Mean value
+
     :param obs: numpy array of Observerd data
     :param sim: numpy array of Simulated data
     :return: float of KGE
@@ -244,6 +250,10 @@ def zmaps_lite(obs, sim, count, nodata=-1):
     error_sig = error(obs_sig, sim_sig)
     sq_error_sig = sq_error(obs_sig, sim_sig)
     # compute
+    # map of errors
+    error_map = (obs * mask) - (sim * mask)
+    # compute weighted error
+    werror_map = error_map * count / np.sum(his_sig)
     werror_sig = geo.flatten_clear(werror_map, mask)
     #
     # compute metrics
@@ -283,7 +293,7 @@ def zmaps_series(obs, sim, count, nodata=-1, full_return=False):
     _mean_obs = np.zeros(len(obs))
     _mean_sim = np.zeros(len(obs))
     _mean_error = np.zeros(len(obs))
-    #
+    # get maps and signals
     if full_return:
         _maps_errors = np.zeros(shape=(len(obs), np.shape(obs[0])[0], np.shape(obs[0])[1]))
         _maps_sqerrors = np.zeros(shape=(len(obs), np.shape(obs[0])[0], np.shape(obs[0])[1]))
@@ -324,6 +334,7 @@ def zmaps_series(obs, sim, count, nodata=-1, full_return=False):
         _mean_obs[i] = lcl_dct['Metrics']['Mean-Obs']
         _mean_sim[i] = lcl_dct['Metrics']['Mean-Sim']
         _mean_error[i] = lcl_dct['Metrics']['Mean-Error']
+    # return metrics and maps and signals
     if full_return:
         return {'Metrics':
                     {'N': _n,
@@ -349,6 +360,7 @@ def zmaps_series(obs, sim, count, nodata=-1, full_return=False):
                      'WError':_sigs_werror,
                      'Count':_sigs_hist}
                 }
+    # return only metrics series (arrays)
     else:
         return  {'Metrics':
                     {'N': _n,

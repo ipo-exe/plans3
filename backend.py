@@ -447,7 +447,7 @@ def get_input2simbhydro(aoi=True):
     else:
         files = ('calib_series.txt','hydro_param.txt', 'calib_shru_param.txt', 'calib_histograms.txt',
                  'calib_basin_histograms.txt', 'calib_basin.asc', 'calib_twi.asc', 'calib_shru.asc',
-                 'calib_canopy_series.txt')
+                 'calib_canopy_series.txt', 'calib_etpat_zmaps.txt')
     return files
 
 

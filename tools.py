@@ -1387,12 +1387,13 @@ def osa_series(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:
 
 
 def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='ETPat', folder='C:/bin', tui=True,
-              nodata=-1, raster=False):
+              nodata=-1, raster=False, wkpl=False, label=''):
     import time, datetime
     import analyst
     from hydrology import map_back
     from inp import histograms, asc_raster
-    from visuals import plot_zmap_analyst
+    from visuals import plot_zmap_analyst, pannel_global
+    from backend import create_rundir
     #
     # report setup
     t0 = time.time()
@@ -1405,16 +1406,21 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='
     if tui:
         from tui import status
         status('performing obs vs. sim analysis for zmaps')
-
+    #
+    # Run Folder setup
+    if tui:
+        from tui import status
+        status('setting folders')
+    if wkpl:  # if the passed folder is a workplace, create a sub folder
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'OSA_ZMAP', wkplc=folder)
     # extract input data
     #
     # extract count matrix (full map extension)
     if tui:
         status('loading histograms')
     count, twibins, shrubins = histograms(fhistograms=fhistograms)
-    #count = (count * 0.0) + 1
-    #print(np.shape(count))
-    #print('\n')
     #
     if tui:
         status('loading ZMAPS')
@@ -1454,17 +1460,6 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='
     series_df = pd.read_csv(fseries, sep=';', engine='python')
     series_df = dataframe_prepro(series_df, strf=False, date=True)
     #
-    if raster:
-        if tui:
-            status('loading raster maps')
-        meta, shru = asc_raster(fshru, dtype='float32')
-        meta, twi = asc_raster(ftwi, dtype='float32')
-        obs_rmaps = np.zeros(shape=(len(obssim_df), np.shape(twi)[0], np.shape(twi)[1]))
-        sim_rmaps = np.zeros(shape=(len(obssim_df), np.shape(twi)[0], np.shape(twi)[1]))
-        for i in range(len(obssim_df)):
-            obs_rmaps[i] = map_back(obs_zmaps[i], twi, shru, twibins, shrubins)
-            sim_rmaps[i] = map_back(sim_zmaps[i], twi, shru, twibins, shrubins)
-    #
     tf = time.time()
     if tui:
         status('loading enlapsed time: {:.3f} seconds'.format(tf - t0))
@@ -1474,27 +1469,42 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='
     if tui:
         status('running series analyst')
     a_dct = analyst.zmaps_series(obs=obs_zmaps, sim=sim_zmaps, count=1.0 * count, nodata=nodata, full_return=True)
+    #
     # retrieve to dataframe
     _aux_tpl = ('N', 'MSE', 'RMSE', 'W-MSE', 'W-RMSE', 'R', 'NSE', 'KGE', 'Mean-Obs', 'Mean-Sim', 'Mean-Error')
     for m in _aux_tpl:
         obssim_df[m] = a_dct['Metrics'][m]
+    #
+    # Export files
+    #
+    #
+    # Analyst series
     exp_file1 = folder + '/' + 'analyst_zmaps_series.txt'
     obssim_df.to_csv(exp_file1, sep=';', index=False)
-    '''
-    import matplotlib.pyplot as plt
-    plt.plot(series_df['Date'], series_df['ET'])
-    plt.plot(obssim_df['Date'], obssim_df['Mean-Obs'], 'o')
-    plt.plot(obssim_df['Date'], obssim_df['Mean-Sim'], 'o')
-    plt.show()
-    '''
+    #
+    # Updates sim series
+    series_df = pd.merge(series_df, obssim_df[['Date', 'Mean-Obs']], how='left', on='Date')
+    series_df.rename(columns={'Mean-Obs':'ETobs'}, inplace=True)
+    # export sim series
+    exp_file2 = folder + '/' + 'analyst_sim_series.txt'
+    series_df.to_csv(exp_file2, sep=';', index=False)
     #
     # Visuals export
+    if tui:
+        status('exporting global pannel')
+    pannel_global(series_df,
+                  qobs=True,
+                  etobs=True,
+                  folder=folder)
+    #
+    # Zmaps
     if tui:
         status('exporting zmaps pannels')
     for i in range(len(obssim_df)):
         if tui:
             status('::: zmaps pannel | {}'.format(obssim_df['Date'].astype(str).values[i]))
-        lcl_ttl = 'ET24h | {}'.format(obssim_df['Date'].astype(str).values[i])
+        lcl_ttl = 'ET24h (mm) | {}'.format(obssim_df['Date'].astype(str).values[i])
+        # built metrics dict
         lcl_dct = dict()
         for m in _aux_tpl:
             lcl_dct[m] = a_dct['Metrics'][m][i]
@@ -1511,16 +1521,47 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='
                           metricranges=(-vmax_zmaps, vmax_zmaps),
                           metrics_dct=lcl_dct,
                           show=False,
-                          filename='et24h_zmap_analyst_{}'.format(obssim_df['Date'].astype(str).values[i]),
+                          folder=folder,
+                          filename='analyst_zmaps_{}'.format(obssim_df['Date'].astype(str).values[i]),
                           ttl=lcl_ttl)
+    #
+    # Rmaps
+    if raster:
+        from visuals import plot_raster_analyst
+        meta, shru = asc_raster(fshru, dtype='float32')
+        meta, twi = asc_raster(ftwi, dtype='float32')
+        if tui:
+            status('exporting raster pannels')
+        for i in range(len(obssim_df)):
+            if tui:
+                status('::: raster pannel | {}'.format(obssim_df['Date'].astype(str).values[i]))
+            lcl_ttl = 'ET24h (mm) | {}'.format(obssim_df['Date'].astype(str).values[i])
+            # built metrics dict
+            lcl_dct = dict()
+            for m in _aux_tpl:
+                lcl_dct[m] = a_dct['Metrics'][m][i]
+            # load raster
+            obs_rmap = map_back(obs_zmaps[i], twi, shru, twibins, shrubins)
+            sim_rmap = map_back(sim_zmaps[i], twi, shru, twibins, shrubins)
+            plot_raster_analyst(obs=obs_rmap,
+                                sim=sim_rmap,
+                                ranges=(0, vmax_zmaps),
+                                metricranges=(-vmax_zmaps, vmax_zmaps),
+                                metrics_dct=lcl_dct,
+                                metrics_txt=True,
+                                show=False,
+                                folder=folder,
+                                filename = 'analyst_raster{}'.format(obssim_df['Date'].astype(str).values[i]),
+                                ttl = lcl_ttl)
     #
     # final exports
     tf = time.time()
-    output_df = pd.DataFrame({'Output files': (exp_file1, exp_file2, exp_file3, exp_file4)})
+    output_df = pd.DataFrame({'Output files': (exp_file1, 'ok')})
     report_lst.append(output_df.to_string(index=False))
     report_lst.append('\n\n')
     report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
     export_report(report_lst, filename='REPORT__analyst_zmaps', folder=folder, tui=tui)
+    return
 
 
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
@@ -1684,9 +1725,28 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     init = time.time()
     if tui:
         status('running simulation')
-    sim_dct = simulation(series=series_df, shruparam=shru_df, canopy=canopy_df, twibins=twibins, countmatrix=count,
-                         lamb=lamb, qt0=qt0, m=m, qo=qo, cpmax=cpmax, sfmax=sfmax, erz=erz, ksat=ksat, c=c, lat=lat,
-                         k=k, n=n, area=area, basinshadow=basincount, tui=False, qobs=qobs, mapback=mapback,
+    sim_dct = simulation(series=series_df,
+                         shruparam=shru_df,
+                         canopy=canopy_df,
+                         twibins=twibins,
+                         countmatrix=count,
+                         lamb=lamb,
+                         qt0=qt0,
+                         m=m,
+                         qo=qo,
+                         cpmax=cpmax,
+                         sfmax=sfmax,
+                         erz=erz,
+                         ksat=ksat,
+                         c=c,
+                         lat=lat,
+                         k=k,
+                         n=n,
+                         area=area,
+                         basinshadow=basincount,
+                         tui=False,
+                         qobs=qobs,
+                         mapback=mapback,
                          mapvar=mapvar,
                          mapdates=mapdates)
     sim_df = sim_dct['Series']
@@ -1929,12 +1989,11 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     return out_dct
 
 
-def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
-              mapraster=False, mapvar='all', mapdates='all', integrate=False, cutdatef=0.3, qobs=True,
-              folder='C:/bin', wkpl=False, label='',tui=False):
+def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, fzmaps,
+              cutdatef=0.3, folder='C:/bin', wkpl=False, label='',tui=False):
     """
 
-    SLH for a calibration series (qobs is known in series)
+    SLH for a calibration series (Qobs and ET is known)
 
     :param fseries: string filepath to simulation series
     :param fhydroparam: string filepath to parameters csv (txt file)
@@ -1945,14 +2004,10 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     :param ftwi: string filepath to twi raster map (asc file)
     :param fshru: string filepath to shru raster map (asc file)
     :param fcanopy: string filepath to canopy seasonal factor series (txt file)
-    :param mapback: boolean to map back variables
-    :param mapraster: boolean to map back raster maps
-    :param mapvar: string of variables to map. Pass concatenated by '-'. Ex: 'ET-TF-Inf'.
-    Options: 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
-    :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-21-01 & 21-22-01'
-    :param integrate: boolean to include variable integration over the simulation period
+    :param fzmaps: string filepath to etpat series of zmaps (txt file)
     :param cutdatef: float fraction (0 to 1) of the validation period
-    :param qobs: boolean to inclue Qobs in visuals
+    :param qobs: boolean to include Qobs in visuals
+    :param etobs: boolean to include ETobs in visuals
     :param folder: string to folderpath
     :param wkpl: boolean to set folder as workplace
     :param label: string label
@@ -2013,58 +2068,119 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # run SLH for calibration period
     if tui:
         status('running SLH for calibration period')
-    calib_dct = slh(fseries=fcalib_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy,
-                    mapback=mapback, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, integrate=integrate,
-                    qobs=qobs, folder=calibration_folder, wkpl=False, label=label, tui=tui)
+    calib_dct = slh(fseries=fcalib_series,
+                    fhydroparam=fhydroparam,
+                    fshruparam=fshruparam,
+                    fhistograms=fhistograms,
+                    fbasinhists=fbasinhists,
+                    fbasin=fbasin,
+                    ftwi=ftwi,
+                    fshru=fshru,
+                    fcanopy=fcanopy,
+                    mapback=False,
+                    mapraster=False,
+                    integrate=False,
+                    qobs=True,
+                    folder=calibration_folder,
+                    wkpl=False,
+                    label=label,
+                    tui=tui)
     fsim_calib = calib_dct['Series']
     # run OSA for calibration period
     if tui:
         status('running OSA for calibration period')
-    osa_files1 = osa_series(fseries=fsim_calib, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
-                            folder=calibration_folder, tui=tui)
-    if mapback and 'ET' in mapvar:
-        if tui:
-            status('running ZMAP OSA for calibration period')
-            print('code missing')
+    osa_files1 = osa_series(fseries=fsim_calib,
+                            fld_obs='Qobs',
+                            fld_sim='Q',
+                            fld_date='Date',
+                            folder=calibration_folder,
+                            tui=tui)
     #
     #
     # run SLH for validation period
     if tui:
         status('running SLH for validation period')
-    valid_dct = slh(fseries=fvalid_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, integrate=integrate,
-                    mapback=mapback, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, qobs=qobs,
-                    folder=validation_folder, wkpl=False, label=label, tui=tui)
+    valid_dct = slh(fseries=fvalid_series,
+                    fhydroparam=fhydroparam,
+                    fshruparam=fshruparam,
+                    fhistograms=fhistograms,
+                    fbasinhists=fbasinhists,
+                    fbasin=fbasin,
+                    ftwi=ftwi,
+                    fshru=fshru,
+                    fcanopy=fcanopy,
+                    mapback=False,
+                    mapraster=False,
+                    integrate=False,
+                    qobs=True,
+                    folder=validation_folder,
+                    wkpl=False,
+                    label=label,
+                    tui=tui)
     fsim_valid = valid_dct['Series']
     # run OSA for validation period
     if tui:
         status('running OSA for validation period')
-    osa_files2 = osa_series(fseries=fsim_valid, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
-                            folder=validation_folder, tui=tui)
-    if mapback and 'ET' in mapvar:
-        if tui:
-            status('running ZMAP OSA for validation period')
-            print('code missing')
+    osa_files2 = osa_series(fseries=fsim_valid,
+                            fld_obs='Qobs',
+                            fld_sim='Q',
+                            fld_date='Date',
+                            folder=validation_folder,
+                            tui=tui)
     #
     #
     # run SLH for full period
     if tui:
         status('running SLH for full period')
-    full_dct = slh(fseries=ffull_series, fhydroparam=fhydroparam, fshruparam=fshruparam, fhistograms=fhistograms,
-                    fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi, fshru=fshru, fcanopy=fcanopy, integrate=integrate,
-                    mapback=False, mapraster=mapraster, mapvar=mapvar, mapdates=mapdates, qobs=qobs,
-                    folder=full_folder, wkpl=False, label=label, tui=tui)
+    # Import Observed Zmaps dataframe series
+    zmaps_obs_df = pd.read_csv(fzmaps, sep=';')
+    zmaps_obs_df = dataframe_prepro(zmaps_obs_df, strfields='File', date=True)
+    mapdates = ' & '.join(zmaps_obs_df['Date'].astype('str'))
+    full_dct = slh(fseries=ffull_series,
+                    fhydroparam=fhydroparam,
+                    fshruparam=fshruparam,
+                    fhistograms=fhistograms,
+                    fbasinhists=fbasinhists,
+                    fbasin=fbasin,
+                    ftwi=ftwi,
+                    fshru=fshru,
+                    fcanopy=fcanopy,
+                    mapback=True,
+                    mapraster=False,
+                    integrate=False,
+                    mapvar='ET',
+                    mapdates=mapdates,
+                    qobs=True,
+                    folder=full_folder,
+                    wkpl=False,
+                    label=label,
+                    tui=tui)
     fsim_full = full_dct['Series']
     # run OSA for full period
     if tui:
         status('running OSA for full period')
-    osa_files3 = osa_series(fseries=fsim_full, fld_obs='Qobs', fld_sim='Q', fld_date='Date',
-                            folder=full_folder, tui=tui)
-    if mapback and 'ET' in mapvar:
-        if tui:
-            status('running ZMAP OSA for full period')
-            print('code missing')
+    osa_files3 = osa_series(fseries=fsim_full,
+                            fld_obs='Qobs',
+                            fld_sim='Q',
+                            fld_date='Date',
+                            folder=full_folder,
+                            tui=tui)
+    # run OSA on zmaps for full period
+    if tui:
+        status('running ZMAP OSA for full period')
+    fzmaps_sim = full_folder + '/' + 'sim_zmaps_series_ET.txt'
+    osa_zmaps_folder = full_folder + '/osa_zmaps'
+    mkdir(osa_zmaps_folder)
+    osa_zmaps(fobs_series=fzmaps,
+              fsim_series=fzmaps_sim,
+              fhistograms=fhistograms,
+              fseries=fsim_full,
+              fshru=fshru,
+              ftwi=ftwi,
+              folder=osa_zmaps_folder,
+              wkpl=False,
+              tui=tui,
+              raster=True)
     #
     # exports
     if tui:
@@ -2260,7 +2376,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     #
     # extract dates to string code for calibration
     etpat_dates_str_calib = ' & '.join(etpat_zmaps_obs_calib_df['Date'].astype('str').values)  # for calibration!!
-    etpat_dates_str_full = ' & '.join(etpat_zmaps_obs_df['Date'].astype('str').values)  # for full
+    etpat_dates_str_full = ' & '.join(etpat_zmaps_obs_df['Date'].astype('str').values)
     #
     # clear prec by dates:
     series_df = clear_prec_by_dates(dseries=series_df, datesstr=etpat_dates_str_full)  # clear prec by dates
@@ -2276,6 +2392,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         zmap_file = etpat_zmaps_obs_calib_df['File'].values[i]
         zmap, ybins, xbins = inp.zmap(zmap_file)
         etpat_zmaps_obs_calib.append(zmap)
+    # array of zmaps
     etpat_zmaps_obs_calib = np.array(etpat_zmaps_obs_calib)
     #
     #
@@ -2319,8 +2436,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                           likelihood=likelihood,
                           tracefrac=1,
                           tracepop=True,
-                          normalize=normalize
-                          )
+                          normalize=normalize)
     end = time.time()
     if tui:
         print('\nCalibration enlapsed time: {:.3f} seconds'.format(end - init))
@@ -2372,11 +2488,18 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     hydroparam_df.to_csv(fhydroparam_mlm, sep=';', index=False)
     #
     # run SLH for calibration basin, asking for mapping the ET:
-    slh_dct = slh_calib(fseries=fseries, fhydroparam=fhydroparam_mlm, fshruparam=fshruparam,
-                        fhistograms=fhistograms, fbasinhists=fbasinhists, fbasin=fbasin, ftwi=ftwi,
-                        fshru=fshru, fcanopy=fcanopy,
-                        mapback=True, mapraster=False, mapvar='ET', mapdates=etpat_dates_str_full,
-                        qobs=True, tui=tui, folder=mlm_folder)
+    slh_dct = slh_calib(fseries=fseries,
+                        fhydroparam=fhydroparam_mlm,
+                        fshruparam=fshruparam,
+                        fhistograms=fhistograms,
+                        fbasinhists=fbasinhists,
+                        fbasin=fbasin,
+                        ftwi=ftwi,
+                        fshru=fshru,
+                        fcanopy=fcanopy,
+                        fzmaps=fetpatzmaps,
+                        tui=tui,
+                        folder=mlm_folder)
     # extract folders:
     calib_folder = slh_dct['CalibFolder']
     valid_folder = slh_dct['ValidFolder']

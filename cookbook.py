@@ -95,7 +95,6 @@ def demo_watch_pannels():
     from tools import export_local_pannels
 
 
-
 def demo_slh():
     """
     Simulation demo routine
@@ -127,19 +126,14 @@ def demo_slh():
     mapback = True
     if mapback:
         # define the variables to map back
-        vars = 'ET'
+        vars = 'ET-D-VSA-R-Qv'
         # define the range of dates to map back
-        date_init = '2011-01-01'
-        date_end = '2012-01-01'
-        dates_series = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_etpat_zmaps_note.txt"
-        series = pd.read_csv(dates_series, sep=';', parse_dates=['Date'])
-        #query_str = 'Date >= "{}" and Date < "{}"'.format(date_init, date_end)
-        #series = series.query(query_str)
-        if len(series) == 0:  # no dates in range
-            mapback = False
-            print('No dates in range')
-        else:
-            mapdates = ' & '.join(series['Date'].astype('str'))
+        date_init = '2013-09-01'
+        date_end = '2014-09-01'
+        series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+        query_str = 'Date >= "{}" and Date < "{}"'.format(date_init, date_end)
+        series = series.query(query_str)
+        mapdates = ' & '.join(series['Date'].astype('str'))
     # integration settings:
     integrate = False
     # raster mapping settings:
@@ -172,9 +166,9 @@ def demo_slh_calib():
     import pandas as pd
 
     # define output workplace
-    outfolder = 'C:/bin/ibira'
+    outfolder = 'C:/bin/sacre'
     # define observed datasets folder
-    folder = 'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
+    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
     # get input files
     files_input = backend.get_input2simbhydro(aoi=False)
     fseries ='{}/{}'.format(folder, files_input[0])
@@ -183,26 +177,13 @@ def demo_slh_calib():
     fhistograms = '{}/{}'.format(folder, files_input[3])
     fbasinhists = '{}/{}'.format(folder, files_input[4])
     fbasin = '{}/{}'.format(folder, files_input[5])
-    ftwi = '{}/{}'.format(folder, files_input[6])
-    fshru = '{}/{}'.format(folder, files_input[7])
+    ftwi = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\__calib_twi_window.asc"
+    #ftwi = '{}/{}'.format(folder, files_input[6])
+    fshru = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\__calib_shru_window.asc"
+    #fshru = '{}/{}'.format(folder, files_input[7])
     fcanopy = '{}/{}'.format(folder, files_input[8])
+    fzmaps = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_etpat_zmaps_note.txt" #'{}/{}'.format(folder, files_input[9])
     #
-
-    #
-    # map back settings
-    vars = 'ET'
-    mapback = False
-    #
-    # import also the etpat series to extract the dates
-    ###fetpatseries = '{}/calib_etpat_zmaps_note.txt'.format(folder)
-    ###series = pd.read_csv(fetpatseries, sep=';', parse_dates=['Date'])
-    ###mapdates = ' & '.join(series['Date'].astype('str'))
-    mapdates = ''
-    #
-    # integration settings:
-    integrate = False
-    # raster mapping settings:
-    mapraster = False
     #
     # call function
     out_dct = slh_calib(fseries=fseries,
@@ -214,15 +195,10 @@ def demo_slh_calib():
                         ftwi=ftwi,
                         fshru=fshru,
                         fcanopy=fcanopy,
+                        fzmaps=fzmaps,
                         folder=outfolder,
                         wkpl=True,
                         tui=True,
-                        mapback=mapback,
-                        mapraster=False,
-                        mapvar=vars,
-                        integrate=False,
-                        mapdates=mapdates,
-                        qobs=True,
                         label='CALIB')
 
 
@@ -244,8 +220,10 @@ def demo_calibration():
     fhistograms = folder + '/' + files_input[3]
     fbasinhists = folder + '/' + files_input[4]
     fbasin = folder + '/' + files_input[5]
-    ftwi = folder + '/' + files_input[6]
-    fshru = folder + '/' + files_input[7]
+    ftwi = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\__calib_twi_window.asc"
+    fshru = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\__calib_shru_window.asc"
+    #ftwi = folder + '/' + files_input[6]
+    #fshru = folder + '/' + files_input[7]
     fetpatzmaps = folder + '/' + 'calib_etpat_zmaps_note.txt' #files_input[8]
     fcanopy = folder + '/' + files_input[9]
 
@@ -253,7 +231,7 @@ def demo_calibration():
 
     likelihood = 'KGE'
     generations = 8
-    popsize = 500
+    popsize = 300
     calibfiles = calibrate(fseries=fseries,
                            fhydroparam=fhydroparam,
                            fshruparam=fshruparam,
@@ -293,7 +271,7 @@ def demo_glue():
     fcanopy = folder + '/' + files_input[9]
 
     # calibration folder
-    calib_folder = 'C:/bin/sacre/00___calib_Hydrology_KGE_2021-09-24-07-14-07'
+    calib_folder = r"C:\bin\sacre\calib_Hydrology_KGE_2021-10-01-21-55-57"
     fseries = calib_folder + '/MLM/full_period/sim_series.txt'
     fhydroparam = calib_folder + '/MLM/mlm_parameters.txt'
     fmodels = calib_folder + '/generations/population.txt'
@@ -305,8 +283,8 @@ def demo_glue():
                      fshruparam=fshruparam,
                      fbasin=fbasin,
                      fcanopy=fcanopy,
-                     likelihood='NSE',
-                     nmodels=1000,
+                     likelihood='Score',
+                     nmodels=100,
                      behavioural=0.5,
                      folder=calib_folder,
                      wkpl=True,
@@ -419,7 +397,7 @@ def demo_create_benchmark_series():
     plt.plot(df2['Date'], df2['Temp'])
     plt.show()
 
-# todo revise
+
 def __insert_irrigation(folder='C:/bin'):
     import pandas as pd
     import matplotlib.pyplot as plt
