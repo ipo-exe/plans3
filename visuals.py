@@ -367,7 +367,7 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
 def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
                  sup1_rng, sup2_rng, sup3_rng, sup4_rng,
                  mid1_rng, mid2_rng, mid3_rng, mid4_rng,
-                 t, offset_back, offset_front, type='ET', filename='frame', folder='C:/bin',
+                 t, offset_back=10, offset_front=10, offset=False, type='ET', filename='frame', folder='C:/bin',
                  show=False, suff='', dpi=300, png=True):
     """
 
@@ -534,15 +534,18 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
     #
     # SERIES
     #
-    if t < offset_back:
-        low = 0
-        hi = offset_front + offset_back + 1
-    elif t >= len(series) - offset_front - 1:
-        low = len(series) - offset_front - offset_back - 1
-        hi = len(series)
-    else:
-        low = t - offset_back
-        hi = t + offset_front + 1
+    low = 0
+    hi = len(series)
+    if offset:
+        if t < offset_back:
+            low = 0
+            hi = offset_front + offset_back + 1
+        elif t >= len(series) - offset_front - 1:
+            low = len(series) - offset_front - offset_back - 1
+            hi = len(series)
+        else:
+            low = t - offset_back
+            hi = t + offset_front + 1
     #
     #
     #
@@ -757,7 +760,7 @@ def pannel_calib_series(dataframe, grid=True, folder='C:/bin', filename='calib_s
     # plot prec
     var = 'Prec'
     ax1 = fig.add_subplot(gs[0, 0])
-    plt.title('Flow', loc='left')
+    plt.title('Precipitation', loc='left')
     plt.ylabel('mm/d')
     plt.plot(dataframe['Date'], dataframe[var])
     plt.ylim(0, 1.1 * np.max(dataframe[var]))
@@ -1296,14 +1299,7 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
     :param png: boolean to export as PNG
     :return: string filepath
     """
-    from matplotlib import cm
-    from matplotlib.colors import ListedColormap
-    earth_big = cm.get_cmap('gist_earth_r', 512)
-    earthcm = ListedColormap(earth_big(np.linspace(0.10, 0.95, 256)))
-    jet_big = cm.get_cmap('jet_r', 512)
-    jetcm = ListedColormap(jet_big(np.linspace(0.3, 0.75, 256)))
-    viridis_big = cm.get_cmap('viridis_r', 512)
-    viridiscm = ListedColormap(viridis_big(np.linspace(0.05, 0.9)))
+    cmaps = _custom_cmaps()
     map_dct = {'dem': ['BrBG_r', 'Elevation'],
                'slope': ['OrRd', 'Degrees'],
                'twi': ['YlGnBu', 'Index units'],
@@ -1312,10 +1308,10 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
                'etpat': ['Greys_r', 'Index units'],
                'catcha': ['Blues', 'Sq. Meters (log10)'],
                'basin': ['Greys', 'Boolean'],
-               'flow':[earthcm, 'mm/d', 'mm'], 
-               'flow_v':[jetcm, 'mm/d', 'mm'], 
-               'stock':[viridiscm, 'mm', 'mm'],
-               'deficit':['jet', 'mm', 'mm'], 
+               'flow':[cmaps['flow'], 'mm/d', 'mm'],
+               'flow_v':[cmaps['flow_v'], 'mm/d', 'mm'],
+               'stock':[cmaps['stk'], 'mm', 'mm'],
+               'deficit':[cmaps['D'], 'mm', 'mm'],
                'VSA':['Blues', 'Boolean', '%'], 
                'RC':['YlOrRd', '%', '%']}
     #

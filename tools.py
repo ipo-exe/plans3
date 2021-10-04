@@ -81,7 +81,7 @@ def maps_diagnostics(rasterfolder='C:/bin', folder='C:/bin', tui=False):
     report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
     export_report(report_lst, filename='REPORT__maps_diagnostics', folder=folder, tui=tui)
 
-
+# this is a mess:
 def view_imported_input(filename, folder, aux_folder=''):
     """
 
@@ -208,8 +208,12 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
     :param fshru: string filepath to twi raster map
     :param folder: string filepath to simulation/output folder. The folder must contain all series files:
     'sim_series.txt' and all 'sim_zmaps_series_VAR.txt' VAR files
-
+    :param chagezmapfolder: boolean to change zmap folder
+    :param zmapfolder: string folder path to zmaps
     :param frametype: string code to frametypes. options: 'all', 'ET', 'Qv' and 'R"
+    :param filter_date: boolean to filter dates
+    :param date_init: string initial date to filter
+    :param date_end: string end date to filter
     :param tui: boolean to display
     :return: none
     """
@@ -221,14 +225,16 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
         from tui import status
     #
     # load heavy inputs
-    meta, twi = inp.asc_raster(ftwi)
-    meta, shru = inp.asc_raster(fshru)
+    if tui:
+        status('loading raster maps')
+    meta, twi = inp.asc_raster(ftwi, dtype='float32')
+    meta, shru = inp.asc_raster(fshru, dtype='float32')
     #
     #
     # set view port
-    upper_y = 0
+    upper_y = 200
     lower_x = 0
-    size = 150
+    size = 500
     twi = twi[upper_y: upper_y + size, lower_x: lower_x + size]
     shru = shru[upper_y: upper_y + size, lower_x: lower_x + size]
     #
@@ -284,6 +290,7 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
                 print(lcl_file)
             lcl_zmap, ybins, xbins = inp.zmap(lcl_file)
             lcl_raster = map_back(lcl_zmap, a1=twi, a2=shru, bins1=ybins, bins2=xbins)
+            print(i)
             #plt.imshow(lcl_raster)
             #plt.show()
             raster_list.append(lcl_raster)
@@ -294,8 +301,8 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
         if tui:
             status('{} maps loaded'.format(len(raster_nd)))
     #
-    offsetback = 10
-    offsetfront = 10
+    offsetback = 0
+    offsetfront = 0
     #
     # plot ET pannels:
     if frametype == 'all' or frametype == 'ET':
@@ -305,7 +312,7 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
         star = 'ET'
         mids = ('Evc', 'Evs', 'Tpun', 'Tpgw')
         prec_rng = (0, np.max(series['Prec'].values))
-        irri_rng = (0, np.max((series['IRA'].values, series['IRA'].values)))
+        irri_rng = (0, np.max((series['IRA'].values, series['IRI'].values)))
         for t in range(len(series)):
             if tui:
                 status('ET pannel t = {} | plotting date {}'.format(t, dates_labels.values[t]))
@@ -316,12 +323,19 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
                                raster_series[mids[2]][t], raster_series[mids[3]][t]],
                          star_rng=(rasters_minval[star], rasters_maxval[star]),
                          deficit_rng=(rasters_minval['D'], rasters_maxval['D']),
-                         sup1_rng=prec_rng, sup2_rng=irri_rng, sup3_rng=irri_rng, sup4_rng=irri_rng,
+                         sup1_rng=prec_rng,
+                         sup2_rng=irri_rng,
+                         sup3_rng=irri_rng,
+                         sup4_rng=irri_rng,
                          mid1_rng=(rasters_minval['ET'], rasters_maxval['ET']),
                          mid2_rng=(rasters_minval['ET'], rasters_maxval['ET']),
                          mid3_rng=(rasters_minval['ET'], rasters_maxval['ET']),
                          mid4_rng=(rasters_minval['ET'], rasters_maxval['ET']),
-                         t=t, type='ET', show=False, offset_back=offsetback, offset_front=offsetfront,
+                         t=t,
+                         type=star,
+                         show=False,
+                         offset_back=offsetback,
+                         offset_front=offsetfront,
                          folder=lcl_folder)
     #
     #
@@ -333,7 +347,7 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
         star = 'Qv'
         mids = ('Inf', 'Cpy', 'Sfs', 'Unz')
         prec_rng = (0, np.max(series['Prec'].values))
-        irri_rng = (0, np.max((series['IRA'].values, series['IRA'].values)))
+        irri_rng = (0, np.max((series['IRA'].values, series['IRI'].values)))
         stockmax = np.max((rasters_maxval['Unz'], rasters_maxval['Cpy'], rasters_maxval['Sfs']))
         for t in range(len(series)):
             if tui:
@@ -345,12 +359,20 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
                                raster_series[mids[2]][t], raster_series[mids[3]][t]],
                          star_rng=(0, rasters_maxval['Inf']),
                          deficit_rng=(rasters_minval['D'], rasters_maxval['D']),
-                         sup1_rng=prec_rng, sup2_rng=irri_rng, sup3_rng=irri_rng, sup4_rng=irri_rng,
+                         sup1_rng=prec_rng,
+                         sup2_rng=irri_rng,
+                         sup3_rng=irri_rng,
+                         sup4_rng=irri_rng,
                          mid1_rng=(0, rasters_maxval['Inf']),
-                         mid2_rng=(0, stockmax),
-                         mid3_rng=(0, stockmax),
-                         mid4_rng=(0, stockmax),
-                         t=t, type=star, show=False, offset_back=offsetback, offset_front=offsetfront,
+                         mid2_rng=(0, rasters_maxval['Cpy']),
+                         mid3_rng=(0, rasters_maxval['Sfs']),
+                         mid4_rng=(0, rasters_maxval['Unz']),
+                         t=t,
+                         type=star,
+                         show=False,
+                         offset=False,
+                         offset_back=offsetback,
+                         offset_front=offsetfront,
                          folder=lcl_folder)
         #
     # plot R pannels:
@@ -361,7 +383,7 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
         star = 'R'
         mids = ('TF', 'RIE', 'RSE', 'VSA')
         prec_rng = (0, np.max(series['Prec'].values))
-        irri_rng = (0, np.max((series['IRA'].values, series['IRA'].values)))
+        irri_rng = (0, np.max((series['IRA'].values, series['IRI'].values)))
         for t in range(len(series)):
             if tui:
                 status('R pannel t = {} | plotting date {}'.format(t, dates_labels.values[t]))
@@ -372,12 +394,19 @@ def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zm
                                raster_series[mids[2]][t], raster_series[mids[3]][t]],
                          star_rng=(0, rasters_maxval['TF']),
                          deficit_rng=(rasters_minval['D'], rasters_maxval['D']),
-                         sup1_rng=prec_rng, sup2_rng=irri_rng, sup3_rng=irri_rng, sup4_rng=irri_rng,
+                         sup1_rng=prec_rng,
+                         sup2_rng=irri_rng,
+                         sup3_rng=irri_rng,
+                         sup4_rng=irri_rng,
                          mid1_rng=(0, rasters_maxval['TF']),
                          mid2_rng=(0, rasters_maxval['TF']),
                          mid3_rng=(0, rasters_maxval['TF']),
                          mid4_rng=(0, 1.0),
-                         t=t, type=star, show=False, offset_back=offsetback, offset_front=offsetfront,
+                         t=t,
+                         type=star,
+                         show=False,
+                         offset_back=offsetback,
+                         offset_front=offsetfront,
                          folder=lcl_folder)
 
 
@@ -852,7 +881,7 @@ def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='loc
 
 
 def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var_zmap_series', folder='C:/bin',
-                        tui=False, dtype='int16'):
+                        tui=False, dtype='int16', factor=1.0):
     """
     Batch routine to compute zmaps from raster series
 
@@ -863,6 +892,8 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
     :param filename: string of output series txt file name
     :param folder: string path to output folder
     :param tui: boolean to tui display
+    :param dtype: string of input raster dtype
+    :param factor: float of raster factor (to divide by during import)
     :return: string file path to map series txt file
     """
     from out import zmap
@@ -901,6 +932,9 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
         lcl_new_filename = 'zmap_' +  var + '_' + dates[i]
         # get raster
         meta, lcl_var = inp.asc_raster(files[i], dtype=dtype)
+        # use factor to access values
+        if factor != 1.0:
+            lcl_var = lcl_var / factor
         lcl_zmap = built_zmap(varmap=lcl_var, twi=twi, shru=shru, twibins=twibins, shrubins=shrubins)
         exp_file = out.zmap(zmap=lcl_zmap, twibins=twibins, shrubins=shrubins, folder=lcl_folder, filename=lcl_new_filename)
         new_files.append(exp_file)
@@ -2864,4 +2898,4 @@ def sal_d_by_lamb(ftwi, m=10, lamb1=5, lamb2=15, dmax=100, size=100, label='', w
         # plot frame
         lcl_flnm = 'sal_d_by_lamb__{}'.format(id_label(id=i))
         sal_deficit_frame(dgbl=lcl_d, d1=lcl_di_1, d2=lcl_di_2, p1=lamb1, p2=lamb2, p_lbl='lamb', vsa1=lcl_vsai_1, vsa2=lcl_vsai_2,
-                          dgbl_max=dmax, vmax=4*dmax, filename=lcl_flnm, folder=folder, supttl='Sensitivity to lambda | m={}'.format(m))
+                          dgbl_max=dmax, vmax=dmax, filename=lcl_flnm, folder=folder, supttl='Sensitivity to lambda | m={}'.format(m))

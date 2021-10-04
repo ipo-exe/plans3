@@ -12,31 +12,31 @@ def demo_watch_by_zmaps():
     from visuals import plot_map_view
     #
     # define output directory
-    folder_output = 'C:/bin/sacre/views'
+    folder_output = 'C:/bin/ibira/views'
     #
     # directory of input data
-    folder_input =  'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    folder_input =  'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
     # files paths to raster maps
-    ftwi = folder_input + '/' + '__calib_twi_window.asc'
-    fshru = folder_input + '/' + '__calib_shru_window.asc'
+    ftwi = folder_input + '/' + '__calib_twi_window1.asc'
+    fshru = folder_input + '/' + '__calib_shru_window1.asc'
     ##fbasin = folder_input + '/' + 'calib_basin.asc'
     #
     # import raster maps
-    meta, twi = inp.asc_raster(ftwi)
-    meta, shru = inp.asc_raster(fshru)
+    meta, twi = inp.asc_raster(ftwi, dtype='float32')
+    meta, shru = inp.asc_raster(fshru, dtype='float32')
     ##meta, basin = inp.asc_raster(fbasin)
     #
     # directory of simulated data
-    folder_sim = 'C:/bin/sacre/SLH_2021-09-23-18-16-31'
+    folder_sim = 'C:/bin/ibira/SLH_2021-10-04-15-57-38'
     # simulated time series
     file = folder_sim + '/' + 'sim_series.txt'
     # import time series
     df_series = pd.read_csv(file, sep=';')
     #
     # define here list of variable maps
-    varmaps = ['D', 'ET', 'VSA', 'Qv', 'Tpgw']
-    size = 20  # define how many frames to watch
-    start = 547
+    varmaps = ['D', 'ET', 'VSA', 'Qv', 'R']
+    size = 50  # define how many frames to watch
+    start = 0
     #
     # loop in variables
     for v in varmaps:
@@ -47,7 +47,7 @@ def demo_watch_by_zmaps():
         # extract min and max values from series (global average values)
         v_min = 0 #np.min(df_series[v].values[:size])
         if v == 'D':
-            v_max = np.max(df_series[v].values[start: start + size]) * 10
+            v_max = np.max(df_series[v].values[start: start + size]) * 1
         elif v == 'VSA':
             v_max = 1
         else:
@@ -93,7 +93,22 @@ def demo_watch_by_zmaps():
 
 def demo_watch_pannels():
     from tools import export_local_pannels
+    # define output directory
+    folder_output = 'C:/bin/ibira/SLH_2021-10-04-16-51-52'
+    #
+    # directory of input data
+    folder_input = 'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
+    # files paths to raster maps
+    ftwi = folder_input + '/' + '__calib_twi_window1.asc'
+    fshru = folder_input + '/' + '__calib_shru_window1.asc'
 
+    export_local_pannels(ftwi, fshru,
+                         folder=folder_output,
+                         date_init='2014-01-01',
+                         date_end='2014-03-01',
+                         frametype='R',
+                         filter_date=True,
+                         tui=True)
 
 def demo_slh():
     """
@@ -105,9 +120,9 @@ def demo_slh():
     import pandas as pd
 
     # define output workplace
-    outfolder = 'C:/bin/sacre'
+    outfolder = 'C:/bin/ibira'
     # define observed datasets folder
-    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    folder = 'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
     # get input files
     files_input = backend.get_input2simbhydro(aoi=False)
     fseries ='{}/{}'.format(folder, files_input[0])
@@ -126,10 +141,10 @@ def demo_slh():
     mapback = True
     if mapback:
         # define the variables to map back
-        vars = 'ET-D-VSA-R-Qv'
+        vars = 'all'
         # define the range of dates to map back
-        date_init = '2013-09-01'
-        date_end = '2014-09-01'
+        date_init = '2014-01-01'
+        date_end = '2015-01-01'
         series = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
         query_str = 'Date >= "{}" and Date < "{}"'.format(date_init, date_end)
         series = series.query(query_str)
@@ -166,9 +181,9 @@ def demo_slh_calib():
     import pandas as pd
 
     # define output workplace
-    outfolder = 'C:/bin/sacre'
+    outfolder = 'C:/bin/ibira'
     # define observed datasets folder
-    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    folder = 'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
     # get input files
     files_input = backend.get_input2simbhydro(aoi=False)
     fseries ='{}/{}'.format(folder, files_input[0])
@@ -177,12 +192,12 @@ def demo_slh_calib():
     fhistograms = '{}/{}'.format(folder, files_input[3])
     fbasinhists = '{}/{}'.format(folder, files_input[4])
     fbasin = '{}/{}'.format(folder, files_input[5])
-    ftwi = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\__calib_twi_window.asc"
+    ftwi = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\__calib_twi_window1.asc"
     #ftwi = '{}/{}'.format(folder, files_input[6])
-    fshru = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\__calib_shru_window.asc"
+    fshru = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\__calib_shru_window1.asc"
     #fshru = '{}/{}'.format(folder, files_input[7])
     fcanopy = '{}/{}'.format(folder, files_input[8])
-    fzmaps = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_etpat_zmaps_note.txt" #'{}/{}'.format(folder, files_input[9])
+    fzmaps = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\calib_etpat_zmaps_note.txt" #'{}/{}'.format(folder, files_input[9])
     #
     #
     # call function
@@ -207,10 +222,10 @@ def demo_calibration():
     from tools import calibrate
 
     # define the output workplace folder
-    outfolder = 'C:/bin/sacre'
+    outfolder = 'C:/bin/ibira'
 
     # get folder of observed datasets
-    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    folder = 'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
 
     # get observed datasets standard names
     files_input = backend.get_input2calibhydro()
@@ -220,8 +235,8 @@ def demo_calibration():
     fhistograms = folder + '/' + files_input[3]
     fbasinhists = folder + '/' + files_input[4]
     fbasin = folder + '/' + files_input[5]
-    ftwi = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\__calib_twi_window.asc"
-    fshru = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\__calib_shru_window.asc"
+    ftwi = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\__calib_twi_window1.asc"
+    fshru = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\__calib_shru_window1.asc"
     #ftwi = folder + '/' + files_input[6]
     #fshru = folder + '/' + files_input[7]
     fetpatzmaps = folder + '/' + 'calib_etpat_zmaps_note.txt' #files_input[8]
@@ -230,8 +245,8 @@ def demo_calibration():
     # Options: 'NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias', 'RMSE-CFC', 'RMSElog-CFC'
 
     likelihood = 'KGE'
-    generations = 8
-    popsize = 300
+    generations = 5
+    popsize = 50
     calibfiles = calibrate(fseries=fseries,
                            fhydroparam=fhydroparam,
                            fshruparam=fshruparam,
@@ -290,6 +305,18 @@ def demo_glue():
                      wkpl=True,
                      tui=True)
 
+
+def demo_sal_by_lamb():
+    from tools import sal_d_by_lamb
+    ftwi = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\__calib_twi_window1.asc"
+    sal_d_by_lamb(ftwi=ftwi,
+                  m=1,
+                  lamb1=1,
+                  lamb2=5,
+                  dmax=100,
+                  size=20,
+                  wkpl=True,
+                  folder='C:/bin/ibira')
 
 # todo revise
 def plot_gens_evolution(folder='C:/bin'):
@@ -463,9 +490,6 @@ def __visual_map_analyst():
     fhistograms = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_histograms.txt"
     fseries = r"C:\000_myFiles\myDrive\Plans3\sacre\datasets\observed\calib_series.txt"
     osa_zmaps(fobs_series, fsim_series, fhistograms, fseries)
-
-
-
 
 # todo revise
 def __demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps_analyst', folder='C:/bin', tui=True):

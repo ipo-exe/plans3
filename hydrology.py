@@ -1014,7 +1014,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
     sobs_etpat = np.array(etpatzmaps)
     # get weights
     w_flow = 1 #len(sobs)  # weight of flow
-    w_etpat = 1 #len(sobs_etpat)  # weight of et
+    w_etpat = 2 #len(sobs_etpat)  # weight of et
 
     if tui:
         print('ETPat series shape: {}'.format(np.shape(sobs_etpat)))
@@ -1221,8 +1221,10 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                                                   nodata=nodata,
                                                   full_return=False)
             #
-            # get the ETpat score (sum of signals KGE)
-            lcl_etpat_score = analyst.kge(obs=etpat_analysis['Metrics']['Mean-Obs'], sim=etpat_analysis['Metrics']['Mean-Sim']) #np.mean(etpat_analysis['Metrics']['KGE'])
+            # get the ETpat score (mean of signals KGE)
+            #lcl_etpat_score = analyst.kge(obs=etpat_analysis['Metrics']['Mean-Obs'], sim=etpat_analysis['Metrics']['Mean-Sim']) #
+            lcl_etpat_score = np.min(etpat_analysis['Metrics']['KGE'])
+            #lcl_etpat_score = 1 - np.mean(etpat_analysis['Metrics']['RMSE'])
             #
             #
             #
