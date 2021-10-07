@@ -567,7 +567,7 @@ def mutation(gene, gene_nucleo, mutrate=0.05, puremutrate=0.1):
         return gene
 
 
-def generate_offspring(pop, nucleotides, offsfrac=1, mutrate=0.10, puremutrate=0.10, cutfrac=0.2):
+def generate_offspring(pop, nucleotides, offsize=100, mutrate=0.10, puremutrate=0.10, cutfrac=0.2):
     """
     Genesis of new offspring DNA
     :param pop: tuple of population DNA
@@ -577,26 +577,28 @@ def generate_offspring(pop, nucleotides, offsfrac=1, mutrate=0.10, puremutrate=0
     :return: tuple of Offspring DNA
     """
     offsp_lst = list()
-    offsize = int(offsfrac * len(pop))
     #print('>>> {}'.format(offsize))
     count = 0
     while True:
         # get random order of mating pool
         parents_ids = np.arange(len(pop))
         np.random.shuffle(parents_ids)
+        parent_a_id = parents_ids[0]
+        parent_b_id = parents_ids[1]
         # loop in mating pool
-        for i in range(1, len(pop), 2):
-            parent_a = pop[parents_ids[i - 1]]
-            parent_b = pop[parents_ids[i]]
-            offsp_a, offsp_b = reproduction(parent_a, parent_b, nucleotides=nucleotides, mutrate=mutrate,
+        parent_a = pop[parent_a_id]
+        parent_b = pop[parent_b_id]
+        offsp_a, offsp_b = reproduction(parent_a, parent_b, nucleotides=nucleotides, mutrate=mutrate,
                                             puremutrate=puremutrate, cutfrac=cutfrac)
-            offsp_lst.append(offsp_a)
-            count = count + 1
-            offsp_lst.append(offsp_b)
-            count = count + 1
-            #print(count)
-        if count >= offsize:
+        offsp_lst.append(offsp_a)
+        count = count + 1
+        if count == offsize:
             break
+        offsp_lst.append(offsp_b)
+        count = count + 1
+        if count == offsize:
+            break
+        #print(count)
     return tuple(offsp_lst)
 
 
@@ -688,8 +690,8 @@ def fitness_moea(dna, solutions):
     return gbl_fit
 
 
-def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrate=0.20, puremutrate=0.10,
-           cutfrac=0.2, tracefrac=0.3, tracepop=False, fittype='similarity', tui=False):
+def _evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrate=0.20, puremutrate=0.10,
+                  cutfrac=0.2, tracefrac=0.3, tracepop=False, fittype='similarity', tui=False):
     """
     Benchmark Evolution of DNAs based on the NSGA-II approach but single-objective
     :param pop0: initial population DNAs
@@ -728,6 +730,7 @@ def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrat
         pop_dct = dict()
         if tracepop:
             dnas_lst = list()
+        #
         # loop in individuals
         for i in range(len(population)):
             #
@@ -751,6 +754,7 @@ def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrat
             scores_lst.append(lcl_dna_score)
             if tracepop:
                 dnas_lst.append(lcl_dna)
+        #
         # trace population
         if tracepop:
             trace_pop.append({'DNAs':dnas_lst[:], 'Ids':ids_lst[:], 'Scores':scores_lst[:]})
@@ -783,6 +787,151 @@ def evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutrat
                       'Scores':parents_scores[:tr_len]})
         if tui:
             print('Trace size: {} KB'.format(getsizeof(trace)))
+            print('Trace len: {}'.format(len(trace)))
+        #if parents_scores[i] > 90:
+    #
+    # returns
+    if tracepop:
+        return trace, trace_pop
+    else:
+        return trace
+
+
+def evolve(pop0, nucleotides, solution, seed=666, generations=10, offsfrac=1, mutrate=0.2, puremutrate=0.1,
+            cutfrac=0.2, tracefrac=0.3, tracepop=False, fittype='similarity', tui=False):
+    """
+    Modified evolution routine to optimize fitness over-operations
+    :param pop0:
+    :param nucleotides:
+    :param solution:
+    :param seed:
+    :param generations:
+    :param offsfrac:
+    :param mutrate:
+    :param puremutrate:
+    :param cutfrac:
+    :param tracefrac:
+    :param tracepop:
+    :param fittype:
+    :param tui:
+    :return:
+    """
+    from sys import getsizeof
+    #
+    #
+    # 1) deploy random state
+    np.random.seed(seed)
+    #
+    parents = pop0
+    trace = list()
+    if tracepop:
+        trace_pop = list()
+    #
+    #
+    # 2) loop in generations
+    pop_dct = dict() # population dictionary
+    for g in range(generations):
+        if tui:
+            print('\n\nGeneration {}\n'.format(g))
+        #
+        #
+        # 3) REPRODUCE the fitting population
+        if g == 0:
+            population = parents
+        else:
+            # get offstring
+            offsize = int(offsfrac * len(pop0))
+            population = generate_offspring(parents, offsize=offsize, nucleotides=nucleotides, mutrate=mutrate,
+                                           puremutrate=puremutrate, cutfrac=cutfrac)
+        if tui:
+            print(len(population))
+            print('Population: {} KB'.format(getsizeof(population)))
+        #
+        #
+        # 4) FIT new population
+        ids_lst = list()
+        scores_lst = list()
+        if tracepop:
+            dnas_lst = list()
+        #
+        # loop in individuals
+        for i in range(len(population)):
+            #
+            # get local score and id:
+            lcl_dna = population[i]  # local dna
+            #
+            #
+            #
+            # Get fitness score:
+            if fittype == 'similarity':
+                lcl_dna_score = fitness_similarity(lcl_dna, solution=solution)
+            elif fittype == 'rmse':
+                lcl_dna_score = fitness_rmse(lcl_dna, solution=solution)
+            #
+            #
+            lcl_dna_id = 'G' + str(g) + '-' + str(i)
+            #
+            # store in retrieval system:
+            pop_dct[lcl_dna_id] = lcl_dna
+            #
+            ids_lst.append(lcl_dna_id)
+            scores_lst.append(lcl_dna_score)
+            if tracepop:
+                dnas_lst.append(lcl_dna)
+        #
+        # trace population
+        if tracepop:
+            trace_pop.append({'DNAs':dnas_lst[:], 'Ids':ids_lst[:], 'Scores':scores_lst[:]})
+        #
+        #
+        # 5) RECRUIT new population
+        if g == 0:
+            df_parents_rank = pd.DataFrame({'Id':ids_lst, 'Score':scores_lst})
+        else:
+            df_offspring_rank = pd.DataFrame({'Id':ids_lst, 'Score':scores_lst})
+            if tui:
+                print('\nOffspring:')
+                print(df_offspring_rank.to_string())
+                print(len(df_offspring_rank))
+            # append to existing dataframe
+            df_parents_rank = df_parents_rank.append(df_offspring_rank, ignore_index=True)
+
+        #
+        #
+        # 6) RANK population
+        df_parents_rank.sort_values(by='Score', ascending=False, inplace=True, ignore_index=True)
+        #
+        #
+        # 7) SELECT mating pool
+        df_parents_rank = df_parents_rank.nlargest(len(pop0), columns=['Score'])
+        # printing
+        if tui:
+            print('\nNew parents:')
+            print(df_parents_rank.to_string())
+        #
+        parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
+        parents_scores = df_parents_rank['Score'].values  # numpy array of float scores
+        #
+        parents_lst = list()
+        for i in range(len(parents_ids)):
+            parents_lst.append(pop_dct[parents_ids[i]])
+        # recicle index
+        pop_dct = dict()
+        for i in range(len(parents_ids)):
+            pop_dct[parents_ids[i]] = parents_lst[i]
+        # new parents
+        parents = tuple(parents_lst)  # parents DNAs
+        #
+        tr_len = int(len(pop0) * tracefrac)
+        #print('>>> {}'.format(tr_len))
+        #
+        # trace parents
+        trace.append({'DNAs':parents[:tr_len],
+                      'Ids':parents_ids[:tr_len],
+                      'Scores':parents_scores[:tr_len]})
+        if tui:
+            print('Trace size: {} KB'.format(getsizeof(trace)))
+            print('Index size: {} KB'.format(getsizeof(pop_dct)))
             print('Trace len: {}'.format(len(trace)))
         #if parents_scores[i] > 90:
     #
@@ -934,19 +1083,20 @@ def demo2():
     nucleo = tuple(np.arange(0, 101))
     solution = (50, 50, 50, 50, 50, 50, 50)
     # generate inital population
-    popsize = 1000
+    popsize = 10
     pop = generate_population(nucleotides=(nucleo,), genesizes=(len(solution),), popsize=popsize)
     #
     # set parameters
-    mutrate = 0.40
+    mutrate = 0.10
     puremutrate = 0.10
-    cutfrac = 0.4
+    cutfrac = 0.3
+    offsfrac = 200
     #
     # evolve
-    generations = 100
-    traced, tracedpop = evolve(pop0=pop, nucleotides=(nucleo,), solution=(solution,), seed=666,
+    generations = 30
+    traced, tracedpop = _evolve(pop0=pop, nucleotides=(nucleo,), solution=(solution,), seed=666,
                                generations=generations, mutrate=mutrate, puremutrate=puremutrate, cutfrac=cutfrac,
-                               tracefrac=1, tracepop=True, fittype='rmse')
+                               tracefrac=1, tracepop=True, fittype='rmse', tui=True, offsfrac=offsfrac)
     # retrieve last one
     last = traced[len(traced) - 1]
     sample_gene = last['DNAs'][0]

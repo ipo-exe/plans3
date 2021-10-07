@@ -1818,7 +1818,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     #
     if tui:
         status('running simulation diagnostics')
-    sdiag_file1 = sdiag(fseries=exp_file1, folder=folder, tui=tui)
+    sdiag_file1 = sdiag(fseries=exp_file1, folder=folder, tui=False)
     #
     # export visual pannel
     if tui:
@@ -1843,10 +1843,10 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
             # heavy imports
             if tui:
                 status('importing twi raster')
-            meta, twi = inp.asc_raster(ftwi)
+            meta, twi = inp.asc_raster(ftwi, dtype='float32')
             if tui:
                 status('importing shru raster')
-            meta, shru = inp.asc_raster(fshru)
+            meta, shru = inp.asc_raster(fshru, dtype='float32')
         #
         if integrate:
             # make integration directory
@@ -2128,7 +2128,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                             fld_sim='Q',
                             fld_date='Date',
                             folder=calibration_folder,
-                            tui=tui)
+                            tui=False)
     #
     #
     # run SLH for validation period
@@ -2160,7 +2160,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                             fld_sim='Q',
                             fld_date='Date',
                             folder=validation_folder,
-                            tui=tui)
+                            tui=False)
     #
     #
     # run SLH for full period
@@ -2180,9 +2180,9 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                     fshru=fshru,
                     fcanopy=fcanopy,
                     mapback=True,
-                    mapraster=False,
+                    mapraster=True,
                     integrate=False,
-                    mapvar='ET',
+                    mapvar='ET-D-VSA-Unz',
                     mapdates=mapdates,
                     qobs=True,
                     folder=full_folder,
@@ -2533,7 +2533,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                         fcanopy=fcanopy,
                         fzmaps=fetpatzmaps,
                         tui=tui,
-                        folder=mlm_folder)
+                        folder=mlm_folder,
+                        )
     # extract folders:
     calib_folder = slh_dct['CalibFolder']
     valid_folder = slh_dct['ValidFolder']

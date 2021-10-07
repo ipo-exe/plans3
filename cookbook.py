@@ -310,11 +310,11 @@ def demo_sal_by_lamb():
     from tools import sal_d_by_lamb
     ftwi = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\__calib_twi_window1.asc"
     sal_d_by_lamb(ftwi=ftwi,
-                  m=1,
-                  lamb1=1,
-                  lamb2=5,
-                  dmax=100,
-                  size=20,
+                  m=5,
+                  lamb1=3,
+                  lamb2=10,
+                  dmax=50,
+                  size=30,
                   wkpl=True,
                   folder='C:/bin/ibira')
 

@@ -887,8 +887,8 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
 
 def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area, basinshadow,
                 m_range, lamb_range, qo_range, cpmax_range, sfmax_range, erz_range, ksat_range, c_range, k_range, n_range,
-                etpatdates, etpatzmaps, tui=True, normalize=False, grid=1000, generations=10, popsize=200, offsfrac=1.0,
-                mutrate=0.5, puremutrate=0.8, cutfrac=0.33, tracefrac=0.1, tracepop=True, likelihood='NSE', nodata=-1):
+                etpatdates, etpatzmaps, tui=True, normalize=False, grid=1000, generations=10, popsize=20, offsfrac=2,
+                mutrate=0.5, puremutrate=0.5, cutfrac=0.4, tracefrac=1, tracepop=True, likelihood='NSE', nodata=-1):
     # todo docstring (redo)
     from evolution import generate_population, generate_offspring, recruitment
     from analyst import nse, kge, rmse, pbias, frequency, error
@@ -939,9 +939,9 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             lcl_df = pd.DataFrame({'Gen': gen,
                                    'Id':traced[g]['Ids'],
                                    'SetIds': traced[g]['SetIds'],
-                                   'Score':traced[g]['Scores'],
-                                   'FlowScore':traced[g]['FlowScores'],
-                                   'EtpatScore':traced[g]['EtpatScores'],
+                                   'L':traced[g]['L'],
+                                   'L_Q':traced[g]['L_Q'],
+                                   'L_ET':traced[g]['L_ET'],
                                    'm': m_lst,
                                    'lamb':lamb_lst,
                                    'qo': qo_lst,
@@ -998,10 +998,9 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
         out_array = np.array(out_lst)
         return out_array.flatten()
     #
-    # run setup
-    runsize = generations * popsize * 2
-    if tui:
-        print('Runsize = {}'.format(runsize))
+    #
+    #
+    # data setup
     #
     # extract observed data
     sobs = series['Q'].values
@@ -1012,65 +1011,79 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
     #
     # get OBS etpat zmaps
     sobs_etpat = np.array(etpatzmaps)
+    #
     # get weights
     w_flow = 1 #len(sobs)  # weight of flow
-    w_etpat = 2 #len(sobs_etpat)  # weight of et
-
+    w_etpat = 1 #len(sobs_etpat)  # weight of et
     if tui:
         print('ETPat series shape: {}'.format(np.shape(sobs_etpat)))
         print('Flow weight: {}'.format(w_flow))
         print('EtPat weight: {}'.format(w_etpat))
     #
     #
-    # reset random state using time
-    seed = int(str(datetime.now())[-6:])
-    np.random.seed(seed)
-    if tui:
-        print('Random Seed: {}'.format(seed))
-    #
-    #
     # bounds setup
     lowerbound = np.array((np.min(m_range), np.min(lamb_range), np.min(qo_range), np.min(cpmax_range), np.min(sfmax_range),
-                           np.min(erz_range), np.min(ksat_range), np.min(c_range), np.min(k_range), np.min(n_range)))
+         np.min(erz_range), np.min(ksat_range), np.min(c_range), np.min(k_range), np.min(n_range)))
     upperbound = np.array((np.max(m_range), np.max(lamb_range), np.max(qo_range), np.max(cpmax_range), np.max(sfmax_range),
-                           np.max(erz_range), np.max(ksat_range), np.max(c_range), np.max(k_range), np.max(n_range)))
+         np.max(erz_range), np.max(ksat_range), np.max(c_range), np.max(k_range), np.max(n_range)))
     ranges = upperbound - lowerbound
     #
     #
     # Evolution setup
+    #
+    # 1) deploy random state
+    seed = int(str(datetime.now())[-6:])
+    np.random.seed(seed)
+    if tui:
+        print('Random Seed: {}'.format(seed))
+    # get integer nucleotides
     nucleotides = tuple(np.arange(0, grid + 1))
-    parents = generate_population(nucleotides=(nucleotides,), genesizes=(10,), popsize=popsize)
-    trace = list()  # list to append best solutions
+    # generate initial population
+    parents = generate_population(nucleotides=(nucleotides,),
+                                  genesizes=(10,),
+                                  popsize=popsize)
+    offsize = int(offsfrac * len(parents))
+    # list to append best solutions
+    trace = list()
     if tracepop:
         trace_pop = list()
     #
     #
-    # generation loop:
+    # 2) generation loop:
+    # run setup
+    runsize = popsize + (generations - 1) * offsize
+    if tui:
+        print('Runsize = {}'.format(runsize))
     counter = 0
+    pop_dct = dict()  # population dictionary
     for g in range(generations):
         if tui:
             print('\n\nGeneration {}\n'.format(g + 1))
-        # get offstring
-        offspring = generate_offspring(parents, offsfrac=offsfrac, nucleotides=(nucleotides,), mutrate=mutrate,
-                                       puremutrate=puremutrate, cutfrac=cutfrac)
-        # recruit new population
-        population = recruitment(parents, offspring)
+        #
+        # 3) REPRODUCE the fitting population
+        if g == 0:
+            population = parents
+        else:
+            # get offstring
+            population = generate_offspring(parents,
+                                            offsize=offsize,
+                                            nucleotides=(nucleotides,),
+                                            mutrate=mutrate,
+                                            puremutrate=puremutrate,
+                                            cutfrac=cutfrac)
+        #
         if tui:
             print('Population size = {}'.format(len(population)))
-        #
-        #
-        if tui:
             print('Population: {} KB       '.format(getsizeof(population)))
             print('                   | Set  ', end='\t')
-            print('{:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8}'.format('m', 'lamb', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n'))
+            print('{:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} | {:>8} {:>8} {:>8}'.format('m', 'lamb', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n', 'L', 'L_Q', 'L_ET'))
         #
-        # fit new population
+        # 4) FIT new population
         ids_lst = list()
         ids_set_lst = list()
         scores_lst = np.zeros(len(population))
         scores_flow_lst = np.zeros(len(population))
         scores_etpat_lst = np.zeros(len(population))
-        pop_dct = dict()
         #
         # metadata metric arrays
         meta_nse = np.zeros(len(population))
@@ -1099,19 +1112,19 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
         #
         # loop in individuals
         for i in range(len(population)):
-            # todo something is wrong here:
             runstatus = 100 * counter / runsize
             counter = counter + 1
             #
             # get local score and id:
             lcl_dna = population[i]  # local dna
-            #print(lcl_dna[0])
-            lcl_set_id = str(lcl_dna[0])
-            #
+            lcl_set_id = str(lcl_dna[0]) # id is the string conversion of DNA
             #
             #
             # express parameter set
-            pset = express_parameter_set(gene=lcl_dna[0], lowerb=lowerbound, ranges=ranges, gridsize=grid)  # express the parameter set
+            pset = express_parameter_set(gene=lcl_dna[0],
+                                         lowerb=lowerbound,
+                                         ranges=ranges,
+                                         gridsize=grid)
             #
             #
             # run model
@@ -1232,29 +1245,25 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             dy = (1 - lcl_flow_score)
             dx = (1 - lcl_etpat_score) * (w_etpat / w_flow)
             euclid_d = np.sqrt(np.power(dx, 2) + np.power(dy, 2))  # euclidean distance
-            #
-            #
             lcl_dna_score = 1 - euclid_d
-            #
-            #
             #
             #
             #
             # printing
             if tui:
                 print('Status: {:8.4f} % | Set '.format(runstatus), end='\t')
-                print('{:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f}'.format(pset[0], pset[1],
+                print('{:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} | {:8.3f} {:8.3f} {:8.3f} '.format(pset[0], pset[1],
                                                                                                        pset[2], pset[3],
                                                                                                        pset[4], pset[5],
                                                                                                        pset[6], pset[7],
-                                                                                                       pset[8], pset[9]), end='   ')
-                print(' | Score: {:8.3f} | Flow: {:8.3f} | ETpat: {:8.3f}'.format(lcl_dna_score, lcl_flow_score, lcl_etpat_score))
+                                                                                                       pset[8], pset[9], lcl_dna_score, lcl_flow_score, lcl_etpat_score))
             #
             #
             lcl_dna_id = 'G' + str(g + 1) + '-' + str(i)  # stamp DNA
             #
             # store in retrieval system:
             pop_dct[lcl_dna_id] = lcl_dna  # dict of population
+            #
             ids_lst.append(lcl_dna_id)
             ids_set_lst.append(lcl_set_id)
             scores_lst[i] = lcl_dna_score
@@ -1289,9 +1298,9 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             trace_pop.append({'DNAs': dnas_lst[:],
                               'Ids': ids_lst[:],
                               'SetIds': ids_set_lst[:],
-                              'Scores': scores_lst[:],
-                              'FlowScores':scores_flow_lst[:],
-                              'EtpatScores':scores_etpat_lst[:],
+                              'L': scores_lst[:],
+                              'L_Q':scores_flow_lst[:],
+                              'L_ET':scores_etpat_lst[:],
                               'NSE':meta_nse[:],
                               'NSElog':meta_nselog[:],
                               'KGE':meta_kge[:],
@@ -1310,13 +1319,13 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                               'Q_C':meta_c_qprec[:],
                               'Qb_C':meta_c_qbprec[:]})
         #
-        #
-        # rank new population (Survival)
-        df_population_rank = pd.DataFrame({'Id': ids_lst[:],
+        # 5) RECRUIT new population
+        if g == 0:
+            df_parents_rank = pd.DataFrame({'Id': ids_lst[:],
                                            'SetIds': ids_set_lst[:],
-                                           'Score': scores_lst[:],
-                                           'FlowScores':scores_flow_lst[:],
-                                           'EtpatScores':scores_etpat_lst[:],
+                                           'L': scores_lst[:],
+                                           'L_Q':scores_flow_lst[:],
+                                           'L_ET':scores_etpat_lst[:],
                                            'NSE': meta_nse[:],
                                            'NSElog': meta_nselog[:],
                                            'KGE': meta_kge[:],
@@ -1335,16 +1344,43 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                                            'Q_C': meta_c_qprec[:],
                                            'Qb_C': meta_c_qbprec[:]
                                            })
+        else:
+            df_offspring_rank = pd.DataFrame({'Id': ids_lst[:],
+                                            'SetIds': ids_set_lst[:],
+                                            'L': scores_lst[:],
+                                            'L_Q': scores_flow_lst[:],
+                                            'L_ET': scores_etpat_lst[:],
+                                            'NSE': meta_nse[:],
+                                            'NSElog': meta_nselog[:],
+                                            'KGE': meta_kge[:],
+                                            'KGElog': meta_kgelog[:],
+                                            'RMSE': meta_rmse[:],
+                                            'RMSElog': meta_rmselog[:],
+                                            'PBias': meta_pbias[:],
+                                            'RMSE_CFC': meta_rmse_cfc[:],
+                                            'RMSElog_CFC': meta_rmselog_cfc[:],
+                                            'Q_sum': meta_q_sum[:],
+                                            'Q_mean': meta_q_mean[:],
+                                            'Q_sd': meta_q_sd[:],
+                                            'Qb_sum': meta_qb_sum[:],
+                                            'Qb_mean': meta_qb_mean[:],
+                                            'Qb_sd': meta_qb_sd[:],
+                                            'Q_C': meta_c_qprec[:],
+                                            'Qb_C': meta_c_qbprec[:]
+                                            })
+            df_parents_rank = df_parents_rank.append(df_offspring_rank, ignore_index=True)
         #
         #
+        # 6) RANK population Maximization. Therefore ascending=False
+        df_parents_rank.drop_duplicates(subset=['SetIds'], inplace=True, ignore_index=True)
+        df_parents_rank.sort_values(by='L', ascending=False, inplace=True)
         #
-        # Maximization. Therefore ascending=False
-        df_population_rank.sort_values(by='Score', ascending=False, inplace=True)
         #
-        #
-        # Selection of mating pool (Parents) - N largest score values
-        df_parents_rank = df_population_rank.nlargest(len(parents), columns=['Score'])
-        #print(df_parents_rank.head(10).to_string())
+        # 7) SELECT mating pool (Parents) - N largest score values
+        df_parents_rank = df_parents_rank.nlargest(len(parents), columns=['L'])
+        if tui:
+            print('\nTop 10 parents:')
+            print(df_parents_rank[['Id', 'L', 'L_Q', 'L_ET', 'SetIds']].head(10).to_string())
         #
         # Extract parents
         parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
@@ -1353,19 +1389,24 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
         parents_lst = list()
         for i in range(len(parents_ids)):
             parents_lst.append(pop_dct[parents_ids[i]])
+        #
         # update parents DNAs
         parents = tuple(parents_lst)
         #
+        # recicle index
+        pop_dct = dict()
+        for i in range(len(parents_ids)):
+            pop_dct[parents_ids[i]] = parents_lst[i]
+        #
         # tracing len setup
         tr_len = int(len(parents) * tracefrac)
-        #
         # trace best parents
         trace.append({'DNAs': parents[:tr_len],
                       'Ids': parents_ids[:tr_len],
                       'SetIds': ids_set_lst[:tr_len],
-                      'Scores': df_parents_rank['Score'].values[:tr_len],
-                      'FlowScores': df_parents_rank['FlowScores'].values[:tr_len],
-                      'EtpatScores':df_parents_rank['EtpatScores'].values[:tr_len],
+                      'L': df_parents_rank['L'].values[:tr_len],
+                      'L_Q': df_parents_rank['L_Q'].values[:tr_len],
+                      'L_ET':df_parents_rank['L_ET'].values[:tr_len],
                       'NSE': df_parents_rank['NSE'].values[:tr_len],
                       'NSElog': df_parents_rank['NSElog'].values[:tr_len],
                       'KGE': df_parents_rank['KGE'].values[:tr_len],
@@ -1384,22 +1425,25 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                       'Q_C': df_parents_rank['Q_C'].values[:tr_len],
                       'Qb_C': df_parents_rank['Qb_C'].values[:tr_len]
                       })
+        if tui:
+            print('Trace size: {} KB'.format(getsizeof(trace)))
+            print('Index size: {} KB'.format(getsizeof(pop_dct)))
     #
     # retrieve last best solution
     last = trace[len(trace) - 1]
     last_dna = last['DNAs'][0]
-    last_score = last['Scores'][0]
-    last_flow_score = last['FlowScores'][0]
-    last_etpat_score = last['EtpatScores'][0]
+    last_score = last['L'][0]
+    last_flow_score = last['L_Q'][0]
+    last_etpat_score = last['L_ET'][0]
     pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges, gridsize=grid)
     if tui:
         print('\n\nMaximum Likelihood Model:')
         tui_df = pd.DataFrame({'Parameter': ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n'),
                                'Set': pset})
         print(tui_df.to_string())
-        print('Score = {:.3f}'.format(last_score))
-        print('Flow Score = {:.3f}'.format(last_flow_score))
-        print('Etpat Score = {:.3f}'.format(last_etpat_score))
+        print('L = {:.3f}'.format(last_score))
+        print('L_Q = {:.3f}'.format(last_flow_score))
+        print('L_ET = {:.3f}'.format(last_etpat_score))
     #
     # wrap traced
     wtrace = wrapper(traced=trace, lowerb=lowerbound, ranges=ranges, gridsize=grid)
