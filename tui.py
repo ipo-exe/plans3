@@ -111,7 +111,6 @@ def validade_project_name(msg='Enter project name', wng='Warning!',
     return nm
 
 
-
 def settings_simulation(key):
     header('Simulation settings')
     mapback = True
@@ -168,7 +167,10 @@ def settings_simulation(key):
         elif exp_opts == frame_opts[4]:
             frametype = 'Skip'
     #
-    out_dct = {'Mapback':mapback, 'Integrate':integrate, 'Mapraster':mapraster, 'Frametype':frametype}
+    out_dct = {'Mapback':mapback,
+               'Integrate':integrate,
+               'Mapraster':mapraster,
+               'Frametype':frametype}
     return out_dct
 
 
@@ -225,7 +227,6 @@ def menu(options, title='Menu', msg='Chose key', exit=True, exitkey='e', exitmsg
                 ok()
                 print(chsn + ':\t' + options_prime[index] + '\n')
                 break
-
     if exit_flag:
         return exitmsg
     else:
@@ -279,8 +280,14 @@ def main(root='default', importing=True):
             header('PLANS 3')
             print('plans3 workplace: {}\n\n'.format(rootdir))
             session_options = (lng[1], lng[2], lng[3])
-            opt = menu({lng[6]:session_options}, title=lng[0], exitmsg= lng[4], msg=lng[5], keylbl=lng[7],
-                       wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+            opt = menu({lng[6]:session_options},
+                       title=lng[0],
+                       exitmsg= lng[4],
+                       msg=lng[5],
+                       keylbl=lng[7],
+                       wng=lng[20],
+                       wngmsg=lng[8],
+                       chsn=lng[9])
             #
             # open project
             if opt == session_options[0]:
@@ -293,8 +300,14 @@ def main(root='default', importing=True):
                         break
                     else:
                         projects_names = tuple(projects_df['Name'])
-                        project_nm = menu({lng[6]: projects_names}, exitmsg=lng[10], title=lng[23], msg=lng[5],
-                                          keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                        project_nm = menu({lng[6]: projects_names},
+                                          exitmsg=lng[10],
+                                          title=lng[23],
+                                          msg=lng[5],
+                                          keylbl=lng[7],
+                                          wng=lng[20],
+                                          wngmsg=lng[8],
+                                          chsn=lng[9])
                         break
                 if project_nm == lng[10]:
                     pass
@@ -317,8 +330,13 @@ def main(root='default', importing=True):
             elif opt == session_options[2]:
                 header(lng[3])
                 lang_options = list(languages[:])
-                opt = menu({lng[6]:lang_options}, title=lng[11],  exitmsg=lng[10], msg=lng[5],
-                       keylbl=lng[7], wng=lng[8], chsn=lng[9])
+                opt = menu({lng[6]:lang_options},
+                           title=lng[11],
+                           exitmsg=lng[10],
+                           msg=lng[5],
+                           keylbl=lng[7],
+                           wng=lng[8],
+                           chsn=lng[9])
                 if opt == lng[10]:
                     pass
                 else:
@@ -341,10 +359,19 @@ def main(root='default', importing=True):
         while True:
             header(lng[12] + ': ' + project_nm)
             print('Project workplace: {}\n'.format(projectdirs['Project']))
-            project_options = ['Manage Observed Datasets', 'Manage Projected Datasets', 'Assessment Tools',
-                               'Simulation Tools', 'Optimization Tools'] #[lng[14], lng[15], lng[16], lng[17]]
-            opt = menu({lng[6]:project_options}, title=lng[13], exitmsg=lng[10], msg=lng[5],
-                       keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+            project_options = ['Manage Observed Datasets',
+                               'Manage Projected Datasets',
+                               'Assessment Tools',
+                               'Simulation Tools',
+                               'Optimization Tools'] #[lng[14], lng[15], lng[16], lng[17]]
+            opt = menu({lng[6]:project_options},
+                       title=lng[13],
+                       exitmsg=lng[10],
+                       msg=lng[5],
+                       keylbl=lng[7],
+                       wng=lng[20],
+                       wngmsg=lng[8],
+                       chsn=lng[9])
             #
             # manage observed datasets
             if opt == project_options[0]:
@@ -357,8 +384,14 @@ def main(root='default', importing=True):
                         observed_options = [lng[24], lng[25]]
                     else:
                         observed_options = [lng[25]]
-                    lcl_opt = menu({lng[6]:observed_options}, title='', exitmsg=lng[10], msg=lng[5],
-                           keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                    lcl_opt = menu({lng[6]:observed_options},
+                                   title='',
+                                   exitmsg=lng[10],
+                                   msg=lng[5],
+                                   keylbl=lng[7],
+                                   wng=lng[20],
+                                   wngmsg=lng[8],
+                                   chsn=lng[9])
                     #
                     # import datasets
                     if lcl_opt == lng[24]:
@@ -368,8 +401,15 @@ def main(root='default', importing=True):
                             inputfiles_df = files_df[files_df['Type'] == 'input']
                             files_lst = list(inputfiles_df['File'])
                             status_lst = list(inputfiles_df['Status'])
-                            lcl_lcl_opt = menu({lng[6]: files_lst, 'Status':status_lst}, title='', exitmsg=lng[10],
-                                                msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                            lcl_lcl_opt = menu({lng[6]: files_lst,
+                                               'Status':status_lst},
+                                               title='',
+                                               exitmsg=lng[10],
+                                               msg=lng[5],
+                                               keylbl=lng[7],
+                                               wng=lng[20],
+                                               wngmsg=lng[8],
+                                               chsn=lng[9])
                             # exit menu condition
                             if lcl_lcl_opt == lng[10]:
                                 break
@@ -437,7 +477,7 @@ def main(root='default', importing=True):
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     # Derive SHRU
-                                    elif lcl_lcl_opt == 'calib_shru.asc':
+                                    elif lcl_lcl_opt == 'calib_shru.asc' or lcl_lcl_opt == 'aoi_shru.asc':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.map_shru(filesp[0], filesp[1], filesp[2],
                                                                      filesp[3], filesp[4],
@@ -446,21 +486,21 @@ def main(root='default', importing=True):
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     # Derive Histograms
-                                    elif lcl_lcl_opt == 'calib_histograms.txt':
+                                    elif lcl_lcl_opt == 'calib_histograms.txt' or lcl_lcl_opt == 'aoi_histograms.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2],
                                                                                folder=projectdirs['Observed'],
                                                                                filename=lcl_filename, tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif lcl_lcl_opt == 'calib_canopy_series.txt':
+                                    elif lcl_lcl_opt == 'calib_canopy_series.txt' or lcl_lcl_opt == 'aoi_canopy_series.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.canopy_series(filesp[0], filesp[1],
                                                                           folder=projectdirs['Observed'],
                                                                           filename=lcl_filename)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif lcl_lcl_opt == 'calib_basin_histograms.txt':
+                                    elif lcl_lcl_opt == 'calib_basin_histograms.txt' or lcl_lcl_opt == 'aoi_basin_histograms.txt':
                                         print('\n' + lng[31] + '...')
                                         derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2], filesp[3],
                                                                                      folder=projectdirs['Observed'],
@@ -477,15 +517,6 @@ def main(root='default', importing=True):
                                                                                 tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
-                                    elif lcl_lcl_opt == 'aoi_lulc_series.txt':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.import_map_series(filesp[0],
-                                                                               rasterfolder=projectdirs['LULC'],
-                                                                               folder=projectdirs['Observed'],
-                                                                               filename=lcl_filename,
-                                                                               rasterfilename='aoi_lulc')
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
                                     elif lcl_lcl_opt == 'calib_etpat_series.txt':
                                         print('\n' + lng[31] + '...')
                                         normalize = False  # todo dialog menu
@@ -496,16 +527,6 @@ def main(root='default', importing=True):
                                                                                 rasterfilename='calib_etpat',
                                                                                 normalize=normalize,
                                                                                 tui=True)
-                                        print('\n{}:\n{}\n'.format(lng[30], derivedfile))
-                                        ok()
-                                    elif lcl_lcl_opt == 'aoi_shru_series.txt':
-                                        print('\n' + lng[31] + '...')
-                                        derivedfile = tools.import_shru_series(filesp[0], filesp[1], filesp[2],
-                                                                               filesp[3], filesp[4],
-                                                                               rasterfolder=projectdirs['SHRU'],
-                                                                               folder=projectdirs['Observed'],
-                                                                               filename=lcl_filename,
-                                                                               suff='aoi', tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'aoi_shru_param.txt' or lcl_lcl_opt == 'calib_shru_param.txt':
@@ -541,48 +562,84 @@ def main(root='default', importing=True):
             # assessment
             elif opt == project_options[2]:
                 header(opt)
-                missing()
-                # old code here:
-                '''
-                # analyse data
-                elif opt == 'Analyse data':
-                    while True:
-                        header('Analyse data')
-                        analysis = ('LULC Analysis | AOI', 'Soil Analysis | AOI', 'SHRU Analysis | AOI',
-                                    'DEM Analysis | AOI', 'Series Analysis | AOI', 'LULC Analysis | CALIB',
-                                    'Soil Analysis | CALIB', 'SHRU Analysis | CALIB', 'DEM Analysis | CALIB',
-                                    'Series Analysis | CALIB')
-                        opt = menu({lng[6]: analysis}, title='Analysis options', exitmsg=lng[10],
-                                   msg=lng[5], keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
-                        if opt == lng[10]:
-                            break
-                        # lulc AOI
-                        elif opt == analysis[0]:
-                            print('Develop code!')
-                '''
+                asmt_options = ['CALIB Basin | Hydrology Calibration Assessment']
+                lcl_opt = menu({lng[6]: asmt_options},
+                               title='Assessment menu',
+                               exitmsg=lng[10],
+                               msg=lng[5],
+                               keylbl=lng[7],
+                               wng=lng[20],
+                               wngmsg=lng[8],
+                               chsn=lng[9])
+                #
+                # calibration assessment
+                if lcl_opt == asmt_options[0]:
+                    header(lcl_opt)
+                    #
+                    # checker protocol
+                    if backend.check_simhydro_files(project_nm, rootdir, aoi=False):
+                        warning(wng=lng[20], msg=lng[27])
+                        filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=False)
+                        print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
+                    else:
+                        # get files
+                        files_input = backend.get_input2simbhydro(aoi=False)
+                        folder = projectdirs['Observed']
+                        fseries = folder + '/' + files_input[0]
+                        fhydroparam = folder + '/' + files_input[1]
+                        fshruparam = folder + '/' + files_input[2]
+                        fhistograms = folder + '/' + files_input[3]
+                        fbasinhists = folder + '/' + files_input[4]
+                        fbasin = folder + '/' + files_input[5]
+                        ftwi = folder + '/' + files_input[11] #+ files_input[6]
+                        fshru = folder + '/' + files_input[10] # + files_input[7]
+                        fcanopy = folder + '/' + files_input[8]
+                        fzmaps = folder + '/' + files_input[9]
+                        # run slh calib
+                        out_dct = tools.hca(fseries=fseries,
+                                            fhydroparam=fhydroparam,
+                                            fshruparam=fshruparam,
+                                            fhistograms=fhistograms,
+                                            fbasinhists=fbasinhists,
+                                            fbasin=fbasin,
+                                            ftwi=ftwi,
+                                            fshru=fshru,
+                                            fcanopy=fcanopy,
+                                            fzmaps=fzmaps,
+                                            folder=projectdirs['Assessment'],
+                                            wkpl=True,
+                                            tui=True,
+                                            label='CALIB')
             #
             # simulation
             elif opt == project_options[3]:
                 while True:
                     header(opt)
                     sim_options = ['CALIB Basin | Observed - Stable LULC Hydrology',
-                                   'AOI Basin | Observed - Changing LULC Hydrology',
-                                   'AOI Basin | Projected - Changing LULC Hydrology']
-                    lcl_opt = menu({lng[6]: sim_options}, title='Simulation menu', exitmsg=lng[10], msg=lng[5],
-                               keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                                   'AOI Basin | Observed - Stable LULC Hydrology',
+                                   'AOI Basin | Projected - Stable LULC Hydrolgy']
+                    lcl_opt = menu({lng[6]: sim_options},
+                                   title='Simulation menu',
+                                   exitmsg=lng[10],
+                                   msg=lng[5],
+                                   keylbl=lng[7],
+                                   wng=lng[20],
+                                   wngmsg=lng[8],
+                                   chsn=lng[9])
                     #
-                    # simulate observed policy
+                    # simulate observed policy in calib basin
                     if lcl_opt == sim_options[0]:
                         header(lcl_opt)
+                        #
                         # checker protocol
                         if backend.check_simhydro_files(project_nm, rootdir, aoi=False):
                             warning(wng=lng[20], msg=lng[27])
                             filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=False)
                             print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
                         else:
-                            #
-                            # SETTINGS
+                            # get settings
                             settings = settings_simulation(lng[6])
+                            # get files
                             files_input = backend.get_input2simbhydro(aoi=False)
                             folder = projectdirs['Observed']
                             fseries = folder + '/' + files_input[0]
@@ -591,35 +648,79 @@ def main(root='default', importing=True):
                             fhistograms = folder + '/' + files_input[3]
                             fbasinhists = folder + '/' + files_input[4]
                             fbasin = folder + '/' + files_input[5]
-                            ftwi = folder + '/' + files_input[6]
-                            fshru = folder + '/' + files_input[7]
+                            ftwi = folder + '/' + files_input[11]  # + files_input[6]
+                            fshru = folder + '/' + files_input[10]  # + files_input[7]
                             fcanopy = folder + '/' + files_input[8]
-                            out_dct = tools.slh_calib(fseries=fseries,
-                                                      fhydroparam=fhydroparam,
-                                                      fshruparam=fshruparam,
-                                                      fhistograms=fhistograms,
-                                                      fbasinhists=fbasinhists,
-                                                      fbasin=fbasin,
-                                                      ftwi=ftwi,
-                                                      fshru=fshru,
-                                                      fcanopy=fcanopy,
-                                                      folder=projectdirs['Simulation'],
-                                                      integrate=settings['Integrate'],
-                                                      wkpl=True,
-                                                      tui=True,
-                                                      mapback=settings['Mapback'],
-                                                      mapraster=settings['Mapraster'],
-                                                      label='calib')
-                            # todo post a checker here
-                            print(settings['Frametype'])
-                            if settings['Frametype'] != 'Skip':
-                                tools.export_local_pannels(ftwi, fshru, folder=out_dct['CalibFolder'], frametype=settings['Frametype'], tui=True)
-                                tools.export_local_pannels(ftwi, fshru, folder=out_dct['ValidFolder'],  frametype=settings['Frametype'], tui=True)
+                            # run slh
+                            out_dct = tools.slh(fseries=fseries,
+                                                fhydroparam=fhydroparam,
+                                                fshruparam=fshruparam,
+                                                fhistograms=fhistograms,
+                                                fbasinhists=fbasinhists,
+                                                fbasin=fbasin,
+                                                ftwi=ftwi,
+                                                fshru=fshru,
+                                                fcanopy=fcanopy,
+                                                folder=projectdirs['Simulation'],
+                                                integrate=settings['Integrate'],
+                                                wkpl=True,
+                                                tui=True,
+                                                mapback=settings['Mapback'],
+                                                mapraster=settings['Mapraster'],
+                                                label='CALIB')
                     #
-                    # simulate observed policy
+                    # simulate observed policy in AOI basin
                     elif lcl_opt == sim_options[1]:
                         header(lcl_opt)
-                        missing()
+                        #
+                        # checker protocol
+                        if backend.check_simhydro_files(project_nm, rootdir, aoi=True):
+                            warning(wng=lng[20], msg=lng[27])
+                            filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=True)
+                            print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
+                        else:
+                            # get settings
+                            settings = settings_simulation(lng[6])
+                            # get files
+                            files_input = backend.get_input2simbhydro(aoi=True)
+                            folder = projectdirs['Observed']
+                            fseries = folder + '/' + files_input[0]
+                            fhydroparam = folder + '/' + files_input[1]
+                            fshruparam = folder + '/' + files_input[2]
+                            fhistograms = folder + '/' + files_input[3]
+                            fbasinhists = folder + '/' + files_input[4]
+                            fbasin = folder + '/' + files_input[5]
+                            ftwi = folder + '/' + files_input[10] # + files_input[6]
+                            fshru = folder + '/' + files_input[9] #+ files_input[7]
+                            fcanopy = folder + '/' + files_input[8]
+                            # run slh
+                            out_dct = tools.slh(fseries=fseries,
+                                                fhydroparam=fhydroparam,
+                                                fshruparam=fshruparam,
+                                                fhistograms=fhistograms,
+                                                fbasinhists=fbasinhists,
+                                                fbasin=fbasin,
+                                                ftwi=ftwi,
+                                                fshru=fshru,
+                                                fcanopy=fcanopy,
+                                                folder=projectdirs['Simulation'],
+                                                integrate=settings['Integrate'],
+                                                wkpl=True,
+                                                tui=True,
+                                                mapback=settings['Mapback'],
+                                                mapraster=settings['Mapraster'],
+                                                label='AOI')
+                            # todo post a checker here
+                            #
+                            # export local pannels
+                            if settings['Frametype'] != 'Skip':
+                                # windows
+                                #ftwi = ''
+                                #fshru = ''
+                                tools.export_local_pannels(ftwi, fshru,
+                                                           folder=out_dct['Folder'],
+                                                           frametype=settings['Frametype'],
+                                                           tui=True)
                     #
                     # simulate projected policy
                     elif lcl_opt == sim_options[2]:
@@ -634,10 +735,16 @@ def main(root='default', importing=True):
             elif opt == project_options[4]:
                 while True:
                     header(opt)
-                    optimize_options = ('Calibrate CALIB Basin Hydrology', 'Calibrate Population Model',
+                    optimize_options = ('Calibrate CALIB Basin Hydrology',
+                                        'Calibrate Population Model',
                                         'Optimize LULC Policy')
-                    lcl_opt = menu({'Model': optimize_options}, exitmsg=lng[10], msg=lng[5], keylbl=lng[7], wng=lng[20],
-                               wngmsg=lng[8], chsn=lng[9])
+                    lcl_opt = menu({'Model': optimize_options},
+                                   exitmsg=lng[10],
+                                   msg=lng[5],
+                                   keylbl=lng[7],
+                                   wng=lng[20],
+                                   wngmsg=lng[8],
+                                   chsn=lng[9])
                     # exit menu condition
                     if lcl_opt == lng[10]:
                         break
@@ -654,8 +761,14 @@ def main(root='default', importing=True):
                                 header(lcl_opt)
                                 metrics_options = ('NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias',
                                                    'RMSE-CFC', 'RMSElog-CFC')
-                                likelihood = menu({'Likelihood': metrics_options}, title='Flow Likelihood Menu', exitmsg=lng[10], msg=lng[5],
-                                              keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                                likelihood = menu({'Likelihood': metrics_options},
+                                                  title='Flow Likelihood Menu',
+                                                  exitmsg=lng[10],
+                                                  msg=lng[5],
+                                                  keylbl=lng[7],
+                                                  wng=lng[20],
+                                                  wngmsg=lng[8],
+                                                  chsn=lng[9])
                                 # exit menu condition
                                 if likelihood == lng[10]:
                                     break
@@ -668,18 +781,25 @@ def main(root='default', importing=True):
                                     fhistograms = folder + '/' + files_input[3]
                                     fbasinhists = folder + '/' + files_input[4]
                                     fbasin = folder + '/' + files_input[5]
-                                    ftwi = folder + '/' + files_input[6]
-                                    fshru = folder + '/' + files_input[7]
+                                    ftwi = folder + '/' + files_input[11] # + files_input[6]
+                                    fshru = folder + '/'  + files_input[10] # + files_input[7]
                                     fetpatzmaps = folder + '/' + files_input[8]
                                     fcanopy = folder + '/' + files_input[9]
                                     aux_str = 'calib_hydro' + '_' + likelihood
-                                    #dst_dir = backend.create_rundir(label=aux_str, wkplc=projectdirs['Optimization'])
-                                    size_opts = ('Very Small - Size:10 Gens:3', 'Small - Size:25 Gens:5',
-                                                 'Medium - Size:250 Gens:5', 'Large - Size:500 Gens:10',
+                                    size_opts = ('Very Small - Size:10 Gens:3',
+                                                 'Small - Size:25 Gens:5',
+                                                 'Medium - Size:250 Gens:5',
+                                                 'Large - Size:500 Gens:10',
                                                  'Very Large - Size:2000 Gens:10')
-                                    scale = menu({'Scale': size_opts}, exitkey='d', title='Genetic Algorithm Scale',
-                                                 exitmsg='Use default (Small)', msg=lng[5],
-                                                 keylbl=lng[7], wng=lng[20], wngmsg=lng[8], chsn=lng[9])
+                                    scale = menu({'Scale': size_opts},
+                                                 exitkey='d',
+                                                 title='Genetic Algorithm Scale',
+                                                 exitmsg='Use default (Small)',
+                                                 msg=lng[5],
+                                                 keylbl=lng[7],
+                                                 wng=lng[20],
+                                                 wngmsg=lng[8],
+                                                 chsn=lng[9])
                                     popsize = 10
                                     generations = 3
                                     if scale == size_opts[0]:
@@ -697,16 +817,22 @@ def main(root='default', importing=True):
                                     elif scale == size_opts[4]:
                                         popsize = 2000
                                         generations = 10
-                                    calibfiles = tools.calibrate(fseries=fseries, fhydroparam=fhydroparam,
+                                    calibfiles = tools.calibrate(fseries=fseries,
+                                                                 fhydroparam=fhydroparam,
                                                                  fshruparam=fshruparam,
                                                                  fhistograms=fhistograms,
                                                                  fbasinhists=fbasinhists,
                                                                  fbasin=fbasin,
                                                                  fetpatzmaps=fetpatzmaps,
-                                                                 ftwi=ftwi, fshru=fshru, fcanopy=fcanopy,
-                                                                 folder=projectdirs['Optimization'], label='calib',
-                                                                 generations=generations, popsize=popsize,
-                                                                 likelihood=likelihood, tui=True, mapback=False,
+                                                                 ftwi=ftwi,
+                                                                 fshru=fshru,
+                                                                 fcanopy=fcanopy,
+                                                                 folder=projectdirs['Optimization'],
+                                                                 label='calib',
+                                                                 generations=generations,
+                                                                 popsize=popsize,
+                                                                 likelihood=likelihood,
+                                                                 tui=True,
                                                                  normalize=False)
                                     print('\nRun files sucessfully created at:\n{}\n'.format(calibfiles['Folder']))
                                     ok()

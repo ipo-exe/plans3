@@ -889,7 +889,46 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                 m_range, lamb_range, qo_range, cpmax_range, sfmax_range, erz_range, ksat_range, c_range, k_range, n_range,
                 etpatdates, etpatzmaps, tui=True, normalize=False, grid=1000, generations=10, popsize=20, offsfrac=2,
                 mutrate=0.5, puremutrate=0.5, cutfrac=0.4, tracefrac=1, tracepop=True, likelihood='NSE', nodata=-1):
-    # todo docstring (redo)
+    """
+
+    Calibration procedure
+
+    :param series: pandas dataframe
+    :param shruparam: pandas dataframe
+    :param canopy: pandas dataframe
+    :param twibins: 1d numpy array
+    :param countmatrix: 2d numpy array
+    :param qt0: boolean
+    :param lat: float
+    :param area: float
+    :param basinshadow: 2d numpy array
+    :param m_range: iterable
+    :param lamb_range: iterable
+    :param qo_range: iterable
+    :param cpmax_range: iterable
+    :param sfmax_range: iterable
+    :param erz_range: iterable
+    :param ksat_range: iterable
+    :param c_range: iterable
+    :param k_range: iterable
+    :param n_range: iterable
+    :param etpatdates: string code of dates
+    :param etpatzmaps: 3d numpy array
+    :param tui: boolean
+    :param normalize: boolean
+    :param grid: int
+    :param generations: int
+    :param popsize: int
+    :param offsfrac: float
+    :param mutrate: float
+    :param puremutrate: float
+    :param cutfrac: float
+    :param tracefrac: float
+    :param tracepop: boolean
+    :param likelihood: string code
+    :param nodata: float
+    :return:
+    """
     from evolution import generate_population, generate_offspring, recruitment
     from analyst import nse, kge, rmse, pbias, frequency, error
     from geo import fuzzy_transition
@@ -989,15 +1028,6 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
         :return: numpy array of parameter set
         """
         return (np.array(gene) * ranges / gridsize) + lowerb
-
-    def clear_full_signal(array3d, masks, nodata=0):
-        out_lst = list()
-        for i in range(len(array3d)):
-            lcl_signal = extract_map_signal(array3d[i], mask=masks[i], nodata=nodata)
-            out_lst.append(lcl_signal)
-        out_array = np.array(out_lst)
-        return out_array.flatten()
-    #
     #
     #
     # data setup
@@ -1058,7 +1088,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
     pop_dct = dict()  # population dictionary
     for g in range(generations):
         if tui:
-            print('\n\nGeneration {}\n'.format(g + 1))
+            print('\n\nGeneration {}\n'.format(g))
         #
         # 3) REPRODUCE the fitting population
         if g == 0:
@@ -1183,7 +1213,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             lcl_rmse = rmse(obs=sobs, sim=ssim)
             lcl_rmselog = rmse(obs=sobs_log, sim=ssim_log)
             lcl_pbias = pbias(obs=sobs, sim=ssim)
-            lcl_rmse_cfc = rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim))
+            lcl_rmse_cfc = rmse(obs=cfc_obs, sim=cfc_sim)
             lcl_rmselog_cfc = rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim))
             #
             #
@@ -1403,7 +1433,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
         # trace best parents
         trace.append({'DNAs': parents[:tr_len],
                       'Ids': parents_ids[:tr_len],
-                      'SetIds': ids_set_lst[:tr_len],
+                      'SetIds': df_parents_rank['SetIds'].values[:tr_len],
                       'L': df_parents_rank['L'].values[:tr_len],
                       'L_Q': df_parents_rank['L_Q'].values[:tr_len],
                       'L_ET':df_parents_rank['L_ET'].values[:tr_len],
@@ -1576,9 +1606,5 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, canopy_df, qt0,
     out_qb_df = pd.concat([out_qb_df, app_qb_df], axis=1)
     #
     return {'Q':out_q_df, 'Qb':out_qb_df}
-
-
-
-
 
 

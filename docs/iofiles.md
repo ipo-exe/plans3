@@ -12,8 +12,8 @@ ioType | FileName | FileFormat | FileType
  :---  |  :---  |  :---  |  :--- 
 input | aoi_basin | asc | raster map
 input | aoi_dem | asc | raster map
+input | aoi_lulc | asc | raster map
 input | aoi_lulc_param | txt | csv data frame
-input | aoi_lulc_series_input | txt | csv time series
 input | aoi_series | txt | csv time series
 input | aoi_soils | asc | raster map
 input | aoi_soils_param | txt | csv data frame
@@ -63,6 +63,24 @@ input | hydro_param | txt | csv data frame
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/dem.PNG "aoi_dem")
 
+## `aoi_lulc.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of LULC (land use and land cover) for the AOI basin and AOI series period. Each LULC class receives an index number defined in the aoi_lulc_param file 
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Date format: `YYYY-MM-DD`.
+	 - No record gaps are allowed (the time series must be continuous).
+	 - Mandatory fields:
+		 -  `Date`: date of record (month and day can be arbitrary).
+		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/sample file.PNG "aoi_lulc")
+
 ## `aoi_lulc_param.txt`
 
 - **I/O**: input.
@@ -103,35 +121,6 @@ IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_Per
     10;          Roads;           R;       0.0;          0.0;        0.0;         0.5;    0.0;    0.0;                     none;            0.4;     1.0;     1.0;         none;        black
 ```
 
-## `aoi_lulc_series_input.txt`
-
-- **I/O**: input.
-- **File type**: csv time series.
-- **Dataset type**: observed.
-- **Dataset description**: Yearly time series of input file paths to LULC .asc raster maps of the AOI basin in the observation period. 
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - No record gaps are allowed (the time series must be continuous).
-	 - Mandatory fields:
-		 -  `Date`: date of record (month and day can be arbitrary).
-		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
-- **Example**:
-```
-       Date;                                              File
- 2010-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_09.asc
- 2011-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_09.asc
- 2012-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_09.asc
- 2013-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_10.asc
- 2014-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_10.asc
- 2015-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_10.asc
- 2016-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_11.asc
- 2017-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_11.asc
- 2018-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_11.asc
- 2019-01-01;  C:/000_myFiles/GISBin/myGIS/PRD4/aoi_lulc_12.asc
-```
-
 ## `aoi_series.txt`
 
 - **I/O**: input.
@@ -147,6 +136,8 @@ IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_Per
 		 -  `Date`: date of record.
 		 -  `Prec`: daily accumulated precipitation in mm.
 		 -  `Temp`: mean daily temperature in Celsius.
+		 -  `IRA`: mean daily flow of irrigation intercepted by the canopy in mm/day.
+		 -  `IRI`: mean daily flow of irrigation not intercepted by the canopy in mm/day.
 - **Example**:
 ```
 sample file
@@ -481,11 +472,12 @@ Parameter;    Set;    Min;    Max
 
 ioType | FileName | FileFormat | FileType
  :---  |  :---  |  :---  |  :--- 
+derived | aoi_basin_histograms | txt | csv data frame
 derived | aoi_canopy_series | txt | csv time series
 derived | aoi_fto | asc | raster map
-derived | aoi_lulc_series | txt | csv time series
+derived | aoi_histograms | txt | csv data frame
+derived | aoi_shru | asc | raster map
 derived | aoi_shru_param | txt | csv data frame
-derived | aoi_shru_series | txt | csv time series
 derived | aoi_slope | asc | raster map
 derived | calib_basin_histograms | txt | csv data frame
 derived | calib_canopy_series | txt | csv time series
@@ -496,6 +488,24 @@ derived | calib_histograms | txt | csv data frame
 derived | calib_shru | asc | raster map
 derived | calib_shru_param | txt | csv data frame
 derived | calib_slope | asc | raster map
+
+## `aoi_basin_histograms.txt`
+
+- **I/O**: derived.
+- **File type**: csv data frame.
+- **Dataset type**: observed.
+- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of AOI basin. Values are in counted cells.
+- **Requirements**:
+	 - Field separator: semicolon `;`.
+	 - Decimal separator: period `.`.
+	 - Mandatory fields:
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
+- **Example**:
+```
+sample file
+```
 
 ## `aoi_canopy_series.txt`
 
@@ -532,34 +542,40 @@ canopy_series
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/fto.PNG "aoi_fto")
 
-## `aoi_lulc_series.txt`
+## `aoi_histograms.txt`
 
 - **I/O**: derived.
-- **File type**: csv time series.
+- **File type**: csv data frame.
 - **Dataset type**: observed.
-- **Dataset description**: Yearly time series of project file paths to LULC .asc raster maps of the AOI basin in the observation period. 
+- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of AOI basin. Values are in counted cells.
 - **Requirements**:
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - No record gaps are allowed (the time series must be continuous).
 	 - Mandatory fields:
-		 -  `Date`: date of record (month and day can be arbitrary).
-		 -  `File`: file path to input LULC .asc raster map. Ex: `C:/mydata/lulc_map_01.asc`
+		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
+	 - The `TWI\SHRU` field must be the first field.
+	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
 - **Example**:
 ```
-       Date;                                                           File
- 2010-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2010-01-01.asc
- 2011-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2011-01-01.asc
- 2012-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2012-01-01.asc
- 2013-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2013-01-01.asc
- 2014-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2014-01-01.asc
- 2015-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2015-01-01.asc
- 2016-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2016-01-01.asc
- 2017-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2017-01-01.asc
- 2018-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2018-01-01.asc
- 2019-01-01;  C:/Plans3/demo/datasets/observed/lulc/aoi_lulc_2019-01-01.asc
+sample file
 ```
+
+## `aoi_shru.asc`
+
+- **I/O**: derived.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Raster map of SHRU of AOI basin.
+- **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: class index.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "aoi_shru")
 
 ## `aoi_shru_param.txt`
 
@@ -630,35 +646,6 @@ IdSHRU;                          SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCNa
   1003;           Roads_Botucatu-Residual;     R_BoR;     10;      3;        Roads;         R;      0.0;         0.0;       0.0;        0.5;   0.0;   0.0;                   none;           0.4;     1.0;    1.0;      none;      black;     Botucatu-Residual;       BoR;  1.0;    0.9;      0.6;  0.0042;      lightcoral;          0.0;   0.45
   1004;         Roads_SerraGeral-Residual;     R_SRR;     10;      4;        Roads;         R;      0.0;         0.0;       0.0;        0.5;   0.0;   0.0;                   none;           0.4;     1.0;    1.0;      none;      black;   SerraGeral-Residual;       SRR;  0.1;    0.1;      0.5;   0.009;       lightgray;          0.0;   0.05
   1005;          Roads_Botucatu-Colluvial;     R_BoC;     10;      5;        Roads;         R;      0.0;         0.0;       0.0;        0.5;   0.0;   0.0;                   none;           0.4;     1.0;    1.0;      none;      black;    Botucatu-Colluvial;       BoC;  1.0;    1.0;      0.6;  0.0042;           brown;          0.0;   0.50
-```
-
-## `aoi_shru_series.txt`
-
-- **I/O**: derived.
-- **File type**: csv time series.
-- **Dataset type**: observed.
-- **Dataset description**: Yearly time series of project file paths to SHRU .asc raster maps of the AOI basin in the observation period. 
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Date format: `YYYY-MM-DD`.
-	 - No missing years allowed.
-	 - Mandatory fields:
-		 -  `Date`: date of record (month and day can be arbitrary).
-		 -  `File`: file path to SHRU .asc raster maps.
-- **Example**:
-```
-       Date;                                                           File
- 2010-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2010-01-01.asc
- 2011-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2011-01-01.asc
- 2012-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2012-01-01.asc
- 2013-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2013-01-01.asc
- 2014-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2014-01-01.asc
- 2015-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2015-01-01.asc
- 2016-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2016-01-01.asc
- 2017-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2017-01-01.asc
- 2018-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2018-01-01.asc
- 2019-01-01;  C:/Plans3/demo/datasets/observed/shru/aoi_shru_2019-01-01.asc
 ```
 
 ## `aoi_slope.asc`
@@ -842,7 +829,7 @@ TWI\SHRU; 101; 102; 103; 104; 105; 201; 202; 203; 204; 205;   301;    302;  303;
 - **I/O**: derived.
 - **File type**: raster map.
 - **Dataset type**: observed.
-- **Dataset description**: Raster map of Surface Hydrologic Response Units (SHRU) for the calibration basin. Each SHRU class receives an index number defined in the shru_calib_param file. 
+- **Dataset description**: Raster map of Surface Hydrologic Response Units (SHRU) for the calibration basin. Each SHRU class receives an index number defined in the calib_shru_param file. 
 - **Requirements**:
 	 - Data type must be `Int16` (integer values only).
 	 - All grid cells must be filled (void cells are not allowed).
@@ -947,81 +934,7 @@ IdSHRU;                          SHRUName; SHRUAlias; IdLULC; IdSoil;     LULCNa
 
 ioType | FileName | FileFormat | FileType
  :---  |  :---  |  :---  |  :--- 
-extracted | aoi_basin_histograms_YYYY-MM-DD | txt | csv data frame
-extracted | aoi_histograms_YYYY-MM-DD | txt | csv data frame
-extracted | aoi_lulc_YYYY-MM-DD | asc | raster map
-extracted | aoi_shru_YYYY-MM-DD | asc | raster map
 extracted | calib_etpat_YYYY-MM-DD | asc | raster map
-
-## `aoi_basin_histograms_YYYY-MM-DD.txt`
-
-- **I/O**: extracted.
-- **File type**: csv data frame.
-- **Dataset type**: observed.
-- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of AOI basin in date YYYY-MM-DD. Values are in counted cells.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
-- **Example**:
-```
-sample file
-```
-
-## `aoi_histograms_YYYY-MM-DD.txt`
-
-- **I/O**: extracted.
-- **File type**: csv data frame.
-- **Dataset type**: observed.
-- **Dataset description**: Data frame of histograms of TWI (rows) and SHRU index (columns) of AOI basin  in year YYYY. Values are in counted cells.
-- **Requirements**:
-	 - Field separator: semicolon `;`.
-	 - Decimal separator: period `.`.
-	 - Mandatory fields:
-		 -  `TWI\SHRU`: TWI positive real values of TWI histogram bins.
-	 - The `TWI\SHRU` field must be the first field.
-	 - The following fields after `TWI\SHRU` must be the index number values of each SHRU class and store positive integer values of the histogram of TWI within each SHRU.
-- **Example**:
-```
-sample file
-```
-
-## `aoi_lulc_YYYY-MM-DD.asc`
-
-- **I/O**: extracted.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of LULC of AOI basin in year YYYY.
-- **Requirements**:
-	 - Data type must be `Int16` (integer values only).
-	 - All grid cells must be filled (void cells are not allowed).
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: class index.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/lulc.PNG "aoi_lulc_YYYY-MM-DD")
-
-## `aoi_shru_YYYY-MM-DD.asc`
-
-- **I/O**: extracted.
-- **File type**: raster map.
-- **Dataset type**: observed.
-- **Dataset description**: Raster map of SHRU of AOI basin in year YYYY. This file is extracted to the `shru` folder during the derivation of the `aoi_shru_sreies` file.
-- **Requirements**:
-	 - Data type must be `Int16` (integer values only).
-	 - All grid cells must be filled (void cells are not allowed).
-	 - Must match the same size (rows and columns) of other related raster maps.
-	 - CRS must be projected (coordinates in meters).
-	 - Grid cells must be squared.
-	 - Cells values units: class index.
-- **Example**:
-
-![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "aoi_shru_YYYY-MM-DD")
 
 ## `calib_etpat_YYYY-MM-DD.asc`
 

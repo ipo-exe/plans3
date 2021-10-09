@@ -42,45 +42,6 @@ from inp import dataframe_prepro
 #from scipy.ndimage.filters import gaussian_filter
 
 
-def maps_diagnostics(rasterfolder='C:/bin', folder='C:/bin', tui=False):
-    import time, datetime, os
-    if tui:
-        from tui import status
-        status('running map diagnostics')
-    #
-    # report setup
-    t0 = time.time()
-    report_lst = list()
-    report_lst.append('Execution timestamp: {}\n'.format(datetime.datetime.now()))
-    report_lst.append('Process: MAPS DIAGNOSTICS | MAPSDIAG\n')
-    input_files_df = pd.DataFrame({'Diagnostics folder': (rasterfolder,)})
-    report_lst.append(input_files_df.to_string(index=False))
-    #
-    files = list()
-    for file in os.listdir(rasterfolder):
-        if file.endswith('.asc'): # and file.startswith(suff):
-            files.append(file)
-    shape_lst = list()
-    sum_nan = list()
-    path_lst = list()
-    for fnm in files:
-        if tui:
-            status('file: {}'.format(fnm))
-        lcl_fpath = rasterfolder + '/' + fnm
-        path_lst.append(lcl_fpath)
-        meta, lcl_raster = inp.asc_raster(lcl_fpath, dtype='float32')
-        shape_lst.append(str(np.shape(lcl_raster)))
-        sum_nan.append(np.sum(np.isnan(lcl_raster)))
-    def_df = pd.DataFrame({'File_Name':files, 'Shape_RxC': shape_lst, 'Sum_NaN':sum_nan, 'File':path_lst})
-    def_df = def_df.sort_values(by='File_Name')
-    #
-    report_lst.append('\n\nDiagnostics Results:\n')
-    report_lst.append(def_df.to_string(index=False))
-    #
-    tf = time.time()
-    report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
-    export_report(report_lst, filename='REPORT__maps_diagnostics', folder=folder, tui=tui)
-
 # this is a mess:
 def view_imported_input(filename, folder, aux_folder=''):
     """
@@ -95,15 +56,22 @@ def view_imported_input(filename, folder, aux_folder=''):
 
     from inp import dataframe_prepro
     from os import listdir
-    from visuals import plot_map_view, plot_qmap_view, pannel_calib_series, plot_shrumap_view
+    from backend import get_stringfields
+    from visuals import plot_map_view, plot_qmap_view, pannel_calib_series, plot_shrumap_view, pannel_aoi_series
 
     def plot_lulc(fraster, fparams, filename, mapid='LULC'):
         lulc_param_df = pd.read_csv(fparams, sep=';', engine='python')
-        lulc_param_df = dataframe_prepro(lulc_param_df, 'LULCName,ConvertTo,ColorLULC')
+        lulc_param_df = dataframe_prepro(lulc_param_df, get_stringfields(flulcparam.split('/')[-1]))
         meta, rmap = inp.asc_raster(fraster)
         ranges = (np.min(lulc_param_df['IdLULC']), np.max(lulc_param_df['IdLULC']))
-        plot_qmap_view(rmap, meta, colors=lulc_param_df['ColorLULC'].values, names=lulc_param_df['LULCName'].values,
-                       mapid=mapid, ranges=ranges, filename=filename, folder=folder)
+        plot_qmap_view(rmap,
+                       meta,
+                       colors=lulc_param_df['ColorLULC'].values,
+                       names=lulc_param_df['LULCName'].values,
+                       mapid=mapid,
+                       ranges=ranges,
+                       filename=filename,
+                       folder=folder)
 
     # get file path
     file = folder + '/' + filename
@@ -117,7 +85,12 @@ def view_imported_input(filename, folder, aux_folder=''):
         mapid = filename.split('.')[0].split('_')[1]
         meta, rmap = inp.asc_raster(file)
         ranges = (np.min(rmap), np.max(rmap))
-        plot_map_view(rmap, meta, ranges, mapid=mapid, filename=filename.split('.')[0], folder=folder, metadata=True)
+        plot_map_view(rmap, meta, ranges,
+                      mapid=mapid,
+                      filename=filename.split('.')[0],
+                      folder=folder,
+                      metadata=True)
+    #
     # plot calib lulc from raster file
     elif filename == 'calib_lulc.asc':
         folder_files = listdir(folder)
@@ -126,14 +99,34 @@ def view_imported_input(filename, folder, aux_folder=''):
             fraster = '{}/{}'.format(folder, filename)
             fparam = '{}/{}'.format(folder, aux_filename)
             plot_lulc(fraster=fraster, fparams=fparam, filename='calib_lulc')
+    #
     # plot calib lulc from param file
     elif filename == 'calib_lulc_param.txt':
         folder_files = listdir(folder)
         aux_filename = 'calib_lulc.asc'
-        if 'calib_lulc.asc' in set(folder_files):
+        if aux_filename in set(folder_files):
             fraster = '{}/{}'.format(folder, aux_filename)
             fparam = '{}/{}'.format(folder, filename)
             plot_lulc(fraster=fraster, fparams=fparam, filename='calib_lulc')
+    #
+    # plot aoi lulc from raster file
+    elif filename == 'aoi_lulc.asc':
+        folder_files = listdir(folder)
+        aux_filename = 'aoi_lulc_param.txt'
+        if aux_filename in set(folder_files):
+            fraster = '{}/{}'.format(folder, filename)
+            fparam = '{}/{}'.format(folder, aux_filename)
+            plot_lulc(fraster=fraster, fparams=fparam, filename='aoi_lulc')
+    #
+    # plot calib lulc from param file
+    elif filename == 'aoi_lulc_param.txt':
+        folder_files = listdir(folder)
+        aux_filename = 'aoi_lulc.asc'
+        if aux_filename in set(folder_files):
+            fraster = '{}/{}'.format(folder, aux_filename)
+            fparam = '{}/{}'.format(folder, filename)
+            plot_lulc(fraster=fraster, fparams=fparam, filename='aoi_lulc')
+    #
     # plot calib soils from raster file
     elif filename == 'calib_soils.asc':
         folder_files = listdir(folder)
@@ -144,8 +137,14 @@ def view_imported_input(filename, folder, aux_folder=''):
             soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
             meta, rmap = inp.asc_raster(file)
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
-            plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
-                           mapid='Soils', ranges=ranges, filename='calib_soils', folder=folder)
+            plot_qmap_view(rmap, meta,
+                           colors=soils_param_df['ColorSoil'].values,
+                           names=soils_param_df['SoilName'].values,
+                           mapid='Soils',
+                           ranges=ranges,
+                           filename='calib_soils',
+                           folder=folder)
+    #
     # plot calib soils from param file
     elif filename == 'calib_soils_param.txt':
         folder_files = listdir(folder)
@@ -156,17 +155,14 @@ def view_imported_input(filename, folder, aux_folder=''):
             soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
             meta, rmap = inp.asc_raster('{}/{}'.format(folder, aux_filename))
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
-            plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
-                           mapid='Soils', ranges=ranges, filename='calib_soils', folder=folder)
-    # plot aoi lulc from series raster map
-    elif filename.split('_')[0] == 'aoi' and filename.split('_')[1] == 'lulc':
-        lcl_stamp = filename.split('.')[0].split('_')[2]
-        folder_files = listdir(aux_folder)
-        aux_filename = 'aoi_lulc_param.txt'
-        if aux_filename in set(folder_files):
-            fraster = '{}/{}'.format(folder, filename)
-            fparam = '{}/{}'.format(aux_folder, aux_filename)
-            plot_lulc(fraster=fraster, fparams=fparam, mapid='AOI LULC | {}'.format(lcl_stamp))
+            plot_qmap_view(rmap, meta,
+                           colors=soils_param_df['ColorSoil'].values,
+                           names=soils_param_df['SoilName'].values,
+                           mapid='Soils',
+                           ranges=ranges,
+                           filename='calib_soils',
+                           folder=folder)
+    #
     # plot aoi soils from raster map
     elif filename == 'aoi_soils.asc':
         folder_files = listdir(folder)
@@ -177,8 +173,14 @@ def view_imported_input(filename, folder, aux_folder=''):
             soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
             meta, rmap = inp.asc_raster(file)
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
-            plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
-                           mapid='Soils', ranges=ranges, filename='aoi_soils', folder=folder)
+            plot_qmap_view(rmap, meta,
+                           colors=soils_param_df['ColorSoil'].values,
+                           names=soils_param_df['SoilName'].values,
+                           mapid='Soils',
+                           ranges=ranges,
+                           filename='aoi_soils',
+                           folder=folder)
+    #
     # plot aoi soils from param file
     elif filename == 'aoi_soils_param.txt':
         folder_files = listdir(folder)
@@ -189,17 +191,36 @@ def view_imported_input(filename, folder, aux_folder=''):
             soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
             meta, rmap = inp.asc_raster('{}/{}'.format(folder, aux_filename))
             ranges = (np.min(soils_param_df['IdSoil']), np.max(soils_param_df['IdSoil']))
-            plot_qmap_view(rmap, meta, colors=soils_param_df['ColorSoil'].values, names=soils_param_df['SoilName'].values,
-                           mapid='Soils', ranges=ranges, filename='aoi_soils', folder=folder)
+            plot_qmap_view(rmap, meta,
+                           colors=soils_param_df['ColorSoil'].values,
+                           names=soils_param_df['SoilName'].values,
+                           mapid='Soils',
+                           ranges=ranges,
+                           filename='aoi_soils',
+                           folder=folder)
+    #
     # plot calib series
     elif filename == 'calib_series.txt':
         series_df = pd.read_csv(file, sep=';')
         series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
         pannel_calib_series(series_df, filename=filename.split('.')[0], folder=folder, show=False)
+    #
+    # plot calib series
+    elif filename == 'aoi_series.txt':
+        series_df = pd.read_csv(file, sep=';')
+        series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
+        pannel_aoi_series(series_df, filename=filename.split('.')[0], folder=folder, show=False)
 
 
-def export_local_pannels(ftwi, fshru, folder='C:/bin', chagezmapfolder=False, zmapfolder='', frametype='all', filter_date=False,
-                         date_init='2011-01-01', date_end = '2011-04-01', tui=False):
+def export_local_pannels(ftwi, fshru,
+                         folder='C:/bin',
+                         chagezmapfolder=False,
+                         zmapfolder='',
+                         frametype='all',
+                         filter_date=False,
+                         date_init='2011-01-01',
+                         date_end = '2011-04-01',
+                         tui=False):
     """
 
     Export frames of local variables
@@ -424,6 +445,7 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
     :return: string file path
     """
     from visuals import plot_shrumap_view
+    from backend import get_stringfields
 
     #
     # import data
@@ -432,13 +454,13 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
     metasoils, soils = inp.asc_raster(fsoils)
     #print(np.shape(soils))
     lulc_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_param_df = dataframe_prepro(lulc_param_df, 'LULCName,ConvertTo,ColorLULC')
+    lulc_param_df = dataframe_prepro(lulc_param_df, get_stringfields(flulcparam.split('/')[-1]))
     soils_param_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_param_df = dataframe_prepro(soils_param_df, 'SoilName,ColorSoil')
+    soils_param_df = dataframe_prepro(soils_param_df, get_stringfields(fsoilsparam.split('/')[-1]))
     lulc_ids = lulc_param_df['IdLULC'].values
     soils_ids = soils_param_df['IdSoil'].values
     shru_df = pd.read_csv(fshruparam, sep=';')
-    shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName,ColorLULC,ColorSoil')
+    shru_df = dataframe_prepro(shru_df, get_stringfields(fshruparam.split('/')[-1]))
     #
     # process data
     shru_map = geo.xmap(map1=lulc, map2=soils, map1ids=lulc_ids, map2ids=soils_ids, map1f=100, map2f=1)
@@ -539,7 +561,13 @@ def map_twi(fslope, fcatcha, ffto, folder='C:/bin', filename='twi'):
     return export_file
 
 
-def map_twi_hand_long(fslope, fcatcha, ffto, fhand, hand_hi=15.0, hand_lo=0.0, hand_w=1, twi_w=1, folder='C:/bin', filename='etwi'):
+def map_twi_hand_long(fslope, fcatcha, ffto, fhand,
+                      hand_hi=15.0,
+                      hand_lo=0.0,
+                      hand_w=1,
+                      twi_w=1,
+                      folder='C:/bin',
+                      filename='etwi'):
     """
 
     Derive the HAND-enhanced TWI raster map. Short version.
@@ -645,7 +673,18 @@ def map_twito(ftwi, ffto, folder='C:/bin', filename='twito'):
 
 def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder='C:/bin', filename='histograms',
                        tui=False):
-    # todo doctring
+    """
+    Compute the 2d histogram
+    :param fshruparam: string
+    :param fshru: string
+    :param ftwi: string
+    :param faoi: string
+    :param ntwibins: int
+    :param folder: string
+    :param filename: string
+    :param tui: boolean
+    :return:
+    """
     import time
     from hydrology import count_matrix, flatten_clear
     from visuals import plot_histograms
@@ -754,6 +793,7 @@ def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filena
         dst = rasterfolder + '/' + lcl_filenm
         copyfile(src=src, dst=dst)
         #print(lcl_expf)
+
         new_files.append(dst)
         #
         # plot view
@@ -945,7 +985,7 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
     exp_df.to_csv(exp_file, sep=';', index=False)
     return exp_file
 
-
+# this may be deprecated
 def import_shru_series(flulcseries, flulcparam, fsoils, fsoilsparam, fshruparam, rasterfolder='C:/bin', folder='C:/bin',
                        filename='shru_series', suff='', tui=False):
     """
@@ -1047,7 +1087,8 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
 
 def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'):
     """
-    Routine to compute SHRU canopy seasonal factor pattern series in terms of peak factor f_Canopy and stores it in a txt file
+    Routine to compute SHRU canopy seasonal factor pattern series in terms of peak factor f_Canopy
+    and stores it in a txt file
 
     :param fseries: string file path to txt file of time series. Must have a 'Date' field
     :param fshruparam: string file path to txt file of shry parameters file provided in the get_shru_param() tool
@@ -1056,13 +1097,14 @@ def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'
     :return: string file path to txt file output
     """
     from resample import interpolate_gaps
+    from backend import get_stringfields
     # import series
     season_df = pd.read_csv(fseries, sep=';')
     season_df = dataframe_prepro(season_df, strf=False, date=True)
     season_df = season_df[['Date']]
     # import parameters
     shru_df = pd.read_csv(fshruparam, sep=';')
-    aux_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
+    aux_str = get_stringfields(fshruparam.split('/')[-1])
     shru_df = dataframe_prepro(shru_df, aux_str)
     # insert month field in
     season_df['Month'] = season_df['Date'].dt.month_name(locale='English').str.slice(stop=3)
@@ -1141,7 +1183,7 @@ def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'
 
 def sdiag(fseries, filename='sim_diagnostics', folder='C:/bin', tui=False):
     """
-    Run hydrology simulation diagnostics
+    Run Hydrology Simulation Diagnostics
 
     :param fseries: string file path to simulation series txt file
     :param filename: string output file name
@@ -2023,11 +2065,11 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     return out_dct
 
 
-def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, fzmaps,
-              cutdatef=0.3, folder='C:/bin', wkpl=False, label='',tui=False):
+def hca(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, fzmaps,
+        cutdatef=0.3, folder='C:/bin', wkpl=False, label='', tui=False, vars='ET-D-VSA-Unz'):
     """
 
-    SLH for a calibration series (Qobs and ET is known)
+    Hydrology Calibration Assessment for a calibration series (Qobs and ET is known)
 
     :param fseries: string filepath to simulation series
     :param fhydroparam: string filepath to parameters csv (txt file)
@@ -2067,7 +2109,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     if wkpl:  # if the passed folder is a workplace, create a sub folder
         if label != '':
             label = label + '_'
-        folder = create_rundir(label=label + 'SLH', wkplc=folder)
+        folder = create_rundir(label=label + 'HCA', wkplc=folder)
     #
     # set up output folders
     calibration_folder = folder + '/calibration_period'
@@ -2182,7 +2224,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                     mapback=True,
                     mapraster=True,
                     integrate=False,
-                    mapvar='ET-D-VSA-Unz',
+                    mapvar=vars,
                     mapdates=mapdates,
                     qobs=True,
                     folder=full_folder,
@@ -2238,7 +2280,7 @@ def slh_calib(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
 
 
 def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
-              fetpatzmaps, folder='C:/bin', tui=False, mapback=False, mapvar='all', mapdates='all',
+              fetpatzmaps, folder='C:/bin', tui=False, mapback=True, mapvar='ET-D-Unz-VSA',
               qobs=True, cutdatef=0.3, generations=100, popsize=200, likelihood='NSE', label='', normalize=False):
     """
     Calibration tool
@@ -2254,9 +2296,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     :param fetpatzmaps: string filepath to etpat zmaps series txt file
     :param folder: string filepath to workplace folder
     :param tui: boolean for display
-    :param mapback: boolean to mapback during MLM simulation
     :param mapvar: string code of variables to mapback during MLM simulation (see SLH docstring)
-    :param mapdates: string code of dates to mapback during MLM simulation (see SLH docstring)
     :param qobs: boolean to inform qobs during MLM simulation
     :param cutdatef: float cut date fraction (0 to 1) for validation period
     :param generations: int number of generations to run the calibration
@@ -2521,20 +2561,20 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                             cal_dct['MLM'][9]]
     hydroparam_df.to_csv(fhydroparam_mlm, sep=';', index=False)
     #
-    # run SLH for calibration basin, asking for mapping the ET:
-    slh_dct = slh_calib(fseries=fseries,
-                        fhydroparam=fhydroparam_mlm,
-                        fshruparam=fshruparam,
-                        fhistograms=fhistograms,
-                        fbasinhists=fbasinhists,
-                        fbasin=fbasin,
-                        ftwi=ftwi,
-                        fshru=fshru,
-                        fcanopy=fcanopy,
-                        fzmaps=fetpatzmaps,
-                        tui=tui,
-                        folder=mlm_folder,
-                        )
+    # run HCA for calibration basin
+    slh_dct = hca(fseries=fseries,
+                  fhydroparam=fhydroparam_mlm,
+                  fshruparam=fshruparam,
+                  fhistograms=fhistograms,
+                  fbasinhists=fbasinhists,
+                  fbasin=fbasin,
+                  ftwi=ftwi,
+                  fshru=fshru,
+                  fcanopy=fcanopy,
+                  fzmaps=fetpatzmaps,
+                  tui=tui,
+                  folder=mlm_folder,
+                  vars=mapvar)
     # extract folders:
     calib_folder = slh_dct['CalibFolder']
     valid_folder = slh_dct['ValidFolder']
@@ -2546,8 +2586,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
 
 
 def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, fcanopy,
-         nmodels='all', modelid='SetIds', likelihood='Score', criteria='>', behavioural=0.1,
-         sampling_grid=20, folder='C:/bin', wkpl=False, tui=False, label=''):
+         nmodels='all', modelid='SetIds', likelihood='L', criteria='>', behavioural=0.1,
+         sampling_grid=100, run_ensemble=True, folder='C:/bin', wkpl=False, tui=False, label=''):
     """
 
     GLUE tool
@@ -2574,7 +2614,7 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     from backend import create_rundir, get_stringfields
     from visuals import glue_scattergram
     from hydrology import ensemble
-    from visuals import glue_ensemble
+    from visuals import glue_ensemble, glue_posterior
     import inp
 
     def extract_ranges(fhydroparam):
@@ -2603,12 +2643,6 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
         twi_bins = dataframe.index.values
         count_matrix = dataframe.values
         return count_matrix, twi_bins, shru_ids
-
-    def extract_twi_avg(twibins, count):
-        twi_sum = 0
-        for i in range(len(twibins)):
-            twi_sum = twi_sum + (twibins[i] * np.sum(count[i]))
-        return twi_sum / np.sum(count)
     #
     #
     # folder setup
@@ -2664,8 +2698,6 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     meta = inp.asc_raster_meta(fbasin)
     area = np.sum(basincount) * meta['cellsize'] * meta['cellsize']
     qt0 = series_df['Qobs'].values[0]
-    # old lamb
-    #lamb = extract_twi_avg(twibins, basincount)
     #
     #
     #
@@ -2695,55 +2727,121 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     exp_file1 = glue_scattergram(behav_df, rng_dct,
                                  likelihood=likelihood,
                                  criteria=criteria,
-                                 behaviroural=behavioural,
-                                 folder=folder)
-    #
-    #
-    #
-    # ******* FLOW ENSEMBLE *******
-    #
-    #
-    if tui:
-        status('computing ensemble datasets')
-    ensb_dct = ensemble(series=series_df,
-                        models_df=behav_df,
-                        shruparam=shru_df,
-                        twibins=twibins,
-                        countmatrix=count,
-                        canopy_df=canopy_df,
-                        qt0=qt0,
-                        lat=lat,
-                        area=area,
-                        basinshadow=basincount,
-                        tui=tui)
-    #
-    # export ensemble dataframes
-    if tui:
-        status('exporting ensemble datasets')
-    exp_en_q = '{}/ensemble_q.txt'.format(folder)
-    ensb_dct['Q'].to_csv(exp_en_q, sep=';', index=False)
-    exp_en_q = '{}/ensemble_qb.txt'.format(folder)
-    ensb_dct['Qb'].to_csv(exp_en_q, sep=';', index=False)
-    # plot ensemble
-    if tui:
-        status('plotting ensemble datasets')
-    glue_ensemble(sim_df=series_df, ensemble_df=ensb_dct['Q'],
-                  filename='ensemble_q_log', folder=folder)
-    glue_ensemble(sim_df=series_df, ensemble_df=ensb_dct['Q'],
-                  filename='ensemble_q_lin', scale='lin', folder=folder)
-    glue_ensemble(sim_df=series_df, ensemble_df=ensb_dct['Qb'],
-                  baseflow=True, filename='ensemble_qb_log', folder=folder)
-    glue_ensemble(sim_df=series_df, ensemble_df=ensb_dct['Qb'],
-                  baseflow=True, filename='ensemble_qb_lin', scale='lin', folder=folder)
-    #
-    #
+                                 behavioural=behavioural,
+                                 folder=folder,
+                                 filename='scattergrams')
     #
     # ******* POSTERIOR BAYESIAN ANALYSIS *******
     #
     #
     # compute posterior CDFs and posterior ranges (90%)
-    # continue here:
-    print('contine here')
+    #
+    #
+    if tui:
+        status('performing posterior GLUE analysis')
+    # prior accumulated likelihood
+    lo_acc = np.linspace(0, 1, sampling_grid)
+    posterior_df = pd.DataFrame({'Lo':lo_acc[1], 'Lo_acc':lo_acc})
+    for i in range(len(params)):
+        lcl_param = params[i]
+        lcl_param_rng = '{}_rng'.format(lcl_param)
+        param_grid = rng_dct[lcl_param_rng][0] + (rng_dct[lcl_param_rng][1] - rng_dct[lcl_param_rng][0]) * lo_acc
+        #
+        # aggregate observed likelihood ly
+        ly_agg = np.zeros(len(lo_acc))
+        for i in range(len(param_grid)):
+            if i == 0:
+                ly_agg[i] = 0
+            else:
+                lcl_query = '{} > {} and {} <= {}'.format(lcl_param, param_grid[i - 1], lcl_param, param_grid[i])
+                lcl_df = behav_df.query(lcl_query)
+                ly_agg[i] = np.sum(lcl_df[likelihood].values - behavioural)
+        #
+        # compute posterior likelihood
+        lp = lo_acc[1] * ly_agg / np.sum(lo_acc[1] * ly_agg)
+        #
+        # accumulate posterior likelihood
+        lp_acc = np.zeros(len(lp))
+        for i in range(len(param_grid)):
+            if i == 0:
+                lp_acc[i] = 0
+            else:
+                lp_acc[i] = lp_acc[i - 1] + lp[i]
+        # append to dataframe
+        posterior_df['{}'.format(lcl_param)] = param_grid
+        posterior_df['{}_Ly_agg'.format(lcl_param)] = ly_agg
+        posterior_df['{}_Lp_acc'.format(lcl_param)] = lp_acc
+        q_str = '{}_Lp_acc <= 0.05'.format(lcl_param)
+        posterior_df['{}_Lp_5'.format(lcl_param)] = posterior_df.query(q_str)[lcl_param].max()
+        q_str = '{}_Lp_acc <= 0.95'.format(lcl_param)
+        posterior_df['{}_Lp_95'.format(lcl_param)] = posterior_df.query(q_str)[lcl_param].max()
+    # export posterior analysis:
+    if tui:
+        status('exporting posterior analysis')
+    exp_file2 = '{}/posterior_analysis.txt'.format(folder)
+    posterior_df.to_csv(exp_file2, sep=';', index=False)
+    label = 'Criteria: {} {} {} | N = {}'.format(likelihood, criteria, behavioural, len(behav_df))
+    glue_posterior(posterior_df,
+                   rng_dct=rng_dct,
+                   label=label,
+                   folder=folder)
+
+    #
+    #
+    #
+    if run_ensemble:
+        #
+        # ******* FLOW ENSEMBLE *******
+        #
+        #
+        if tui:
+            status('computing ensemble datasets')
+        ensb_dct = ensemble(series=series_df,
+                            models_df=behav_df,
+                            shruparam=shru_df,
+                            twibins=twibins,
+                            countmatrix=count,
+                            canopy_df=canopy_df,
+                            qt0=qt0,
+                            lat=lat,
+                            area=area,
+                            basinshadow=basincount,
+                            tui=tui)
+        #
+        # export ensemble dataframes
+        if tui:
+            status('exporting ensemble datasets')
+        exp_en_q = '{}/ensemble_q.txt'.format(folder)
+        ensb_dct['Q'].to_csv(exp_en_q, sep=';', index=False)
+        exp_en_q = '{}/ensemble_qb.txt'.format(folder)
+        ensb_dct['Qb'].to_csv(exp_en_q, sep=';', index=False)
+        #
+        # plot ensemble
+        if tui:
+            status('plotting ensemble datasets')
+        glue_ensemble(sim_df=series_df,
+                      ensemble_df=ensb_dct['Q'],
+                      filename='ensemble_q_log',
+                      folder=folder)
+        glue_ensemble(sim_df=series_df,
+                      ensemble_df=ensb_dct['Q'],
+                      filename='ensemble_q_lin',
+                      scale='lin',
+                      folder=folder)
+        glue_ensemble(sim_df=series_df,
+                      ensemble_df=ensb_dct['Qb'],
+                      baseflow=True,
+                      filename='ensemble_qb_log',
+                      folder=folder)
+        glue_ensemble(sim_df=series_df,
+                      ensemble_df=ensb_dct['Qb'],
+                      baseflow=True,
+                      filename='ensemble_qb_lin',
+                      scale='lin',
+                      folder=folder)
+    #
+    #
+    #
     return 666
 
 

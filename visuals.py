@@ -755,6 +755,7 @@ def pannel_calib_series(dataframe, grid=True, folder='C:/bin', filename='calib_s
     """
     #
     fig = plt.figure(figsize=(16, 10))  # Width, Height
+    fig.suptitle('Calibration basin series')
     gs = mpl.gridspec.GridSpec(5, 1, wspace=0.8, hspace=0.6)
     #
     # plot prec
@@ -804,6 +805,65 @@ def pannel_calib_series(dataframe, grid=True, folder='C:/bin', filename='calib_s
     plt.ylim(0.5 * np.min(dataframe[var]), 1.1 * np.max(dataframe[var]))
     plt.grid(grid)
     plt.yscale('log')
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        if suff == '':
+            filepath = folder + '/' + filename + '.png'
+        else:
+            filepath = folder + '/' + filename + '_' + suff + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
+
+
+def pannel_aoi_series(dataframe, grid=True, folder='C:/bin', filename='aoi_series', suff='', show=False):
+    """
+    The aoi series pannel
+    :param dataframe: pandas dataframe of the calib_serie.txt file
+    :param grid: boolean
+    :param folder: string - output folder path
+    :param filename: string - filename
+    :param suff: string - suffix
+    :param show: boolean - to show figure
+    :return: string - filepath
+    """
+    #
+    fig = plt.figure(figsize=(16, 7))  # Width, Height
+    fig.suptitle('AOI basin series')
+    gs = mpl.gridspec.GridSpec(3, 1, wspace=0.8, hspace=0.6)
+    #
+    # plot prec
+    var = 'Prec'
+    ax1 = fig.add_subplot(gs[0, 0])
+    plt.title('Precipitation', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(dataframe['Date'], dataframe[var])
+    plt.ylim(0, 1.1 * np.max(dataframe[var]))
+    plt.grid(grid)
+    #
+    # plot temp
+    var = 'Temp'
+    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
+    plt.title('Temperature', loc='left')
+    plt.ylabel('°C')
+    plt.plot(dataframe['Date'], dataframe[var], 'tab:orange')
+    plt.ylim(0, 1.1 * np.max(dataframe[var]))
+    plt.grid(grid)
+    #
+    # plot IRI and IRA
+    ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
+    plt.title('Irrigation', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(dataframe['Date'], dataframe['IRA'], 'orange', label='Irrigation by aspersion')
+    plt.plot(dataframe['Date'], dataframe['IRI'], 'green', label='Irrigation by inundation')
+    plt.ylabel('mm/d')
+    plt.ylim(0, 1.1 * np.max([dataframe['IRI'].values, dataframe['IRA'].values]))
+    plt.legend(loc='upper right', ncol=2, framealpha=1, fancybox=False)
+    plt.grid(grid)
     #
     if show:
         plt.show()
@@ -1464,7 +1524,7 @@ def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, p1, p2, p_lbl='m', vmax=500, vmi
     plt.close(fig)
 
 
-def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behaviroural=0.5,
+def glue_scattergram(models_df, rng_dct, likelihood='L', criteria='>', behavioural=0.5,
                      filename='post_scattergram', folder='C:/bin', show=False):
     """
     Plot the 9 scattergrams of GLUE analysis
@@ -1473,24 +1533,27 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
      Example: key "m_rng" would access the range tuple of m parameter
     :param likelihood: string of likelihood index.
     :param criteria: string of behavioural criteria
-    :param behaviroural: float of behavioural threshold
+    :param behavioural: float of behavioural threshold
     :param filename: string of filename
     :param folder: string of folder path
     :param show: boolean to show instead of saving
     :return: string of filepath
     """
     fig = plt.figure(figsize=(14, 6), )  # Width, Height
-    fig.suptitle('GLUE | Posterior scattergrams of behavioural models'
-                 ' | Criteria: {} {} {} | N = {}'.format(likelihood, criteria, behaviroural, len(models_df)))
+    fig.suptitle('GLUE | Likelihood scattergrams of behavioural models'
+                 ' | Criteria: {} {} {} | N = {}'.format(likelihood, criteria, behavioural, len(models_df)))
     rows = 2
     cols = 5
-    gs = mpl.gridspec.GridSpec(rows, cols, wspace=0.45, hspace=0.45)
+    gs = mpl.gridspec.GridSpec(rows, cols, wspace=0.55, hspace=0.45)
     #
     params = ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
     units = ('mm', 'twi units', 'mm/d', 'mm', 'mm', 'mm', 'mm/d', '°C', 'days', 'stores units')
     #
-    criteria_line = (models_df['m'].values * 0.0) + (behaviroural * 0.97)
     #
+    if behavioural >=0:
+        ymin = 0
+    else:
+        ymin = behavioural + 0.5 * behavioural
     ind = 0
     for i in range(rows):
         for j in range(cols):
@@ -1499,11 +1562,66 @@ def glue_scattergram(models_df, rng_dct, likelihood='Score', criteria='>', behav
             ax = fig.add_subplot(gs[i, j])
             plt.title('{}'.format(lcl_prm))
             plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.')
-            plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
-            plt.ylabel('L[M|y]')
+            plt.hlines(y=behavioural,
+                       xmin=rng_dct['{}_rng'.format(lcl_prm)][0],
+                       xmax=rng_dct['{}_rng'.format(lcl_prm)][1],
+                       colors='tab:red')
+            #plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+            plt.ylabel('Ly[M|y]')
             plt.xlabel('{}'.format(lcl_units))
             plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-            plt.ylim((0, 1.1))
+            plt.ylim((ymin, 1.1))
+            ind = ind + 1
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile)
+        plt.close(fig)
+        return expfile
+
+
+def glue_posterior(posterior_df, rng_dct, filename='posterior_analysis', folder='C:/bin', show=False, label=''):
+    """
+    Plot the 10 CFDs of GLUE analysis
+    :param models_df: pandas dataframe - models dataframe (behavioural)
+    :param rng_dct: dictionary - range dictionary with parameter keys followed by '_rng'.
+     Example: key "m_rng" would access the range tuple of m parameter
+    :param filename: string of filename
+    :param folder: string of folder path
+    :param show: boolean to show instead of saving
+    :return: string of filepath
+    """
+    fig = plt.figure(figsize=(14, 6), )  # Width, Height
+    if label == '':
+        fig.suptitle('GLUE | Posterior Likelihood Cumulative Density Function')
+    else:
+        fig.suptitle('GLUE | Posterior Likelihood Cumulative Density Function | {}'.format(label))
+    rows = 2
+    cols = 5
+    gs = mpl.gridspec.GridSpec(rows, cols, wspace=0.55, hspace=0.45)
+    #
+    params = ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    units = ('mm', 'twi units', 'mm/d', 'mm', 'mm', 'mm', 'mm/d', '°C', 'days', 'stores units')
+    #
+    #
+    ind = 0
+    for i in range(rows):
+        for j in range(cols):
+            lcl_prm = params[ind]
+            lcl_units = units[ind]
+            ax = fig.add_subplot(gs[i, j])
+            plt.title('{}'.format(lcl_prm))
+            plt.plot(posterior_df['{}'.format(lcl_prm)], posterior_df['Lo_acc'], 'tab:grey', linestyle='--', label='prior')
+            plt.plot(posterior_df['{}'.format(lcl_prm)], posterior_df['{}_Lp_acc'.format(lcl_prm)], 'k', label='posterior')
+            plt.vlines(x=posterior_df['{}_Lp_95'.format(lcl_prm)].values[0], ymin=0, ymax=1, colors='tab:red')
+            plt.vlines(x=posterior_df['{}_Lp_5'.format(lcl_prm)].values[0], ymin=0, ymax=1, colors='tab:red')
+            plt.ylabel('cumulative likelihood')
+            plt.xlabel('{}'.format(lcl_units))
+            plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+            plt.ylim((0.0, 1.1))
             ind = ind + 1
     #
     if show:
@@ -1953,7 +2071,8 @@ def plot_zmap_analyst(obs, sim, error, w_error, count, obs_sig, sim_sig, error_s
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
-    
+
+
 def plot_raster_analyst(obs, sim, ranges, metricranges, metrics_dct='', metrics_txt=False, show=False,
                         ttl='title', filename='raster_analyst', folder='C:/bin', nodata=-1, vartype='flow_v'):
     """
@@ -2037,28 +2156,25 @@ def plot_raster_analyst(obs, sim, ranges, metricranges, metrics_dct='', metrics_
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
-#
-# todo verify
-def plot_osa_zmaps_mean_series(analyst_df, var_df, var='ET', grid=False, folder='C:/bin', filename='zmaps_mean_series', show=True):
-    #
-    fig = plt.figure(figsize=(16, 8))  # Width, Height
-    gs = mpl.gridspec.GridSpec(1, 1, wspace=0.8, hspace=0.6)
 
-    ax1 = fig.add_subplot(gs[0, 0])
-    plt.title('Precipitation', loc='left')
-    plt.ylabel('mm/d')
-    plt.plot(var_df['Date'], var_df[var], color='tab:blue', label='Simulated Variable')
-    plt.plot(analyst_df['Date'], analyst_df['Obs_Mean_Series'], 'o', color='tab:gray', label='Observed Zmap Mean')
-    plt.plot(analyst_df['Date'], analyst_df['Sim_Mean_Series'], 'o', color='navy', label='Simulated Zmap Mean')
+
+def plot_population(pop_df, xfield='L_ET', yfield='L_Q', zfield='L', grid=True, x_max=1, y_max=1, x_min=-1, y_min=-1,
+                    ttl='title', show=False, folde='C:/bin', filename='population'):
+    fig = plt.figure(figsize=(7, 7), )  # Width, Height
+    fig.suptitle('Likelihood space | {}'.format(ttl))
+    pop_df = pop_df.query('{} >= {} and {} >= {} and {} <= {} and {} <= {}'.format(xfield, x_min, yfield, y_min, xfield, x_max, yfield, y_max))
+    plt.scatter(x=pop_df[xfield], y=pop_df[yfield], marker='.', c=pop_df[zfield], cmap='jet_r')
+    plt.ylabel(yfield)
+    plt.xlabel(xfield)
+    plt.ylim((y_min, y_max))
+    plt.xlim((x_min, x_max))
     plt.grid(grid)
-    plt.legend(loc='upper left', ncol=1, framealpha=1, fancybox=False)
     #
     if show:
         plt.show()
         plt.close(fig)
     else:
-        # export file
-        filepath = folder + '/' + filename + '.png'
-        plt.savefig(filepath)
+        expfile = folder + '/' + filename + '_{}_{}.png'.format(xfield, yfield)
+        plt.savefig(expfile)
         plt.close(fig)
-        return filepath
+        return expfile

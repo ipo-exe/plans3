@@ -176,7 +176,7 @@ def demo_slh():
 
 
 def demo_slh_calib():
-    from tools import slh_calib
+    from tools import hca
     import backend
     import pandas as pd
 
@@ -201,20 +201,20 @@ def demo_slh_calib():
     #
     #
     # call function
-    out_dct = slh_calib(fseries=fseries,
-                        fhydroparam=fhydroparam,
-                        fshruparam=fshruparam,
-                        fhistograms=fhistograms,
-                        fbasinhists=fbasinhists,
-                        fbasin=fbasin,
-                        ftwi=ftwi,
-                        fshru=fshru,
-                        fcanopy=fcanopy,
-                        fzmaps=fzmaps,
-                        folder=outfolder,
-                        wkpl=True,
-                        tui=True,
-                        label='CALIB')
+    out_dct = hca(fseries=fseries,
+                  fhydroparam=fhydroparam,
+                  fshruparam=fshruparam,
+                  fhistograms=fhistograms,
+                  fbasinhists=fbasinhists,
+                  fbasin=fbasin,
+                  ftwi=ftwi,
+                  fshru=fshru,
+                  fcanopy=fcanopy,
+                  fzmaps=fzmaps,
+                  folder=outfolder,
+                  wkpl=True,
+                  tui=True,
+                  label='CALIB')
 
 
 def demo_calibration():
@@ -244,9 +244,9 @@ def demo_calibration():
 
     # Options: 'NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias', 'RMSE-CFC', 'RMSElog-CFC'
 
-    likelihood = 'KGE'
-    generations = 5
-    popsize = 50
+    likelihood = 'NSElog'
+    generations = 10
+    popsize = 200
     calibfiles = calibrate(fseries=fseries,
                            fhydroparam=fhydroparam,
                            fshruparam=fshruparam,
@@ -274,7 +274,7 @@ def demo_glue():
     from tools import glue
     #
     # get folder of observed datasets
-    folder = 'C:/000_myFiles/myDrive/Plans3/sacre/datasets/observed'
+    folder = 'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
     # get observed datasets standard names
     files_input = get_input2calibhydro()
     fshruparam = folder + '/' + files_input[2]
@@ -286,7 +286,7 @@ def demo_glue():
     fcanopy = folder + '/' + files_input[9]
 
     # calibration folder
-    calib_folder = r"C:\bin\sacre\calib_Hydrology_KGE_2021-10-01-21-55-57"
+    calib_folder = r"C:\bin\ibira\optimization\calib_Hydrology_NSElog_2021-10-08-12-47-30"
     fseries = calib_folder + '/MLM/full_period/sim_series.txt'
     fhydroparam = calib_folder + '/MLM/mlm_parameters.txt'
     fmodels = calib_folder + '/generations/population.txt'
@@ -298,9 +298,10 @@ def demo_glue():
                      fshruparam=fshruparam,
                      fbasin=fbasin,
                      fcanopy=fcanopy,
-                     likelihood='Score',
-                     nmodels=100,
-                     behavioural=0.5,
+                     likelihood='KGE',
+                     nmodels=5000,
+                     behavioural=0.2,
+                     run_ensemble=False,
                      folder=calib_folder,
                      wkpl=True,
                      tui=True)

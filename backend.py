@@ -32,9 +32,9 @@ Module description:
 This module stores all backend functions specific of plans3. 
 Input parameters are all strings and booleans.
 '''
-
 import os
 import pandas as pd
+
 
 def header(p0='title', p1=70, p2='*', p3=True):
     """
@@ -271,7 +271,7 @@ def get_root_dir(root='C:/Plans3'):
 def get_prj_dirs():
     dct = {'Datasets':'datasets', 'Observed':'observed', 'Projected':'projected',
            'Runbin':'runbin', 'Simulation':'simulation', 'Optimization':'optimization',
-           'LULC':'lulc', 'SHRU':'shru', 'ETpat':'etpat', 'Assessment':'assessment'}
+           'ETpat':'etpat', 'Assessment':'assessment'}
     return dct
 
 
@@ -290,22 +290,27 @@ def get_prj_dirs_paths(p0='name', wkplc='C:'):
     :param wkplc:
     :return:
     """
-
     dirs = get_prj_dirs()
     dir0 = wkplc + '/' + p0
     dir01 = dir0 + '/' + dirs['Datasets']
-    dir02 = dir0 + '/' + dirs['Runbin']
+    dir02 = 'C:/bin/ibira' #dir0 + '/' + dirs['Runbin']
     dir011 = dir01 + '/' + dirs['Observed']
     dir012 = dir01 + '/' + dirs['Projected']
     dir021 = dir02 + '/' + dirs['Simulation']
     dir022 = dir02 + '/' + dirs['Optimization']
     dir023 = dir02 + '/' + dirs['Assessment']
-    dir0111 = dir011 + '/' + dirs['LULC']
-    dir0112 = dir011 + '/' + dirs['SHRU']
+    #dir0111 = dir011 + '/' + dirs['LULC']
+    #dir0112 = dir011 + '/' + dirs['SHRU']
     dir0113 = dir011 + '/' + dirs['ETpat']
-    def_dct = {'Project': dir0, 'Datasets': dir01, 'Observed': dir011, 'Projected': dir012,
-               'Runbin': dir02, 'Simulation': dir021, 'Optimization': dir022,
-               'LULC':dir0111, 'SHRU':dir0112, 'ETpat':dir0113, 'Assessment': dir023}
+    def_dct = {'Project': dir0,
+               'Datasets': dir01,
+               'Observed': dir011,
+               'Projected': dir012,
+               'Runbin': dir02,
+               'Simulation': dir021,
+               'Optimization': dir022,
+               'ETpat':dir0113,
+               'Assessment': dir023}
     return def_dct
 
 
@@ -337,8 +342,8 @@ def create_new_project(p0, wkplc='C:'):
     subdirs = get_prj_dirs()
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'])
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'])
-    os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['LULC'])
-    os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['SHRU'])
+    #os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['LULC'])
+    #os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['SHRU'])
     os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['ETpat'])
     #os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['CN']) # deprecated
     #os.mkdir(new_prj_path + '/' + subdirs['Datasets'] + '/' + subdirs['Observed'] + '/' + subdirs['PPat'])  # deprecated
@@ -357,20 +362,24 @@ def get_existing_projects(wkplc='C:'):
     :param wkplc: workplace directory
     :return: dataframe
     """
+    # list dirs in workplace
     wkplc_items = os.listdir(wkplc)
     wkplc_dirs = list()
     for i in range(len(wkplc_items)):
         lcl_path = wkplc + '/' + wkplc_items[i]
         if os.path.isdir(lcl_path):
             wkplc_dirs.append(lcl_path)
-            #print('{} is dir'.format(lcl_path))
+    # list projects in
     wkplc_projects_paths = list()
     dct_prj_dirs = get_prj_dirs()
     for i in range(len(wkplc_dirs)):
+        # first level
         lcl_items = os.listdir(wkplc_dirs[i])
         if dct_prj_dirs['Datasets'] in set(lcl_items) and dct_prj_dirs['Runbin'] in set(lcl_items):
+            # second level
             lcl_items = os.listdir(wkplc_dirs[i] + '/' + dct_prj_dirs['Datasets'])
             if dct_prj_dirs['Observed'] in set(lcl_items) and dct_prj_dirs['Projected'] in set(lcl_items):
+                # third level
                 lcl_items = os.listdir(wkplc_dirs[i] + '/' + dct_prj_dirs['Runbin'])
                 if dct_prj_dirs['Simulation'] in set(lcl_items) and dct_prj_dirs['Optimization'] in set(lcl_items) \
                         and dct_prj_dirs['Assessment'] in set(lcl_items):
@@ -407,25 +416,53 @@ def get_observed_files(infile='iofiles.txt', sep='|'):
 
 
 def get_input2derived():
-    dct = {'calib_twito.asc':('calib_twi.asc', 'calib_fto.asc'),
-           'aoi_twito.asc':('calib_twi.asc', 'calib_fto.asc'),
-           'aoi_canopy_series.txt':('aoi_series.txt', 'aoi_shru_param.txt'),
-           'calib_canopy_series.txt': ('calib_series.txt', 'calib_shru_param.txt'),
-           'calib_shru.asc': ('calib_lulc.asc', 'calib_lulc_param.txt', 'calib_soils.asc',
-                              'calib_soils_param.txt', 'calib_shru_param.txt'),
-           'aoi_lulc_series.txt':('aoi_lulc_series_input.txt',),
-           'aoi_shru_series.txt':('aoi_lulc_series.txt', 'aoi_lulc_param.txt', 'aoi_soils.asc',
-                                  'aoi_soils_param.txt', 'aoi_shru_param.txt'),
-           'aoi_shru_param.txt':('aoi_lulc_param.txt', 'aoi_soils_param.txt'),
-           'calib_shru_param.txt':('calib_lulc_param.txt', 'calib_soils_param.txt'),
-           'calib_histograms.txt':('calib_shru_param.txt', 'calib_shru.asc', 'calib_twi.asc'),
-           'calib_basin_histograms.txt': ('calib_shru_param.txt', 'calib_shru.asc', 'calib_twi.asc', 'calib_basin.asc'),
+    dct = {'calib_twito.asc':('calib_twi.asc',
+                              'calib_fto.asc'),
+           'aoi_twito.asc':('calib_twi.asc',
+                            'calib_fto.asc'),
+           'aoi_canopy_series.txt':('aoi_series.txt',
+                                    'aoi_shru_param.txt'),
+           'calib_canopy_series.txt': ('calib_series.txt',
+                                       'calib_shru_param.txt'),
+           'calib_shru.asc': ('calib_lulc.asc',
+                              'calib_lulc_param.txt',
+                              'calib_soils.asc',
+                              'calib_soils_param.txt',
+                              'calib_shru_param.txt'),
+           'aoi_shru.asc': ('aoi_lulc.asc',
+                            'aoi_lulc_param.txt',
+                            'aoi_soils.asc',
+                            'aoi_soils_param.txt',
+                            'aoi_shru_param.txt'),
+           'aoi_shru_param.txt':('aoi_lulc_param.txt',
+                                 'aoi_soils_param.txt'),
+           'calib_shru_param.txt':('calib_lulc_param.txt',
+                                   'calib_soils_param.txt'),
+           'calib_histograms.txt':('calib_shru_param.txt',
+                                   'calib_shru.asc',
+                                   'calib_twi.asc'),
+           'calib_basin_histograms.txt': ('calib_shru_param.txt',
+                                          'calib_shru.asc',
+                                          'calib_twi.asc',
+                                          'calib_basin.asc'),
+           'aoi_histograms.txt': ('aoi_shru_param.txt',
+                                  'aoi_shru.asc',
+                                  'aoi_twi.asc'),
+           'aoi_basin_histograms.txt': ('aoi_shru_param.txt',
+                                        'aoi_shru.asc',
+                                        'aoi_twi.asc',
+                                        'aoi_basin.asc'),
            'aoi_slope.asc':('aoi_dem.asc',),
            'calib_slope.asc':('calib_dem.asc',),
-           'aoi_fto.asc': ('aoi_soils.asc', 'aoi_soils_param.txt'),
-           'calib_fto.asc': ('calib_soils.asc', 'calib_soils_param.txt'),
+           'aoi_fto.asc': ('aoi_soils.asc',
+                           'aoi_soils_param.txt'),
+           'calib_fto.asc': ('calib_soils.asc',
+                             'calib_soils_param.txt'),
            'calib_etpat_series.txt':('calib_etpat_series_input.txt',),
-           'calib_etpat_zmaps.txt':('calib_etpat_series.txt', 'calib_twi.asc', 'calib_shru.asc', 'calib_histograms.txt')}
+           'calib_etpat_zmaps.txt':('calib_etpat_series.txt',
+                                    'calib_twi.asc',
+                                    'calib_shru.asc',
+                                    'calib_histograms.txt')}
     return dct
 
 
@@ -434,20 +471,48 @@ def get_mapid_byfile(filename):
 
 
 def get_input2calibhydro():
-    files = ('calib_series.txt','hydro_param.txt', 'calib_shru_param.txt', 'calib_histograms.txt',
-             'calib_basin_histograms.txt', 'calib_basin.asc', 'calib_twi.asc', 'calib_shru.asc',
-             'calib_etpat_zmaps.txt', 'calib_canopy_series.txt')
+    files = ('calib_series.txt',
+             'hydro_param.txt',
+             'calib_shru_param.txt',
+             'calib_histograms.txt',
+             'calib_basin_histograms.txt',
+             'calib_basin.asc',
+             'calib_twi.asc',
+             'calib_shru.asc',
+             'calib_etpat_zmaps.txt',
+             'calib_canopy_series.txt',
+             '__calib_shru_window1.asc',
+             '__calib_twi_window1.asc'
+             )
     return files
 
 
 def get_input2simbhydro(aoi=True):
     if aoi:
-        files = ('aoi_series.txt', 'hydro_param.txt', 'aoi_shru_param.txt', 'aoi_shru_series.txt',
-                 'aoi_basin.asc', 'aoi_twi.asc', 'aoi_shru.asc', 'aoi_canopy_series.txt')
+        files = ('aoi_series.txt',
+                 'hydro_param.txt',
+                 'aoi_shru_param.txt',
+                 'aoi_histograms.txt',
+                 'aoi_basin_histograms.txt',
+                 'aoi_basin.asc',
+                 'aoi_twi.asc',
+                 'aoi_shru.asc',
+                 'aoi_canopy_series.txt',
+                 'aoi_shru_window_1.asc',
+                 'aoi_twi_window_1.asc')
     else:
-        files = ('calib_series.txt','hydro_param.txt', 'calib_shru_param.txt', 'calib_histograms.txt',
-                 'calib_basin_histograms.txt', 'calib_basin.asc', 'calib_twi.asc', 'calib_shru.asc',
-                 'calib_canopy_series.txt', 'calib_etpat_zmaps.txt')
+        files = ('calib_series.txt',
+                 'hydro_param.txt',
+                 'calib_shru_param.txt',
+                 'calib_histograms.txt',
+                 'calib_basin_histograms.txt',
+                 'calib_basin.asc',
+                 'calib_twi.asc',
+                 'calib_shru.asc',
+                 'calib_canopy_series.txt',
+                 'calib_etpat_zmaps.txt',
+                 '__calib_shru_window1.asc',
+                 '__calib_twi_window1.asc')
     return files
 
 
@@ -459,7 +524,6 @@ def get_derived_files():
     files = list()
     for i in range(len(filenames)):
         files.append(filenames[i] + '.' + filesformats[i])
-    # files = ('cn_series.txt', 'cn_calib.asc', 'twi.asc', 'lulc_series.txt', 'lulc_areas.txt')  # deprecated
     return files
 
 
@@ -478,7 +542,6 @@ def verify_observed_files(p0='name', wkplc='C:'):
     files_df = get_observed_files()
     files = files_df['File'].values
     existing_files = os.listdir(get_prj_dirs_paths(p0=p0, wkplc=wkplc)['Observed'])
-    #print(existing_files)
     status = list()
     for i in range(len(files)):
         if files[i] in set(existing_files):
@@ -565,7 +628,6 @@ def check_simhydro_files(p0='name', wkplc='C:', aoi=True):
         return False
 
 
-
 def importfile(src, dst):
     from shutil import copyfile
     copyfile(src=src, dst=dst)
@@ -598,7 +660,11 @@ def get_stringfields(filename):
     :return: string of string fields
     """
     def_str = ''
-    if filename == 'calib_shru_param.txt':
+    if filename == 'calib_shru_param.txt' or filename == 'aoi_shru_param.txt':
         def_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
+    elif filename == 'calib_soils_param.txt' or filename =='aoi_soils_param.txt':
+        def_str = 'SoilName,SoilAlias,ColorSoil'
+    elif filename == 'calib_lulc_param.txt' or filename =='aoi_lulc_param.txt':
+        def_str = 'LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC'
     return def_str
 
