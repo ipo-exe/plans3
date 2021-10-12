@@ -886,9 +886,11 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
 
 
 def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area, basinshadow,
-                m_range, lamb_range, qo_range, cpmax_range, sfmax_range, erz_range, ksat_range, c_range, k_range, n_range,
-                etpatdates, etpatzmaps, tui=True, normalize=False, grid=1000, generations=10, popsize=20, offsfrac=2,
-                mutrate=0.5, puremutrate=0.5, cutfrac=0.4, tracefrac=1, tracepop=True, likelihood='NSE', nodata=-1):
+                m_range, lamb_range, qo_range, cpmax_range, sfmax_range, erz_range,
+                ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps, tui=True,
+                normalize=False, grid=1000, generations=10, popsize=20, offsfrac=2,
+                mutrate=0.5, puremutrate=0.5, cutfrac=0.4, tracefrac=1, tracepop=True,
+                likelihood='NSE', nodata=-1):
     """
 
     Calibration procedure
@@ -902,35 +904,35 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
     :param lat: float
     :param area: float
     :param basinshadow: 2d numpy array
-    :param m_range: iterable
-    :param lamb_range: iterable
-    :param qo_range: iterable
-    :param cpmax_range: iterable
-    :param sfmax_range: iterable
-    :param erz_range: iterable
-    :param ksat_range: iterable
-    :param c_range: iterable
-    :param k_range: iterable
-    :param n_range: iterable
+    :param m_range: iterable of min and max of m
+    :param lamb_range: iterable of min and max of lamb
+    :param qo_range: iterable of min and max of qo
+    :param cpmax_range: iterable of min and max of cpmax
+    :param sfmax_range: iterable of min and max of sfmax
+    :param erz_range: iterable of min and max of erz
+    :param ksat_range: iterable of min and max of ksat
+    :param c_range: iterable of min and max of c
+    :param k_range: iterable of min and max of k
+    :param n_range: iterable of min and max of n
     :param etpatdates: string code of dates
-    :param etpatzmaps: 3d numpy array
-    :param tui: boolean
-    :param normalize: boolean
-    :param grid: int
-    :param generations: int
-    :param popsize: int
-    :param offsfrac: float
-    :param mutrate: float
-    :param puremutrate: float
-    :param cutfrac: float
-    :param tracefrac: float
-    :param tracepop: boolean
-    :param likelihood: string code
-    :param nodata: float
-    :return:
+    :param etpatzmaps: 3d numpy array of zmaps
+    :param tui: boolean for TUI print
+    :param normalize: boolean to normalize values of simulated ET (0 and 1)
+    :param grid: int for sampling grid
+    :param generations: int number of generations
+    :param popsize: int number of population size
+    :param offsfrac: float fraction of offspring size relative to population
+    :param mutrate: float probability of mutation during crossover
+    :param puremutrate: float probability of pure mutation
+    :param cutfrac: float fraction for cutting genes during crossover
+    :param tracefrac: float fraction of parents to traceback
+    :param tracepop: boolean to trace all population
+    :param likelihood: string code of likelihood
+    :param nodata: float of no data
+    :return: dictionary of MLM set, traced parents and (optional) population dataframes
     """
     from evolution import generate_population, generate_offspring, recruitment
-    from analyst import nse, kge, rmse, pbias, frequency, error
+    import analyst
     from geo import fuzzy_transition
     from sys import getsizeof
     from datetime import datetime
@@ -974,47 +976,88 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                 n_lst.append(lcl_pset[9])
             #
             gen = np.ones(len(m_lst)) * g
+            #
+            # built dict
+            lcl_dct = {'Gen': gen,
+                       'Id':traced[g]['Ids'],
+                       'SetIds': traced[g]['SetIds'],
+                       'L':traced[g]['L'],
+                       'L_Q':traced[g]['L_Q'],
+                       'L_ET':traced[g]['L_ET'],
+                       'm': m_lst,
+                       'lamb':lamb_lst,
+                       'qo': qo_lst,
+                       'cpmax': cpmax_lst,
+                       'sfmax': sfmax_lst,
+                       'erz': erz_lst,
+                       'ksat': ksat_lst,
+                       'c': c_lst,
+                       'k': k_lst,
+                       'n': n_lst}
+            # append Q metadata
+            q_meta = ('NSE',
+                         'NSElog',
+                         'KGE',
+                         'KGElog',
+                         'RMSE',
+                         'RMSElog',
+                         'PBias',
+                         'RMSE_CFC',
+                         'RMSElog_CFC',
+                         'Q_sum',
+                         'Q_mean',
+                         'Q_sd',
+                         'Qb_sum',
+                         'Qb_mean',
+                         'Qb_sd',
+                         'Q_C',
+                         'Qb_C'
+                         )
+            for m in q_meta:
+                lcl_dct[m] = traced[g][m]
+            # append ET metadata
+            et_meta = ('ET_MSE_mean',
+                          'ET_MSE_min',
+                          'ET_MSE_max',
+                          'ET_RMSE_mean',
+                          'ET_RMSE_min',
+                          'ET_RMSE_max',
+                          'ET_W-MSE_mean',
+                          'ET_W-MSE_min',
+                          'ET_W-MSE_max',
+                          'ET_W-RMSE_mean',
+                          'ET_W-RMSE_min',
+                          'ET_W-RMSE_max',
+                          'ET_NSE_mean',
+                          'ET_NSE_min',
+                          'ET_NSE_max',
+                          'ET_KGE_mean',
+                          'ET_KGE_min',
+                          'ET_KGE_max',
+                          'ET_R_mean',
+                          'ET_R_min',
+                          'ET_R_max',
+                          'ET_MeanObs_mean',
+                          'ET_MeanObs_min',
+                          'ET_MeanObs_max',
+                          'ET_MeanSim_mean',
+                          'ET_MeanSim_min',
+                          'ET_MeanSim_max',
+                          'ET_MeanErr_mean',
+                          'ET_MeanErr_min',
+                          'ET_MeanErr_max')
+            for m in et_meta:
+                lcl_dct[m] = traced[g][m]
+            #
             # built export dataframe
-            lcl_df = pd.DataFrame({'Gen': gen,
-                                   'Id':traced[g]['Ids'],
-                                   'SetIds': traced[g]['SetIds'],
-                                   'L':traced[g]['L'],
-                                   'L_Q':traced[g]['L_Q'],
-                                   'L_ET':traced[g]['L_ET'],
-                                   'm': m_lst,
-                                   'lamb':lamb_lst,
-                                   'qo': qo_lst,
-                                   'cpmax': cpmax_lst,
-                                   'sfmax': sfmax_lst,
-                                   'erz': erz_lst,
-                                   'ksat': ksat_lst,
-                                   'c': c_lst,
-                                   'k': k_lst,
-                                   'n': n_lst,
-                                   'NSE': traced[g]['NSE'],
-                                   'NSElog': traced[g]['NSElog'],
-                                   'KGE': traced[g]['KGE'],
-                                   'KGElog': traced[g]['KGElog'],
-                                   'RMSE': traced[g]['RMSE'],
-                                   'RMSElog': traced[g]['RMSElog'],
-                                   'PBias': traced[g]['PBias'],
-                                   'RMSE_CFC': traced[g]['RMSE_CFC'],
-                                   'RMSElog_CFC': traced[g]['RMSElog_CFC'],
-                                   'Q_sum': traced[g]['Q_sum'],
-                                   'Q_mean': traced[g]['Q_mean'],
-                                   'Q_sd': traced[g]['Q_sd'],
-                                   'Qb_sum': traced[g]['Qb_sum'],
-                                   'Qb_mean': traced[g]['Qb_mean'],
-                                   'Qb_sd': traced[g]['Qb_sd'],
-                                   'Q_C': traced[g]['Q_C'],
-                                   'Qb_C': traced[g]['Qb_C']
-                                   })
+            lcl_df = pd.DataFrame(lcl_dct)
             #
             #
             if g == 0:
                 out_df = lcl_df
             else:
                 out_df = out_df.append(lcl_df, ignore_index=True)
+        # compute Qb_R
         out_df['Qb_R'] = out_df['Qb_sum'].values / out_df['Q_sum'].values
         # return full dataframe
         return out_df
@@ -1037,7 +1080,6 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
     #
     # get log10 of flow for calibration metrics
     loglim = 0.000001
-    sobs_log = np.log10(sobs + (loglim * (sobs <= 0)))
     #
     # get OBS etpat zmaps
     sobs_etpat = np.array(etpatzmaps)
@@ -1136,6 +1178,48 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
         meta_c_qprec = np.zeros(len(population))
         meta_c_qbprec = np.zeros(len(population))
         #
+        # metadata metric of ETpat
+        meta_mean_mse_etpat = np.zeros(len(population))
+        meta_min_mse_etpat = np.zeros(len(population))
+        meta_max_mse_etpat = np.zeros(len(population))
+        #
+        meta_mean_rmse_etpat = np.zeros(len(population))
+        meta_min_rmse_etpat = np.zeros(len(population))
+        meta_max_rmse_etpat = np.zeros(len(population))
+        #
+        meta_mean_wmse_etpat = np.zeros(len(population))
+        meta_min_wmse_etpat = np.zeros(len(population))
+        meta_max_wmse_etpat = np.zeros(len(population))
+        #
+        meta_mean_wrmse_etpat = np.zeros(len(population))
+        meta_min_wrmse_etpat = np.zeros(len(population))
+        meta_max_wrmse_etpat = np.zeros(len(population))
+        #
+        meta_mean_nse_etpat = np.zeros(len(population))
+        meta_min_nse_etpat = np.zeros(len(population))
+        meta_max_nse_etpat = np.zeros(len(population))
+        #
+        meta_mean_kge_etpat = np.zeros(len(population))
+        meta_min_kge_etpat = np.zeros(len(population))
+        meta_max_kge_etpat = np.zeros(len(population))
+        #
+        meta_mean_r_etpat = np.zeros(len(population))
+        meta_min_r_etpat = np.zeros(len(population))
+        meta_max_r_etpat = np.zeros(len(population))
+        #
+        meta_mean_mean_obs_etpat = np.zeros(len(population))
+        meta_min_mean_obs_etpat = np.zeros(len(population))
+        meta_max_mean_obs_etpat = np.zeros(len(population))
+        #
+        meta_mean_mean_sim_etpat = np.zeros(len(population))
+        meta_min_mean_sim_etpat = np.zeros(len(population))
+        meta_max_mean_sim_etpat = np.zeros(len(population))
+        #
+        meta_mean_mean_err = np.zeros(len(population))
+        meta_min_mean_err = np.zeros(len(population))
+        meta_max_mean_err = np.zeros(len(population))
+        #
+        #
         if tracepop:
             dnas_lst = list()
         #
@@ -1185,65 +1269,36 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             sim_df = sim_dct['Series']
             #
             # compute Flow sim data
-            ssim = sim_df['Q'].values
-            ssim_log = np.log10(ssim + (loglim * (ssim <= 0)))
+            flow_analysis = analyst.flow(obs=sobs, sim=sim_df['Q'].values)
             #
             #
-            # get metadata of simulated values
-            lcl_q_sum = np.sum(ssim)
-            lcl_q_mean = np.mean(ssim)
-            lcl_q_sd = np.std(ssim + (loglim * (ssim <= 0)))
-            lcl_qb_sum = np.sum(sim_df['Qb'].values)
-            lcl_qb_mean = np.mean(sim_df['Qb'].values)
-            lcl_qb_sd = np.std(sim_df['Qb'].values + (loglim * (sim_df['Qb'].values <= 0)))
-            lcl_c_qprec = lcl_q_sum / np.sum(sim_df['Prec'].values)
-            lcl_c_qbprec = lcl_qb_sum / np.sum(sim_df['Prec'].values)
-            cfc_obs = frequency(series=sobs)['Values']
-            try:
-                cfc_sim = frequency(series=ssim)['Values']
-            except ValueError:
-                print('Value Error found in simulated CFC')
-                cfc_sim = np.ones(shape=np.shape(cfc_obs))
-            #
-            # get metadata metrics
-            lcl_nse = nse(obs=sobs, sim=ssim)
-            lcl_nselog = nse(obs=sobs_log, sim=ssim_log)
-            lcl_kge = kge(obs=sobs, sim=ssim)
-            lcl_kgelog = kge(obs=sobs_log, sim=ssim_log)
-            lcl_rmse = rmse(obs=sobs, sim=ssim)
-            lcl_rmselog = rmse(obs=sobs_log, sim=ssim_log)
-            lcl_pbias = pbias(obs=sobs, sim=ssim)
-            lcl_rmse_cfc = rmse(obs=cfc_obs, sim=cfc_sim)
-            lcl_rmselog_cfc = rmse(obs=np.log10(cfc_obs), sim=np.log10(cfc_sim))
-            #
-            #
-            # Get fitness score for Flow:
+            # Selector to get fitness score for Flow:
             if likelihood == 'NSE':
-                lcl_flow_score = lcl_nse
+                lcl_flow_score = flow_analysis['Metrics']['NSE']
             elif likelihood == 'NSElog':
-                lcl_flow_score = lcl_nselog
+                lcl_flow_score = flow_analysis['Metrics']['NSElog']
             elif likelihood == 'KGE':
-                lcl_flow_score = lcl_kge
+                lcl_flow_score = flow_analysis['Metrics']['KGE']
             elif likelihood == 'KGElog':
-                lcl_flow_score = lcl_kgelog
+                lcl_flow_score = flow_analysis['Metrics']['KGElog']
             elif likelihood == 'RMSE':
-                lcl_flow_score = 1 - lcl_rmse
+                lcl_flow_score = 1 - flow_analysis['Metrics']['NRMSE']
             elif likelihood == 'RMSElog':
-                lcl_flow_score = 1 - lcl_rmselog
+                lcl_flow_score = 1 - flow_analysis['Metrics']['NRMSElog']
             elif likelihood == 'PBias':
-                lcl_flow_score = 1 - np.abs(lcl_pbias)
+                lcl_flow_score = 1 - (np.abs(flow_analysis['Metrics']['PBias']) / 100)
             elif likelihood == 'RMSE-CFC':
-                lcl_flow_score = 1 - lcl_rmse_cfc
+                lcl_flow_score = 1 - flow_analysis['Metrics']['NRMSE_CFC']
             elif likelihood == 'RMSElog-CFC':
-                lcl_flow_score = 1 - lcl_rmselog_cfc
+                lcl_flow_score = 1 - flow_analysis['Metrics']['NRMSElog_CFC']
             elif likelihood == 'NSElog x KGElog':
-                lcl_flow_score = lcl_nselog * lcl_kgelog
+                lcl_flow_score = flow_analysis['Metrics']['NSElog'] * flow_analysis['Metrics']['KGElog']
             elif likelihood == 'NSElog x RMSElog-CFC':
-                lcl_flow_score = lcl_nselog * (1 - lcl_rmselog_cfc)
+                lcl_flow_score = flow_analysis['Metrics']['NSElog'] * (1 - flow_analysis['Metrics']['NRMSElog_CFC'])
             elif likelihood == 'KGElog x RMSElog-CFC':
-                lcl_flow_score = lcl_kgelog * (1 - lcl_rmselog_cfc)
+                lcl_flow_score = flow_analysis['Metrics']['KGElog'] * (1 - flow_analysis['Metrics']['NRMSElog_CFC'])
             else:
-                lcl_flow_score = lcl_nse
+                lcl_flow_score = flow_analysis['Metrics']['NSE']
             #
             #
             #
@@ -1258,16 +1313,15 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             else:
                 ssim_etpat = np.array(sim_dct['Maps']['ET'])
             #
+            # get analyst dict
             etpat_analysis = analyst.zmaps_series(obs=sobs_etpat,
                                                   sim=ssim_etpat,
                                                   count=1.0 *countmatrix,
                                                   nodata=nodata,
                                                   full_return=False)
             #
-            # get the ETpat score (mean of signals KGE)
-            #lcl_etpat_score = analyst.kge(obs=etpat_analysis['Metrics']['Mean-Obs'], sim=etpat_analysis['Metrics']['Mean-Sim']) #
-            lcl_etpat_score = np.min(etpat_analysis['Metrics']['KGE'])
-            #lcl_etpat_score = 1 - np.mean(etpat_analysis['Metrics']['RMSE'])
+            # get the ETpat score (minimum of signals KGE)
+            lcl_etpat_score = etpat_analysis['Stats']['KGE_min']
             #
             #
             #
@@ -1303,25 +1357,66 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                 dnas_lst.append(lcl_dna)
             #
             # store metadata metrics:
-            meta_nse[i] = lcl_nse
-            meta_nselog[i] = lcl_nselog
-            meta_kge[i] = lcl_kge
-            meta_kgelog[i] = lcl_kgelog
-            meta_rmse[i] = lcl_rmse
-            meta_rmselog[i] = lcl_rmselog
-            meta_pbias[i] = lcl_pbias
-            meta_rmse_cfc[i] = lcl_rmse_cfc
-            meta_rmselog_cfc[i] = lcl_rmselog_cfc
+            meta_nse[i] = flow_analysis['Metrics']['NSE']
+            meta_nselog[i] = flow_analysis['Metrics']['NSElog']
+            meta_kge[i] = flow_analysis['Metrics']['KGE']
+            meta_kgelog[i] = flow_analysis['Metrics']['KGElog']
+            meta_rmse[i] = flow_analysis['Metrics']['RMSE']
+            meta_rmselog[i] = flow_analysis['Metrics']['RMSElog']
+            meta_pbias[i] = flow_analysis['Metrics']['PBias']
+            meta_rmse_cfc[i] = flow_analysis['Metrics']['RMSE_CFC']
+            meta_rmselog_cfc[i] = flow_analysis['Metrics']['RMSElog_CFC']
             #
             # store metadata diags
-            meta_q_sum[i] = lcl_q_sum
-            meta_q_mean[i] = lcl_q_mean
-            meta_q_sd[i] = lcl_q_sd
-            meta_qb_sum[i] = lcl_qb_sum
-            meta_qb_mean[i] = lcl_qb_mean
-            meta_qb_sd[i] = lcl_qb_sd
-            meta_c_qprec[i] = lcl_c_qprec
-            meta_c_qbprec[i] = lcl_c_qbprec
+            meta_q_sum[i] = flow_analysis['Stats']['Q_sum']
+            meta_q_mean[i] = flow_analysis['Stats']['Q_mean']
+            meta_q_sd[i] = flow_analysis['Stats']['Q_sd']
+            meta_qb_sum[i] = np.sum(sim_df['Qb'].values)
+            meta_qb_mean[i] = np.mean(sim_df['Qb'].values)
+            meta_qb_sd[i] = np.std(sim_df['Qb'].values + (loglim * (sim_df['Qb'].values <= 0)))
+            meta_c_qprec[i] = flow_analysis['Stats']['Q_sum'] / np.sum(sim_df['Prec'].values)
+            meta_c_qbprec[i] = np.sum(sim_df['Qb'].values) / np.sum(sim_df['Prec'].values)
+            #
+            # store metadata et
+            meta_mean_mse_etpat[i] = etpat_analysis['Stats']['MSE_mean']
+            meta_min_mse_etpat[i] = etpat_analysis['Stats']['MSE_min']
+            meta_max_mse_etpat[i] = etpat_analysis['Stats']['MSE_max']
+            #
+            meta_mean_rmse_etpat[i] = etpat_analysis['Stats']['RMSE_mean']
+            meta_min_rmse_etpat[i] = etpat_analysis['Stats']['RMSE_min']
+            meta_max_rmse_etpat[i] = etpat_analysis['Stats']['RMSE_max']
+            #
+            meta_mean_wmse_etpat[i] = etpat_analysis['Stats']['W-MSE_mean']
+            meta_min_wmse_etpat[i] = etpat_analysis['Stats']['W-MSE_min']
+            meta_max_wmse_etpat[i] = etpat_analysis['Stats']['W-MSE_max']
+            #
+            meta_mean_wrmse_etpat[i] = etpat_analysis['Stats']['W-RMSE_mean']
+            meta_min_wrmse_etpat[i] = etpat_analysis['Stats']['W-RMSE_min']
+            meta_max_wrmse_etpat[i] = etpat_analysis['Stats']['W-RMSE_max']
+            #
+            meta_mean_nse_etpat[i] = etpat_analysis['Stats']['NSE_mean']
+            meta_min_nse_etpat[i] = etpat_analysis['Stats']['NSE_min']
+            meta_max_nse_etpat[i] = etpat_analysis['Stats']['NSE_max']
+            #
+            meta_mean_kge_etpat[i] = etpat_analysis['Stats']['KGE_mean']
+            meta_min_kge_etpat[i] = etpat_analysis['Stats']['KGE_min']
+            meta_max_kge_etpat[i] = etpat_analysis['Stats']['KGE_max']
+            #
+            meta_mean_r_etpat[i] = etpat_analysis['Stats']['R_mean']
+            meta_min_r_etpat[i] = etpat_analysis['Stats']['R_min']
+            meta_max_r_etpat[i] = etpat_analysis['Stats']['R_max']
+            #
+            meta_mean_mean_obs_etpat[i] = etpat_analysis['Stats']['MeanObs_mean']
+            meta_min_mean_obs_etpat[i] = etpat_analysis['Stats']['MeanObs_min']
+            meta_max_mean_obs_etpat[i] = etpat_analysis['Stats']['MeanObs_max']
+            #
+            meta_mean_mean_sim_etpat[i] = etpat_analysis['Stats']['MeanSim_mean']
+            meta_min_mean_sim_etpat[i] = etpat_analysis['Stats']['MeanSim_min']
+            meta_max_mean_sim_etpat[i] = etpat_analysis['Stats']['MeanSim_max']
+            #
+            meta_mean_mean_err[i] = etpat_analysis['Stats']['MeanErr_mean']
+            meta_min_mean_err[i] = etpat_analysis['Stats']['MeanErr_min']
+            meta_max_mean_err[i] = etpat_analysis['Stats']['MeanErr_max']
         #
         # trace full population
         if tracepop:
@@ -1347,7 +1442,38 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                               'Qb_mean':meta_qb_mean,
                               'Qb_sd':meta_qb_sd[:],
                               'Q_C':meta_c_qprec[:],
-                              'Qb_C':meta_c_qbprec[:]})
+                              'Qb_C':meta_c_qbprec[:],
+                              'ET_MSE_mean': meta_mean_mse_etpat[:],
+                              'ET_MSE_min': meta_min_mse_etpat[:],
+                              'ET_MSE_max': meta_max_mse_etpat[:],
+                              'ET_RMSE_mean': meta_mean_rmse_etpat[:],
+                              'ET_RMSE_min': meta_min_rmse_etpat[:],
+                              'ET_RMSE_max': meta_max_rmse_etpat[:],
+                              'ET_W-MSE_mean': meta_mean_wmse_etpat[:],
+                              'ET_W-MSE_min': meta_min_wmse_etpat[:],
+                              'ET_W-MSE_max': meta_max_wmse_etpat[:],
+                              'ET_W-RMSE_mean': meta_mean_wrmse_etpat[:],
+                              'ET_W-RMSE_min': meta_min_wrmse_etpat[:],
+                              'ET_W-RMSE_max': meta_max_wrmse_etpat[:],
+                              'ET_NSE_mean': meta_mean_nse_etpat[:],
+                              'ET_NSE_min': meta_min_nse_etpat[:],
+                              'ET_NSE_max': meta_max_nse_etpat[:],
+                              'ET_KGE_mean': meta_mean_kge_etpat[:],
+                              'ET_KGE_min': meta_min_kge_etpat[:],
+                              'ET_KGE_max': meta_max_kge_etpat[:],
+                              'ET_R_mean': meta_mean_r_etpat[:],
+                              'ET_R_min': meta_min_r_etpat[:],
+                              'ET_R_max': meta_max_r_etpat[:],
+                              'ET_MeanObs_mean': meta_mean_mean_obs_etpat[:],
+                              'ET_MeanObs_min': meta_min_mean_obs_etpat[:],
+                              'ET_MeanObs_max': meta_max_mean_obs_etpat[:],
+                              'ET_MeanSim_mean': meta_mean_mean_sim_etpat[:],
+                              'ET_MeanSim_min': meta_min_mean_sim_etpat[:],
+                              'ET_MeanSim_max': meta_max_mean_sim_etpat[:],
+                              'ET_MeanErr_mean': meta_mean_mean_err[:],
+                              'ET_MeanErr_min': meta_min_mean_err[:],
+                              'ET_MeanErr_max': meta_max_mean_err[:]
+                              })
         #
         # 5) RECRUIT new population
         if g == 0:
@@ -1372,8 +1498,38 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                                            'Qb_mean': meta_qb_mean[:],
                                            'Qb_sd': meta_qb_sd[:],
                                            'Q_C': meta_c_qprec[:],
-                                           'Qb_C': meta_c_qbprec[:]
-                                           })
+                                           'Qb_C': meta_c_qbprec[:],
+                                            'ET_MSE_mean': meta_mean_mse_etpat[:],
+                                            'ET_MSE_min': meta_min_mse_etpat[:],
+                                            'ET_MSE_max': meta_max_mse_etpat[:],
+                                            'ET_RMSE_mean': meta_mean_rmse_etpat[:],
+                                            'ET_RMSE_min': meta_min_rmse_etpat[:],
+                                            'ET_RMSE_max': meta_max_rmse_etpat[:],
+                                            'ET_W-MSE_mean': meta_mean_wmse_etpat[:],
+                                            'ET_W-MSE_min': meta_min_wmse_etpat[:],
+                                            'ET_W-MSE_max': meta_max_wmse_etpat[:],
+                                            'ET_W-RMSE_mean': meta_mean_wrmse_etpat[:],
+                                            'ET_W-RMSE_min': meta_min_wrmse_etpat[:],
+                                            'ET_W-RMSE_max': meta_max_wrmse_etpat[:],
+                                            'ET_NSE_mean': meta_mean_nse_etpat[:],
+                                            'ET_NSE_min': meta_min_nse_etpat[:],
+                                            'ET_NSE_max': meta_max_nse_etpat[:],
+                                            'ET_KGE_mean': meta_mean_kge_etpat[:],
+                                            'ET_KGE_min': meta_min_kge_etpat[:],
+                                            'ET_KGE_max': meta_max_kge_etpat[:],
+                                            'ET_R_mean': meta_mean_r_etpat[:],
+                                            'ET_R_min': meta_min_r_etpat[:],
+                                            'ET_R_max': meta_max_r_etpat[:],
+                                            'ET_MeanObs_mean': meta_mean_mean_obs_etpat[:],
+                                            'ET_MeanObs_min': meta_min_mean_obs_etpat[:],
+                                            'ET_MeanObs_max': meta_max_mean_obs_etpat[:],
+                                            'ET_MeanSim_mean': meta_mean_mean_sim_etpat[:],
+                                            'ET_MeanSim_min': meta_min_mean_sim_etpat[:],
+                                            'ET_MeanSim_max': meta_max_mean_sim_etpat[:],
+                                            'ET_MeanErr_mean': meta_mean_mean_err[:],
+                                            'ET_MeanErr_min': meta_min_mean_err[:],
+                                            'ET_MeanErr_max': meta_max_mean_err[:]
+                                            })
         else:
             df_offspring_rank = pd.DataFrame({'Id': ids_lst[:],
                                             'SetIds': ids_set_lst[:],
@@ -1396,8 +1552,38 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                                             'Qb_mean': meta_qb_mean[:],
                                             'Qb_sd': meta_qb_sd[:],
                                             'Q_C': meta_c_qprec[:],
-                                            'Qb_C': meta_c_qbprec[:]
-                                            })
+                                            'Qb_C': meta_c_qbprec[:],
+                                              'ET_MSE_mean': meta_mean_mse_etpat[:],
+                                              'ET_MSE_min': meta_min_mse_etpat[:],
+                                              'ET_MSE_max': meta_max_mse_etpat[:],
+                                              'ET_RMSE_mean': meta_mean_rmse_etpat[:],
+                                              'ET_RMSE_min': meta_min_rmse_etpat[:],
+                                              'ET_RMSE_max': meta_max_rmse_etpat[:],
+                                              'ET_W-MSE_mean': meta_mean_wmse_etpat[:],
+                                              'ET_W-MSE_min': meta_min_wmse_etpat[:],
+                                              'ET_W-MSE_max': meta_max_wmse_etpat[:],
+                                              'ET_W-RMSE_mean': meta_mean_wrmse_etpat[:],
+                                              'ET_W-RMSE_min': meta_min_wrmse_etpat[:],
+                                              'ET_W-RMSE_max': meta_max_wrmse_etpat[:],
+                                              'ET_NSE_mean': meta_mean_nse_etpat[:],
+                                              'ET_NSE_min': meta_min_nse_etpat[:],
+                                              'ET_NSE_max': meta_max_nse_etpat[:],
+                                              'ET_KGE_mean': meta_mean_kge_etpat[:],
+                                              'ET_KGE_min': meta_min_kge_etpat[:],
+                                              'ET_KGE_max': meta_max_kge_etpat[:],
+                                              'ET_R_mean': meta_mean_r_etpat[:],
+                                              'ET_R_min': meta_min_r_etpat[:],
+                                              'ET_R_max': meta_max_r_etpat[:],
+                                              'ET_MeanObs_mean': meta_mean_mean_obs_etpat[:],
+                                              'ET_MeanObs_min': meta_min_mean_obs_etpat[:],
+                                              'ET_MeanObs_max': meta_max_mean_obs_etpat[:],
+                                              'ET_MeanSim_mean': meta_mean_mean_sim_etpat[:],
+                                              'ET_MeanSim_min': meta_min_mean_sim_etpat[:],
+                                              'ET_MeanSim_max': meta_max_mean_sim_etpat[:],
+                                              'ET_MeanErr_mean': meta_mean_mean_err[:],
+                                              'ET_MeanErr_min': meta_min_mean_err[:],
+                                              'ET_MeanErr_max': meta_max_mean_err[:]
+                                              })
             df_parents_rank = df_parents_rank.append(df_offspring_rank, ignore_index=True)
         #
         #
@@ -1453,7 +1639,37 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                       'Qb_mean': df_parents_rank['Qb_mean'].values[:tr_len],
                       'Qb_sd': df_parents_rank['Qb_sd'].values[:tr_len],
                       'Q_C': df_parents_rank['Q_C'].values[:tr_len],
-                      'Qb_C': df_parents_rank['Qb_C'].values[:tr_len]
+                      'Qb_C': df_parents_rank['Qb_C'].values[:tr_len],
+                      'ET_MSE_mean': meta_mean_mse_etpat[:tr_len],
+                      'ET_MSE_min': meta_min_mse_etpat[:tr_len],
+                      'ET_MSE_max': meta_max_mse_etpat[:tr_len],
+                      'ET_RMSE_mean': meta_mean_rmse_etpat[:tr_len],
+                      'ET_RMSE_min': meta_min_rmse_etpat[:tr_len],
+                      'ET_RMSE_max': meta_max_rmse_etpat[:tr_len],
+                      'ET_W-MSE_mean': meta_mean_wmse_etpat[:tr_len],
+                      'ET_W-MSE_min': meta_min_wmse_etpat[:tr_len],
+                      'ET_W-MSE_max': meta_max_wmse_etpat[:tr_len],
+                      'ET_W-RMSE_mean': meta_mean_wrmse_etpat[:tr_len],
+                      'ET_W-RMSE_min': meta_min_wrmse_etpat[:tr_len],
+                      'ET_W-RMSE_max': meta_max_wrmse_etpat[:tr_len],
+                      'ET_NSE_mean': meta_mean_nse_etpat[:tr_len],
+                      'ET_NSE_min': meta_min_nse_etpat[:tr_len],
+                      'ET_NSE_max': meta_max_nse_etpat[:tr_len],
+                      'ET_KGE_mean': meta_mean_kge_etpat[:tr_len],
+                      'ET_KGE_min': meta_min_kge_etpat[:tr_len],
+                      'ET_KGE_max': meta_max_kge_etpat[:tr_len],
+                      'ET_R_mean': meta_mean_r_etpat[:tr_len],
+                      'ET_R_min': meta_min_r_etpat[:tr_len],
+                      'ET_R_max': meta_max_r_etpat[:tr_len],
+                      'ET_MeanObs_mean': meta_mean_mean_obs_etpat[:tr_len],
+                      'ET_MeanObs_min': meta_min_mean_obs_etpat[:tr_len],
+                      'ET_MeanObs_max': meta_max_mean_obs_etpat[:tr_len],
+                      'ET_MeanSim_mean': meta_mean_mean_sim_etpat[:tr_len],
+                      'ET_MeanSim_min': meta_min_mean_sim_etpat[:tr_len],
+                      'ET_MeanSim_max': meta_max_mean_sim_etpat[:tr_len],
+                      'ET_MeanErr_mean': meta_mean_mean_err[:tr_len],
+                      'ET_MeanErr_min': meta_min_mean_err[:tr_len],
+                      'ET_MeanErr_max': meta_max_mean_err[:tr_len]
                       })
         if tui:
             print('Trace size: {} KB'.format(getsizeof(trace)))

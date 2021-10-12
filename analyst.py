@@ -80,6 +80,16 @@ def rmse(obs, sim):
     return np.sqrt(mse(obs=obs, sim=sim))
 
 
+def nrmse(obs, sim):
+    """
+    Normalized RMSE by the mean observed value
+    :param obs: float, int or numpy array of Observerd data
+    :param sim: float, int or numpy array of Simulated data
+    :return: float value of NRMSE
+    """
+    return rmse(obs=obs, sim=sim) / np.mean(obs)
+
+
 def nse(obs, sim):
     """
     Nash-Sutcliffe Efficiency (NSE) coeficient
@@ -169,6 +179,46 @@ def frequency(series):
     prob = freq/np.sum(freq)  # estimate probs.
     out_dct = {'Percentiles': ptles, 'Exeedance':exeed, 'Frequency': freq, 'Probability': prob, 'Values':cfc}
     return out_dct
+
+
+def flow(obs, sim, loglim=0.00001):
+    #
+    # get log
+    _sim_log = np.log10(sim + (loglim * (sim <= 0)))
+    _obs_log = np.log10(obs + (loglim * (obs <= 0)))
+    #
+    # get cfcs
+    _cfc_obs = frequency(series=obs)['Values']
+    try:
+        _cfc_sim = frequency(series=sim)['Values']
+    except ValueError:
+        #print('Value Error found in simulated CFC')
+        _cfc_sim = np.ones(shape=np.shape(_cfc_obs))
+    #
+    # get stats
+    _dct_stats = dict()
+    _dct_stats['Q_sum'] = np.sum(sim)
+    _dct_stats['Q_mean'] = np.mean(sim)
+    _dct_stats['Q_sd'] = np.std(sim + (loglim * (sim <= 0)))
+    #
+    # get metrics
+    _dct_metrics = dict()
+    _dct_metrics['NSE'] = nse(obs=obs, sim=sim)
+    _dct_metrics['NSElog'] = nse(obs=_obs_log, sim=_sim_log)
+    _dct_metrics['KGE'] = kge(obs=obs, sim=sim)
+    _dct_metrics['KGElog'] = kge(obs=_obs_log, sim=_sim_log)
+    _dct_metrics['RMSE'] = rmse(obs=obs, sim=sim)
+    _dct_metrics['RMSElog'] = rmse(obs=_obs_log, sim=_sim_log)
+    _dct_metrics['NRMSE'] = nrmse(obs=obs, sim=sim)
+    _dct_metrics['NRMSElog'] = nrmse(obs=_obs_log, sim=_sim_log)
+    _dct_metrics['PBias'] = pbias(obs=obs, sim=sim)
+    _dct_metrics['RMSE_CFC'] = rmse(obs=_cfc_obs, sim=_cfc_sim)
+    _dct_metrics['RMSElog_CFC'] = rmse(obs=np.log10(_cfc_obs), sim=np.log10(_cfc_sim))
+    _dct_metrics['NRMSE_CFC'] = nrmse(obs=_cfc_obs, sim=_cfc_sim)
+    _dct_metrics['NRMSElog_CFC'] = nrmse(obs=np.log10(_cfc_obs), sim=np.log10(_cfc_sim))
+    #
+    return {'Stats':_dct_stats, 'Metrics':_dct_metrics}
+
 
 
 def zmaps(obs, sim, count, nodata=-1):
@@ -304,6 +354,7 @@ def zmaps_series(obs, sim, count, nodata=-1, full_return=False):
         _sigs_sqerror = list()
         _sigs_werror = list()
         _sigs_hist = list()
+    #
     # loop in maps
     for i in range(len(obs)):
         # analysis
@@ -348,6 +399,37 @@ def zmaps_series(obs, sim, count, nodata=-1, full_return=False):
                      'Mean-Obs': _mean_obs,
                      'Mean-Sim': _mean_sim,
                      'Mean-Error': _mean_error},
+                'Stats':
+                    {'MSE_mean': np.mean(_mse),
+                     'MSE_min': np.min(_mse),
+                     'MSE_max': np.max(_mse),
+                     'RMSE_mean': np.mean(_rmse),
+                     'RMSE_min': np.min(_rmse),
+                     'RMSE_max': np.max(_rmse),
+                     'W-MSE_mean': np.mean(_w_mse),
+                     'W-MSE_min': np.min(_w_mse),
+                     'W-MSE_max': np.max(_w_mse),
+                     'W-RMSE_mean': np.mean(_w_rmse),
+                     'W-RMSE_min': np.min(_w_rmse),
+                     'W-RMSE_max': np.max(_w_rmse),
+                     'NSE_mean': np.mean(_nse),
+                     'NSE_min': np.min(_nse),
+                     'NSE_max': np.max(_nse),
+                     'KGE_mean': np.mean(_kge),
+                     'KGE_min': np.min(_kge),
+                     'KGE_max': np.max(_kge),
+                     'R_mean': np.mean(_r),
+                     'R_min': np.min(_r),
+                     'R_max': np.max(_r),
+                     'MeanObs_mean': np.mean(_mean_obs),
+                     'MeanObs_min': np.min(_mean_obs),
+                     'MeanObs_max': np.max(_mean_obs),
+                     'MeanSim_mean': np.mean(_mean_sim),
+                     'MeanSim_min': np.min(_mean_sim),
+                     'MeanSim_max': np.max(_mean_sim),
+                     'MeanErr_mean': np.mean(_mean_error),
+                     'MeanErr_min': np.min(_mean_error),
+                     'MeanErr_max': np.max(_mean_error)},
                 'Maps':
                     {'Error':_maps_errors,
                      'SqError':_maps_sqerrors,
@@ -374,4 +456,36 @@ def zmaps_series(obs, sim, count, nodata=-1, full_return=False):
                      'Mean-Obs': _mean_obs,
                      'Mean-Sim': _mean_sim,
                      'Mean-Error': _mean_error},
+                 'Stats':
+                     {'MSE_mean': np.mean(_mse),
+                      'MSE_min': np.min(_mse),
+                      'MSE_max': np.max(_mse),
+                      'RMSE_mean': np.mean(_rmse),
+                      'RMSE_min': np.min(_rmse),
+                      'RMSE_max': np.max(_rmse),
+                      'W-MSE_mean': np.mean(_w_mse),
+                      'W-MSE_min': np.min(_w_mse),
+                      'W-MSE_max': np.max(_w_mse),
+                      'W-RMSE_mean': np.mean(_w_rmse),
+                      'W-RMSE_min': np.min(_w_rmse),
+                      'W-RMSE_max': np.max(_w_rmse),
+                      'NSE_mean': np.mean(_nse),
+                      'NSE_min': np.min(_nse),
+                      'NSE_max': np.max(_nse),
+                      'KGE_mean': np.mean(_kge),
+                      'KGE_min': np.min(_kge),
+                      'KGE_max': np.max(_kge),
+                      'R_mean': np.mean(_r),
+                      'R_min': np.min(_r),
+                      'R_max': np.max(_r),
+                      'MeanObs_mean': np.mean(_mean_obs),
+                      'MeanObs_min': np.min(_mean_obs),
+                      'MeanObs_max': np.max(_mean_obs),
+                      'MeanSim_mean': np.mean(_mean_sim),
+                      'MeanSim_min': np.min(_mean_sim),
+                      'MeanSim_max': np.max(_mean_sim),
+                      'MeanErr_mean': np.mean(_mean_error),
+                      'MeanErr_min': np.min(_mean_error),
+                      'MeanErr_max': np.max(_mean_error)
+                      }
                 }
