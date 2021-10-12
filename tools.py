@@ -2510,7 +2510,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                           likelihood=likelihood,
                           tracefrac=1,
                           tracepop=True,
-                          normalize=normalize)
+                          normalize=normalize,
+                          etpat=False)
     end = time.time()
     if tui:
         print('\nCalibration enlapsed time: {:.3f} seconds'.format(end - init))
