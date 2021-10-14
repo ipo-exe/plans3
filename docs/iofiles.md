@@ -447,10 +447,11 @@ IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K
 	 - Field separator: semicolon `;`.
 	 - Decimal separator: period  `.`.
 	 - Mandatory fields:
-		 -  `Parameter`: parameter standard names: `m`, `qo`, `cpmax`,  `dpmax`, `erz`, `ksat`, `c`,`lat`, `k`, `n`.
+		 -  `Parameter`: parameter standard names: `m`, `lamb`, `qo`, `cpmax`,  `dpmax`, `erz`, `ksat`, `c`,`lat`, `k`, `n`.
 		 -  `Set`: positive real number of parameter set (updated by calibration).
 		 -  `Min`: positive real number of lower bound of parameter space.
 		 -  `Max`: positive real number of upper bound of parameter space.
+		 -  `AOI_f`: positive real number between 0 and 1 as factor of parameter in the AOI basin.
 - **Example**:
 ```
 Parameter;    Set;    Min;    Max;  AOI_f
