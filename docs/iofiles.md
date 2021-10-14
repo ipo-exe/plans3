@@ -451,7 +451,7 @@ IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K
 		 -  `Set`: positive real number of parameter set (updated by calibration).
 		 -  `Min`: positive real number of lower bound of parameter space.
 		 -  `Max`: positive real number of upper bound of parameter space.
-		 -  `AOI_f`: positive real number between 0 and 1 as factor of parameter in the AOI basin.
+		 -  `AOI_f`: positive real number between as factor of parameter in the AOI basin.
 - **Example**:
 ```
 Parameter;    Set;    Min;    Max;  AOI_f

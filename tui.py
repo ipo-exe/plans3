@@ -759,8 +759,15 @@ def main(root='default', importing=True):
                         else:
                             while True:
                                 header(lcl_opt)
-                                metrics_options = ('NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias',
-                                                   'RMSE-CFC', 'RMSElog-CFC')
+                                metrics_options = ('NSE',
+                                                   'NSElog',
+                                                   'RMSE',
+                                                   'RMSElog',
+                                                   'KGE',
+                                                   'KGElog',
+                                                   'PBias',
+                                                   'RMSE-CFC',
+                                                   'RMSElog-CFC')
                                 likelihood = menu({'Likelihood': metrics_options},
                                                   title='Flow Likelihood Menu',
                                                   exitmsg=lng[10],

@@ -1642,7 +1642,7 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='
 
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
         mapraster=False, mapvar='all', mapdates='all', integrate=False, qobs=False, folder='C:/bin',
-        wkpl=False, label='',  tui=False):
+        wkpl=False, label='', tui=False, aoi=False):
     """
 
     SLH - Stable LULC Hydrology routine
@@ -1755,6 +1755,19 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     lat = hydroparam_dct['lat']['Set']
     k = hydroparam_dct['k']['Set']
     n = hydroparam_dct['n']['Set']
+    # AOI factor correction
+    if aoi:
+        m = m * hydroparam_dct['m']['AOI_f']
+        lamb = lamb * hydroparam_dct['lamb']['AOI_f']
+        qo = qo * hydroparam_dct['qo']['AOI_f']
+        cpmax = cpmax * hydroparam_dct['cpmax']['AOI_f']
+        sfmax = sfmax * hydroparam_dct['sfmax']['AOI_f']
+        erz = erz * hydroparam_dct['erz']['AOI_f']
+        ksat = ksat * hydroparam_dct['ksat']['AOI_f']
+        c = c * hydroparam_dct['c']['AOI_f']
+        lat = lat * hydroparam_dct['lat']['AOI_f']
+        k = k * hydroparam_dct['k']['AOI_f']
+        n = n * hydroparam_dct['n']['AOI_f']
     #
     # Shru parameters
     if tui:
