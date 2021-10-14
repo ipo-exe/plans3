@@ -430,7 +430,7 @@ IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K
 - **File type**: csv data frame.
 - **Dataset type**: observed.
 - **Dataset description**:
-	 Data frame of hydrology parameter set and ranges. 
+	 Data frame of hydrology parameter set, ranges and AOI factor. 
 	 Parameters are: 
 	 1) `m` - positive real value of effective transmissivity decay coefficient in mm; 
 	 2) `lamb` -positive real value of the TWI threshold to compute local deficits (standard Topmodel is the averaged TWI) in TWI units; 
@@ -453,18 +453,18 @@ IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K
 		 -  `Max`: positive real number of upper bound of parameter space.
 - **Example**:
 ```
-Parameter;    Set;    Min;    Max
-        m;   32.5;    1.0;   50.0
-     lamb;    4.0;    1.0;   30.0
-       qo;    0.8;    0.5;    2.0
-    cpmax;   16.3;   10.0;   20.0
-    sfmax;   19.6;   10.0;    5.0
-      erz;  110.0;  100.0;  250.0
-     ksat;    5.9;    1.1;   10.0
-        c;   28.3;   25.0;  100.0
-      lat;  -30.1;  -30.0;  -30.0
-        k;    1.4;    1.0;    5.0
-        n;    3.0;    1.1;    5.0
+Parameter;    Set;    Min;    Max;  AOI_f
+        m;   32.5;    1.0;   50.0;    1.0
+     lamb;    4.0;    1.0;   30.0;    1.0
+       qo;    0.8;    0.5;    2.0;    1.0
+    cpmax;   16.3;   10.0;   20.0;    1.0
+    sfmax;   19.6;   10.0;    5.0;    1.0
+      erz;  110.0;  100.0;  250.0;    1.0
+     ksat;    5.9;    1.1;   10.0;    1.0
+        c;   28.3;   25.0;  100.0;    1.0
+      lat;  -30.1;  -30.0;  -30.0;    1.0
+        k;    1.4;    1.0;    5.0;    0.4
+        n;    3.0;    1.1;    5.0;    1.0
 ```
 
 ---
