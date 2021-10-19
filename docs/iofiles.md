@@ -15,18 +15,22 @@ input | aoi_dem | asc | raster map
 input | aoi_lulc | asc | raster map
 input | aoi_lulc_param | txt | csv data frame
 input | aoi_series | txt | csv time series
+input | aoi_shru_window | asc | raster map
 input | aoi_soils | asc | raster map
 input | aoi_soils_param | txt | csv data frame
 input | aoi_twi | asc | raster map
+input | aoi_twi_window | asc | raster map
 input | calib_basin | asc | raster map
 input | calib_dem | asc | raster map
 input | calib_etpat_series_input | txt | csv time series
 input | calib_lulc | asc | raster map
 input | calib_lulc_param | txt | csv data frame
 input | calib_series | txt | csv time series
+input | calib_shru_window | asc | raster map
 input | calib_soils | asc | raster map
 input | calib_soils_param | txt | csv data frame
 input | calib_twi | asc | raster map
+input | calib_twi_window | asc | raster map
 input | hydro_param | txt | csv data frame
 
 ## `aoi_basin.asc`
@@ -143,6 +147,23 @@ IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_Per
 sample file
 ```
 
+## `aoi_shru_window.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Window (small extension) of raster map of SHRU of AOI basin.
+- **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: class index.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "aoi_shru_window")
+
 ## `aoi_soils.asc`
 
 - **I/O**: input.
@@ -205,6 +226,23 @@ IdSoil;     SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;   K_USLE;    Co
 - **Example**:
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "aoi_twi")
+
+## `aoi_twi_window.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Window (small extension) of raster map of the Topographic Wetness Index (TWI) for the AOI basin.
+- **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: TWI units.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "aoi_twi_window")
 
 ## `calib_basin.asc`
 
@@ -361,6 +399,23 @@ IdLULC;       LULCName;   LULCAlias;  f_Canopy;  f_RootDepth;  f_Surface;  f_Per
  2014-12-31;   0.1627;   26.8;  0.0;  0.0;   2.7368;  1.585944
 ```
 
+## `calib_shru_window.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Window (small extension) of raster map of SHRU of CALIB basin.
+- **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: class index.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/shru.PNG "calib_shru_window")
+
 ## `calib_soils.asc`
 
 - **I/O**: input.
@@ -423,6 +478,23 @@ IdSoil;                SoilName;   SoilAlias;   f_To;   f_Ksat;   Porosity;    K
 - **Example**:
 
 ![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twi")
+
+## `calib_twi_window.asc`
+
+- **I/O**: input.
+- **File type**: raster map.
+- **Dataset type**: observed.
+- **Dataset description**: Window (small extension) of raster map of the Topographic Wetness Index (TWI) for the CALIB basin.
+- **Requirements**:
+	 - Data type must be `Int16` (integer values only).
+	 - All grid cells must be filled (void cells are not allowed).
+	 - Must match the same size (rows and columns) of other related raster maps.
+	 - CRS must be projected (coordinates in meters).
+	 - Grid cells must be squared.
+	 - Cells values units: TWI units.
+- **Example**:
+
+![alt text](https://github.com/ipo-exe/plans3/blob/main/docs/figs/twi.PNG "calib_twi_window")
 
 ## `hydro_param.txt`
 

@@ -922,8 +922,7 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
 
 
 def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area, basinshadow,
-                m_range, lamb_range, qo_range, cpmax_range, sfmax_range, erz_range,
-                ksat_range, c_range, k_range, n_range, etpatdates, etpatzmaps, tui=True,
+                p_ranges, etpatdates, etpatzmaps, tui=True,
                 normalize=False, grid=1000, generations=10, popsize=20, offsfrac=2,
                 mutrate=0.5, puremutrate=0.5, cutfrac=0.4, tracefrac=1, tracepop=True,
                 likelihood='NSE', nodata=-1, etpat=True):
@@ -940,16 +939,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
     :param lat: float
     :param area: float
     :param basinshadow: 2d numpy array
-    :param m_range: iterable of min and max of m
-    :param lamb_range: iterable of min and max of lamb
-    :param qo_range: iterable of min and max of qo
-    :param cpmax_range: iterable of min and max of cpmax
-    :param sfmax_range: iterable of min and max of sfmax
-    :param erz_range: iterable of min and max of erz
-    :param ksat_range: iterable of min and max of ksat
-    :param c_range: iterable of min and max of c
-    :param k_range: iterable of min and max of k
-    :param n_range: iterable of min and max of n
+    :param p_ranges: dictionary of iterables of parameter ranges
     :param etpatdates: string code of dates
     :param etpatzmaps: 3d numpy array of zmaps
     :param tui: boolean for TUI print
@@ -1148,11 +1138,15 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
     #
     #
     # bounds setup
-    lowerbound = np.array((np.min(m_range), np.min(lamb_range), np.min(qo_range), np.min(cpmax_range), np.min(sfmax_range),
-         np.min(erz_range), np.min(ksat_range), np.min(c_range), np.min(k_range), np.min(n_range)))
-    upperbound = np.array((np.max(m_range), np.max(lamb_range), np.max(qo_range), np.max(cpmax_range), np.max(sfmax_range),
-         np.max(erz_range), np.max(ksat_range), np.max(c_range), np.max(k_range), np.max(n_range)))
-    ranges = upperbound - lowerbound
+    params = ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    lower_bound = list()
+    upper_bound = list()
+    for p in params:
+        lower_bound.append(np.min(p_ranges[p]))
+        upper_bound.append(np.max(p_ranges[p]))
+    lower_bound = np.array(lower_bound)
+    upper_bound = np.array(upper_bound)
+    ranges = upper_bound - lower_bound
     #
     #
     # Evolution setup
@@ -1294,7 +1288,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             #
             # express parameter set
             pset = express_parameter_set(gene=lcl_dna[0],
-                                         lowerb=lowerbound,
+                                         lowerb=lower_bound,
                                          ranges=ranges,
                                          gridsize=grid)
             #
@@ -1753,9 +1747,9 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
         if tui:
             print('\nTop 10 parents:')
             if etpat:
-                print(df_parents_rank[['Id', 'L', 'L_Q', 'L_ET', 'SetIds']].head(10).to_string())
+                print(df_parents_rank[['Id', 'L', 'L_Q', 'L_ET']].head(10).to_string())
             else:
-                print(df_parents_rank[['Id', 'L', 'SetIds']].head(10).to_string())
+                print(df_parents_rank[['Id', 'L']].head(10).to_string())
         #
         # Extract parents
         parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
@@ -1865,7 +1859,7 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
     if etpat:
         last_flow_score = last['L_Q'][0]
         last_etpat_score = last['L_ET'][0]
-    pset = express_parameter_set(last_dna[0], lowerb=lowerbound, ranges=ranges, gridsize=grid)
+    pset = express_parameter_set(last_dna[0], lowerb=lower_bound, ranges=ranges, gridsize=grid)
     if tui:
         print('\n\nMaximum Likelihood Model:')
         tui_df = pd.DataFrame({'Parameter': ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n'),
@@ -1877,11 +1871,11 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             print('L_ET = {:.3f}'.format(last_etpat_score))
     #
     # wrap traced
-    wtrace = wrapper(traced=trace, lowerb=lowerbound, ranges=ranges, gridsize=grid, etpat=etpat)
+    wtrace = wrapper(traced=trace, lowerb=lower_bound, ranges=ranges, gridsize=grid, etpat=etpat)
     out_dct = {'MLM':pset, 'Traced': wtrace}
     if tracepop:
         # wrap population
-        wtrace_pop = wrapper(traced=trace_pop, lowerb=lowerbound, ranges=ranges, gridsize=grid, etpat=etpat)
+        wtrace_pop = wrapper(traced=trace_pop, lowerb=lower_bound, ranges=ranges, gridsize=grid, etpat=etpat)
         out_dct['Population'] = wtrace_pop
     return out_dct
 

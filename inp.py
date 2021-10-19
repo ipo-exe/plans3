@@ -140,7 +140,7 @@ def hydroparams(fhydroparam):
     hydroparam_df = pd.read_csv(fhydroparam, sep=';')
     hydroparam_df = dataframe_prepro(hydroparam_df, 'Parameter')
     #
-    fields = ('Set', 'Min', 'Max')
+    fields = ('Set', 'Min', 'Max', 'AOI_f')
     params = ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'lat', 'k', 'n')
     # built dict
     hydroparams_dct = dict()

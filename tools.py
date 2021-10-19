@@ -61,7 +61,7 @@ def view_imported_input(filename, folder, aux_folder=''):
 
     def plot_lulc(fraster, fparams, filename, mapid='LULC'):
         lulc_param_df = pd.read_csv(fparams, sep=';', engine='python')
-        lulc_param_df = dataframe_prepro(lulc_param_df, get_stringfields(flulcparam.split('/')[-1]))
+        lulc_param_df = dataframe_prepro(lulc_param_df, get_stringfields(fparams.split('/')[-1]))
         meta, rmap = inp.asc_raster(fraster)
         ranges = (np.min(lulc_param_df['IdLULC']), np.max(lulc_param_df['IdLULC']))
         plot_qmap_view(rmap,
@@ -253,7 +253,7 @@ def export_local_pannels(ftwi, fshru,
     #
     #
     # set view port
-    upper_y = 200
+    upper_y = 0
     lower_x = 0
     size = 500
     twi = twi[upper_y: upper_y + size, lower_x: lower_x + size]
@@ -1640,9 +1640,19 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='
     return
 
 
-def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, mapback=False,
-        mapraster=False, mapvar='all', mapdates='all', integrate=False, qobs=False, folder='C:/bin',
-        wkpl=False, label='', tui=False, aoi=False):
+def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
+        mapback=False,
+        mapraster=False,
+        mapvar='all',
+        mapdates='all',
+        integrate=False,
+        slicedates='all',
+        qobs=False,
+        folder='C:/bin',
+        wkpl=False,
+        label='',
+        tui=False,
+        aoi=False):
     """
 
     SLH - Stable LULC Hydrology routine
@@ -1662,6 +1672,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     Options: 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
     :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-21-01 & 21-22-01'
     :param integrate: boolean to include variable integration over the simulation period
+    :param slicedates: string code to slice series. 'all' or 'YYYY-MM-DD to YYYY-MM-DD'
     :param qobs: boolean to inclue Qobs in visuals
     :param folder: string to folderpath
     :param wkpl: boolean to set folder as workplace
@@ -1680,18 +1691,6 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     from hydrology import simulation, map_back
     from visuals import pannel_global
     from backend import create_rundir, get_stringfields
-
-    def extract_twi_avg(twibins, count):
-        """
-        convenience function for extracting TWI average value
-        :param twibins: 1d array of TWI bins
-        :param count: 2d array of countmatrix of basin
-        :return: average value of TWI
-        """
-        twi_sum = 0
-        for i in range(len(twibins)):
-            twi_sum = twi_sum + (twibins[i] * np.sum(count[i]))
-        return twi_sum / np.sum(count)
 
     def get_mapid(var):
         if var == 'D':
@@ -1737,7 +1736,10 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
 
     series_df =  pd.read_csv(fseries, sep=';')
     series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
-    #series_df = series_df.query('Date < "2011-05-01"')
+    if slicedates != 'all':
+        slicedates = slicedates.split(' to ')
+        q_str = 'Date >= "{}" and Date <= "{}"'.format(slicedates[0].strip(), slicedates[1].strip())
+        series_df = series_df.query(q_str)
     #
     if tui:
         status('loading hydrology parameters')
@@ -1773,7 +1775,6 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     if tui:
         status('loading SHRU parameters')
     shru_df = pd.read_csv(fshruparam, sep=';')
-    #aux_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
     shru_df = dataframe_prepro(shru_df, get_stringfields(fshruparam.split('/')[-1]))
     #
     # canopy series pattern
@@ -1799,8 +1800,6 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     qt0 = 0.01  # fixed
     if qobs:
         qt0 = series_df['Q'].values[0]
-    # extract the average TWI of basin
-    ## old standard method lamb = extract_twi_avg(twibins, basincount)
     #
     end = time.time()
     report_lst.append('\n\nLoading enlapsed time: {:.3f} seconds\n'.format(end - init))
@@ -2078,11 +2077,18 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     return out_dct
 
 
-def hca(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy, fzmaps,
-        cutdatef=0.3, folder='C:/bin', wkpl=False, label='', tui=False, vars='ET-D-VSA-Unz'):
+def hca(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
+        fzmaps='',
+        etpat=False,
+        cutdatef=0.3,
+        folder='C:/bin',
+        wkpl=False,
+        label='',
+        tui=False,
+        vars='ET-D-VSA-Unz'):
     """
 
-    Hydrology Calibration Assessment for a calibration series (Qobs and ET is known)
+    Hydrology Calibration Assessment for a calibration series
 
     :param fseries: string filepath to simulation series
     :param fhydroparam: string filepath to parameters csv (txt file)
@@ -2234,7 +2240,7 @@ def hca(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                     ftwi=ftwi,
                     fshru=fshru,
                     fcanopy=fcanopy,
-                    mapback=True,
+                    mapback=etpat,
                     mapraster=True,
                     integrate=False,
                     mapvar=vars,
@@ -2255,21 +2261,22 @@ def hca(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                             folder=full_folder,
                             tui=tui)
     # run OSA on zmaps for full period
-    if tui:
-        status('running ZMAP OSA for full period')
-    fzmaps_sim = full_folder + '/' + 'sim_zmaps_series_ET.txt'
-    osa_zmaps_folder = full_folder + '/osa_zmaps'
-    mkdir(osa_zmaps_folder)
-    osa_zmaps(fobs_series=fzmaps,
-              fsim_series=fzmaps_sim,
-              fhistograms=fhistograms,
-              fseries=fsim_full,
-              fshru=fshru,
-              ftwi=ftwi,
-              folder=osa_zmaps_folder,
-              wkpl=False,
-              tui=tui,
-              raster=True)
+    if etpat and fzmaps != '':
+        if tui:
+            status('running ZMAP OSA for full period')
+        fzmaps_sim = full_folder + '/' + 'sim_zmaps_series_ET.txt'
+        osa_zmaps_folder = full_folder + '/osa_zmaps'
+        mkdir(osa_zmaps_folder)
+        osa_zmaps(fobs_series=fzmaps,
+                  fsim_series=fzmaps_sim,
+                  fhistograms=fhistograms,
+                  fseries=fsim_full,
+                  fshru=fshru,
+                  ftwi=ftwi,
+                  folder=osa_zmaps_folder,
+                  wkpl=False,
+                  tui=tui,
+                  raster=True)
     #
     # exports
     if tui:
@@ -2293,8 +2300,19 @@ def hca(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
 
 
 def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
-              fetpatzmaps, folder='C:/bin', tui=False, mapback=True, mapvar='ET-D-Unz-VSA',
-              qobs=True, cutdatef=0.3, generations=100, popsize=200, likelihood='NSE', label='', normalize=False):
+              fetpatzmaps='',
+              etpat=False,
+              folder='C:/bin',
+              tui=False,
+              mapback=True,
+              mapvar='ET-D-Unz-VSA',
+              qobs=True,
+              cutdatef=0.3,
+              generations=100,
+              popsize=200,
+              likelihood='KGE',
+              label='',
+              normalize=False):
     """
     Calibration tool
     :param fseries: string filepath to input series txt file
@@ -2307,6 +2325,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     :param fshru: string filepath to shru asc file
     :param fcanopy: string filepath to canopy series txt file
     :param fetpatzmaps: string filepath to etpat zmaps series txt file
+    :param etpat: boolean to use etpat series in calibration
     :param folder: string filepath to workplace folder
     :param tui: boolean for display
     :param mapvar: string code of variables to mapback during MLM simulation (see SLH docstring)
@@ -2348,21 +2367,21 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         return calib_df, cut_date
 
     def extract_ranges(fhydroparam):
-        dct, hydroparam_df = inp.hydroparams(fhydroparam=fhydroparam)
+        _dct, hydroparam_df = inp.hydroparams(fhydroparam=fhydroparam)
         #
         # extract set range values
         out_dct = {'Params_df':hydroparam_df,
-                   'm_rng': (dct['m']['Min'], dct['m']['Max']),
-                   'lamb_rng': (dct['lamb']['Min'], dct['lamb']['Max']),
-                   'qo_rng': (dct['qo']['Min'], dct['qo']['Max']),
-                   'cpmax_rng': (dct['cpmax']['Min'], dct['cpmax']['Max']),
-                   'sfmax_rng': (dct['sfmax']['Min'], dct['sfmax']['Max']),
-                   'erz_rng': (dct['erz']['Min'], dct['erz']['Max']),
-                   'ksat_rng': (dct['ksat']['Min'], dct['ksat']['Max']),
-                   'c_rng': (dct['c']['Min'], dct['c']['Max']),
-                   'k_rng': (dct['k']['Min'], dct['k']['Max']),
-                   'n_rng': (dct['n']['Min'], dct['n']['Max']),
-                   'lat':dct['lat']['Set']}
+                   'm': (_dct['m']['Min'], _dct['m']['Max']),
+                   'lamb': (_dct['lamb']['Min'], _dct['lamb']['Max']),
+                   'qo': (_dct['qo']['Min'], _dct['qo']['Max']),
+                   'cpmax': (_dct['cpmax']['Min'], _dct['cpmax']['Max']),
+                   'sfmax': (_dct['sfmax']['Min'], _dct['sfmax']['Max']),
+                   'erz': (_dct['erz']['Min'], _dct['erz']['Max']),
+                   'ksat': (_dct['ksat']['Min'], _dct['ksat']['Max']),
+                   'c': (_dct['c']['Min'], _dct['c']['Max']),
+                   'k': (_dct['k']['Min'], _dct['k']['Max']),
+                   'n': (_dct['n']['Min'], _dct['n']['Max']),
+                   'lat':_dct['lat']['Set']}
         return out_dct
 
     def extract_twi_avg(twibins, count):
@@ -2440,47 +2459,49 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     qt0 = 0.01  # fixed
     if qobs:
         qt0 = series_df['Q'].values[0]
-    # old standard lambda:
-    #lamb = extract_twi_avg(twibins, basincount)
     #
     #
     # ******* ET PAT ZMAPS *******
+    if etpat:
+        # extract etpat zmaps series for calibration
+        if tui:
+            status('loading OBS ETPat Z-maps')
+        #
+        # Import Observed Zmaps
+        etpat_zmaps_obs_df = pd.read_csv(fetpatzmaps, sep=';')
+        etpat_zmaps_obs_df = dataframe_prepro(etpat_zmaps_obs_df, strfields='File', date=True)
+        # split dataframes for later
+        etpat_zmaps_obs_calib_df = etpat_zmaps_obs_df.query('Date < "{}"'.format(cut_date))
+        etpat_zmaps_obs_valid_df = etpat_zmaps_obs_df.query('Date >= "{}"'.format(cut_date))
+        #
+        # get a dataframe to store each date series
+        etpat_calib_dates = pd.DataFrame({'Date': etpat_zmaps_obs_calib_df['Date']})
+        etpat_valid_dates = pd.DataFrame({'Date': etpat_zmaps_obs_valid_df['Date']})
+        #
+        # extract dates to string code for calibration
+        etpat_dates_str_calib = ' & '.join(etpat_zmaps_obs_calib_df['Date'].astype('str').values)  # for calibration!!
+        etpat_dates_str_full = ' & '.join(etpat_zmaps_obs_df['Date'].astype('str').values)
+        #
+        # clear prec by dates:
+        series_df = clear_prec_by_dates(dseries=series_df, datesstr=etpat_dates_str_full)
+        #
+        # now load zmaps for calibration
+        etpat_zmaps_obs_calib = list()
+        for i in range(len(etpat_zmaps_obs_calib_df)):
+            zmap_file = etpat_zmaps_obs_calib_df['File'].values[i]
+            zmap, ybins, xbins = inp.zmap(zmap_file)
+            etpat_zmaps_obs_calib.append(zmap)
+        # array of zmaps
+        etpat_zmaps_obs_calib = np.array(etpat_zmaps_obs_calib)
+    else:
+        etpat_dates_str_calib = None
+        etpat_zmaps_obs_calib = None
     #
-    # extract etpat zmaps series for calibration
-    if tui:
-        status('loading OBS ETPat Z-maps')
-    #
-    # Import Observed Zmaps
-    etpat_zmaps_obs_df = pd.read_csv(fetpatzmaps, sep=';')
-    etpat_zmaps_obs_df = dataframe_prepro(etpat_zmaps_obs_df, strfields='File', date=True)
-    # split dataframes for later
-    etpat_zmaps_obs_calib_df = etpat_zmaps_obs_df.query('Date < "{}"'.format(cut_date))
-    etpat_zmaps_obs_valid_df = etpat_zmaps_obs_df.query('Date >= "{}"'.format(cut_date))
-    #
-    # get a dataframe to store each date series
-    etpat_calib_dates = pd.DataFrame({'Date': etpat_zmaps_obs_calib_df['Date']})
-    etpat_valid_dates = pd.DataFrame({'Date': etpat_zmaps_obs_valid_df['Date']})
-    #
-    # extract dates to string code for calibration
-    etpat_dates_str_calib = ' & '.join(etpat_zmaps_obs_calib_df['Date'].astype('str').values)  # for calibration!!
-    etpat_dates_str_full = ' & '.join(etpat_zmaps_obs_df['Date'].astype('str').values)
-    #
-    # clear prec by dates:
-    series_df = clear_prec_by_dates(dseries=series_df, datesstr=etpat_dates_str_full)  # clear prec by dates
     # split series
     calib_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef)
     # export to file and update fseries
     fseries = '{}/calibration_series.txt'.format(folder)
     series_df.to_csv(fseries, sep=';', index=False)
-    #
-    # now load zmaps for calibration
-    etpat_zmaps_obs_calib = list()
-    for i in range(len(etpat_zmaps_obs_calib_df)):
-        zmap_file = etpat_zmaps_obs_calib_df['File'].values[i]
-        zmap, ybins, xbins = inp.zmap(zmap_file)
-        etpat_zmaps_obs_calib.append(zmap)
-    # array of zmaps
-    etpat_zmaps_obs_calib = np.array(etpat_zmaps_obs_calib)
     #
     #
     end = time.time()
@@ -2505,16 +2526,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                           lat=lat,
                           area=area,
                           basinshadow=basincount,
-                          m_range=rng_dct['m_rng'],
-                          lamb_range=rng_dct['lamb_rng'],
-                          qo_range=rng_dct['qo_rng'],
-                          cpmax_range=rng_dct['cpmax_rng'],
-                          sfmax_range=rng_dct['sfmax_rng'],
-                          erz_range=rng_dct['erz_rng'],
-                          ksat_range=rng_dct['ksat_rng'],
-                          c_range=rng_dct['c_rng'],
-                          k_range=rng_dct['k_rng'],
-                          n_range=rng_dct['n_rng'],
+                          p_ranges=rng_dct,
                           etpatdates=etpat_dates_str_calib,
                           etpatzmaps=etpat_zmaps_obs_calib,
                           tui=tui,
@@ -2524,7 +2536,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                           tracefrac=1,
                           tracepop=True,
                           normalize=normalize,
-                          etpat=False)
+                          etpat=etpat)
     end = time.time()
     if tui:
         print('\nCalibration enlapsed time: {:.3f} seconds'.format(end - init))
@@ -2588,7 +2600,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                   fzmaps=fetpatzmaps,
                   tui=tui,
                   folder=mlm_folder,
-                  vars=mapvar)
+                  vars=mapvar,
+                  etpat=etpat)
     # extract folders:
     calib_folder = slh_dct['CalibFolder']
     valid_folder = slh_dct['ValidFolder']

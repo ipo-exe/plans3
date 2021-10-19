@@ -111,6 +111,50 @@ def validade_project_name(msg='Enter project name', wng='Warning!',
     return nm
 
 
+def slice_series(fseries):
+    header('Slicing settings')
+    _df = pd.read_csv(fseries, sep=';', dtype=str)
+    _len = len(_df)
+    #
+    # size options
+    _opt_1 = '1 / 1  | {:6} days'.format(int(_len))
+    _opt_2 = '1 / 2  | {:6} days'.format(int(_len/2))
+    _opt_3 = '1 / 3  | {:6} days'.format(int(_len / 3))
+    _opt_4 = '1 / 4  | {:6} days'.format(int(_len/4))
+    _opt_5 = '1 / 5  | {:6} days'.format(int(_len / 5))
+    _opt_6 = '1 / 10  | {:6} days'.format(int(_len / 10))
+    _opt_7 = '1 / 20  | {:6} days'.format(int(_len / 20))
+    _opt_8 = '1 / 30  | {:6} days'.format(int(_len / 30))
+    size_opts = (_opt_1,
+                 _opt_2,
+                 _opt_3,
+                 _opt_4,
+                 _opt_5,
+                 _opt_6,
+                 _opt_7,
+                 _opt_8)
+    size_opt = menu({'Size menu': size_opts}, title='size options', exit=False)
+    #
+    # start options
+    if size_opt != _opt_1:
+        _size = int(size_opt[4:].split('|')[0].strip())
+        if _size > 10:
+            _size = 10
+        start_opts = list()
+        _step = int(_len/_size)
+        for i in range(0, _len - _step + 1, _step):
+            start_opts.append('start at day {:6}'.format(str(i)))
+        start_opt = menu({'Start menu': start_opts}, title='start options', exit=False)
+        #
+        #
+        # find the dates
+        start_date = _df['Date'].values[int(start_opt.split(' ')[3].strip())]
+        end_date = _df['Date'].values[int(start_opt.split(' ')[3].strip()) + int(size_opt.split(' ')[-2].strip()) - 1]
+        return '{} to {}'.format(start_date, end_date)
+    else:
+        return 'all'
+
+
 def settings_simulation(key):
     header('Simulation settings')
     mapback = True
@@ -637,8 +681,6 @@ def main(root='default', importing=True):
                             filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=False)
                             print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
                         else:
-                            # get settings
-                            settings = settings_simulation(lng[6])
                             # get files
                             files_input = backend.get_input2simbhydro(aoi=False)
                             folder = projectdirs['Observed']
@@ -651,6 +693,11 @@ def main(root='default', importing=True):
                             ftwi = folder + '/' + files_input[11]  # + files_input[6]
                             fshru = folder + '/' + files_input[10]  # + files_input[7]
                             fcanopy = folder + '/' + files_input[8]
+                            #
+                            # get settings
+                            settings = settings_simulation(lng[6])
+                            slicedates = slice_series(fseries=fseries)
+                            #
                             # run slh
                             out_dct = tools.slh(fseries=fseries,
                                                 fhydroparam=fhydroparam,
@@ -667,6 +714,7 @@ def main(root='default', importing=True):
                                                 tui=True,
                                                 mapback=settings['Mapback'],
                                                 mapraster=settings['Mapraster'],
+                                                slicedates=slicedates,
                                                 label='CALIB')
                     #
                     # simulate observed policy in AOI basin
@@ -679,8 +727,7 @@ def main(root='default', importing=True):
                             filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=True)
                             print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
                         else:
-                            # get settings
-                            settings = settings_simulation(lng[6])
+                            #
                             # get files
                             files_input = backend.get_input2simbhydro(aoi=True)
                             folder = projectdirs['Observed']
@@ -693,6 +740,13 @@ def main(root='default', importing=True):
                             ftwi = folder + '/' + files_input[10] # + files_input[6]
                             fshru = folder + '/' + files_input[9] #+ files_input[7]
                             fcanopy = folder + '/' + files_input[8]
+                            #
+                            # get settings
+                            settings = settings_simulation(lng[6])
+                            slicedates = slice_series(fseries=fseries)
+                            #
+                            #
+                            #
                             # run slh
                             out_dct = tools.slh(fseries=fseries,
                                                 fhydroparam=fhydroparam,
@@ -709,14 +763,13 @@ def main(root='default', importing=True):
                                                 tui=True,
                                                 mapback=settings['Mapback'],
                                                 mapraster=settings['Mapraster'],
-                                                label='AOI')
+                                                slicedates=slicedates,
+                                                label='AOI',
+                                                aoi=True)
                             # todo post a checker here
                             #
                             # export local pannels
                             if settings['Frametype'] != 'Skip':
-                                # windows
-                                #ftwi = ''
-                                #fshru = ''
                                 tools.export_local_pannels(ftwi, fshru,
                                                            folder=out_dct['Folder'],
                                                            frametype=settings['Frametype'],
@@ -759,6 +812,18 @@ def main(root='default', importing=True):
                         else:
                             while True:
                                 header(lcl_opt)
+                                type_options = ('Flow and ET', 'Flow only')
+                                runtype = menu({'Type': type_options},
+                                                  title='Calibration Menu',
+                                                  exitmsg=lng[10],
+                                                  msg=lng[5],
+                                                  keylbl=lng[7],
+                                                  wng=lng[20],
+                                                  wngmsg=lng[8],
+                                                  chsn=lng[9])
+                                # exit menu condition
+                                if runtype == lng[10]:
+                                    break
                                 metrics_options = ('NSE',
                                                    'NSElog',
                                                    'RMSE',
@@ -792,7 +857,16 @@ def main(root='default', importing=True):
                                     fshru = folder + '/'  + files_input[10] # + files_input[7]
                                     fetpatzmaps = folder + '/' + files_input[8]
                                     fcanopy = folder + '/' + files_input[9]
+                                    #
+                                    if runtype == 'Flow Only':
+                                        etpat = False
+                                    elif runtype == 'Flow and ET':
+                                        etpat = True
+                                    else:
+                                        etpat = False
+                                    #
                                     aux_str = 'calib_hydro' + '_' + likelihood
+                                    #
                                     size_opts = ('Very Small - Size:10 Gens:3',
                                                  'Small - Size:25 Gens:5',
                                                  'Medium - Size:250 Gens:5',
@@ -824,6 +898,9 @@ def main(root='default', importing=True):
                                     elif scale == size_opts[4]:
                                         popsize = 2000
                                         generations = 10
+                                    #
+                                    #
+                                    # run calibration tool
                                     calibfiles = tools.calibrate(fseries=fseries,
                                                                  fhydroparam=fhydroparam,
                                                                  fshruparam=fshruparam,
@@ -840,7 +917,8 @@ def main(root='default', importing=True):
                                                                  popsize=popsize,
                                                                  likelihood=likelihood,
                                                                  tui=True,
-                                                                 normalize=False)
+                                                                 normalize=False,
+                                                                 etpat=etpat)
                                     print('\nRun files sucessfully created at:\n{}\n'.format(calibfiles['Folder']))
                                     ok()
                     #

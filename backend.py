@@ -293,7 +293,7 @@ def get_prj_dirs_paths(p0='name', wkplc='C:'):
     dirs = get_prj_dirs()
     dir0 = wkplc + '/' + p0
     dir01 = dir0 + '/' + dirs['Datasets']
-    dir02 = 'C:/bin/ibira' #dir0 + '/' + dirs['Runbin']
+    dir02 = 'C:/bin/pardinho' #dir0 + '/' + dirs['Runbin']
     dir011 = dir01 + '/' + dirs['Observed']
     dir012 = dir01 + '/' + dirs['Projected']
     dir021 = dir02 + '/' + dirs['Simulation']
@@ -481,8 +481,8 @@ def get_input2calibhydro():
              'calib_shru.asc',
              'calib_etpat_zmaps.txt',
              'calib_canopy_series.txt',
-             '__calib_shru_window1.asc',
-             '__calib_twi_window1.asc'
+             'calib_shru_window_1.asc',
+             'calib_twi_window_1.asc'
              )
     return files
 
@@ -511,8 +511,8 @@ def get_input2simbhydro(aoi=True):
                  'calib_shru.asc',
                  'calib_canopy_series.txt',
                  'calib_etpat_zmaps.txt',
-                 '__calib_shru_window1.asc',
-                 '__calib_twi_window1.asc')
+                 'calib_shru_window_1.asc',
+                 'calib_twi_window_1.asc')
     return files
 
 
