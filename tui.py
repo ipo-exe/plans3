@@ -690,8 +690,10 @@ def main(root='default', importing=True):
                             fhistograms = folder + '/' + files_input[3]
                             fbasinhists = folder + '/' + files_input[4]
                             fbasin = folder + '/' + files_input[5]
-                            ftwi = folder + '/' + files_input[11]  # + files_input[6]
-                            fshru = folder + '/' + files_input[10]  # + files_input[7]
+                            ftwi = folder + '/' + files_input[6]
+                            fshru = folder + '/' + files_input[7]
+                            ftwi_window = folder + '/' + files_input[11]
+                            fshru_window = folder + '/' + files_input[10]
                             fcanopy = folder + '/' + files_input[8]
                             #
                             # get settings
@@ -716,6 +718,13 @@ def main(root='default', importing=True):
                                                 mapraster=settings['Mapraster'],
                                                 slicedates=slicedates,
                                                 label='CALIB')
+                            #
+                            # export local pannels
+                            if settings['Frametype'] != 'Skip':
+                                tools.export_local_pannels(ftwi_window, fshru_window,
+                                                           folder=out_dct['Folder'],
+                                                           frametype=settings['Frametype'],
+                                                           tui=True)
                     #
                     # simulate observed policy in AOI basin
                     elif lcl_opt == sim_options[1]:
@@ -737,9 +746,11 @@ def main(root='default', importing=True):
                             fhistograms = folder + '/' + files_input[3]
                             fbasinhists = folder + '/' + files_input[4]
                             fbasin = folder + '/' + files_input[5]
-                            ftwi = folder + '/' + files_input[10] # + files_input[6]
-                            fshru = folder + '/' + files_input[9] #+ files_input[7]
+                            ftwi = folder + '/' + files_input[6]
+                            fshru = folder + '/' + files_input[7]
                             fcanopy = folder + '/' + files_input[8]
+                            ftwi_window = folder + '/' + files_input[10]
+                            fshru_window = folder + '/' + files_input[9]
                             #
                             # get settings
                             settings = settings_simulation(lng[6])
@@ -766,19 +777,75 @@ def main(root='default', importing=True):
                                                 slicedates=slicedates,
                                                 label='AOI',
                                                 aoi=True)
-                            # todo post a checker here
                             #
                             # export local pannels
                             if settings['Frametype'] != 'Skip':
-                                tools.export_local_pannels(ftwi, fshru,
+                                tools.export_local_pannels(ftwi_window, fshru_window,
                                                            folder=out_dct['Folder'],
                                                            frametype=settings['Frametype'],
                                                            tui=True)
                     #
                     # simulate projected policy
                     elif lcl_opt == sim_options[2]:
+                        # todo list available scenarios to choose
                         header(lcl_opt)
-                        missing()
+                        #
+                        # checker protocol
+                        if backend.check_simhydro_files(project_nm, rootdir, aoi=True):
+                            warning(wng=lng[20], msg=lng[27])
+                            filessim_df = backend.verify_simhydro_files(project_nm, rootdir, aoi=True)
+                            print(filessim_df[filessim_df['Status'] == 'missing'].to_string(index=False))
+                        else:
+                            #
+                            # get files
+                            # todo load files from the scenario chosen
+                            files_input = backend.get_input2simbhydro(aoi=True)
+                            folder = projectdirs['Observed']
+                            fseries = folder + '/' + files_input[0]
+                            fhydroparam = folder + '/' + files_input[1]
+                            fshruparam = folder + '/' + files_input[2]
+                            fhistograms = 'C:/000_myFiles/myDrive/Plans3/pardinho/datasets/projected/scn__lulc_predc/histograms.txt'
+                            fbasinhists = 'C:/000_myFiles/myDrive/Plans3/pardinho/datasets/projected/scn__lulc_predc/basin_histograms.txt'
+                            fbasin = folder + '/' + files_input[5]
+                            ftwi = folder + '/' + files_input[6]
+                            fshru = 'C:/000_myFiles/myDrive/Plans3/pardinho/datasets/projected/scn__lulc_predc/shru.asc'
+                            fcanopy = folder + '/' + files_input[8]
+                            ftwi_window = folder + '/' + files_input[10]
+                            fshru_window = folder + '/' + files_input[9]
+                            #
+                            # get settings
+                            settings = settings_simulation(lng[6])
+                            slicedates = slice_series(fseries=fseries)
+                            #
+                            #
+                            #
+                            # run slh
+                            out_dct = tools.slh(fseries=fseries,
+                                                fhydroparam=fhydroparam,
+                                                fshruparam=fshruparam,
+                                                fhistograms=fhistograms,
+                                                fbasinhists=fbasinhists,
+                                                fbasin=fbasin,
+                                                ftwi=ftwi,
+                                                fshru=fshru,
+                                                fcanopy=fcanopy,
+                                                folder=projectdirs['Simulation'],
+                                                integrate=settings['Integrate'],
+                                                wkpl=True,
+                                                tui=True,
+                                                mapback=settings['Mapback'],
+                                                mapraster=settings['Mapraster'],
+                                                slicedates=slicedates,
+                                                label='predc_AOI',
+                                                aoi=True)
+                            # todo post a checker here
+                            #
+                            # export local pannels
+                            if settings['Frametype'] != 'Skip':
+                                tools.export_local_pannels(ftwi_window, fshru_window,
+                                                           folder=out_dct['Folder'],
+                                                           frametype=settings['Frametype'],
+                                                           tui=True)
                     #
                     # exit
                     elif lcl_opt == lng[10]:

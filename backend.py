@@ -481,8 +481,8 @@ def get_input2calibhydro():
              'calib_shru.asc',
              'calib_etpat_zmaps.txt',
              'calib_canopy_series.txt',
-             'calib_shru_window_1.asc',
-             'calib_twi_window_1.asc'
+             'calib_shru_window.asc',
+             'calib_twi_window.asc'
              )
     return files
 
@@ -498,8 +498,8 @@ def get_input2simbhydro(aoi=True):
                  'aoi_twi.asc',
                  'aoi_shru.asc',
                  'aoi_canopy_series.txt',
-                 'aoi_shru_window_1.asc',
-                 'aoi_twi_window_1.asc')
+                 'aoi_shru_window.asc',
+                 'aoi_twi_window.asc')
     else:
         files = ('calib_series.txt',
                  'hydro_param.txt',
@@ -511,8 +511,8 @@ def get_input2simbhydro(aoi=True):
                  'calib_shru.asc',
                  'calib_canopy_series.txt',
                  'calib_etpat_zmaps.txt',
-                 'calib_shru_window_1.asc',
-                 'calib_twi_window_1.asc')
+                 'calib_shru_window.asc',
+                 'calib_twi_window.asc')
     return files
 
 

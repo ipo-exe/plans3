@@ -311,7 +311,7 @@ def export_local_pannels(ftwi, fshru,
                 print(lcl_file)
             lcl_zmap, ybins, xbins = inp.zmap(lcl_file)
             lcl_raster = map_back(lcl_zmap, a1=twi, a2=shru, bins1=ybins, bins2=xbins)
-            print(i)
+            #print(i)
             #plt.imshow(lcl_raster)
             #plt.show()
             raster_list.append(lcl_raster)
@@ -1800,6 +1800,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     qt0 = 0.01  # fixed
     if qobs:
         qt0 = series_df['Q'].values[0]
+    #print(qt0)
     #
     end = time.time()
     report_lst.append('\n\nLoading enlapsed time: {:.3f} seconds\n'.format(end - init))

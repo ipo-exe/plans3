@@ -581,6 +581,7 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
     ts_qb[0] = qt0
     ts_qs = np.zeros(shape=size, dtype='float32')
     ts_q = np.zeros(shape=size, dtype='float32')
+    ts_q[0] = qt0
     ts_vsa = np.zeros(shape=size, dtype='float32')
     ts_vsa[0] = np.sum(vsa_i * basinshadow) / np.sum(basinshadow)
     #
@@ -821,6 +822,7 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
         #
         # compute Qb - Baseflow
         ts_qb[t] = topmodel_qb(d=ts_d[t], qo=qo, m=m)
+
         #
         # Update Di
         d_i = topmodel_di(d=ts_d[t], twi=lamb_i, m=m, lamb=lamb)
@@ -871,6 +873,8 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
     #
     #
     # RUNOFF ROUTING by Nash Cascade of linear reservoirs
+    if n < 1:
+        n = 1.0
     ts_qs = nash_cascade(ts_r, k=k, n=n)
     #
     #
