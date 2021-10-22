@@ -35,7 +35,10 @@ Input parameters are all strings and booleans.
 
 import numpy as np
 import pandas as pd
+
+import backend
 import inp, out, geo
+import visuals
 from out import export_report
 from inp import dataframe_prepro
 #import matplotlib.pyplot as plt
@@ -1305,7 +1308,14 @@ def qualmap_analyst(fmap, fparams, faoi='full', type='lulc', folder='C:/bin', wk
         plot_lulc_view(qmap, param_df, areas_df, aoi, meta, folder=folder)
 
 
-def osa_series(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:/bin', tui=False, var=True, log=True):
+def osa_series(fseries,
+               fld_obs='Qobs',
+               fld_sim='Q',
+               fld_date='Date',
+               folder='C:/bin',
+               tui=False,
+               var=True,
+               log=True):
     """
     Observed vs. Simulated Analyst routine for series
 
@@ -1462,8 +1472,33 @@ def osa_series(fseries, fld_obs='Qobs', fld_sim='Q', fld_date='Date', folder='C:
     return (exp_file1, exp_file2, exp_file3, exp_file4)
 
 
-def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='ETPat', folder='C:/bin', tui=True,
-              nodata=-1, raster=False, wkpl=False, label=''):
+def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi,
+              var='ETPat',
+              folder='C:/bin',
+              tui=True,
+              nodata=-1,
+              raster=False,
+              wkpl=False,
+              label=''):
+    """
+
+    Observed-Simulation Analyst of Zmaps
+
+    :param fobs_series: string filepath to observed timeseries
+    :param fsim_series: string filepath to simulated timeseries
+    :param fhistograms: string filepath to histograms dataframe
+    :param fseries: string filepath to input timeseries
+    :param fshru: string filepath to shru raster map
+    :param ftwi: string filepath to twi raster map
+    :param var: string code of variable
+    :param folder: string path to output folder
+    :param tui: boolean to TUI display
+    :param nodata: float no data value
+    :param raster: boolean to compute raster views
+    :param wkpl: boolean to consider folder as workplace
+    :param label: string label
+    :return: none
+    """
     import time, datetime
     import analyst
     from hydrology import map_back
@@ -1637,7 +1672,197 @@ def osa_zmaps(fobs_series, fsim_series, fhistograms, fseries, fshru, ftwi, var='
     report_lst.append('\n\n')
     report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
     export_report(report_lst, filename='REPORT__analyst_zmaps', folder=folder, tui=tui)
-    return
+
+
+def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
+            model_id='Id',
+            mapback=False,
+            mapraster=False,
+            mapvar='all',
+            mapdates='all',
+            integrate=False,
+            slicedates='all',
+            qobs=False,
+            folder='C:/bin',
+            wkpl=False,
+            label='',
+            tui=False,
+            aoi=False,
+            pannel=False,
+            ensemble=False,
+            averaging=False):
+    """
+
+    Batch of SLH
+
+    :param fmodels: string filepath to model dataframe csv
+    :param fseries: string filepath to simulation series
+    :param fhydroparam: string filepath to parameters csv (txt file)
+    :param fshruparam: string filepath to shru parameters csv (txt file)
+    :param fhistograms: string filepath to histograms csv (txt file)
+    :param fbasinhists: string filepath to basin histograms csv (txt file)
+    :param fbasin: string filepath to basin raster map (asc file)
+    :param ftwi: string filepath to twi raster map (asc file)
+    :param fshru: string filepath to shru raster map (asc file)
+    :param fcanopy: string filepath to canopy seasonal factor series (txt file)
+    :param model_id: string field name of model ID
+    :param mapback: boolean to map back variables
+    :param mapraster: boolean to map back raster maps
+    :param mapvar: string of variables to map. Pass concatenated by '-'. Ex: 'ET-TF-Inf'.
+    Options: 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
+    :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-21-01 & 21-22-01'
+    :param integrate: boolean to include variable integration over the simulation period
+    :param slicedates: string code to slice series. 'all' or 'YYYY-MM-DD to YYYY-MM-DD'
+    :param qobs: boolean to inclue Qobs in visuals
+    :param folder: string to folderpath
+    :param wkpl: boolean to set folder as workplace
+    :param label: string label
+    :param tui: boolean to TUI display
+    :param aoi: boolean to consider AOI basin
+    :param pannel: boolean to export simulation pannel
+    :param ensemble: boolean to export ensemble of models
+    :param averaging: boolean to export average maps (if integration is allowed)
+    :return: none
+    """
+    import os
+    from backend import get_mapid
+    from visuals import plot_ensemble
+    # Run Folder setup
+    if wkpl:  # if the passed folder is a workplace, create a sub folder within it
+        from backend import create_rundir
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'batSLH', wkplc=folder)
+    #
+    # read models dataframe
+    models_df = pd.read_csv(fmodels, sep=';')
+    #
+    # read sample fhydroparam
+    hydroparam_dct, hydroparam_df = inp.hydroparams(fhydroparam=fhydroparam)
+    #
+    # loop across models to simulation
+    series_dct = dict() # dict for storing series
+    lcl_folders = list()
+    params = ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    for i in range(len(models_df)):
+        print('Model ID: {}'.format(models_df[model_id].values[i]))
+        # create local folder
+        lcl_folder = folder + '/model_{}'.format(models_df[model_id].values[i])
+        lcl_folders.append(lcl_folder)
+        os.mkdir(lcl_folder)
+        #
+        # create local hydroparam file
+        lcl_hydroparam_df = hydroparam_df.copy()
+        lcl_hydroparam_df.set_index('Parameter', inplace=True)
+        #
+        # change parameter values
+        for p in params:
+            lcl_hydroparam_df.at[p, 'Set'] = models_df[p].values[i]
+        lcl_hydroparam_df.reset_index(inplace=True)
+        print(lcl_hydroparam_df[['Parameter', 'Set']])
+        lcl_fhydroparam = lcl_folder + '/hydro_param.txt'
+        lcl_hydroparam_df.to_csv(lcl_fhydroparam, sep=';', index=False)
+        #
+        # run local model
+        lcl_dct = slh(fseries=fseries,
+                      fhydroparam=lcl_fhydroparam,
+                      fshruparam=fshruparam,
+                      fhistograms=fhistograms,
+                      fbasinhists=fbasinhists,
+                      fcanopy=fcanopy,
+                      fbasin=fbasin,
+                      fshru=fshru,
+                      ftwi=ftwi,
+                      mapback=mapback,
+                      mapraster=mapraster,
+                      mapvar=mapvar,
+                      integrate=integrate,
+                      slicedates=slicedates,
+                      qobs=qobs,
+                      folder=lcl_folder,
+                      wkpl=False,
+                      tui=tui,
+                      aoi=aoi,
+                      pannel=pannel)
+        series_dct[models_df[model_id].values[i]] = lcl_dct['Series']
+    #
+    # compute ensemble
+    if ensemble:
+        ensemble_vars = backend.get_all_simvars().split('-')
+        series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+        if slicedates != 'all':
+            slicedates = slicedates.split(' to ')
+            q_str = 'Date >= "{}" and Date <= "{}"'.format(slicedates[0].strip(), slicedates[1].strip())
+            series_df = series_df.query(q_str)
+        t_ensem = len(series_df)
+        n_ensem = len(models_df)
+        for v in ensemble_vars:
+            # set up
+            sim_grid = np.zeros(shape=(n_ensem, t_ensem))
+            # models loop:
+            for i in range(n_ensem):
+                # read lcl series
+                lcl_file = series_dct[models_df[model_id].values[i]]
+                lcl_series_df = pd.read_csv(lcl_file, sep=';', parse_dates=['Date'])
+                sim_grid[i] = lcl_series_df[v].values
+            # append series
+            series_df['{}_05'.format(v)] = np.quantile(sim_grid, 0.05, axis=0)
+            series_df['{}_50'.format(v)] = np.quantile(sim_grid, 0.5, axis=0)
+            series_df['{}_95'.format(v)] = np.quantile(sim_grid, 0.95, axis=0)
+        #
+        # export ensemble series
+        fseries_ensemble = '{}/series_ensemble.txt'.format(folder)
+        series_df.to_csv(fseries_ensemble, sep=';', index=False)
+        #
+        # export ensemble plots
+        for v in ensemble_vars:
+            lcl_filename = 'ensemble'
+            lcl_ttl = '{} ensemble'.format(v)
+            lcl_qobs = False
+            if v == 'Q':
+                lcl_qobs = qobs
+            plot_ensemble(dataframe=series_df,
+                          q_05_field='{}_05'.format(v),
+                          q_50_field='{}_50'.format(v),
+                          q_95_field='{}_95'.format(v),
+                          ttl=lcl_ttl,
+                          ttl1=v,
+                          filename=lcl_filename,
+                          folder=folder,
+                          suff=v,
+                          show=False,
+                          qobs=lcl_qobs)
+    #
+    # averaging across integration
+    if integrate and averaging:
+        # compute averages
+        if mapvar == 'all':
+            mapvars = backend.get_all_lclvars()
+        else:
+            mapvars = mapvar.split('-')
+        # variable loop
+        for v in mapvars:
+            # models loop
+            for i in range(len(lcl_folders)):
+                lcl_file = '{}/integration/raster_integral_{}.asc'.format(lcl_folders[i], v)
+                # import map
+                meta, lcl_map = inp.asc_raster(lcl_file, dtype='float32')
+                # accumulate
+                if i == 0:
+                    acc_map = lcl_map
+                else:
+                    acc_map = acc_map + lcl_map
+            # get average
+            acc_map = acc_map / len(lcl_folders)
+            filename = 'avg_{}'.format(v)
+            print(filename)
+            favg_map = out.asc_raster(acc_map, meta, folder=folder, filename=filename)
+            mapid = get_mapid(v)
+            visuals.plot_map_view(acc_map, meta,
+                                  ranges=[0,  np.max(acc_map)],
+                                  mapid=mapid, mapttl='Average {}'.format(v),
+                                  filename=filename,
+                                  folder=folder)
 
 
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
@@ -1652,7 +1877,8 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         wkpl=False,
         label='',
         tui=False,
-        aoi=False):
+        aoi=False,
+        pannel=True):
     """
 
     SLH - Stable LULC Hydrology routine
@@ -1678,6 +1904,8 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     :param wkpl: boolean to set folder as workplace
     :param label: string label
     :param tui: boolean to TUI display
+    :param aoi: boolean to consider AOI basin
+    :param pannel: boolean to export simulation pannel
     :return: dictionary with keys to output filepaths
                 out_dct =  {'Series':exp_file1,
                             'Histograms':exp_file2,
@@ -1690,24 +1918,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     from inp import zmap
     from hydrology import simulation, map_back
     from visuals import pannel_global
-    from backend import create_rundir, get_stringfields
-
-    def get_mapid(var):
-        if var == 'D':
-            mapid = 'deficit'
-        elif var in set(['Cpy', 'Sfs', 'Unz']):
-            mapid = 'stock'
-        elif var in set(['R', 'Inf', 'TF', 'IRA', 'IRI', 'Qv', 'Prec']):
-            mapid = 'flow'
-        elif var in set(['ET', 'Evc', 'Evs', 'Tpun', 'Tpgw']):
-            mapid = 'flow_v'
-        elif var == 'VSA':
-            mapid = 'VSA'
-        elif var == 'RC':
-            mapid = 'RC'
-        else:
-            mapid = 'flow'
-        return mapid
+    from backend import create_rundir, get_stringfields, get_mapid
     #
     # Run Folder setup
     if wkpl:  # if the passed folder is a workplace, create a sub folder within it
@@ -1876,9 +2087,10 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     sdiag_file1 = sdiag(fseries=exp_file1, folder=folder, tui=False)
     #
     # export visual pannel
-    if tui:
-        status('exporting visual results')
-    exp_file4 = pannel_global(sim_df, grid=True, show=False, qobs=qobs, folder=folder)
+    if pannel:
+        if tui:
+            status('exporting visual results')
+        exp_file4 = pannel_global(sim_df, grid=True, show=False, qobs=qobs, folder=folder)
     #
     #
     # ****** MAP EXPORT ******
@@ -2055,7 +2267,10 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     report_lst.insert(2, 'Execution enlapsed time: {:.3f} seconds\n'.format(tf - t0))
     #
     # output files report
-    outfiles = [exp_file1, exp_file2, exp_file3, sdiag_file1, exp_file4]
+    if pannel:
+        outfiles = [exp_file1, exp_file2, exp_file3, sdiag_file1, exp_file4]
+    else:
+        outfiles = [exp_file1, exp_file2, exp_file3, sdiag_file1]
     output_df = pd.DataFrame({'Main output files': outfiles})
     report_lst.append(output_df.to_string(index=False))
     report_lst.append('\n')
@@ -2066,11 +2281,17 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     export_report(report_lst, filename='REPORT__simulation', folder=folder, tui=tui)
     #
     # return section
-    out_dct = {'Series':exp_file1,
-               'Histograms':exp_file2,
-               'Parameters':exp_file3,
-               'Pannel':exp_file4,
-               'Folder':folder}
+    if pannel:
+        out_dct = {'Series':exp_file1,
+                   'Histograms':exp_file2,
+                   'Parameters':exp_file3,
+                   'Pannel':exp_file4,
+                   'Folder':folder}
+    else:
+        out_dct = {'Series': exp_file1,
+                   'Histograms': exp_file2,
+                   'Parameters': exp_file3,
+                   'Folder': folder}
     if mapback:
         out_dct['ZMaps'] = zmaps_dct
         if mapraster:
@@ -2614,8 +2835,17 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
 
 
 def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, fcanopy,
-         nmodels='all', modelid='SetIds', likelihood='L', criteria='>', behavioural=0.1,
-         sampling_grid=100, run_ensemble=True, folder='C:/bin', wkpl=False, tui=False, label=''):
+         nmodels='all',
+         modelid='SetIds',
+         likelihood='L',
+         criteria='>',
+         behavioural=0.1,
+         sampling_grid=100,
+         run_ensemble=True,
+         folder='C:/bin',
+         wkpl=False,
+         tui=False,
+         label=''):
     """
 
     GLUE tool

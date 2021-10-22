@@ -282,6 +282,8 @@ def get_all_lclvars():
 def get_all_vars():
     return 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA-Q-Qs-Qb'
 
+def get_all_simvars():
+    return 'PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA-Q-Qs-Qb'
 
 def get_prj_dirs_paths(p0='name', wkplc='C:'):
     """
@@ -668,3 +670,20 @@ def get_stringfields(filename):
         def_str = 'LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC'
     return def_str
 
+
+def get_mapid(var):
+    if var == 'D':
+        mapid = 'deficit'
+    elif var in set(['Cpy', 'Sfs', 'Unz']):
+        mapid = 'stock'
+    elif var in set(['R', 'Inf', 'TF', 'IRA', 'IRI', 'Qv', 'Prec']):
+        mapid = 'flow'
+    elif var in set(['ET', 'Evc', 'Evs', 'Tpun', 'Tpgw']):
+        mapid = 'flow_v'
+    elif var == 'VSA':
+        mapid = 'VSA'
+    elif var == 'RC':
+        mapid = 'RC'
+    else:
+        mapid = 'flow'
+    return mapid

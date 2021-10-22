@@ -2178,3 +2178,56 @@ def plot_population(pop_df, xfield='L_ET', yfield='L_Q', zfield='L', grid=True, 
         plt.savefig(expfile)
         plt.close(fig)
         return expfile
+
+
+def plot_ensemble(dataframe,
+                  q_05_field='Q_05',
+                  q_50_field='Q_50',
+                  q_95_field='Q_95',
+                  date_field='Date',
+                  ttl='title',
+                  ttl1='Variable',
+                  filename='ensemble',
+                  folder='C:/bin',
+                  suff='',
+                  show=True,
+                  grid=True,
+                  qobs=False):
+    #
+    fig = plt.figure(figsize=(16, 8))  # Width, Height
+    gs = mpl.gridspec.GridSpec(2, 1, wspace=0.8, hspace=0.25)
+    fig.suptitle(ttl)
+    # plot prec
+    ax1 = fig.add_subplot(gs[0, 0])
+    plt.title('Precipitation', loc='left')
+    plt.ylabel('mm/d')
+    plt.plot(dataframe[date_field], dataframe['Prec'])
+    plt.ylim(0, 1.1 * dataframe['Prec'].max())
+    plt.grid(grid)
+    #plt.xticks(locs, labels)
+    # plot q
+    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
+    plt.title(ttl1, loc='left')
+    plt.ylabel('mm/d')
+    plt.fill_between(x=dataframe['Date'],
+                     y1=dataframe[q_05_field],
+                     y2=dataframe[q_95_field],
+                     color='lightsteelblue',
+                     label='90% confidence')
+    plt.ylim(0, 1.1 * dataframe[q_95_field].max())
+    plt.plot(dataframe['Date'], dataframe[q_50_field], 'navy', label='Median')
+    if qobs:
+        plt.plot(dataframe['Date'], dataframe['Q'], 'tab:grey', label='Observed')
+    plt.legend(loc='upper left')
+    plt.grid(grid)
+    #plt.xticks(locs, labels)
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        # export file
+        filepath = folder + '/' + filename + '_' + suff + '.png'
+        plt.savefig(filepath)
+        plt.close(fig)
+        return filepath
