@@ -969,6 +969,7 @@ def pannel_global(series_df, qobs=False, etobs=False, grid=True, show=False, fol
     else:
         qmin = 0.8 * np.min(series_df['Q'].values)
         qmax = 1.5 * np.max(series_df['Q'].values)
+
     #
     # Prec
     ax = fig.add_subplot(gs[0, 0:col1])
@@ -1039,12 +1040,14 @@ def pannel_global(series_df, qobs=False, etobs=False, grid=True, show=False, fol
         plt.plot(series_df['Date'], series_df['Qobs'], 'tab:grey', label='Observed Streamflow')
     plt.plot(series_df['Date'], series_df['Q'], 'tab:blue', label='Streamflow')
     plt.plot(series_df['Date'], series_df['Qb'], 'navy', label='Baseflow')
+    if qmax / qmin >= 100:
+        plt.yscale('log')
+        qmax = 10 * qmax
     plt.ylim(qmin, qmax)
     plt.ylabel('mm/d')
     plt.legend(loc='upper right', ncol=3, framealpha=1, fancybox=False)
     ax.tick_params(axis='x', which='major', labelsize=8)
-    if qmax / qmin >= 100:
-        plt.yscale('log')
+
     #
     # Ev
     ax = fig.add_subplot(gs[2, col2:])
@@ -1341,7 +1344,7 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='lulc', filename='map
 
 
 def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview', folder='C:/bin',
-                  metadata=True, show=False, integration=False, png=True):
+                  metadata=True, show=False, integration=False, png=True, nodata=-1):
     """
 
     Plot a generic map view
@@ -1382,6 +1385,7 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
     if mapid == 'catcha':
         map = np.log10(map)
         ranges = np.log10(ranges)
+    map[map == nodata] = np.nan
     im = plt.imshow(map, cmap=map_dct[mapid][0], vmin=ranges[0], vmax=ranges[1])
     plt.title(mapttl)
     plt.axis('off')

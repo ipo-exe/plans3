@@ -769,7 +769,12 @@ def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder
     return exp_file
 
 
-def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filename='map_series', rasterfilename='map', view=True):
+def import_map_series(fmapseries,
+                      rasterfolder='C:/bin',
+                      folder='C:/bin',
+                      filename='map_series',
+                      rasterfilename='map',
+                      view=True):
     """
     import map series data set
     :param fmapseries: string for the input time series data frame. Must have 'Date' and 'File" as fields
@@ -796,7 +801,6 @@ def import_map_series(fmapseries, rasterfolder='C:/bin', folder='C:/bin', filena
         dst = rasterfolder + '/' + lcl_filenm
         copyfile(src=src, dst=dst)
         #print(lcl_expf)
-
         new_files.append(dst)
         #
         # plot view
@@ -867,18 +871,18 @@ def import_etpat_series(finputseries, rasterfolder='C:/bin', folder='C:/bin', fi
         exp_df.to_csv(exp_file, sep=';', index=False)
         #
         # view
-        view_rasters(exp_file, mapvar='ETpat', mapid='etpat', vmin=0, vmax=1, tui=tui, dtype='float32')
+        view_rasters(exp_file, mapvar='ETpat', mapid='etpat', vmin=0, vmax=1, tui=tui, dtype='float32', nodata=nodata)
     else:
         # just import rasters
         exp_file = import_map_series(fmapseries=finputseries, filename='calib_etpat_series', rasterfolder=rasterfolder,
                                      folder=folder, rasterfilename=rasterfilename, view=False)
         #
         # view
-        view_rasters(exp_file, mapvar='ET', mapid='flow_v', vmin=0, vmax=10, tui=tui, dtype='float32')
+        view_rasters(exp_file, mapvar='ET', mapid='flow_v', vmin=0, vmax=10, tui=tui, dtype='float32', nodata=nodata)
     return exp_file
 
 
-def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='local', tui=False, dtype='int16'):
+def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='local', tui=False, dtype='int16', nodata=-1):
     """
     Batch routine to plot raster maps from map series file
 
@@ -920,7 +924,7 @@ def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='loc
         ranges = [v_min, v_max]
         # plot local map
         plot_map_view(lcl_map, meta, ranges, mapid, mapttl='{} | {}'.format(mapvar, dates[i]),
-                      filename=lcl_filename, folder=lcl_folder)
+                      filename=lcl_filename, folder=lcl_folder, nodata=nodata)
 
 
 def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var_zmap_series', folder='C:/bin',
@@ -979,7 +983,8 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
         if factor != 1.0:
             lcl_var = lcl_var / factor
         lcl_zmap = built_zmap(varmap=lcl_var, twi=twi, shru=shru, twibins=twibins, shrubins=shrubins)
-        exp_file = out.zmap(zmap=lcl_zmap, twibins=twibins, shrubins=shrubins, folder=lcl_folder, filename=lcl_new_filename)
+        exp_file = out.zmap(zmap=lcl_zmap, twibins=twibins, shrubins=shrubins, folder=lcl_folder,
+                            filename=lcl_new_filename)
         new_files.append(exp_file)
     #
     # export data
@@ -1072,7 +1077,8 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
             shru_al.append(lcl_shru_al)
             shru_lulc_ids.append(lulc_ids[i])
             shru_soils_ids.append(soils_ids[j])
-    shru_df = pd.DataFrame({'IdSHRU':shru_ids, 'SHRUName': shru_nm, 'SHRUAlias': shru_al, 'IdLULC':shru_lulc_ids, 'IdSoil':shru_soils_ids})
+    shru_df = pd.DataFrame({'IdSHRU':shru_ids, 'SHRUName': shru_nm, 'SHRUAlias': shru_al,
+                            'IdLULC':shru_lulc_ids, 'IdSoil':shru_soils_ids})
     # join parameters:
     shru_df = shru_df.join(lulc_df.set_index('IdLULC'), on='IdLULC')
     shru_df = shru_df.join(soils_df.set_index('IdSoil'), on='IdSoil')
@@ -2303,6 +2309,7 @@ def hca(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         fzmaps='',
         etpat=False,
         cutdatef=0.3,
+        tail=False,
         folder='C:/bin',
         wkpl=False,
         label='',
@@ -2335,12 +2342,18 @@ def hca(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     from visuals import pannel_calib_valid
     from os import mkdir
 
-    def extract_calib_valid(dataframe, fvalid=0.333):
+    def extract_calib_valid(dataframe, fvalid=0.333, tail=False):
         size = len(dataframe)
-        cut_id = int(size * (1 - fvalid))
-        cut_date = dataframe['Date'].values[cut_id]
-        calib_df = dataframe.query('Date < "{}"'.format(cut_date))
-        valid_df = dataframe.query('Date >= "{}"'.format(cut_date))
+        if tail:
+            cut_id = int(size * (fvalid))
+            cut_date = dataframe['Date'].values[cut_id]
+            calib_df = dataframe.query('Date >= "{}"'.format(cut_date))
+            valid_df = dataframe.query('Date < "{}"'.format(cut_date))
+        else:
+            cut_id = int(size * (1 - fvalid))
+            cut_date = dataframe['Date'].values[cut_id]
+            calib_df = dataframe.query('Date < "{}"'.format(cut_date))
+            valid_df = dataframe.query('Date >= "{}"'.format(cut_date))
         return calib_df, valid_df, cut_date
     #
     # Run Folder setup
@@ -2530,6 +2543,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
               mapvar='ET-D-Unz-VSA',
               qobs=True,
               cutdatef=0.3,
+              tail=False,
               generations=100,
               popsize=200,
               likelihood='KGE',
@@ -2553,6 +2567,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     :param mapvar: string code of variables to mapback during MLM simulation (see SLH docstring)
     :param qobs: boolean to inform qobs during MLM simulation
     :param cutdatef: float cut date fraction (0 to 1) for validation period
+    :param tail: boolean to use the series tail as the calibration set
     :param generations: int number of generations to run the calibration
     :param popsize: int number of models in each generation
     :param likelihood: string code for Q calibration.
@@ -2581,11 +2596,16 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
             def_df.loc[index, 'Prec'] = 0.0
         return def_df
 
-    def extract_calib_valid(dataframe, fvalid=0.333):
+    def extract_calib_valid(dataframe, fvalid=0.333, tail=False):
         size = len(dataframe)
-        cut_id = int(size * (1 - fvalid))
-        cut_date = dataframe['Date'].values[cut_id]
-        calib_df = dataframe.query('Date < "{}"'.format(cut_date))
+        if tail:
+            cut_id = int(size * (fvalid))
+            cut_date = dataframe['Date'].values[cut_id]
+            calib_df = dataframe.query('Date >= "{}"'.format(cut_date))
+        else:
+            cut_id = int(size * (1 - fvalid))
+            cut_date = dataframe['Date'].values[cut_id]
+            calib_df = dataframe.query('Date < "{}"'.format(cut_date))
         return calib_df, cut_date
 
     def extract_ranges(fhydroparam):
@@ -2643,7 +2663,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # Series
     series_df =  pd.read_csv(fseries, sep=';')
     series_df = dataframe_prepro(series_df, strf=False, date=True, datefield='Date')
-    calib_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef)
+    # get the cut date
+    calib_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef, tail=tail)
     # Hydro param
     if tui:
         status('loading hydrology parameters') #print(' >>> loading hydrology parameters...')
@@ -2693,8 +2714,12 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         etpat_zmaps_obs_df = pd.read_csv(fetpatzmaps, sep=';')
         etpat_zmaps_obs_df = dataframe_prepro(etpat_zmaps_obs_df, strfields='File', date=True)
         # split dataframes for later
-        etpat_zmaps_obs_calib_df = etpat_zmaps_obs_df.query('Date < "{}"'.format(cut_date))
-        etpat_zmaps_obs_valid_df = etpat_zmaps_obs_df.query('Date >= "{}"'.format(cut_date))
+        if tail:
+            etpat_zmaps_obs_calib_df = etpat_zmaps_obs_df.query('Date >= "{}"'.format(cut_date))
+            etpat_zmaps_obs_valid_df = etpat_zmaps_obs_df.query('Date < "{}"'.format(cut_date))
+        else:
+            etpat_zmaps_obs_calib_df = etpat_zmaps_obs_df.query('Date < "{}"'.format(cut_date))
+            etpat_zmaps_obs_valid_df = etpat_zmaps_obs_df.query('Date >= "{}"'.format(cut_date))
         #
         # get a dataframe to store each date series
         etpat_calib_dates = pd.DataFrame({'Date': etpat_zmaps_obs_calib_df['Date']})
@@ -2719,8 +2744,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
         etpat_dates_str_calib = None
         etpat_zmaps_obs_calib = None
     #
-    # split series
-    calib_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef)
+    # split series again (now for real)
+    calib_df, cut_date = extract_calib_valid(series_df, fvalid=cutdatef, tail=tail)
     # export to file and update fseries
     fseries = '{}/calibration_series.txt'.format(folder)
     series_df.to_csv(fseries, sep=';', index=False)
@@ -2823,7 +2848,8 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
                   tui=tui,
                   folder=mlm_folder,
                   vars=mapvar,
-                  etpat=etpat)
+                  etpat=etpat,
+                  tail=tail)
     # extract folders:
     calib_folder = slh_dct['CalibFolder']
     valid_folder = slh_dct['ValidFolder']
@@ -2845,6 +2871,7 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
          folder='C:/bin',
          wkpl=False,
          tui=False,
+         normalize=False,
          label=''):
     """
 
@@ -2971,6 +2998,10 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     if nmodels != 'all':
         # extract n models
         behav_df = behav_df.nlargest(nmodels, columns=[likelihood])
+    if normalize:
+        behav_df[likelihood] = (behav_df[likelihood] - behav_df[likelihood].min()) / \
+                               (behav_df[likelihood].max() - behav_df[likelihood].min())
+        behavioural = 0.0
     #
     # export behaviroural models:
     if tui:

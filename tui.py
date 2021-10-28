@@ -546,15 +546,22 @@ def main(root='default', importing=True):
                                         ok()
                                     elif lcl_lcl_opt == 'calib_basin_histograms.txt' or lcl_lcl_opt == 'aoi_basin_histograms.txt':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.compute_histograms(filesp[0], filesp[1], filesp[2], filesp[3],
-                                                                                     folder=projectdirs['Observed'],
-                                                                                     filename=lcl_filename, tui=True)
+                                        derivedfile = tools.compute_histograms(filesp[0],
+                                                                               filesp[1],
+                                                                               filesp[2],
+                                                                               filesp[3],
+                                                                               folder=projectdirs['Observed'],
+                                                                               filename=lcl_filename,
+                                                                               tui=True)
                                         print('\n{}:\n{}\n'.format(lng[30], derivedfile))
                                         ok()
                                     elif lcl_lcl_opt == 'calib_etpat_zmaps.txt':
                                         print('\n' + lng[31] + '...')
-                                        derivedfile = tools.compute_zmap_series(filesp[0], filesp[1], filesp[2],
-                                                                                filesp[3], var='etpat',
+                                        derivedfile = tools.compute_zmap_series(fvarseries=filesp[0],
+                                                                                ftwi=filesp[1], #r"C:\000_myFiles\myDrive\Plans3\pardinho\datasets\observed\calib_twi_window.asc", #
+                                                                                fshru=filesp[2], #r"C:\000_myFiles\myDrive\Plans3\pardinho\datasets\observed\calib_shru_window.asc", #
+                                                                                fhistograms=filesp[3],
+                                                                                var='etpat',
                                                                                 folder=projectdirs['Observed'],
                                                                                 filename=lcl_filename,
                                                                                 dtype='float32',
@@ -653,6 +660,7 @@ def main(root='default', importing=True):
                                             folder=projectdirs['Assessment'],
                                             wkpl=True,
                                             tui=True,
+                                            etpat=True,
                                             label='CALIB')
             #
             # simulation
@@ -707,13 +715,14 @@ def main(root='default', importing=True):
                                                 fhistograms=fhistograms,
                                                 fbasinhists=fbasinhists,
                                                 fbasin=fbasin,
-                                                ftwi=ftwi,
-                                                fshru=fshru,
+                                                ftwi=ftwi_window,
+                                                fshru=fshru_window,
                                                 fcanopy=fcanopy,
                                                 folder=projectdirs['Simulation'],
                                                 integrate=settings['Integrate'],
                                                 wkpl=True,
                                                 tui=True,
+                                                qobs=True,
                                                 mapback=settings['Mapback'],
                                                 mapraster=settings['Mapraster'],
                                                 slicedates=slicedates,
@@ -985,7 +994,9 @@ def main(root='default', importing=True):
                                                                  likelihood=likelihood,
                                                                  tui=True,
                                                                  normalize=False,
-                                                                 etpat=etpat)
+                                                                 etpat=etpat,
+                                                                 cutdatef=0.2,
+                                                                 tail=True)
                                     print('\nRun files sucessfully created at:\n{}\n'.format(calibfiles['Folder']))
                                     ok()
                     #

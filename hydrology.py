@@ -926,10 +926,21 @@ def simulation(series, shruparam, canopy, twibins, countmatrix, lamb, qt0, m, qo
 
 
 def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area, basinshadow,
-                p_ranges, etpatdates, etpatzmaps, tui=True,
-                normalize=False, grid=1000, generations=10, popsize=20, offsfrac=2,
-                mutrate=0.5, puremutrate=0.5, cutfrac=0.4, tracefrac=1, tracepop=True,
-                likelihood='NSE', nodata=-1, etpat=True):
+                p_ranges, etpatdates, etpatzmaps,
+                tui=True,
+                normalize=False,
+                grid=1000,
+                generations=10,
+                popsize=20,
+                offsfrac=2,
+                mutrate=0.5,
+                puremutrate=0.5,
+                cutfrac=0.4,
+                tracefrac=1,
+                tracepop=True,
+                likelihood='NSE',
+                nodata=-1,
+                etpat=True):
     """
 
     Calibration procedure
@@ -1201,9 +1212,31 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
             print('Population: {} KB       '.format(getsizeof(population)))
             print('                   | Set  ', end='\t')
             if etpat:
-                print('{:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} | {:>8} {:>8} {:>8}'.format('m', 'lamb', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n', 'L', 'L_Q', 'L_ET'))
+                print('{:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} | {:>8} {:>8} {:>8}'.format('m',
+                                                                                                               'lamb',
+                                                                                                               'qo',
+                                                                                                               'cpmax',
+                                                                                                               'sfmax',
+                                                                                                               'erz',
+                                                                                                               'ksat',
+                                                                                                               'c',
+                                                                                                               'k',
+                                                                                                               'n',
+                                                                                                               'L',
+                                                                                                               'L_Q',
+                                                                                                               'L_ET'))
             else:
-                print('{:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} | {:>8}'.format('m', 'lamb', 'qo','cpmax', 'sfmax', 'erz', 'ksat','c', 'k', 'n', 'L'))
+                print('{:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} {:>8} | {:>8}'.format('m',
+                                                                                                   'lamb',
+                                                                                                   'qo',
+                                                                                                   'cpmax',
+                                                                                                   'sfmax',
+                                                                                                   'erz',
+                                                                                                   'ksat',
+                                                                                                   'c',
+                                                                                                   'k',
+                                                                                                   'n',
+                                                                                                   'L'))
         #
         # 4) FIT new population
         ids_lst = list()
@@ -1376,8 +1409,8 @@ def calibration(series, shruparam, canopy, twibins, countmatrix, qt0, lat, area,
                                                       nodata=nodata,
                                                       full_return=False)
                 #
-                # get the ETpat score (minimum of signals KGE)
-                lcl_etpat_score = etpat_analysis['Stats']['KGE_min']
+                # get the ETpat score (mean of signals KGE)
+                lcl_etpat_score = etpat_analysis['Stats']['KGE_mean']
                 #
                 #
                 #

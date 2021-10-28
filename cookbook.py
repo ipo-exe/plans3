@@ -274,7 +274,7 @@ def demo_glue():
     from tools import glue
     #
     # get folder of observed datasets
-    folder = 'C:/000_myFiles/myDrive/Plans3/ibirapuita/datasets/observed'
+    folder = 'C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed'
     # get observed datasets standard names
     files_input = get_input2calibhydro()
     fshruparam = folder + '/' + files_input[2]
@@ -284,9 +284,9 @@ def demo_glue():
     ftwi = folder + '/' + files_input[6]
     fshru = folder + '/' + files_input[7]
     fcanopy = folder + '/' + files_input[9]
-
+    #
     # calibration folder
-    calib_folder = r"C:\bin\ibira\optimization\calib_Hydrology_NSElog_2021-10-08-12-47-30"
+    calib_folder = r"C:\bin\pardinho\optimization\000_calib_Hydrology_KGElog_2021-10-27-18-01-16"
     fseries = calib_folder + '/MLM/full_period/sim_series.txt'
     fhydroparam = calib_folder + '/MLM/mlm_parameters.txt'
     fmodels = calib_folder + '/generations/population.txt'
@@ -298,12 +298,13 @@ def demo_glue():
                      fshruparam=fshruparam,
                      fbasin=fbasin,
                      fcanopy=fcanopy,
-                     likelihood='KGE',
+                     likelihood='L',
                      nmodels=5000,
-                     behavioural=0.2,
+                     behavioural=-0.65,
                      run_ensemble=False,
                      folder=calib_folder,
                      wkpl=True,
+                     normalize=True,
                      tui=True)
 
 
