@@ -517,17 +517,90 @@ def map_slope(fdem, folder='C:/bin', filename='slope'):
     from visuals import plot_map_view
     # import data
     meta, dem = inp.asc_raster(fdem)
-    #plt.imshow(dem)
-    #plt.show()
     # process data
     slp = geo.slope(dem, meta['cellsize'], degree=True)
-    #plt.imshow(slp)
-    #plt.show()
-    #
     # export
     export_file = out.asc_raster(slp, meta, folder, filename)
     ranges = (np.min(slp), np.max(slp))
     plot_map_view(slp, meta, ranges, mapid='slope', filename=filename, folder=folder, metadata=True)
+    return export_file
+
+
+def map_c_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
+    """
+    Map the USLE-M C factor
+    :param flulc: string filepath to lulc asc raster map
+    :param flulcparam: string filepath to lulc parameter csv dataframe
+    :param folder: string path to output folder
+    :param filename: string file name (no extension)
+    :return: string filepath to output file
+    """
+    from backend import get_stringfields
+    from visuals import plot_map_view
+    # import data
+    meta, lulc = inp.asc_raster(flulc)
+    # extract dataframe
+    lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
+    lulc_df = dataframe_prepro(lulc_df, strfields=get_stringfields(flulcparam.split('/')[-1]))
+    # process data
+    c_usle = geo.reclassify(array=lulc, upvalues=lulc_df['IdLULC'].values, classes=lulc_df['C_USLE'].values)
+    # export
+    export_file = out.asc_raster(c_usle, meta, folder, filename)
+    ranges = (np.min(lulc_df['C_USLE']), np.max(lulc_df['C_USLE']))
+    plot_map_view(c_usle, meta, ranges, mapid='c_usle', mapttl='USLE C factor', filename=filename, folder=folder,
+                  metadata=True, show=False)
+    return export_file
+
+
+def map_p_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
+    """
+    Map the USLE P factor
+    :param flulc: string filepath to lulc asc raster map
+    :param flulcparam: string filepath to lulc parameter csv dataframe
+    :param folder: string path to output folder
+    :param filename: string file name (no extension)
+    :return: string filepath to output file
+    """
+    from backend import get_stringfields
+    from visuals import plot_map_view
+    # import data
+    meta, lulc = inp.asc_raster(flulc)
+    # extract dataframe
+    lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
+    lulc_df = dataframe_prepro(lulc_df, strfields=get_stringfields(flulcparam.split('/')[-1]))
+    # process data
+    p_usle = geo.reclassify(array=lulc, upvalues=lulc_df['IdLULC'].values, classes=lulc_df['P_USLE'].values)
+    # export
+    export_file = out.asc_raster(c_usle, meta, folder, filename)
+    ranges = (np.min(lulc_df['P_USLE']), np.max(lulc_df['P_USLE']))
+    plot_map_view(p_usle, meta, ranges, mapid='p_usle', mapttl='USLE P factor', filename=filename, folder=folder,
+                  metadata=True, show=False)
+    return export_file
+
+
+def map_k_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
+    """
+    Map the USLE K factor
+    :param flulc: string filepath to lulc asc raster map
+    :param flulcparam: string filepath to lulc parameter csv dataframe
+    :param folder: string path to output folder
+    :param filename: string file name (no extension)
+    :return: string filepath to output file
+    """
+    from backend import get_stringfields
+    from visuals import plot_map_view
+    # import data
+    meta, lulc = inp.asc_raster(flulc)
+    # extract dataframe
+    lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
+    lulc_df = dataframe_prepro(lulc_df, strfields=get_stringfields(flulcparam.split('/')[-1]))
+    # process data
+    p_usle = geo.reclassify(array=lulc, upvalues=lulc_df['IdLULC'].values, classes=lulc_df['P_USLE'].values)
+    # export
+    export_file = out.asc_raster(c_usle, meta, folder, filename)
+    ranges = (np.min(lulc_df['P_USLE']), np.max(lulc_df['P_USLE']))
+    plot_map_view(p_usle, meta, ranges, mapid='p_usle', mapttl='USLE P factor', filename=filename, folder=folder,
+                  metadata=True, show=False)
     return export_file
 
 
@@ -1051,12 +1124,13 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
     :param filename: string file name
     :return: string file path to output file
     """
+    from backend import get_stringfields
     # extract data
     lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_df = dataframe_prepro(lulc_df, strfields='LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC')
+    lulc_df = dataframe_prepro(lulc_df, strfields=get_stringfields(flulcparam.split('/')[-1]))
     #print(lulc_df.to_string())
     soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_df = dataframe_prepro(soils_df, strfields='SoilName,SoilAlias,ColorSoil')
+    soils_df = dataframe_prepro(soils_df, strfields=get_stringfields(fsoilsparam.split('/')[-1]))
     #print(soils_df.to_string())
     lulc_ids = lulc_df['IdLULC'].values
     soils_ids = soils_df['IdSoil'].values

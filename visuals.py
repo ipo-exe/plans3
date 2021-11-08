@@ -1365,6 +1365,8 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
     cmaps = _custom_cmaps()
     map_dct = {'dem': ['BrBG_r', 'Elevation'],
                'slope': ['OrRd', 'Degrees'],
+               'c_usle':['YlGn_r', 'Index units'],
+               'p_usle': ['YlOrBr', 'Index units'],
                'twi': ['YlGnBu', 'Index units'],
                'twito': ['YlGnBu', 'Index units'],
                'fto': ['Blues', 'Index units'],
