@@ -35,9 +35,6 @@ Input parameters are all strings and booleans.
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
-import geo
 
 
 def error(obs, sim):
@@ -161,24 +158,40 @@ def linreg(obs, sim):
     return {'A':a, 'B':b, 'R':r, 'P':p, 'SD':sd}
 
 
-def frequency(series):
+def frequency(dataframe, var_field, zero=True, step=1):
     """
-    Frequency analysis on a given time series.
-    :param series: 1-d numpy array
-    :return: dictionary object with the following keys:
+
+    This fuction performs a frequency analysis on a given time series.
+
+    :param dataframe: pandas DataFrame object with time series
+    :param var_field: string of variable field
+    :param zero: boolean control to consider values of zero. Default: True
+    :return: pandas DataFrame object with the following columns:
+
      'Pecentiles' - percentiles in % of array values (from 0 to 100 by steps of 1%)
-     'Exeedance' - exeedance probability in % (reverse of percentiles: 100 - percentiles)
+     'Exceedance' - exeedance probability in % (reverse of percentiles)
      'Frequency' - count of values on the histogram bin defined by the percentiles
      'Probability'- local bin empirical probability defined by frequency/count
      'Values' - values percentiles of bins
+
     """
-    ptles = np.arange(0, 101, 1)  # create bins
-    cfc = np.percentile(series, ptles)  # get percentiles
-    exeed = 100 - ptles  # get exeedance probs.
-    freq = np.histogram(series, bins=101)[0]  # get histogram
-    prob = freq/np.sum(freq)  # estimate probs.
-    out_dct = {'Percentiles': ptles, 'Exeedance':exeed, 'Frequency': freq, 'Probability': prob, 'Values':cfc}
-    return out_dct
+    # get dataframe right
+    in_df = dataframe[[var_field]].copy()
+    in_df = in_df.dropna()
+    if zero:
+        pass
+    else:
+        mask = in_df[var_field] != 0
+        in_df = in_df[mask]
+    def_v = in_df[var_field].values
+    ptles = np.arange(0, 100 + step, step)
+    cfc = np.percentile(def_v, ptles)
+    exeed = 100 - ptles
+    freq = np.histogram(def_v, bins=len(ptles))[0]
+    prob = freq/np.sum(freq)
+    out_dct = {'Percentiles': ptles, 'Exceedance':exeed, 'Frequency': freq, 'Probability': prob, 'Values':cfc}
+    out_df = pd.DataFrame(out_dct)
+    return out_df
 
 
 def flow(obs, sim, loglim=0.00001):
@@ -218,7 +231,6 @@ def flow(obs, sim, loglim=0.00001):
     _dct_metrics['NRMSElog_CFC'] = nrmse(obs=np.log10(_cfc_obs), sim=np.log10(_cfc_sim))
     #
     return {'Stats':_dct_stats, 'Metrics':_dct_metrics}
-
 
 
 def zmaps(obs, sim, count, nodata=-1):

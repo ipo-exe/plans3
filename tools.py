@@ -2999,9 +2999,10 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
         # extract n models
         behav_df = behav_df.nlargest(nmodels, columns=[likelihood])
     if normalize:
-        behav_df[likelihood] = (behav_df[likelihood] - behav_df[likelihood].min()) / \
-                               (behav_df[likelihood].max() - behav_df[likelihood].min())
-        behavioural = 0.0
+        behav_df_norm = behav_df.copy()
+        behav_df_norm[likelihood] = (behav_df_norm[likelihood] - behav_df_norm[likelihood].min()) / \
+                                    (behav_df_norm[likelihood].max() - behav_df_norm[likelihood].min())
+        behavioural_norm = 0.0
     #
     # export behaviroural models:
     if tui:
@@ -3009,6 +3010,10 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     exp_file0 = '{}/behaviroural.txt'.format(folder)
     behav_df = behav_df.sort_values(by=likelihood, ascending=False)
     behav_df.to_csv(exp_file0, sep=';', index=False)
+    if normalize:
+        exp_file0 = '{}/behaviroural_normalized.txt'.format(folder)
+        behav_df_norm = behav_df_norm.sort_values(by=likelihood, ascending=False)
+        behav_df_norm.to_csv(exp_file0, sep=';', index=False)
     #
     # export visual scattergrams:
     if tui:
@@ -3019,6 +3024,13 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
                                  behavioural=behavioural,
                                  folder=folder,
                                  filename='scattergrams')
+    if normalize:
+        exp_file1 = glue_scattergram(behav_df_norm, rng_dct,
+                                     likelihood=likelihood,
+                                     criteria=criteria,
+                                     behavioural=behavioural_norm,
+                                     folder=folder,
+                                     filename='scattergrams_normalized')
     #
     # ******* POSTERIOR BAYESIAN ANALYSIS *******
     #
@@ -3028,6 +3040,7 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     #
     if tui:
         status('performing posterior GLUE analysis')
+    #
     # prior accumulated likelihood
     lo_acc = np.linspace(0, 1, sampling_grid)
     posterior_df = pd.DataFrame({'Lo':lo_acc[1], 'Lo_acc':lo_acc})

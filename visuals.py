@@ -89,8 +89,8 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     # plot of CFCs
     plt.subplot(gs[0:2, 0:2])
     plt.title('CFCs', loc='left')
-    plt.plot(freq['Exeedance'], freq['ValuesObs'], 'tab:grey', label='Obs')
-    plt.plot(freq['Exeedance'], freq['ValuesSim'], 'tab:blue', label='Sim')
+    plt.plot(freq['Exceedance'], freq['ValuesObs'], 'tab:grey', label='Obs')
+    plt.plot(freq['Exceedance'], freq['ValuesSim'], 'tab:blue', label='Sim')
     plt.ylim((vmin, 1.2 * vmax))
     if log:
         plt.yscale('log')
@@ -129,9 +129,9 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     # plot of CFC Erros
     plt.subplot(gs[2, 0:2])
     plt.title('CFC Error', loc='left')
-    plt.plot(freq['Exeedance'], freq['E'], 'tab:red')
+    plt.plot(freq['Exceedance'], freq['E'], 'tab:red')
     plt.ylabel(units)
-    plt.xlabel('Exeed. %')
+    plt.xlabel('Exceed. %')
     plt.grid(True)
     #
     # plot Error
@@ -144,8 +144,8 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     # plot
     plt.subplot(gs[3, 0:2])
     plt.title('CFC - Squared Error', loc='left')
-    plt.plot(freq['Exeedance'], freq['SE'], 'tab:red')
-    plt.xlabel('Exeed. %')
+    plt.plot(freq['Exceedance'], freq['SE'], 'tab:red')
+    plt.xlabel('Exceed. %')
     plt.grid(True)
     #
     # plot
@@ -175,8 +175,8 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
         # plot
         plt.subplot(gs[4, 0:2])
         plt.title('CFC - Sq. Error of Log', loc='left')
-        plt.plot(freq['Exeedance'], freq['SElog'], 'tab:red')
-        plt.xlabel('Exeed. %')
+        plt.plot(freq['Exceedance'], freq['SElog'], 'tab:red')
+        plt.xlabel('Exceed. %')
         plt.grid(True)
         # plot
         plt.subplot(gs[4, 3:10])
@@ -241,8 +241,8 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     # plot of CFCs
     plt.subplot(gs[0:2, 0:2])
     plt.title('CFCs - Full', loc='left')
-    plt.plot(freq_full['Exeedance'], freq_full['ValuesObs'], 'tab:grey', label='Obs.')
-    plt.plot(freq_full['Exeedance'], freq_full['ValuesSim'], 'blue', label='Sim.')
+    plt.plot(freq_full['Exceedance'], freq_full['ValuesObs'], 'tab:grey', label='Obs.')
+    plt.plot(freq_full['Exceedance'], freq_full['ValuesSim'], 'blue', label='Sim.')
     plt.ylim((vmin, 1.2 * vmax))
     if log:
         plt.yscale('log')
@@ -284,9 +284,9 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     # plot of CFC Erros
     plt.subplot(gs[2, 0:2])
     plt.title('CFC Error', loc='left')
-    plt.plot(freq_full['Exeedance'], freq_full['E'], 'tab:red')
+    plt.plot(freq_full['Exceedance'], freq_full['E'], 'tab:red')
     plt.ylabel(units)
-    plt.xlabel('Exeed. %')
+    plt.xlabel('Exceed. %')
     plt.grid(True)
     #
     # plot Error
@@ -300,8 +300,8 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     # plot
     plt.subplot(gs[3, 0:2])
     plt.title('CFC - Squared Error', loc='left')
-    plt.plot(freq_full['Exeedance'], freq_full['SE'], 'tab:red')
-    plt.xlabel('Exeed. %')
+    plt.plot(freq_full['Exceedance'], freq_full['SE'], 'tab:red')
+    plt.xlabel('Exceed. %')
     plt.grid(True)
     #
     # plot
@@ -340,8 +340,8 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
         # plot
         plt.subplot(gs[4, 0:2])
         plt.title('CFC - Sq. Error of Log', loc='left')
-        plt.plot(freq_full['Exeedance'], freq_full['SElog'], 'tab:red')
-        plt.xlabel('Exeed. %')
+        plt.plot(freq_full['Exceedance'], freq_full['SElog'], 'tab:red')
+        plt.xlabel('Exceed. %')
         plt.grid(True)
         # plot
         plt.subplot(gs[4, 3:10])
