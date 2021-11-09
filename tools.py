@@ -528,7 +528,7 @@ def map_slope(fdem, folder='C:/bin', filename='slope'):
 
 def map_c_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
     """
-    Map the USLE-M C factor
+    Map the USLE C factor
     :param flulc: string filepath to lulc asc raster map
     :param flulcparam: string filepath to lulc parameter csv dataframe
     :param folder: string path to output folder
@@ -552,7 +552,7 @@ def map_c_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
     return export_file
 
 
-def map_p_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
+def map_p_usle(flulc, flulcparam, folder='C:/bin', filename='p_usle'):
     """
     Map the USLE P factor
     :param flulc: string filepath to lulc asc raster map
@@ -571,14 +571,14 @@ def map_p_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
     # process data
     p_usle = geo.reclassify(array=lulc, upvalues=lulc_df['IdLULC'].values, classes=lulc_df['P_USLE'].values)
     # export
-    export_file = out.asc_raster(c_usle, meta, folder, filename)
+    export_file = out.asc_raster(p_usle, meta, folder, filename)
     ranges = (np.min(lulc_df['P_USLE']), np.max(lulc_df['P_USLE']))
     plot_map_view(p_usle, meta, ranges, mapid='p_usle', mapttl='USLE P factor', filename=filename, folder=folder,
                   metadata=True, show=False)
     return export_file
 
 
-def map_k_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
+def map_k_usle(fsoils, fsoilsparam, folder='C:/bin', filename='k_usle'):
     """
     Map the USLE K factor
     :param flulc: string filepath to lulc asc raster map
@@ -590,16 +590,104 @@ def map_k_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
     from backend import get_stringfields
     from visuals import plot_map_view
     # import data
-    meta, lulc = inp.asc_raster(flulc)
+    meta, soils = inp.asc_raster(fsoils)
     # extract dataframe
-    lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_df = dataframe_prepro(lulc_df, strfields=get_stringfields(flulcparam.split('/')[-1]))
+    soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
+    soils_df = dataframe_prepro(soils_df, strfields=get_stringfields(fsoilsparam.split('/')[-1]))
     # process data
-    p_usle = geo.reclassify(array=lulc, upvalues=lulc_df['IdLULC'].values, classes=lulc_df['P_USLE'].values)
+    k_usle = geo.reclassify(array=soils, upvalues=soils_df['IdSoil'].values, classes=soils_df['K_USLE'].values)
     # export
-    export_file = out.asc_raster(c_usle, meta, folder, filename)
-    ranges = (np.min(lulc_df['P_USLE']), np.max(lulc_df['P_USLE']))
-    plot_map_view(p_usle, meta, ranges, mapid='p_usle', mapttl='USLE P factor', filename=filename, folder=folder,
+    export_file = out.asc_raster(k_usle, meta, folder, filename)
+    ranges = (np.min(soils_df['K_USLE']), np.max(soils_df['K_USLE']))
+    plot_map_view(k_usle, meta, ranges, mapid='k_usle', mapttl='USLE K factor', filename=filename, folder=folder,
+                  metadata=True, show=False)
+    return export_file
+
+
+def map_s_rusle(fslope, folder='C:/bin', filename='s_rusle'):
+    """
+    Map the S RUSLE factor (McCool et al. 1987; USDA, 1997)
+
+    S = 10.8 sinθ + 0.03     sinθ < 0.09
+    S = 16.8 sinθ - 0.5      sinθ >= 0.09
+
+    :param fslope: string filepath to slope asc raster (angle in degrees)
+    :param folder: string path to output folder
+    :param filename: string file name (no extension)
+    :return: string filepath to output file
+    """
+    from visuals import plot_map_view
+    # import
+    meta, slp = inp.asc_raster(fslope, dtype='float32')
+    # process
+    s_rusle = geo.rusle_s(slope=slp)
+    # export
+    export_file = out.asc_raster(s_rusle, meta, folder, filename)
+    ranges = (np.min(s_rusle), np.max(s_rusle))
+    plot_map_view(s_rusle, meta, ranges, mapid='s_rusle', mapttl='RUSLE S factor', filename=filename, folder=folder,
+                  metadata=True, show=False)
+    return export_file
+
+
+def map_l_rusle(fslope, folder='C:/bin', filename='l_rusle'):
+    """
+    RUSLE L Factor (McCool et al. 1989; USDA, 1997)
+
+    L = (x / 22.13) ^ m
+
+    where:
+    m = β / (1 + β)
+    and:
+    β = (sinθ ⁄ 0.0896) ⁄ (3.0⋅(sinθ)^0.8 + 0.56)
+
+    x is the plot lenght taken as 1.4142 * cellsize  (diagonal length of cell)
+
+    :param fslope: string filepath to slope asc raster (angle in degrees)
+    :param folder: string path to output folder
+    :param filename: string file name (no extension)
+    :return: string filepath to output file
+    """
+    from visuals import plot_map_view
+    # import
+    meta, slp = inp.asc_raster(fslope, dtype='float32')
+    # process
+    l_rusle = geo.rusle_l(slope=slp, cellsize=meta['cellsize'])
+    # export
+    export_file = out.asc_raster(l_rusle, meta, folder, filename)
+    ranges = (np.min(l_rusle), np.max(l_rusle))
+    plot_map_view(l_rusle, meta, ranges, mapid='l_rusle', mapttl='RUSLE L factor', filename=filename, folder=folder,
+                  metadata=True, show=False)
+    return export_file
+
+def map_a_usle_m(f_runoff, f_k_usle, f_l_rusle, f_s_rusle, f_c_usle, f_p_usle,
+                 erosivity=8000,
+                 annual_p=1900,
+                 cum_cusle_factor=1.5,
+                 folder='C:/bin',
+                 filename='a_usle_m'):
+    from visuals import plot_map_view
+    # import rasters
+    meta, _r = inp.asc_raster(f_runoff, dtype='float32')
+    meta, _k = inp.asc_raster(f_k_usle, dtype='float32')
+    meta, _l = inp.asc_raster(f_l_rusle, dtype='float32')
+    meta, _s = inp.asc_raster(f_s_rusle, dtype='float32')
+    meta, _c = inp.asc_raster(f_c_usle, dtype='float32')
+    meta, _p = inp.asc_raster(f_p_usle, dtype='float32')
+    #
+    # compute a
+    _a = geo.usle_m_a(q=_r,
+                      prec=annual_p,
+                      r=erosivity,
+                      k=_k,
+                      l=_l,
+                      s=_s,
+                      c=_c * cum_cusle_factor,
+                      p=_p,
+                      cellsize=meta['cellsize'])
+    # export
+    export_file = out.asc_raster(_a, meta, folder, filename)
+    ranges = (np.min(_a), np.max(_a))
+    plot_map_view(_a, meta, ranges, mapid='a_usle_m', mapttl='Annual Soil Loss USLE-M', filename=filename, folder=folder,
                   metadata=True, show=False)
     return export_file
 

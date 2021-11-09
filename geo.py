@@ -1099,6 +1099,26 @@ def usle_s(slope):
     return (65.41 * np.power(lcl_grad, 2)) + (4.56 * lcl_grad) + 0.065
 
 
+def usle_m_a(q, prec, r, k, l, s, c, p, cellsize=30):
+    """
+
+    USLE-M Annual Soil Loss (Kinnell & Risse, 1998)
+
+    :param q: 2d numpy array of annual runoff in mm / year
+    :param prec: 2d numpy array or float of annual precipitation in mm / year
+    :param r: 2d numpy array or float of rain erosivity in MJ mm h-1 ha-1 year-1
+    :param k: 2d numpy array or float of erodibility K factor in ton h MJ-1 mm-1
+    :param l: 2d numpy array or float of USLE/RUSLE L factor
+    :param s: 2d numpy array or float of USLE/RUSLE S factor
+    :param c: 2d numpy array or float of C_UM factor
+    :param p: 2d numpy array or float of USLE/RUSLE P factor
+    :param cellsize: float of grid cell size in meters
+    :return: 2d numpy array of Annual Soil Loss in ton / year
+    """
+    return (q / prec) * r * k * l * s * c * p * (cellsize * cellsize / (100 * 100))
+
+
+
 def write_wkt_points(x_long, y_lat):
     """
     Writes on a tuple Points WKT geometry strings
