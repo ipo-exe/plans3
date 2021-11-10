@@ -756,6 +756,45 @@ def grad(slope):
     return grad
 
 
+def local_load(avg_load, proxy, aoi):
+    """
+    compute a local load map for a loading variable
+
+    :param avg_load: float average load
+    :param proxy: 2d numpy array of proxy map
+    :param aoi: 2d numpy array of AOI (pseudo-boolean of 0 and 1)
+    :return: local load map
+    """
+    # mean inside aoi
+    _mean_proxy = np.sum(proxy * aoi) / np.sum(aoi)
+    # if no process occurs, load is zero
+    if _mean_proxy == 0:
+        avg_load = 0
+        _mean_proxy = 1
+    # weights
+    _weights = proxy * aoi / _mean_proxy
+    return avg_load * _weights
+
+
+def local_loads(loads, zones_ids, zones, proxy):
+    """
+    Compute the local loads considering average loads per zone type and a proxy map
+    :param loads: 1d numpy array of average loads per zones
+    :param zones_ids: 1d numpy array of zones ids values
+    :param zones: 2d numpy array of zones map
+    :param proxy: 2d numpy array proxy map
+    :return:
+    """
+    import matplotlib.pyplot as plt
+    # deploy a new array:
+    _loads = np.zeros(shape=np.shape(proxy))
+    for i in range(len(zones_ids)):
+        _lcl_aoi = 1.0 * (zones == zones_ids[i])
+        _lcl_local_load = local_load(avg_load=loads[i], proxy=proxy, aoi=_lcl_aoi)
+        _loads = _loads + _lcl_local_load
+    return _loads
+
+
 def mask(array, mask):
     """
     utility function for masking an array
@@ -1116,7 +1155,6 @@ def usle_m_a(q, prec, r, k, l, s, c, p, cellsize=30):
     :return: 2d numpy array of Annual Soil Loss in ton / year
     """
     return (q / prec) * r * k * l * s * c * p * (cellsize * cellsize / (100 * 100))
-
 
 
 def write_wkt_points(x_long, y_lat):

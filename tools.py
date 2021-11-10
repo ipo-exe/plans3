@@ -448,22 +448,20 @@ def map_shru(flulc, flulcparam, fsoils, fsoilsparam, fshruparam, folder='C:/bin'
     :return: string file path
     """
     from visuals import plot_shrumap_view
-    from backend import get_stringfields
-
     #
     # import data
     metalulc, lulc = inp.asc_raster(flulc)
     #print(np.shape(lulc))
     metasoils, soils = inp.asc_raster(fsoils)
-    #print(np.shape(soils))
-    lulc_param_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_param_df = dataframe_prepro(lulc_param_df, get_stringfields(flulcparam.split('/')[-1]))
-    soils_param_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_param_df = dataframe_prepro(soils_param_df, get_stringfields(fsoilsparam.split('/')[-1]))
+    # LULC
+    lulc_param_df = inp.lulcparam(flulcparam)
+    # Soils
+    soils_param_df = inp.soilsparam(fsoilsparam)
+    #
     lulc_ids = lulc_param_df['IdLULC'].values
     soils_ids = soils_param_df['IdSoil'].values
-    shru_df = pd.read_csv(fshruparam, sep=';')
-    shru_df = dataframe_prepro(shru_df, get_stringfields(fshruparam.split('/')[-1]))
+    # SHRU
+    shru_df = inp.shruparam(fshruparam)
     #
     # process data
     shru_map = geo.xmap(map1=lulc, map2=soils, map1ids=lulc_ids, map2ids=soils_ids, map1f=100, map2f=1)
@@ -493,8 +491,7 @@ def map_fto(fsoils, fsoilsparam, folder='C:/bin', filename='fto'):
     from visuals import plot_map_view
     # import data
     meta, soils = inp.asc_raster(fsoils)
-    soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_df = dataframe_prepro(soils_df, strfields='SoilName,ColorSoil')
+    soils_df = inp.soilsparam(fsoilsparam)
     # process data
     fto = geo.reclassify(soils, upvalues=soils_df['IdSoil'].values, classes=soils_df['f_To'].values)
     #plt.imshow(fto)
@@ -535,13 +532,11 @@ def map_c_usle(flulc, flulcparam, folder='C:/bin', filename='c_usle'):
     :param filename: string file name (no extension)
     :return: string filepath to output file
     """
-    from backend import get_stringfields
     from visuals import plot_map_view
     # import data
     meta, lulc = inp.asc_raster(flulc)
     # extract dataframe
-    lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_df = dataframe_prepro(lulc_df, strfields=get_stringfields(flulcparam.split('/')[-1]))
+    lulc_df = inp.lulcparam(flulcparam)
     # process data
     c_usle = geo.reclassify(array=lulc, upvalues=lulc_df['IdLULC'].values, classes=lulc_df['C_USLE'].values)
     # export
@@ -561,13 +556,11 @@ def map_p_usle(flulc, flulcparam, folder='C:/bin', filename='p_usle'):
     :param filename: string file name (no extension)
     :return: string filepath to output file
     """
-    from backend import get_stringfields
     from visuals import plot_map_view
     # import data
     meta, lulc = inp.asc_raster(flulc)
     # extract dataframe
-    lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_df = dataframe_prepro(lulc_df, strfields=get_stringfields(flulcparam.split('/')[-1]))
+    lulc_df = inp.lulcparam(flulcparam)
     # process data
     p_usle = geo.reclassify(array=lulc, upvalues=lulc_df['IdLULC'].values, classes=lulc_df['P_USLE'].values)
     # export
@@ -587,13 +580,11 @@ def map_k_usle(fsoils, fsoilsparam, folder='C:/bin', filename='k_usle'):
     :param filename: string file name (no extension)
     :return: string filepath to output file
     """
-    from backend import get_stringfields
     from visuals import plot_map_view
     # import data
     meta, soils = inp.asc_raster(fsoils)
     # extract dataframe
-    soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_df = dataframe_prepro(soils_df, strfields=get_stringfields(fsoilsparam.split('/')[-1]))
+    soils_df = inp.soilsparam(fsoilsparam)
     # process data
     k_usle = geo.reclassify(array=soils, upvalues=soils_df['IdSoil'].values, classes=soils_df['K_USLE'].values)
     # export
@@ -655,24 +646,48 @@ def map_l_rusle(fslope, folder='C:/bin', filename='l_rusle'):
     # export
     export_file = out.asc_raster(l_rusle, meta, folder, filename)
     ranges = (np.min(l_rusle), np.max(l_rusle))
-    plot_map_view(l_rusle, meta, ranges, mapid='l_rusle', mapttl='RUSLE L factor', filename=filename, folder=folder,
-                  metadata=True, show=False)
+    plot_map_view(l_rusle, meta, ranges,
+                  mapid='l_rusle',
+                  mapttl='RUSLE L factor',
+                  filename=filename,
+                  folder=folder,
+                  metadata=True,
+                  show=False)
     return export_file
 
-def map_a_usle_m(f_runoff, f_k_usle, f_l_rusle, f_s_rusle, f_c_usle, f_p_usle,
-                 erosivity=8000,
+
+def map_a_usle_m(fmap_r, fmap_k_usle, fmap_l_rusle, fmap_s_rusle, fmap_c_usle, fmap_p_usle,
+                 erosivity=6000,
                  annual_p=1900,
                  cum_cusle_factor=1.5,
                  folder='C:/bin',
-                 filename='a_usle_m'):
+                 filename='a_usle_m',
+                 view=True):
+    """
+    Annual Soil Loss of USLE-M model (Kinnell and Risse, 1998)
+
+    :param fmap_r: string filepath to annual runoff .asc raster map
+    :param fmap_k_usle: string filepath to annual runoff .asc raster map
+    :param fmap_l_rusle: string filepath to annual runoff .asc raster map
+    :param fmap_s_rusle: string filepath to annual runoff .asc raster map
+    :param fmap_c_usle: string filepath to annual runoff .asc raster map
+    :param fmap_p_usle: string filepath to annual runoff .asc raster map
+    :param erosivity: float of annual rain erosivity in MJ mm h-1 ha-1 year-1
+    :param annual_p: float of annual precipitation in mm
+    :param cum_cusle_factor: float of C_um/C_usle correction factor
+    :param folder: string filepath to output folder
+    :param filename: string filename
+    :param view: boolean to plot view
+    :return:
+    """
     from visuals import plot_map_view
     # import rasters
-    meta, _r = inp.asc_raster(f_runoff, dtype='float32')
-    meta, _k = inp.asc_raster(f_k_usle, dtype='float32')
-    meta, _l = inp.asc_raster(f_l_rusle, dtype='float32')
-    meta, _s = inp.asc_raster(f_s_rusle, dtype='float32')
-    meta, _c = inp.asc_raster(f_c_usle, dtype='float32')
-    meta, _p = inp.asc_raster(f_p_usle, dtype='float32')
+    meta, _r = inp.asc_raster(fmap_r, dtype='float32')
+    meta, _k = inp.asc_raster(fmap_k_usle, dtype='float32')
+    meta, _l = inp.asc_raster(fmap_l_rusle, dtype='float32')
+    meta, _s = inp.asc_raster(fmap_s_rusle, dtype='float32')
+    meta, _c = inp.asc_raster(fmap_c_usle, dtype='float32')
+    meta, _p = inp.asc_raster(fmap_p_usle, dtype='float32')
     #
     # compute a
     _a = geo.usle_m_a(q=_r,
@@ -686,9 +701,111 @@ def map_a_usle_m(f_runoff, f_k_usle, f_l_rusle, f_s_rusle, f_c_usle, f_p_usle,
                       cellsize=meta['cellsize'])
     # export
     export_file = out.asc_raster(_a, meta, folder, filename)
-    ranges = (np.min(_a), np.max(_a))
-    plot_map_view(_a, meta, ranges, mapid='a_usle_m', mapttl='Annual Soil Loss USLE-M', filename=filename, folder=folder,
-                  metadata=True, show=False)
+    if view:
+        ranges = (np.min(_a), np.max(_a))
+        plot_map_view(_a, meta, ranges,
+                      mapid='a_usle_m',
+                      mapttl='Annual Soil Loss USLE-M',
+                      filename=filename,
+                      folder=folder,
+                      metadata=True,
+                      show=False)
+    return export_file
+
+
+def map_n_load(flulc, fmap_proxy, flulcparam, folder='C:/bin', filename='n_load', view=True):
+    """
+    Map the Nitrogen load in kg-N / year
+    :param flulc: string filepath to asc raster map of LULC
+    :param fmap_proxy: string file path to asc raster map of proxy process
+    :param flulcparam: string file path to txt csv dataframe of LULC parameters
+    :param folder: string folder path to output folder
+    :param filename: string filename
+    :param view: boolean to plot
+    :return: string file path of output folder
+    """
+    from visuals import plot_map_view
+    #
+    # import data
+    meta, lulc = inp.asc_raster(flulc)
+    meta, proxy = inp.asc_raster(fmap_proxy, dtype='float32')
+    #
+    # extract dataframe
+    lulc_df = inp.lulcparam(flulcparam)
+    # get values
+    zones_ids = lulc_df['IdLULC'].values
+    loads_lst = lulc_df['N_load'].values
+    #
+    # compute the load per cell in kg / year
+    cell_loads = loads_lst * (meta['cellsize'] * meta['cellsize'] / (100 * 100))
+    #
+    # process
+    _n_load_map = geo.local_loads(loads=cell_loads,
+                                  zones_ids=zones_ids,
+                                  zones=lulc,
+                                  proxy=proxy)
+    #
+    # export
+    export_file = out.asc_raster(_n_load_map, meta, folder, filename)
+    #
+    # plot
+    if view:
+        ranges = (np.min(_n_load_map), np.max(_n_load_map))
+        plot_map_view(_n_load_map, meta, ranges,
+                      mapid='n_load',
+                      mapttl='Annual nitrogen load',
+                      filename=filename,
+                      folder=folder,
+                      metadata=True,
+                      show=False)
+    return export_file
+
+
+def map_p_load(flulc, fmap_proxy, flulcparam, folder='C:/bin', filename='p_load', view=True):
+    """
+    Map the Phosphorous load in kg-P / year
+    :param flulc: string filepath to asc raster map of LULC
+    :param fmap_proxy: string file path to asc raster map of proxy process
+    :param flulcparam: string file path to txt csv dataframe of LULC parameters
+    :param folder: string folder path to output folder
+    :param filename: string filename
+    :param view: boolean to plot
+    :return: string file path of output folder
+    """
+    from visuals import plot_map_view
+    #
+    # import data
+    meta, lulc = inp.asc_raster(flulc)
+    meta, proxy = inp.asc_raster(fmap_proxy, dtype='float32')
+    #
+    # extract dataframe
+    lulc_df = inp.lulcparam(flulcparam)
+    # get values
+    zones_ids = lulc_df['IdLULC'].values
+    loads_lst = lulc_df['P_load'].values
+    #
+    # compute the load per cell in kg / year
+    cell_loads = loads_lst * (meta['cellsize'] * meta['cellsize'] / (100 * 100))
+    #
+    # process
+    _p_load_map = geo.local_loads(loads=cell_loads,
+                                  zones_ids=zones_ids,
+                                  zones=lulc,
+                                  proxy=proxy)
+    #
+    # export
+    export_file = out.asc_raster(_p_load_map, meta, folder, filename)
+    #
+    # plot
+    if view:
+        ranges = (np.min(_p_load_map), np.max(_p_load_map))
+        plot_map_view(_p_load_map, meta, ranges,
+                      mapid='p_load',
+                      mapttl='Annual phosphorous load',
+                      filename=filename,
+                      folder=folder,
+                      metadata=True,
+                      show=False)
     return export_file
 
 
@@ -856,8 +973,7 @@ def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder
         init = time.time()
         from tui import status
         status('loading SHRU parameters')
-    shru_df = pd.read_csv(fshruparam, sep=';')
-    shru_df = dataframe_prepro(shru_df, 'SHRUName,LULCName,SoilName')
+    shru_df = inp.shruparam(fshruparam)
     shrubins = shru_df['IdSHRU'].values
     #
     # import shru raster
@@ -1212,14 +1328,9 @@ def get_shru_param(flulcparam, fsoilsparam, folder='C:/bin', filename='shru_para
     :param filename: string file name
     :return: string file path to output file
     """
-    from backend import get_stringfields
     # extract data
-    lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
-    lulc_df = dataframe_prepro(lulc_df, strfields=get_stringfields(flulcparam.split('/')[-1]))
-    #print(lulc_df.to_string())
-    soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
-    soils_df = dataframe_prepro(soils_df, strfields=get_stringfields(fsoilsparam.split('/')[-1]))
-    #print(soils_df.to_string())
+    lulc_df = inp.lulcparam(flulcparam)
+    soils_df = inp.soilsparam(fsoilsparam)
     lulc_ids = lulc_df['IdLULC'].values
     soils_ids = soils_df['IdSoil'].values
     #
@@ -1274,9 +1385,7 @@ def canopy_series(fseries, fshruparam, folder='C:/bin', filename='canopy_season'
     season_df = dataframe_prepro(season_df, strf=False, date=True)
     season_df = season_df[['Date']]
     # import parameters
-    shru_df = pd.read_csv(fshruparam, sep=';')
-    aux_str = get_stringfields(fshruparam.split('/')[-1])
-    shru_df = dataframe_prepro(shru_df, aux_str)
+    shru_df = inp.shruparam(fshruparam)
     # insert month field in
     season_df['Month'] = season_df['Date'].dt.month_name(locale='English').str.slice(stop=3)
     #
@@ -1414,7 +1523,12 @@ def sdiag(fseries, filename='sim_diagnostics', folder='C:/bin', tui=False):
     return exp_file
 
 
-def qualmap_analyst(fmap, fparams, faoi='full', type='lulc', folder='C:/bin', wkpl=False, label=''):
+def qualmap_analyst(fmap, fparams,
+                    faoi='full',
+                    type='lulc',
+                    folder='C:/bin',
+                    wkpl=False,
+                    label=''):
     """
     Analyst of qualitative maps.
     :param fmap: string file path to raster map .asc file
@@ -2086,7 +2200,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     from inp import zmap
     from hydrology import simulation, map_back
     from visuals import pannel_global
-    from backend import create_rundir, get_stringfields, get_mapid
+    from backend import create_rundir, get_mapid
     #
     # Run Folder setup
     if wkpl:  # if the passed folder is a workplace, create a sub folder within it
@@ -2153,8 +2267,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     # Shru parameters
     if tui:
         status('loading SHRU parameters')
-    shru_df = pd.read_csv(fshruparam, sep=';')
-    shru_df = dataframe_prepro(shru_df, get_stringfields(fshruparam.split('/')[-1]))
+    shru_df = inp.shruparam(fshruparam)
     #
     # canopy series pattern
     if tui:
@@ -2743,7 +2856,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     from inp import histograms
     from hydrology import avg_2d, simulation, map_back, calibration
     from visuals import pannel_global
-    from backend import create_rundir, get_stringfields
+    from backend import create_rundir
     import time
     from os import mkdir
 
@@ -2836,9 +2949,7 @@ def calibrate(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin
     # SHRU param
     if tui:
         status('loading SHRU parameters')
-    shru_df = pd.read_csv(fshruparam, sep=';')
-    #aux_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
-    shru_df = dataframe_prepro(shru_df, get_stringfields(fshruparam.split('/')[-1]))
+    shru_df = inp.shruparam(fshruparam)
     #
     # canopy series pattern
     if tui:
@@ -3117,8 +3228,7 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     #
     if tui:
         status('loading SHRU parameters')
-    shru_df = pd.read_csv(fshruparam, sep=';')
-    shru_df = dataframe_prepro(shru_df, get_stringfields(fshruparam.split('/')[-1]))
+    shru_df = inp.shruparam(fshruparam)
     #
     # extract countmatrix (full map extension)
     if tui:
@@ -3307,6 +3417,108 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     #
     #
     return 666
+
+
+def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
+         aero=6000,
+         label='',
+         wkpl=False,
+         tui=False,
+         log=True,
+         nutrients=True,
+         folder='C:/bin',
+         zero=0.00001):
+    """
+
+    ANNUAL SOIL LOSS ASSESSMENT using USLE-M (Kinnel and Risse, 1998)
+
+    :param fmap_r: string filepath to asc raster map of annual runoff
+    :param fslope: string filepath to asc raster map of slope
+    :param flulc: string filepath to asc raster map of LULC
+    :param fsoils: string filepath to asc raster map of Soils
+    :param flulcparam: string filepath to txt csv file LULC param
+    :param fsoilsparam: string filepath to txt csv file Soils param
+    :param fseries: string filepath to txt csv file Series (must have 'Prec' field in mm)
+    :param aero: float of annual erosivity in MJ mm h-1 ha-1 year-1
+    :param label: string label to workplace
+    :param wkpl: boolean to set folder as workplace
+    :param tui: boolean to display
+    :param folder: string filepath to output folder
+    :return: none
+    """
+    if tui:
+        from tui import status
+        status('setting folders')
+    # folder setup
+    if wkpl:  # if the passed folder is a workplace, create a sub folder
+        from backend import create_rundir
+        if label != '':
+            label = label + '_'
+        folder = create_rundir(label=label + 'ASLA', wkplc=folder)
+    #
+    # compute USLE/RUSLE maps
+    if tui:
+        status('computing USLE K map')
+    fmap_k = map_k_usle(fsoils=fsoils, fsoilsparam=fsoilsparam, folder=folder)
+    if tui:
+        status('computing RUSLE L map')
+    fmap_l = map_l_rusle(fslope=fslope, folder=folder)
+    if tui:
+        status('computing RUSLE S map')
+    fmap_s = map_s_rusle(fslope=fslope, folder=folder)
+    if tui:
+        status('computing USLE C map')
+    fmap_c = map_c_usle(flulc=flulc, flulcparam=flulcparam, folder=folder)
+    if tui:
+        status('computing USLE P map')
+    fmap_p = map_p_usle(flulc=flulc, flulcparam=flulcparam, folder=folder)
+    #
+    # compute annual precipitation in mm
+    if tui:
+        status('computing annual precipitation')
+    series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    annual_prec = series_df['Prec'].sum() / (len(series_df) / 365)
+    #
+    # compute annual soil loss
+    if tui:
+        status('computing USLE-M Annual Soil Loss')
+    fmap_asl = map_a_usle_m(fmap_r=fmap_r,
+                            fmap_k_usle=fmap_k,
+                            fmap_l_rusle=fmap_l,
+                            fmap_s_rusle=fmap_s,
+                            fmap_c_usle=fmap_c,
+                            fmap_p_usle=fmap_p,
+                            erosivity=aero,
+                            annual_p=annual_prec,
+                            cum_cusle_factor=1.5,
+                            folder=folder)
+    if log:
+        if tui:
+            status('computing log10 of USLE-M Annual Soil Loss')
+        # import
+        meta, asl = inp.asc_raster(fmap_asl, dtype='float32')
+        # process
+        asl_log10 = np.log10(asl + zero)
+        # export
+        filename = 'a_usle_m_log'
+        fmap_asllog = out.asc_raster(asl_log10, meta, folder, filename=filename)
+        # plot
+        from visuals import plot_map_view
+        ranges = (-3, np.max(asl_log10))
+        plot_map_view(asl_log10, meta, ranges,
+                      mapid='a_usle_m',
+                      mapttl='log10 of Annual Soil Loss USLE-M',
+                      filename=filename,
+                      folder=folder,
+                      metadata=True,
+                      show=False)
+    if nutrients:
+        if tui:
+            status('computing Annual Nitrogen Load')
+        map_n_load(flulc=flulc, fmap_proxy=fmap_asl, flulcparam=flulcparam, folder=folder)
+        if tui:
+            status('computing Annual Phosphorous Load')
+        map_p_load(flulc=flulc, fmap_proxy=fmap_asl, flulcparam=flulcparam, folder=folder)
 
 
 def sal_d_by_twi(ftwi1, ftwi2, m=10, dmax=100, size=100, label='', wkpl=False, folder='C:/bin'):

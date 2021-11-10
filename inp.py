@@ -165,3 +165,39 @@ def histograms(fhistograms):
     twi_bins = dataframe.index.values
     count_matrix = dataframe.values
     return count_matrix, twi_bins, shru_ids
+
+
+def lulcparam(flulcparam):
+    """
+    Import the lulc parameters dataframe
+    :param flulcparam: string filepath
+    :return: pandas dataframe
+    """
+    from backend import get_stringfields
+    _lulc_df = pd.read_csv(flulcparam, sep=';', engine='python')
+    _lulc_df = dataframe_prepro(_lulc_df, strfields=get_stringfields(filename='lulc'))
+    return _lulc_df
+
+
+def soilsparam(fsoilsparam):
+    """
+    Import the soils parameters dataframe
+    :param flulcparam: string filepath
+    :return: pandas dataframe
+    """
+    from backend import get_stringfields
+    _soils_df = pd.read_csv(fsoilsparam, sep=';', engine='python')
+    _soils_df = dataframe_prepro(_soils_df, strfields=get_stringfields(filename='soils'))
+    return _soils_df
+
+
+def shruparam(fshruparam):
+    """
+    Import the SHRU parameters dataframe
+    :param flulcparam: string filepath
+    :return: pandas dataframe
+    """
+    from backend import get_stringfields
+    _shru_df = pd.read_csv(fshruparam, sep=';', engine='python')
+    _shru_df = dataframe_prepro(_shru_df, strfields=get_stringfields(filename='shru'))
+    return _shru_df

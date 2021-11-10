@@ -662,11 +662,11 @@ def get_stringfields(filename):
     :return: string of string fields
     """
     def_str = ''
-    if filename == 'calib_shru_param.txt' or filename == 'aoi_shru_param.txt':
+    if filename == 'calib_shru_param.txt' or filename == 'aoi_shru_param.txt' or filename == 'shru':
         def_str = 'SHRUName,SHRUAlias,LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC,SoilName,SoilAlias,ColorSoil'
-    elif filename == 'calib_soils_param.txt' or filename =='aoi_soils_param.txt':
+    elif filename == 'calib_soils_param.txt' or filename =='aoi_soils_param.txt' or filename == 'soils':
         def_str = 'SoilName,SoilAlias,ColorSoil'
-    elif filename == 'calib_lulc_param.txt' or filename =='aoi_lulc_param.txt':
+    elif filename == 'calib_lulc_param.txt' or filename =='aoi_lulc_param.txt' or filename == 'lulc':
         def_str = 'LULCName,LULCAlias,CanopySeason,ConvertTo,ColorLULC'
     return def_str
 
