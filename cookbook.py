@@ -312,12 +312,13 @@ def demo_asla(pre=True):
     from tools import asla
     if pre:
         frunoff = r"C:/000_myFiles/myDrive/myProjects/104_paper_castelhano/produtos/pre/avg_R_annual.asc"
-        flulc = r"C:\000_myFiles\myDrive\Plans3\pardinho\datasets\projected\scn__lulc_predc\aoi_lulc_predc.asc"
+        flulc = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/projected/scn__lulc_predc/aoi_lulc_predc.asc"
         label = 'E6000_pre'
     else:
         frunoff = r"C:/000_myFiles/myDrive/myProjects/104_paper_castelhano/produtos/pos/avg_R_annual.asc"
         flulc = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_lulc.asc"
         label = 'E6000_pos'
+    #
     fseries = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_series.txt"
     flulc_param = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_lulc_param.txt"
     fslope = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_slope.asc"

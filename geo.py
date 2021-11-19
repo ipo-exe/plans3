@@ -760,20 +760,22 @@ def local_load(avg_load, proxy, aoi):
     """
     compute a local load map for a loading variable
 
+    load_i = avg_load * proxy_i / avg_proxy
+
     :param avg_load: float average load
     :param proxy: 2d numpy array of proxy map
     :param aoi: 2d numpy array of AOI (pseudo-boolean of 0 and 1)
     :return: local load map
     """
-    # mean inside aoi
-    _mean_proxy = np.sum(proxy * aoi) / np.sum(aoi)
+    # average inside aoi
+    _avg_proxy = np.sum(proxy * aoi) / np.sum(aoi)
     # if no process occurs, load is zero
-    if _mean_proxy == 0:
+    if _avg_proxy == 0:
         avg_load = 0
-        _mean_proxy = 1
+        _avg_proxy = 1
     # weights
-    _weights = proxy * aoi / _mean_proxy
-    return avg_load * _weights
+    _weights = proxy / _avg_proxy
+    return avg_load * _weights * aoi
 
 
 def local_loads(loads, zones_ids, zones, proxy):
@@ -785,12 +787,14 @@ def local_loads(loads, zones_ids, zones, proxy):
     :param proxy: 2d numpy array proxy map
     :return:
     """
-    import matplotlib.pyplot as plt
     # deploy a new array:
     _loads = np.zeros(shape=np.shape(proxy))
     for i in range(len(zones_ids)):
         _lcl_aoi = 1.0 * (zones == zones_ids[i])
-        _lcl_local_load = local_load(avg_load=loads[i], proxy=proxy, aoi=_lcl_aoi)
+        if np.sum(_lcl_aoi) == 0: # zone id not found
+            _lcl_local_load = np.zeros(shape=np.shape(proxy))
+        else:
+            _lcl_local_load = local_load(avg_load=loads[i], proxy=proxy, aoi=_lcl_aoi)
         _loads = _loads + _lcl_local_load
     return _loads
 
