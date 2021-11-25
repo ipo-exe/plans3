@@ -308,6 +308,74 @@ def demo_glue():
                      tui=True)
 
 
+def demo_bat_slh_pre_pos():
+    from tools import bat_slh
+
+    folder = r"C:/bin/pardinho/optimization/000_calib_Hydrology_KGElog_2021-10-27-18-01-16"
+    ftwi = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_twi.asc"
+    fseries = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_series.txt"
+    fshru_param = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_shru_param.txt"
+    fbasin = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_basin.asc"
+    fcanopy = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_canopy_series.txt"
+    fhydrop = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/hydro_param.txt"
+    fmodels = folder + '/generations/selection.txt'
+    #
+    #
+    # pre
+    fshru = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/projected/scn__lulc_predc/aoi_shru.asc"
+    fhists = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/projected/scn__lulc_predc/aoi_histograms.txt"
+    fbasin_hists = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/projected/scn__lulc_predc/aoi_basin_histograms.txt"
+    bat_slh(fmodels=fmodels,
+            fseries=fseries,
+            fhydroparam=fhydrop,
+            fshruparam=fshru_param,
+            fshru=fshru,
+            ftwi=ftwi,
+            fhistograms=fhists,
+            fbasinhists=fbasin_hists,
+            fbasin=fbasin,
+            fcanopy=fcanopy,
+            model_id='Id',
+            wkpl=True,
+            tui=True,
+            mapback=True,
+            mapvar='Qv-R-Tpgw-Inf-RIE-ET',
+            integrate=True,
+            qobs=True,
+            pannel=False,
+            ensemble=True,
+            stats=True,
+            annualize=True,
+            folder='C:/bin/pardinho')
+    #
+    #
+    # pos
+    fshru = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_shru.asc"
+    fhists = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_histograms.txt"
+    fbasin_hists = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_basin_histograms.txt"
+    bat_slh(fmodels=fmodels,
+            fseries=fseries,
+            fhydroparam=fhydrop,
+            fshruparam=fshru_param,
+            fshru=fshru,
+            ftwi=ftwi,
+            fhistograms=fhists,
+            fbasinhists=fbasin_hists,
+            fbasin=fbasin,
+            fcanopy=fcanopy,
+            model_id='Id',
+            wkpl=True,
+            tui=True,
+            mapback=True,
+            mapvar='Qv-R-Tpgw-Inf-RIE-ET',
+            integrate=True,
+            qobs=True,
+            pannel=False,
+            ensemble=True,
+            stats=True,
+            annualize=True,
+            folder='C:/bin/pardinho')
+
 def demo_asla(pre=True):
     from tools import asla
     if pre:

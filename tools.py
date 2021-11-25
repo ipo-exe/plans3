@@ -1972,7 +1972,8 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
             aoi=False,
             pannel=False,
             ensemble=False,
-            averaging=False):
+            stats=False,
+            annualize=False):
     """
 
     Batch of SLH
@@ -2003,7 +2004,8 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
     :param aoi: boolean to consider AOI basin
     :param pannel: boolean to export simulation pannel
     :param ensemble: boolean to export ensemble of models
-    :param averaging: boolean to export average maps (if integration is allowed)
+    :param stats: boolean to export stats maps (if integration is allowed)
+    :param annualize: boolean to annualize stats maps (if stats is allowed)
     :return: none
     """
     import os
@@ -2115,8 +2117,11 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
                           show=False,
                           qobs=lcl_qobs)
     #
-    # averaging across integration
-    if integrate and averaging:
+    # stats across integration
+    if integrate and stats:
+        if annualize:
+            _lcl_series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+            annual_factor = len(_lcl_series_df) / 365
         # compute averages
         if mapvar == 'all':
             mapvars = backend.get_all_lclvars()
@@ -2125,26 +2130,31 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
         # variable loop
         for v in mapvars:
             # models loop
+            _maps = list()
             for i in range(len(lcl_folders)):
                 lcl_file = '{}/integration/raster_integral_{}.asc'.format(lcl_folders[i], v)
                 # import map
                 meta, lcl_map = inp.asc_raster(lcl_file, dtype='float32')
-                # accumulate
-                if i == 0:
-                    acc_map = lcl_map
-                else:
-                    acc_map = acc_map + lcl_map
-            # get average
-            acc_map = acc_map / len(lcl_folders)
-            filename = 'avg_{}'.format(v)
-            print(filename)
-            favg_map = out.asc_raster(acc_map, meta, folder=folder, filename=filename)
-            mapid = get_mapid(v)
-            visuals.plot_map_view(acc_map, meta,
-                                  ranges=[0,  np.max(acc_map)],
-                                  mapid=mapid, mapttl='Average {}'.format(v),
-                                  filename=filename,
-                                  folder=folder)
+                if annualize:
+                    lcl_map = lcl_map / annual_factor
+                _maps.append(lcl_map)
+            # vectorize
+            _maps = np.array(_maps)
+            # get stats dict
+            _stats_dict = geo.local_stats(maps=_maps)
+            # loop in dict keys:
+            for stat in _stats_dict:
+                filename = '{}_{}'.format(stat, v)
+                if annualize:
+                    filename = 'annual_{}_{}'.format(stat, v)
+                print(filename)
+                favg_map = out.asc_raster(acc_map, meta, folder=folder, filename=filename)
+                mapid = get_mapid(v)
+                visuals.plot_map_view(acc_map, meta,
+                                      ranges=[0,  np.max(acc_map)],
+                                      mapid=mapid, mapttl='{} {}'.format(stat, v),
+                                      filename=filename,
+                                      folder=folder)
 
 
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,

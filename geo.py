@@ -799,6 +799,60 @@ def local_loads(loads, zones_ids, zones, proxy):
     return _loads
 
 
+def local_stats(maps, tui=False):
+    """
+    Compute the local stats of a pile of maps
+    :param maps: 3d numpy array with the 2d maps
+    :return: dictionary with the local stats maps (2d numpy arrays)
+    """
+    if tui:
+        size = len(maps) * np.shape(maps[0])[0] * np.shape(maps[0])[1]
+        print('Size: {}'.format(size))
+        _count = 0
+    # declare stats arrays
+    _median = np.zeros(shape=np.shape(maps[0]))
+    _mean = np.zeros(shape=np.shape(maps[0]))
+    _max = np.zeros(shape=np.shape(maps[0]))
+    _min = np.zeros(shape=np.shape(maps[0]))
+    _5th_ptile = np.zeros(shape=np.shape(maps[0]))
+    _50th_ptile = np.zeros(shape=np.shape(maps[0]))
+    _95th_ptile = np.zeros(shape=np.shape(maps[0]))
+    _range_90 = np.zeros(shape=np.shape(maps[0]))
+    _range_minmax = np.zeros(shape=np.shape(maps[0]))
+    # scan the arrays
+    for i in range(len(maps[0])):
+        if tui:
+            _status = _count / size
+            print('Status: {:.3f}%'.format(_count / size))
+        for j in range(len(maps[0][0])):
+            # built a cross array for every cell
+            _x_values = np.zeros(shape=len(maps))
+            for k in range(len(_x_values)):
+                _x_values[k] = maps[k][i][j]
+                if tui:
+                    _count = _count + 1
+            #
+            # sample stas
+            _median[i][j] = np.median(_x_values)
+            _mean[i][j] = np.mean(_x_values)
+            _min[i][j] = np.min(_x_values)
+            _max[i][j] = np.max(_x_values)
+            _5th_ptile[i][j] = np.percentile(_x_values, q=5)
+            _50th_ptile[i][j] = np.percentile(_x_values, q=50)
+            _95th_ptile[i][j] = np.percentile(_x_values, q=95)
+    _range_90 = _95th_ptile - _50th_ptile
+    _range_minmax = _max - _min
+    return {'Median':_median,
+            'Mean': _mean,
+            'Min': _min,
+            'Max': _max,
+            '5th_p': _5th_ptile,
+            '50th_p': _5th_ptile,
+            '95th_p': _95th_ptile,
+            'Range_90': _range_90,
+            'Range_minmax': _range_minmax}
+
+
 def mask(array, mask):
     """
     utility function for masking an array
