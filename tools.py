@@ -2141,17 +2141,17 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
             # vectorize
             _maps = np.array(_maps)
             # get stats dict
-            _stats_dict = geo.local_stats(maps=_maps)
+            _stats_dict = geo.local_stats(maps=_maps, tui=True)
             # loop in dict keys:
             for stat in _stats_dict:
                 filename = '{}_{}'.format(stat, v)
                 if annualize:
-                    filename = 'annual_{}_{}'.format(stat, v)
+                    filename = 'annual_{}_{}'.format(v, stat)
                 print(filename)
-                favg_map = out.asc_raster(acc_map, meta, folder=folder, filename=filename)
+                favg_map = out.asc_raster(_stats_dict[stat], meta, folder=folder, filename=filename)
                 mapid = get_mapid(v)
-                visuals.plot_map_view(acc_map, meta,
-                                      ranges=[0,  np.max(acc_map)],
+                visuals.plot_map_view(_stats_dict[stat], meta,
+                                      ranges=[0,  np.max(_stats_dict[stat])],
                                       mapid=mapid, mapttl='{} {}'.format(stat, v),
                                       filename=filename,
                                       folder=folder)
@@ -2163,6 +2163,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         mapvar='all',
         mapdates='all',
         integrate=False,
+        integrate_only=True,
         slicedates='all',
         qobs=False,
         folder='C:/bin',
@@ -2394,7 +2395,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         from backend import get_all_lclvars
         from out import zmap
         #
-        if mapraster or integrate:
+        if mapraster or integrate or integrate_only:
             from hydrology import map_back
             from visuals import plot_map_view
             #
@@ -2406,7 +2407,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                 status('importing shru raster')
             meta, shru = inp.asc_raster(fshru, dtype='float32')
         #
-        if integrate:
+        if integrate or integrate_only:
             # make integration directory
             int_folder = folder + '/integration'
             mkdir(int_folder)
@@ -2428,22 +2429,29 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                 status('exporting zmaps | {}'.format(var))
             #
             # make var directory
-            lcl_folder = folder + '/sim_' + var
-            mkdir(lcl_folder)
+            if integrate_only:
+                pass
+            else:
+                lcl_folder = folder + '/sim_' + var
+                mkdir(lcl_folder)
             #
-            if integrate:
+            if integrate or integrate_only:
                 # initiate integration
                 integration = mapped[var][0] * 0.0
+            #
             # loop across all mapped dates
             lcl_files = list()
             for t in range(len(stamp)):
-                # get local file name
-                lcl_filename ='zmap_{}_{}'.format(var, stamp[t])
-                # export to CSV
-                lcl_file = zmap(zmap=mapped[var][t], twibins=twibins, shrubins=shrubins,
-                                folder=lcl_folder, filename=lcl_filename)
-                # trace file path
-                lcl_files.append(lcl_file)
+                if integrate_only:
+                    pass
+                else:
+                    # get local file name
+                    lcl_filename ='zmap_{}_{}'.format(var, stamp[t])
+                    # export to CSV
+                    lcl_file = zmap(zmap=mapped[var][t], twibins=twibins, shrubins=shrubins,
+                                    folder=lcl_folder, filename=lcl_filename)
+                    # trace file path
+                    lcl_files.append(lcl_file)
                 # conpute integration
                 if integrate:
                     integration = integration + mapped[var][t]
@@ -2452,12 +2460,12 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
             #
             if integrate:
                 # stock variables
-                lcl_label = 'Accumulation'
+                lcl_label = 'acc'
                 if var in set(['D', 'Unz', 'Cpy', 'Sfs', 'RC', 'VSA', 'Temp']):
                     integration = integration / len(mapped[var])  # take the average
                     if var == 'VSA':
                         integration = integration * 100
-                    lcl_label = 'Average'
+                    lcl_label = 'avg'
                 # export integral zmap
                 lcl_filename = 'zmap_integral_{}'.format(var)
                 lcl_file = zmap(zmap=integration, twibins=twibins, shrubins=shrubins,
@@ -2479,12 +2487,15 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                 plot_map_view(mp, meta, ranges, mapid, mapttl=lcl_ttl,folder=int_folder,
                               filename=lcl_filename, show=False, integration=True)
             #
-            # export map list file to main folder:
-            lcl_exp_df = pd.DataFrame({'Date': stamp, 'File': lcl_files})
-            lcl_file = folder + '/' + 'sim_zmaps_series_' + var + '.txt'
-            lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
-            zmaps_dct[var] = lcl_file
-            mapfiles_lst.append(lcl_file)
+            if integrate_only:
+                pass
+            else:
+                # export map list file to main folder:
+                lcl_exp_df = pd.DataFrame({'Date': stamp, 'File': lcl_files})
+                lcl_file = folder + '/' + 'sim_zmaps_series_' + var + '.txt'
+                lcl_exp_df.to_csv(lcl_file, sep=';', index=False)
+                zmaps_dct[var] = lcl_file
+                mapfiles_lst.append(lcl_file)
         #
         #
         # ****** RASTER EXPORT ******

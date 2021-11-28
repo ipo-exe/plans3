@@ -822,8 +822,9 @@ def local_stats(maps, tui=False):
     # scan the arrays
     for i in range(len(maps[0])):
         if tui:
-            _status = _count / size
-            print('Status: {:.3f}%'.format(_count / size))
+            _status = 100 * _count / size
+            if _status % 5 < 0.1:
+                print('Status: {:.3f}%'.format(_status))
         for j in range(len(maps[0][0])):
             # built a cross array for every cell
             _x_values = np.zeros(shape=len(maps))
