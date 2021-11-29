@@ -168,6 +168,17 @@ def get_large_solution(seed=666, size=30, show=False):
         plt.show()
     return sol, mask
 
+
+def get_cost_surface():
+    from scipy.ndimage import gaussian_filter
+    size = 100
+    #np.random.seed(766)
+    np.random.seed(466)
+    im_rnd = np.random.random(size=(size, size))
+    im_field = gaussian_filter(im_rnd, sigma=5)
+    return im_field
+
+
 # utilitary routines for plotting:
 def plot_trace_generations(evolution, mask, sol, folder='.', step=1):
     import matplotlib.pyplot as plt
@@ -381,6 +392,19 @@ def express_1darray(gene):
     return expression
 
 
+def express_path(gene, p0=0, pmin=0, pmax=100):
+    _a = express_1darray(gene=gene)
+    _path = np.zeros(shape=np.shape(_a))
+    _path[0] = p0
+    for i in range(1, len(_path)):
+        _path[i] = _path[i - 1] + _a[i - 1]
+        if _path[i] >= pmax:
+            _path[i] = pmax - 1
+        if _path[i] <= pmin:
+            _path[i] = pmin
+    return _path
+
+
 def encode_string(string='text', concat=''):
     """
     Encode a string-based phenotype
@@ -525,7 +549,7 @@ def crossover(genea, geneb, cutfrac=0.2):
 
 def mutation(gene, gene_nucleo, mutrate=0.05, puremutrate=0.1):
     """
-    Mutation of a single gene
+    Mutation of a single gene (change of a single nucletide)
     :param gene: tuple of gene
     :param gene_nucleo: tuple of gene nucleotides
     :param mutrate: float fraction of mutation rate
@@ -560,6 +584,7 @@ def mutation(gene, gene_nucleo, mutrate=0.05, puremutrate=0.1):
                     neighbor_nucleos = (gene_mut[gene_nucleoid - 1], gene_mut[gene_nucleoid + 1])
                 # get the mutated nucleotide position in the list of biesed nucleotides
                 mut_nucleoid = np.random.randint(0, len(neighbor_nucleos))
+            #
             # replace nucleotide in gene
             gene_mut[gene_nucleoid] = gene_nucleo[mut_nucleoid]
         return tuple(gene_mut)
@@ -797,23 +822,32 @@ def _evolve(pop0, nucleotides, solution, seed, generations=10, offsfrac=1, mutra
         return trace
 
 
-def evolve(pop0, nucleotides, solution, seed=666, generations=10, offsfrac=1, mutrate=0.2, puremutrate=0.1,
-            cutfrac=0.2, tracefrac=0.3, tracepop=False, fittype='similarity', tui=False):
+def evolve(pop0, nucleotides, solution,
+           seed=666,
+           generations=10,
+           offsfrac=1,
+           mutrate=0.2,
+           puremutrate=0.1,
+           cutfrac=0.2,
+           tracefrac=0.3,
+           tracepop=False,
+           fittype='similarity',
+           tui=False):
     """
     Modified evolution routine to optimize fitness over-operations
-    :param pop0:
-    :param nucleotides:
-    :param solution:
-    :param seed:
-    :param generations:
+    :param pop0: initial population DNAs
+    :param nucleotides: tuple of genes nucleotides (tuple of tuples)
+    :param solution: tuple of gene solutions (tuple of objects) --- needed for fitness function
+    :param seed: int number for random state
+    :param generations: int - number of generations
     :param offsfrac:
-    :param mutrate:
-    :param puremutrate:
-    :param cutfrac:
-    :param tracefrac:
-    :param tracepop:
-    :param fittype:
-    :param tui:
+    :param mutrate: float - mutation rate (less than 1)
+    :param puremutrate: float - fraction of pure mutations (less than 1)
+    :param cutfrac: float -  fraction of gene cut in cross over (less than 0.5)
+    :param tracefrac: float - fraction of traced dnas (less than 1)
+    :param tracepop: boolean to trace full population
+    :param fittype: string code for type of fittness function. Available: 'similarity' (default), 'rmse'
+    :param tui: boolean - display screen
     :return:
     """
     from sys import getsizeof
@@ -829,7 +863,7 @@ def evolve(pop0, nucleotides, solution, seed=666, generations=10, offsfrac=1, mu
     #
     #
     # 2) loop in generations
-    pop_dct = dict() # population dictionary
+    pop_dct = dict()  # population dictionary
     for g in range(generations):
         if tui:
             print('\n\nGeneration {}\n'.format(g))
@@ -842,7 +876,7 @@ def evolve(pop0, nucleotides, solution, seed=666, generations=10, offsfrac=1, mu
             # get offstring
             offsize = int(offsfrac * len(pop0))
             population = generate_offspring(parents, offsize=offsize, nucleotides=nucleotides, mutrate=mutrate,
-                                           puremutrate=puremutrate, cutfrac=cutfrac)
+                                            puremutrate=puremutrate, cutfrac=cutfrac)
         if tui:
             print(len(population))
             print('Population: {} KB'.format(getsizeof(population)))
@@ -881,14 +915,14 @@ def evolve(pop0, nucleotides, solution, seed=666, generations=10, offsfrac=1, mu
         #
         # trace population
         if tracepop:
-            trace_pop.append({'DNAs':dnas_lst[:], 'Ids':ids_lst[:], 'Scores':scores_lst[:]})
+            trace_pop.append({'DNAs': dnas_lst[:], 'Ids': ids_lst[:], 'Scores': scores_lst[:]})
         #
         #
         # 5) RECRUIT new population
         if g == 0:
-            df_parents_rank = pd.DataFrame({'Id':ids_lst, 'Score':scores_lst})
+            df_parents_rank = pd.DataFrame({'Id': ids_lst, 'Score': scores_lst})
         else:
-            df_offspring_rank = pd.DataFrame({'Id':ids_lst, 'Score':scores_lst})
+            df_offspring_rank = pd.DataFrame({'Id': ids_lst, 'Score': scores_lst})
             if tui:
                 print('\nOffspring:')
                 print(df_offspring_rank.to_string())
@@ -923,17 +957,17 @@ def evolve(pop0, nucleotides, solution, seed=666, generations=10, offsfrac=1, mu
         parents = tuple(parents_lst)  # parents DNAs
         #
         tr_len = int(len(pop0) * tracefrac)
-        #print('>>> {}'.format(tr_len))
+        # print('>>> {}'.format(tr_len))
         #
         # trace parents
-        trace.append({'DNAs':parents[:tr_len],
-                      'Ids':parents_ids[:tr_len],
-                      'Scores':parents_scores[:tr_len]})
+        trace.append({'DNAs': parents[:tr_len],
+                      'Ids': parents_ids[:tr_len],
+                      'Scores': parents_scores[:tr_len]})
         if tui:
             print('Trace size: {} KB'.format(getsizeof(trace)))
             print('Index size: {} KB'.format(getsizeof(pop_dct)))
             print('Trace len: {}'.format(len(trace)))
-        #if parents_scores[i] > 90:
+        # if parents_scores[i] > 90:
     #
     # returns
     if tracepop:
@@ -1016,6 +1050,217 @@ def evolve_moea(pop0, nucleotides, solutions, seed, mutrate=0.10, generations=10
     return trace
 
 # demo routines:
+def demo_evolve_path(pop0, nucleotides, solution,
+                    seed=666,
+                    generations=10,
+                    offsfrac=1,
+                    mutrate=0.2,
+                    puremutrate=0.1,
+                    cutfrac=0.2,
+                    tracefrac=0.3,
+                    tracepop=False,
+                    fittype='similarity',
+                    tui=False):
+    """
+    Modified evolution routine for the path problem
+    :param pop0: initial population DNAs
+    :param nucleotides: tuple of genes nucleotides (tuple of tuples)
+    :param solution: tuple of gene solutions (tuple of objects) --- needed for fitness function
+    :param seed: int number for random state
+    :param generations: int - number of generations
+    :param offsfrac:
+    :param mutrate: float - mutation rate (less than 1)
+    :param puremutrate: float - fraction of pure mutations (less than 1)
+    :param cutfrac: float -  fraction of gene cut in cross over (less than 0.5)
+    :param tracefrac: float - fraction of traced dnas (less than 1)
+    :param tracepop: boolean to trace full population
+    :param fittype: string code for type of fittness function. Available: 'similarity' (default), 'rmse'
+    :param tui: boolean - display screen
+    :return:
+    """
+    # todo modify first stages (it must reach the destiny and then varies
+    from sys import getsizeof
+    #
+    # 1) deploy random state
+    np.random.seed(seed)
+    #
+    parents = pop0
+    trace = list()
+    if tracepop:
+        trace_pop = list()
+    #
+    #
+    # 2) loop in generations
+    pop_dct = dict() # population dictionary
+    for g in range(generations):
+        if tui:
+            print('\n\nGeneration {}\n'.format(g))
+        #
+        #
+        # 3) REPRODUCE the fitting population
+        if g == 0:
+            population = parents
+        else:
+            # get offstring
+            offsize = int(offsfrac * len(pop0))
+            population = generate_offspring(parents,
+                                            offsize=offsize,
+                                            nucleotides=nucleotides,
+                                            mutrate=mutrate,
+                                            puremutrate=puremutrate,
+                                            cutfrac=cutfrac)
+        if tui:
+            print(len(population))
+            print('Population: {} KB'.format(getsizeof(population)))
+        #
+        #
+        # 4) FIT new population
+        ids_lst = list()
+        ids_set_lst = list()
+        scores_lst = list()
+        prox_lst = list()
+        cost_lst = list()
+        if tracepop:
+            dnas_lst = list()
+        #
+        # loop in individuals
+        for i in range(len(population)):
+            #
+            # get local score and id:
+            lcl_dna = population[i]  # local dna
+            lcl_set_id = str(lcl_dna)  # id is the string conversion of DNA
+            #
+            #
+            #
+            # Get fitness score:
+            if fittype == 'similarity':
+                lcl_dna_score = fitness_similarity(lcl_dna, solution=solution)
+            elif fittype == 'rmse':
+                lcl_dna_score = fitness_rmse(lcl_dna, solution=solution)
+            elif fittype == 'path':
+                # start
+                x0 = 15
+                y0 = 15
+                # target
+                xf = 75
+                yf = 95
+                # express genes
+                _lcl_x_path = express_path(gene=lcl_dna[0], p0=x0)
+                _lcl_y_path = express_path(gene=lcl_dna[1], p0=y0)
+                #
+                # compute distance score:
+                _dx = xf - _lcl_x_path[-1]
+                _dy = yf - _lcl_y_path[-1]
+                _prox = np.sqrt((_dx * _dx) + (_dy * _dy))
+                #
+                # compure path score:
+                _cost = 0
+                # accumulate cost
+                for t in range(len(_lcl_x_path) - 1):
+                    _cost = _cost + solution[int(_lcl_y_path[t])][int(_lcl_x_path[t])]
+                #_cost = _cost * 10
+                #
+                #
+                lcl_dna_score = 1 - np.sqrt((_prox * _prox) + (_cost * _cost))
+            #
+            #
+            lcl_dna_id = 'G' + str(g) + '-' + str(i)
+            #
+            # store in retrieval system:
+            pop_dct[lcl_dna_id] = lcl_dna
+            #
+            ids_lst.append(lcl_dna_id)
+            ids_set_lst.append(lcl_set_id)
+            scores_lst.append(lcl_dna_score)
+            prox_lst.append(_prox)
+            cost_lst.append(_cost)
+            if tracepop:
+                dnas_lst.append(lcl_dna)
+        #
+        # trace population
+        if tracepop:
+            trace_pop.append({'DNAs':dnas_lst[:],
+                              'Ids':ids_lst[:],
+                              'Scores':scores_lst[:],
+                              'Prox':prox_lst[:],
+                              'Cost':cost_lst[:]})
+        #
+        #
+        # 5) RECRUIT new population
+        if g == 0:
+            df_parents_rank = pd.DataFrame({'Id':ids_lst,
+                                            'SetIds':ids_set_lst[:],
+                                            'Score':scores_lst[:],
+                                            'Prox': prox_lst[:],
+                                            'Cost': cost_lst[:]
+                                            })
+        else:
+            df_offspring_rank = pd.DataFrame({'Id':ids_lst,
+                                              'SetIds':ids_set_lst[:],
+                                              'Score':scores_lst[:],
+                                              'Prox': prox_lst[:],
+                                              'Cost': cost_lst[:]
+                                              })
+            if tui:
+                print('\nOffspring:')
+                print(df_offspring_rank[['Id', 'Score', 'Prox', 'Cost']].head(5).to_string())
+                print(len(df_offspring_rank))
+            # append to existing dataframe
+            df_parents_rank = df_parents_rank.append(df_offspring_rank, ignore_index=True)
+
+        #
+        #
+        # 6) RANK population
+        df_parents_rank.drop_duplicates(subset=['SetIds'], inplace=True, ignore_index=True)
+        df_parents_rank.sort_values(by='Score', ascending=False, inplace=True, ignore_index=True)
+        #df_parents_rank.sort_values(by=['Prox', 'Cost'], ascending=True, inplace=True, ignore_index=True)
+        #
+        #
+        # 7) SELECT mating pool
+        df_parents_rank = df_parents_rank.head(len(pop0))
+        # printing
+        if tui:
+            print('\nNew parents:')
+            print(df_parents_rank[['Id', 'Score', 'Prox', 'Cost']].head(5).to_string())
+        #
+        parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
+        parents_scores = df_parents_rank['Score'].values  # numpy array of float scores
+        parents_prox = df_parents_rank['Prox'].values
+        parents_cost = df_parents_rank['Cost'].values
+        #
+        parents_lst = list()
+        for i in range(len(parents_ids)):
+            parents_lst.append(pop_dct[parents_ids[i]])
+        # recicle index
+        pop_dct = dict()
+        for i in range(len(parents_ids)):
+            pop_dct[parents_ids[i]] = parents_lst[i]
+        # new parents
+        parents = tuple(parents_lst)  # parents DNAs
+        #
+        tr_len = int(len(df_parents_rank) * tracefrac)
+        print('>>> {}'.format(tr_len))
+        #
+        # trace parents
+        trace.append({'DNAs':parents[:tr_len],
+                      'Ids':parents_ids[:tr_len],
+                      'Scores':parents_scores[:tr_len],
+                      'Prox':parents_prox[:tr_len],
+                      'Cost':parents_cost[:tr_len]
+                      })
+        if tui:
+            print('Trace size: {} KB'.format(getsizeof(trace)))
+            print('Index size: {} KB'.format(getsizeof(pop_dct)))
+            print('Trace len: {}'.format(len(trace)))
+        #if parents_scores[i] > 90:
+    #
+    # returns
+    if tracepop:
+        return trace, trace_pop
+    else:
+        return trace
+
+
 def demo1():
     """
     example of 2D Map GA (single objective)

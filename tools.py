@@ -340,7 +340,8 @@ def export_local_pannels(ftwi, fshru,
         for t in range(len(series)):
             if tui:
                 status('ET pannel t = {} | plotting date {}'.format(t, dates_labels.values[t]))
-            pannel_local(series, star=raster_series[star][t],
+            pannel_local(series,
+                         star=raster_series[star][t],
                          deficit=raster_series['D'][t],
                          sups=[raster_series['IRA'][t], raster_series['IRI'][t]],
                          mids=[raster_series[mids[0]][t], raster_series[mids[1]][t],

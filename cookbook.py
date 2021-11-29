@@ -376,6 +376,7 @@ def demo_bat_slh_pre_pos():
             annualize=True,
             folder='C:/bin/pardinho')
 
+
 def demo_asla(pre=True):
     from tools import asla
     if pre:
@@ -409,7 +410,6 @@ def demo_asla(pre=True):
          folder='C:/bin/pardinho/assessment')
 
 
-
 def demo_sal_by_lamb():
     from tools import sal_d_by_lamb
     ftwi = r"C:\000_myFiles\myDrive\Plans3\ibirapuita\datasets\observed\__calib_twi_window1.asc"
@@ -423,6 +423,147 @@ def demo_sal_by_lamb():
                   folder='C:/bin/ibira')
 
 # todo revise
+def demo_path_problem():
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import evolution
+    from backend import create_rundir
+    from datetime import datetime
+
+    def id_label(id):
+        if id < 10:
+            return '000' + str(id)
+        elif id >= 10 and id < 100:
+            return '00' + str(id)
+        elif id >= 100 and id < 1000:
+            return '0' + str(id)
+        elif id >= 1000 and id < 10000:
+            return str(id)
+
+    _nucleo = ((1, 0, -1),
+               (1, 0, -1))
+
+    _field = evolution.get_cost_surface()
+    _vmin = np.min(_field)
+    _vmax = np.max(_field)
+    _field[50][40:55] = 100
+    fig, ax = plt.subplots()
+    im = ax.imshow(_field, 'jet', extent=[0, 100, 0, 100], origin='lower', vmin=_vmin, vmax=_vmax)
+    fig.colorbar(im, shrink=0.4)
+    plt.show()
+
+    seed = int(str(datetime.now())[-6:])
+
+    # start
+    x0 = 15
+    y0 = 15
+    # target
+    xf = 75
+    yf = 95
+
+    _solution = _field.copy()
+    _solution[yf][xf] = 0
+
+    _path_size = 120
+    _gene_size = (_path_size, _path_size)
+    _pop_size = 2000
+    _generations = 150
+
+    # get initial pop
+    print('get pop')
+    _pop0 = evolution.generate_population(nucleotides=_nucleo,
+                                          genesizes=_gene_size,
+                                          popsize=_pop_size)
+    # evolve pop
+    traced = evolution.demo_evolve_path(pop0=_pop0,
+                                        nucleotides=_nucleo,
+                                        solution=_solution,
+                                        seed=seed,
+                                        generations=_generations,
+                                        fittype='path',
+                                        offsfrac=1,
+                                        mutrate=0.5,
+                                        puremutrate=0.9,
+                                        cutfrac=0.5,
+                                        tracefrac=0.1,
+                                        tracepop=False,
+                                        tui=True)
+
+    print(type(traced))
+    print(len(traced))
+    last = traced[len(traced) - 1]
+    # print(last)
+    print(len(last['DNAs']))
+    last_df = pd.DataFrame({'Id': last['Ids'], 'Score': last['Scores'], 'Prox': last['Prox'], 'Cost': last['Cost']})
+    print(last_df.to_string())
+
+    folder = create_rundir(label='ev', wkplc='C:/bin/fun')
+
+    # plot generations
+    for g in range(len(traced)):
+        print('gen {}'.format(g))
+        # retrieve paths
+        _x_paths = np.zeros(shape=(len(traced[g]['Ids']), _path_size))
+        _y_paths = np.zeros(shape=(len(traced[g]['Ids']), _path_size))
+        _last_xs = np.zeros(shape=len(traced[g]['Ids']))
+        _last_ys = np.zeros(shape=len(traced[g]['Ids']))
+        for i in range(len(traced[g]['Ids']) - 1):
+            _x_paths[i] = evolution.express_path(gene=traced[g]['DNAs'][i][0], p0=x0)
+            _y_paths[i] = evolution.express_path(gene=traced[g]['DNAs'][i][1], p0=y0)
+            _last_xs[i] = _x_paths[i][-1]
+            _last_ys[i] = _y_paths[i][-1]
+        # plot paths
+        fig, ax = plt.subplots()
+        im = ax.imshow(_field, 'jet', extent=[0, 100, 0, 100], origin='lower', vmin=_vmin, vmax=_vmax)
+        fig.colorbar(im, shrink=0.4)
+        for i in range(len(_x_paths)):
+            ax.plot(_x_paths[i], _y_paths[i], 'tab:grey', alpha=0.5)
+        ax.scatter(_last_xs, _last_ys, c='k', marker='.', zorder=10000)
+        ax.plot(x0, y0, 'ko')
+        ax.text(x0 - 4, y0, 'A')
+        ax.plot(xf, yf, 'ko')
+        ax.text(xf + 2, yf, 'B')
+        plt.title('gen = {}'.format(g))
+        lcl_id = id_label(g)
+        expfile = '{}/gen_frame_{}.png'.format(folder, lcl_id)
+        plt.savefig(expfile)
+        plt.close(fig)
+
+    # plot dynamic path
+    dynamic = False
+    if dynamic:
+        stages = [999]
+        for s in stages:
+            subfolder = create_rundir(label=str(s), wkplc=folder)
+            # retrieve paths
+            last = traced[s]
+            _x_paths = np.zeros(shape=(len(last['Ids']), _path_size))
+            _y_paths = np.zeros(shape=(len(last['Ids']), _path_size))
+            for i in range(len(last['Ids']) - 1):
+                _x_paths[i] = evolution.express_path(gene=last['DNAs'][i][0], p0=x0)
+                _y_paths[i] = evolution.express_path(gene=last['DNAs'][i][1], p0=y0)
+            # plot
+            for t in range(1, _path_size):
+                print('gen {} | t = {}'.format(s + 1, t))
+                fig, ax = plt.subplots()
+                im = ax.imshow(_field, 'jet', extent=[0, 100, 0, 100], origin='lower', vmin=_vmin, vmax=_vmax)
+                fig.colorbar(im, shrink=0.4)
+                for i in range(len(_x_paths)):
+                    ax.plot(_x_paths[i][:t], _y_paths[i][:t], 'tab:grey', alpha=0.5)
+                for i in range(len(_x_paths)):
+                    ax.plot(_x_paths[i][:t][-1], _y_paths[i][:t][-1], c='tab:red', marker='.')
+                ax.plot(x0, y0, 'ko')
+                ax.text(x0 - 4, y0, 'A')
+                ax.plot(xf, yf, 'ko')
+                ax.text(xf + 2, yf, 'B')
+                plt.title('gen {} | t = {}'.format(s + 1, t))
+                lcl_id = id_label(t)
+                expfile = '{}/frame_{}.png'.format(subfolder, lcl_id)
+                plt.savefig(expfile)
+                plt.close(fig)
+
+
 def plot_gens_evolution(folder='C:/bin'):
     import pandas as pd
     import numpy as np
