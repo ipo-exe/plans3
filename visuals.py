@@ -54,7 +54,7 @@ def _custom_cmaps():
     #
     viridis_big = cm.get_cmap('viridis_r', 512)
     viridiscm = ListedColormap(viridis_big(np.linspace(0.05, 0.9)))
-    return {'flow_v':jetcm, 'D':jetcm2, 'flow':earthcm, 'stk':viridiscm}
+    return {'flow_v':jetcm, 'D':jetcm2, 'flow':earthcm, 'stk':viridiscm, 'sed':'hot_r'}
 
 
 def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', fld_date='Date', filename='analyst', suff='',
@@ -1384,7 +1384,9 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
                'stock':[cmaps['stk'], 'mm', 'mm'],
                'deficit':[cmaps['D'], 'mm', 'mm'],
                'VSA':['Blues', 'Boolean', '%'], 
-               'RC':['YlOrRd', '%', '%']}
+               'RC':['YlOrRd', '%', '%'],
+               'anom': ['seismic_r', 'Anomaly units'],
+               'unc':['inferno', 'Uncertainty units', '%']}
     #
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
@@ -1536,8 +1538,13 @@ def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, p1, p2, p_lbl='m', vmax=500, vmi
     plt.close(fig)
 
 
-def glue_scattergram(models_df, rng_dct, likelihood='L', criteria='>', behavioural=0.5,
-                     filename='post_scattergram', folder='C:/bin', show=False):
+def glue_scattergram(models_df, rng_dct,
+                     likelihood='L',
+                     criteria='>',
+                     behavioural=0.5,
+                     filename='post_scattergram',
+                     folder='C:/bin',
+                     show=False):
     """
     Plot the 9 scattergrams of GLUE analysis
     :param models_df: pandas dataframe - models dataframe (behavioural)
@@ -1582,7 +1589,8 @@ def glue_scattergram(models_df, rng_dct, likelihood='L', criteria='>', behaviour
             plt.ylabel('Ly[M|y]')
             plt.xlabel('{}'.format(lcl_units))
             plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
-            plt.ylim((ymin, 1.1))
+            plt.ylim((-0.65, -0.55))
+            #plt.ylim((ymin, 1.1))
             ind = ind + 1
     #
     if show:
@@ -1590,7 +1598,7 @@ def glue_scattergram(models_df, rng_dct, likelihood='L', criteria='>', behaviour
         plt.close(fig)
     else:
         expfile = folder + '/' + filename + '.png'
-        plt.savefig(expfile)
+        plt.savefig(expfile, dpi=400)
         plt.close(fig)
         return expfile
 
@@ -1641,7 +1649,7 @@ def glue_posterior(posterior_df, rng_dct, filename='posterior_analysis', folder=
         plt.close(fig)
     else:
         expfile = folder + '/' + filename + '.png'
-        plt.savefig(expfile)
+        plt.savefig(expfile, dpi=400)
         plt.close(fig)
         return expfile
 
@@ -2170,8 +2178,19 @@ def plot_raster_analyst(obs, sim, ranges, metricranges, metrics_dct='', metrics_
         return expfile
 
 
-def plot_population(pop_df, xfield='L_ET', yfield='L_Q', zfield='L', grid=True, x_max=1, y_max=1, x_min=-1, y_min=-1,
-                    ttl='title', show=False, folde='C:/bin', filename='population'):
+def plot_population(pop_df,
+                    xfield='L_ET',
+                    yfield='L_Q',
+                    zfield='L',
+                    grid=True,
+                    x_max=1,
+                    y_max=1,
+                    x_min=-3,
+                    y_min=-3,
+                    ttl='title',
+                    show=False,
+                    folde='C:/bin',
+                    filename='population'):
     fig = plt.figure(figsize=(7, 7), )  # Width, Height
     fig.suptitle('Likelihood space | {}'.format(ttl))
     pop_df = pop_df.query('{} >= {} and {} >= {} and {} <= {} and {} <= {}'.format(xfield, x_min, yfield, y_min, xfield, x_max, yfield, y_max))

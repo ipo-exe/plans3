@@ -756,6 +756,293 @@ def grad(slope):
     return grad
 
 
+def least_cost_path(cost_map, x0, y0, xf, yf,
+                    popsize=100,
+                    generations=30,
+                    pathf=2.0,
+                    offsfrac=1,
+                    mutrate=0.95,
+                    puremutrate=0.9,
+                    cutfrac=0.2,
+                    tracefrac=1,
+                    tui=False):
+    import pandas as pd
+    import evolution
+    from datetime import datetime
+    from sys import getsizeof
+    if tui:
+        from tui import status
+    #
+    # deploy random state
+    seed = int(str(datetime.now())[-6:])
+    np.random.seed(seed)
+    #
+    # set target to zero cost
+    _solution = cost_map.copy()
+    _solution[yf][xf] = 0
+    #
+    # deploy nucletides for 2 genes
+    _nucleo = ((1, 0, -1), (1, 0, -1))
+    #
+    # get path size
+    _dy = yf - y0
+    _dx = xf - x0
+    _euclid_dist = np.sqrt((_dx * _dx) + (_dy * _dy))
+    print(_euclid_dist)
+    _path_size = int(pathf * _euclid_dist)
+    print(_path_size)
+    #
+    # get gene sizes
+    _gene_size = (_path_size, _path_size)
+    #
+    #
+    #
+    # -------- Generate candidate paths --------
+    if tui:
+        status('generating initial population')
+    parents = evolution.generate_population(nucleotides=_nucleo,
+                                            genesizes=_gene_size,
+                                            popsize=popsize)
+    if tui:
+        status('generating candidate paths')
+    pop_dct = dict()  # population dictionary
+    trace_lst = list()
+    g = 0
+    while True:
+        if tui:
+            print('\n')
+            status('running generation: {}'.format(g))
+        # REPRODUCE the fitting population
+        if g == 0:
+            population = parents
+        else:
+            # get offstring
+            offsize = int(offsfrac * len(parents))
+            if tui:
+                status('generating offspring')
+            population = evolution.generate_offspring(parents,
+                                                      offsize=offsize,
+                                                      nucleotides=_nucleo,
+                                                      mutrate=mutrate,
+                                                      puremutrate=puremutrate,
+                                                      cutfrac=cutfrac)
+        if tui:
+            status('population size: {} DNAs'.format(len(population)))
+            status('population size in memory: {} KB'.format(getsizeof(population)))
+        #
+        #
+        # 4) FIT new population
+        ids_lst = list()
+        ids_set_lst = list()
+        scores_lst = list()
+        # loop in individuals
+        for i in range(len(population)):
+            # get local score and id:
+            lcl_dna = population[i]  # local dna
+            lcl_set_id = str(lcl_dna)  # id is the string conversion of DNA
+            #
+            # express genes
+            _lcl_x_path = evolution.express_path(gene=lcl_dna[0], p0=x0)
+            _lcl_y_path = evolution.express_path(gene=lcl_dna[1], p0=y0)
+            #
+            # compute distance score:
+            _dx = xf - _lcl_x_path[-1]
+            _dy = yf - _lcl_y_path[-1]
+            _prox = np.sqrt((_dx * _dx) + (_dy * _dy))
+            #
+            # compure DNA score:
+            lcl_dna_score = _prox
+            #
+            # tag DNA
+            lcl_dna_id = 'G' + str(g) + '-' + str(i)
+            # store in retrieval system:
+            pop_dct[lcl_dna_id] = lcl_dna
+            #
+            ids_lst.append(lcl_dna_id)
+            ids_set_lst.append(lcl_set_id)
+            scores_lst.append(lcl_dna_score)
+        #
+        # RECRUIT:
+        if g == 0:
+            df_parents_rank = pd.DataFrame({'Id':ids_lst,
+                                            'SetIds':ids_set_lst[:],
+                                            'Score':scores_lst[:]
+                                            })
+        else:
+            df_offspring_rank = pd.DataFrame({'Id':ids_lst,
+                                              'SetIds':ids_set_lst[:],
+                                              'Score':scores_lst[:],
+                                              })
+            if tui:
+                print('offspring:')
+                print(df_offspring_rank[['Id', 'Score']].head(5).to_string())
+            # append to existing dataframe
+            df_parents_rank = df_parents_rank.append(df_offspring_rank, ignore_index=True)
+        #
+        # RANK population
+        df_parents_rank.drop_duplicates(subset='SetIds', inplace=True, ignore_index=True)
+        df_parents_rank.sort_values(by='Score', ascending=True, inplace=True, ignore_index=True)
+        #
+        # SELECT mating pool
+        df_parents_rank = df_parents_rank.head(len(parents))
+        if tui:
+            print('new parents:')
+            print(df_parents_rank[['Id', 'Score']].head(5).to_string())
+        #
+        # retrieve parents DNAs to a list:
+        parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
+        parents_lst = list()
+        for i in range(len(parents_ids)):
+            parents_lst.append(pop_dct[parents_ids[i]])
+        # recicle index
+        pop_dct = dict()
+        for i in range(len(parents_ids)):
+            pop_dct[parents_ids[i]] = parents_lst[i]
+        # Set new parents
+        parents = tuple(parents_lst)  # parents DNAs
+        if np.min(df_parents_rank['Score'].values) <= 30:
+            break
+        else:
+            g = g + 1
+    #
+    #
+    #
+    # -------- Generate least cost paths --------
+    #
+    if tui:
+        status('generating least cost paths')
+    trace = list()
+    for g in range(generations):
+        if tui:
+            print('\n')
+            status('running generation: {}'.format(g))
+        # REPRODUCE the fitting population
+        if g == 0:
+            population = parents
+        else:
+            # get offstring
+            offsize = int(offsfrac * len(parents))
+            if tui:
+                status('generating offspring')
+            population = evolution.generate_offspring(parents,
+                                                      offsize=offsize,
+                                                      nucleotides=_nucleo,
+                                                      mutrate=mutrate,
+                                                      puremutrate=puremutrate,
+                                                      cutfrac=cutfrac)
+        if tui:
+            status('population size: {} DNAs'.format(len(population)))
+            status('population size in memory: {} KB'.format(getsizeof(population)))
+        #
+        #
+        # 4) FIT new population
+        ids_lst = list()
+        ids_set_lst = list()
+        scores_lst = list()
+        prox_lst = list()
+        cost_lst = list()
+        # loop in individuals
+        for i in range(len(population)):
+            # get local score and id:
+            lcl_dna = population[i]  # local dna
+            lcl_set_id = str(lcl_dna)  # id is the string conversion of DNA
+            #
+            # express genes
+            _lcl_x_path = evolution.express_path(gene=lcl_dna[0], p0=x0)
+            _lcl_y_path = evolution.express_path(gene=lcl_dna[1], p0=y0)
+            #
+            # compute distance score:
+            _dx = xf - _lcl_x_path[-1]
+            _dy = yf - _lcl_y_path[-1]
+            _prox = np.sqrt((_dx * _dx) + (_dy * _dy))
+            # compure path score:
+            _cost = 0
+            # accumulate cost
+            for t in range(len(_lcl_x_path) - 1):
+                _cost = _cost + _solution[int(_lcl_y_path[t])][int(_lcl_x_path[t])]
+            #
+            # compure DNA score:
+            _w_prox = 100
+            _w_cost = 1
+            lcl_dna_score = np.sqrt((_w_prox * (_prox * _prox)) + (_w_cost * (_cost * _cost)))
+            #
+            # tag DNA
+            lcl_dna_id = 'G' + str(g) + '-' + str(i)
+            # store in retrieval system:
+            pop_dct[lcl_dna_id] = lcl_dna
+            #
+            ids_lst.append(lcl_dna_id)
+            ids_set_lst.append(lcl_set_id)
+            scores_lst.append(lcl_dna_score)
+            prox_lst.append(_prox)
+            cost_lst.append(_cost)
+        #
+        # RECRUIT:
+        if g == 0:
+            df_parents_rank = pd.DataFrame({'Id':ids_lst,
+                                            'SetIds':ids_set_lst[:],
+                                            'Score':scores_lst[:],
+                                            'Prox': prox_lst[:],
+                                            'Cost': cost_lst[:]
+                                            })
+        else:
+            df_offspring_rank = pd.DataFrame({'Id':ids_lst,
+                                              'SetIds':ids_set_lst[:],
+                                              'Score':scores_lst[:],
+                                              'Prox': prox_lst[:],
+                                              'Cost': cost_lst[:]
+                                              })
+            if tui:
+                print('offspring:')
+                print(df_offspring_rank[['Id', 'Score', 'Prox', 'Cost']].head(5).to_string())
+            # append to existing dataframe
+            df_parents_rank = df_parents_rank.append(df_offspring_rank, ignore_index=True)
+        #
+        # RANK population
+        df_parents_rank.drop_duplicates(subset='SetIds', inplace=True, ignore_index=True)
+        df_parents_rank.sort_values(by='Score', ascending=True, inplace=True, ignore_index=True)
+        #
+        # SELECT mating pool
+        df_parents_rank = df_parents_rank.head(len(parents))
+        if tui:
+            print('new parents:')
+            print(df_parents_rank[['Id', 'Score', 'Prox', 'Cost']].head(5).to_string())
+        #
+        # retrieve parents DNAs to a list:
+        parents_ids = df_parents_rank['Id'].values  # numpy array of string IDs
+        parents_scores = df_parents_rank['Score'].values  # numpy array of float scores
+        parents_prox = df_parents_rank['Prox'].values
+        parents_cost = df_parents_rank['Cost'].values
+        parents_lst = list()
+        for i in range(len(parents_ids)):
+            parents_lst.append(pop_dct[parents_ids[i]])
+        # recicle index
+        pop_dct = dict()
+        for i in range(len(parents_ids)):
+            pop_dct[parents_ids[i]] = parents_lst[i]
+        # Set new parents
+        parents = tuple(parents_lst)  # parents DNAs
+        #
+        #
+        tr_len = int(len(df_parents_rank) * tracefrac)
+        print('>>> {}'.format(tr_len))
+        #
+        # trace parents
+        trace.append({'DNAs': parents[:tr_len],
+                      'Ids': parents_ids[:tr_len],
+                      'Scores': parents_scores[:tr_len],
+                      'Prox': parents_prox[:tr_len],
+                      'Cost': parents_cost[:tr_len]
+                      })
+        if tui:
+            print('Trace size: {} KB'.format(getsizeof(trace)))
+            print('Index size: {} KB'.format(getsizeof(pop_dct)))
+            print('Trace len: {}'.format(len(trace)))
+
+    return trace
+
+
+
 def local_load(avg_load, proxy, aoi):
     """
     compute a local load map for a loading variable
@@ -1262,7 +1549,7 @@ def write_wkt_polygon(x_long, y_lat):
     return 'Polygon (({}))'.format(argument)
 
 
-def zonalstats(field, zones):
+def zonalstats(field, zones, tui=False):
     """
     Performs a zonal statistics over a 2d numpy array
     :param field: 2d numpy array map of the field variable
@@ -1295,6 +1582,8 @@ def zonalstats(field, zones):
     # loop in zones
     zone_values = np.unique(zones)
     for i in range(len(zone_values)):
+        if tui:
+            print('Zone #:{}'.format(zone_values[i]))
         #
         # compute mask
         lcl_mask = (zones == zone_values[i]) * 1.0
@@ -1315,13 +1604,13 @@ def zonalstats(field, zones):
             med_lst.append(np.median(lcl_cleared))
     # load to dict
     out_dct = {'Zones':zone_values,
-            'Count':cnt_lst,
-            'Sum':sum_lst,
-            'Mean':avg_lst,
-            'Max':max_lst,
-            'Min':min_lst,
-            'SD':std_lst,
-            'Median':med_lst
-            }
+               'Count':cnt_lst,
+               'Sum':sum_lst,
+               'Mean':avg_lst,
+               'Max':max_lst,
+               'Min':min_lst,
+               'SD':std_lst,
+               'Median':med_lst
+                }
     return out_dct
 
