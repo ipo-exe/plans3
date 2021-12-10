@@ -3411,6 +3411,8 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
         ensb_dct['Q'].to_csv(exp_en_q, sep=';', index=False)
         exp_en_q = '{}/ensemble_qb.txt'.format(folder)
         ensb_dct['Qb'].to_csv(exp_en_q, sep=';', index=False)
+        exp_en_q = '{}/ensemble_et.txt'.format(folder)
+        ensb_dct['ET'].to_csv(exp_en_q, sep=';', index=False)
         #
         # plot ensemble
         if tui:

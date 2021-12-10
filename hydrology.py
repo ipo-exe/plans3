@@ -1956,6 +1956,7 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, canopy_df, qt0,
     t_ensem = len(series)
     sim_grid_q = np.zeros(shape=(n_ensem, t_ensem))
     sim_grid_qb = np.zeros(shape=(n_ensem, t_ensem))
+    sim_grid_et = np.zeros(shape=(n_ensem, t_ensem))
     sim_ids = models_df['Id']
     m_vec = models_df['m'].values
     lamb_vec = models_df['lamb'].values
@@ -1995,10 +1996,12 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, canopy_df, qt0,
         sim_df = sim_dct['Series']
         sim_grid_q[i] = sim_df['Q'].values
         sim_grid_qb[i] = sim_df['Qb'].values
+        sim_grid_et[i] = sim_df['ET'].values
     #
     # transpose grid
     sim_grid_q_t = np.transpose(sim_grid_q)
     sim_grid_qb_t = np.transpose(sim_grid_qb)
+    sim_grid_et_t = np.transpose(sim_grid_et)
     #
     # compute lo-mid-hi bounds
     lo_bound_q = np.zeros(shape=np.shape(series['Prec'].values))
@@ -2007,20 +2010,32 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, canopy_df, qt0,
     lo_bound_qb = np.zeros(shape=np.shape(series['Prec'].values))
     mid_bound_qb = np.zeros(shape=np.shape(series['Prec'].values))
     hi_bound_qb = np.zeros(shape=np.shape(series['Prec'].values))
+    lo_bound_et = np.zeros(shape=np.shape(series['Prec'].values))
+    mid_bound_et = np.zeros(shape=np.shape(series['Prec'].values))
+    hi_bound_et = np.zeros(shape=np.shape(series['Prec'].values))
     #
     for t in range(len(sim_grid_q_t)):
         #
         # full discharge
-        lcl_freq = frequency(series=sim_grid_q_t[t])
+        lcl_df = pd.DataFrame({'Values': sim_grid_q_t[t]})
+        lcl_freq = frequency(dataframe=lcl_df, var_field='Values')
         lo_bound_q[t] = lcl_freq['Values'][5]
         mid_bound_q[t] = lcl_freq['Values'][50]
         hi_bound_q[t] = lcl_freq['Values'][95]
         #
         # baseflow
-        lcl_freq = frequency(series=sim_grid_qb_t[t])
+        lcl_df = pd.DataFrame({'Values': sim_grid_qb_t[t]})
+        lcl_freq = frequency(dataframe=lcl_df, var_field='Values')
         lo_bound_qb[t] = lcl_freq['Values'][5]
         mid_bound_qb[t] = lcl_freq['Values'][50]
         hi_bound_qb[t] = lcl_freq['Values'][95]
+        #
+        # et
+        lcl_df = pd.DataFrame({'Values': sim_grid_et_t[t]})
+        lcl_freq = frequency(dataframe=lcl_df, var_field='Values')
+        lo_bound_et[t] = lcl_freq['Values'][5]
+        mid_bound_et[t] = lcl_freq['Values'][50]
+        hi_bound_et[t] = lcl_freq['Values'][95]
     #
     # built exports
     out_q_df = pd.DataFrame({'Date': series['Date'],
@@ -2036,7 +2051,14 @@ def ensemble(series, models_df, shruparam, twibins, countmatrix, canopy_df, qt0,
                              'Hi_95': hi_bound_qb})
     app_qb_df = pd.DataFrame(sim_grid_qb_t, columns=sim_ids)
     out_qb_df = pd.concat([out_qb_df, app_qb_df], axis=1)
+    # et
+    out_et_df = pd.DataFrame({'Date': series['Date'],
+                              'Lo_5': lo_bound_et,
+                              'Mid_50': mid_bound_et,
+                              'Hi_95': hi_bound_et})
+    app_et_df = pd.DataFrame(sim_grid_et_t, columns=sim_ids)
+    out_et_df = pd.concat([out_et_df, app_et_df], axis=1)
     #
-    return {'Q':out_q_df, 'Qb':out_qb_df}
+    return {'Q':out_q_df, 'Qb':out_qb_df, 'ET': out_et_df}
 
 
