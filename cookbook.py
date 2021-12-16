@@ -110,6 +110,7 @@ def demo_watch_pannels():
                          filter_date=True,
                          tui=True)
 
+
 def demo_slh():
     """
     Simulation demo routine
@@ -408,6 +409,76 @@ def demo_asla(pre=True):
          tui=True,
          nutrients=True,
          folder='C:/bin/pardinho/assessment')
+
+
+def demo_compute_zmaps_et():
+    import os
+    import inp, visuals
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import tools
+    folder = 'C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/etpat'
+    l = os.listdir(folder)
+    # filtrar com base no nome
+    files = list()
+    for f in l:
+        if '.asc' in f and '.aux' not in f:
+            files.append(f)
+    print(files)
+    print(len(files))
+    # get htwi and shru
+    ftwi = 'C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_twi_window.asc'
+    fshru = 'C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_shru_window.asc'
+    meta, twi = inp.asc_raster(ftwi, dtype='float32')
+    meta, shru = inp.asc_raster(fshru, dtype='float32')
+    #plt.imshow(twi)
+    #plt.show()
+    # import et24h
+    et_maps = list()
+    et_dates = list()
+    max_values = list()
+    paths = list()
+    for i in range(len(files)):
+        print(i)
+        filepath = folder + '/' + files[i]
+        date = files[i].split('_')[-1].split('.')[0]
+        meta, et = inp.asc_raster(filepath, dtype='float32')
+        et = (et / 1) * (et >= 0) + (-1 * (et < 0))
+        #plt.imshow(et)
+        #plt.show()
+        et_maps.append(et)
+        et_dates.append(date)
+        paths.append(filepath)
+        max_values.append(np.max(et))
+    df = pd.DataFrame({'Date': et_dates, 'File': paths})
+    print(df.to_string())
+    fout = folder + '/calib_et_series.txt'
+    df.to_csv(fout, index=False, sep=';')
+    for i in range(len(et_maps)):
+        print(i)
+        title = 'ET 24h | ' + et_dates[i]
+        file_name = 'calib_etpat_' + et_dates[i]
+        et = et_maps[i]
+        et[et == -1] = np.nan
+        #plt.imshow(et)
+        #plt.show()
+        visuals.plot_map_view(et, meta, [0, 10],
+                              mapid='flow_v',
+                              mapttl=title,
+                              filename=file_name,
+                              metadata=True,
+                              folder=folder, show=False)
+    #
+    # compute zmaps
+    tools.compute_zmap_series(fvarseries=fout,
+                              var='et24h',
+                              ftwi=ftwi,
+                              fshru=fshru,
+                              fhistograms='C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_histograms.txt',
+                              filename='calib_etpat_zmaps',
+                              folder='C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed',
+                              dtype='float32', tui=True, factor=1)
 
 
 def demo_sal_by_lamb():
@@ -851,5 +922,4 @@ def __demo_obs_sim_map_analyst(fseries, type, var='ETPat', filename='obssim_maps
                                      obs_sig=signal_obs_lst[i], sim_sig=signal_sim_lst[i], ranges=ranges,
                                      metricranges=metricranges, error_sig=metric_signal[i], metrics_dct=metrics_dct,
                                      filename=lcl_filename, folder=folder, ttl=lcl_ttl)
-
 

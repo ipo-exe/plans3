@@ -130,7 +130,7 @@ def count_matrix(twi, shru, aoi, shrubins, twibins):
             elif i == len(countmatrix) - 1:
                 lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * aoi
             else:
-                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i])  * aoi
+                lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i]) * aoi
             countmatrix[i][j] = np.sum(lcl_mask)  # insert sum of pixels found in local HRU
     return countmatrix, twibins, shrubins
 
@@ -146,9 +146,12 @@ def built_zmap(varmap, twi, shru, twibins, shrubins, nodata=-1.0):
     :param nodata: float of standard no data value
     :return: 2d numpy array of variable ZMAP
     """
+    import matplotlib.pyplot as plt
     # first mask by the nodata value
     aoivar = 1.0 * (varmap != nodata)
+    # deploy the zmap matrix
     zmap = np.zeros(shape=(len(twibins), len(shrubins)))
+    # loop in zmap matrix
     for i in range(len(zmap)):
         for j in range(len(zmap[i])):
             if i == 0:
@@ -157,11 +160,15 @@ def built_zmap(varmap, twi, shru, twibins, shrubins, nodata=-1.0):
                 lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * aoivar
             else:
                 lcl_mask = (shru == shrubins[j]) * (twi >= twibins[i - 1]) * (twi < twibins[i]) * aoivar
+            #plt.imshow(lcl_mask)
+            #plt.show()
             if np.sum(lcl_mask) == 0.0:  # not found any local HRU within the AOI of var
                 zmap[i][j] = nodata
             else:
                 # take the mean variable value at the local HRU mask
-                zmap[i][j] = np.sum(varmap * lcl_mask) / np.sum(lcl_mask)  
+                zmap[i][j] = np.sum(varmap * lcl_mask) / np.sum(lcl_mask)
+        #plt.imshow(zmap)
+        #plt.show()
     return zmap
 
 

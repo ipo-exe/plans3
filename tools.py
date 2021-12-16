@@ -79,14 +79,20 @@ def view_imported_input(filename, folder, aux_folder=''):
     # get file path
     file = folder + '/' + filename
     #
-    quantmaps = ('aoi_dem.asc', 'aoi_basin.asc', 'aoi_twi.asc', 'calib_twi.asc',
-                 'calib_dem.asc', 'calib_basin.asc')
+    quantmaps = ('aoi_dem.asc',
+                 'aoi_basin.asc',
+                 'aoi_twi.asc',
+                 'aoi_twi_window.asc',
+                 'calib_twi.asc',
+                 'calib_twi_window.asc',
+                 'calib_dem.asc',
+                 'calib_basin.asc')
     lulc_maps = ('aoi_lulc.asc', 'calib_lulc.asc')
     #
     # plot quant map
     if filename in set(quantmaps):
         mapid = filename.split('.')[0].split('_')[1]
-        meta, rmap = inp.asc_raster(file)
+        meta, rmap = inp.asc_raster(file, dtype='float32')
         ranges = (np.min(rmap), np.max(rmap))
         plot_map_view(rmap, meta, ranges,
                       mapid=mapid,
@@ -1205,8 +1211,12 @@ def view_rasters(fmapseries, mapvar='ET', mapid='etpat', vmin='local', vmax='loc
                       filename=lcl_filename, folder=lcl_folder, nodata=nodata)
 
 
-def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var_zmap_series', folder='C:/bin',
-                        tui=False, dtype='int16', factor=1.0):
+def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var,
+                        filename='var_zmap_series',
+                        folder='C:/bin',
+                        tui=False,
+                        dtype='int16',
+                        factor=1.0):
     """
     Batch routine to compute zmaps from raster series
 
@@ -1260,8 +1270,13 @@ def compute_zmap_series(fvarseries, ftwi, fshru, fhistograms, var, filename='var
         # use factor to access values
         if factor != 1.0:
             lcl_var = lcl_var / factor
-        lcl_zmap = built_zmap(varmap=lcl_var, twi=twi, shru=shru, twibins=twibins, shrubins=shrubins)
-        exp_file = out.zmap(zmap=lcl_zmap, twibins=twibins, shrubins=shrubins, folder=lcl_folder,
+        lcl_zmap = built_zmap(varmap=lcl_var,
+                              twi=twi,
+                              shru=shru,
+                              twibins=twibins,
+                              shrubins=shrubins)
+        exp_file = out.zmap(zmap=lcl_zmap,
+                            twibins=twibins, shrubins=shrubins, folder=lcl_folder,
                             filename=lcl_new_filename)
         new_files.append(exp_file)
     #
@@ -1672,8 +1687,8 @@ def osa_series(fseries,
     #
     # **** Frequency analysis ****
     #
-    freq_obs = analyst.frequency(series=obs)
-    freq_sim = analyst.frequency(series=sim)
+    freq_obs = analyst.frequency(dataframe=series_df, var_field='Obs')
+    freq_sim = analyst.frequency(dataframe=series_df, var_field='Sim')
     obs_freq = freq_obs['Values']
     sim_freq = freq_sim['Values']
     if log:
@@ -1688,7 +1703,7 @@ def osa_series(fseries,
         selog_freq = analyst.sq_error(obs=obslog_freq, sim=simlog_freq)
     #
     # built dataframe
-    freq_df = pd.DataFrame({'Percentiles': freq_obs['Percentiles'], 'Exeedance': freq_obs['Exeedance'],
+    freq_df = pd.DataFrame({'Percentiles': freq_obs['Percentiles'], 'Exceedance': freq_obs['Exceedance'],
                             'ProbabObs': freq_obs['Probability'], 'ValuesObs': freq_obs['Values'],
                             'ProbabSim': freq_sim['Probability'],
                             'ValuesSim': freq_sim['Values'],
@@ -2164,7 +2179,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         mapvar='all',
         mapdates='all',
         integrate=False,
-        integrate_only=True,
+        integrate_only=False,
         slicedates='all',
         qobs=False,
         folder='C:/bin',

@@ -201,9 +201,9 @@ def flow(obs, sim, loglim=0.00001):
     _obs_log = np.log10(obs + (loglim * (obs <= 0)))
     #
     # get cfcs
-    _cfc_obs = frequency(series=obs)['Values']
+    _cfc_obs = frequency(dataframe=pd.DataFrame({'Obs':obs}), var_field='Obs')['Values']
     try:
-        _cfc_sim = frequency(series=sim)['Values']
+        _cfc_sim = frequency(dataframe=pd.DataFrame({'Sim':sim}), var_field='Sim')['Values']
     except ValueError:
         #print('Value Error found in simulated CFC')
         _cfc_sim = np.ones(shape=np.shape(_cfc_obs))
@@ -243,6 +243,7 @@ def zmaps(obs, sim, count, nodata=-1):
     :param nodata: float of no data value
     :return: dict of analyst products
     """
+    import geo
     # get full boolean mask
     mask = (obs != nodata) * (sim != nodata) * (count > 0) * 1.0
     # number of data points
@@ -296,6 +297,7 @@ def zmaps_lite(obs, sim, count, nodata=-1):
     :param nodata: float of no data value
     :return: dict of analyst products
     """
+    import geo
     # get full boolean mask
     mask = (obs != nodata) * (sim != nodata) * (count > 0) * 1.0
     # number of data points

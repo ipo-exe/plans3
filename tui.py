@@ -947,7 +947,7 @@ def main(root='default', importing=True):
                                                  'Small - Size:25 Gens:5',
                                                  'Medium - Size:250 Gens:5',
                                                  'Large - Size:500 Gens:10',
-                                                 'Very Large - Size:1000 Gens:10')
+                                                 'Very Large - Size:2000 Gens:10')
                                     scale = menu({'Scale': size_opts},
                                                  exitkey='d',
                                                  title='Genetic Algorithm Scale',
@@ -972,7 +972,7 @@ def main(root='default', importing=True):
                                         popsize = 500
                                         generations = 10
                                     elif scale == size_opts[4]:
-                                        popsize = 1000
+                                        popsize = 2000
                                         generations = 10
                                     #
                                     #

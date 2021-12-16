@@ -1076,50 +1076,104 @@ def view_maps_hist(show=False):
                     plt.savefig(filepath, dpi=400)
                     plt.close(fig)
 
-def view_pre_pos():
+
+def view_pre_pos(show=True):
     import pandas as pd
     import matplotlib.pyplot as plt
     import numpy as np
-
+    folder = r'C:\000_myFiles\myDrive\myProjects\104_paper_castelhano\produtos\figs\bin'
     fpos = r"C:\bin\pardinho\produtos\pos_batSLH_2021-11-27\series_ensemble.txt"
     fpre = r"C:\bin\pardinho\produtos\pre_batSLH_2021-11-27\series_ensemble.txt"
-
     pos_df = pd.read_csv(fpos, sep=';', parse_dates=['Date'])
     pre_df = pd.read_csv(fpre, sep=';', parse_dates=['Date'])
-
     print(pos_df.head().to_string())
-    vars = ['R', 'Q', 'Qb', 'ET', 'Qv', 'Inf', 'TF', 'RIE', 'RSE', 'Tpgw']
-
+    vars = ['Prec','TF', 'ET', 'Evc', 'Evs', 'Tpun', 'Tpgw', 'R', 'RIE', 'RSE', 'Inf', 'Qv', 'Q', 'Qb', 'Qs']
     pre_50 = list()
     pos_50 = list()
     pre_rng = list()
     pos_rng = list()
     for v in vars:
-        pre_50.append(365 * np.sum(pre_df['{}_50'.format(v)].values) / len(pre_df))
-        pos_50.append(365 * np.sum(pos_df['{}_50'.format(v)].values) / len(pre_df))
-        _lo = 365 * np.sum(pre_df['{}_05'.format(v)].values) / len(pre_df)
-        _hi = 365 * np.sum(pre_df['{}_95'.format(v)].values) / len(pre_df)
-        pre_rng.append(_hi - _lo)
-        _lo = 365 * np.sum(pos_df['{}_05'.format(v)].values) / len(pre_df)
-        _hi = 365 * np.sum(pos_df['{}_95'.format(v)].values) / len(pre_df)
-        pos_rng.append(_hi - _lo)
-
+        print(v)
+        if v == 'Prec':
+            pre_50.append(365 * np.sum(pre_df['Prec'.format(v)].values) / len(pre_df))
+            pos_50.append(365 * np.sum(pos_df['Prec'.format(v)].values) / len(pre_df))
+            _lo = 365 * np.sum(pre_df['Prec'.format(v)].values) / len(pre_df)
+            _hi = 365 * np.sum(pre_df['Prec'.format(v)].values) / len(pre_df)
+            pre_rng.append(_hi - _lo)
+            _lo = 365 * np.sum(pos_df['Prec'.format(v)].values) / len(pre_df)
+            _hi = 365 * np.sum(pos_df['Prec'.format(v)].values) / len(pre_df)
+            pos_rng.append(_hi - _lo)
+        else:
+            pre_50.append(365 * np.sum(pre_df['{}_50'.format(v)].values) / len(pre_df))
+            pos_50.append(365 * np.sum(pos_df['{}_50'.format(v)].values) / len(pre_df))
+            _lo = 365 * np.sum(pre_df['{}_05'.format(v)].values) / len(pre_df)
+            _hi = 365 * np.sum(pre_df['{}_95'.format(v)].values) / len(pre_df)
+            pre_rng.append(_hi - _lo)
+            _lo = 365 * np.sum(pos_df['{}_05'.format(v)].values) / len(pre_df)
+            _hi = 365 * np.sum(pos_df['{}_95'.format(v)].values) / len(pre_df)
+            pos_rng.append(_hi - _lo)
     labels = vars
     x = np.arange(len(labels))  # the label locations
     width = 0.3  # the width of the bars
-
     fig = plt.figure(figsize=(10, 4))  # Width, Height
     plt.subplot(111)
-    plt.bar(x - width / 2, pre_50, width, yerr=np.array(pre_rng) / 2, label='Pre', color='tab:green')
-    plt.bar(x + width / 2, pos_50, width, yerr=np.array(pos_rng) / 2, label='Pos', color='tab:blue')
-
+    plt.bar(x - width / 2, pre_50, width, yerr=np.array(pre_rng) / 2, label='Pre-development', color='tab:green')
+    plt.bar(x + width / 2, pos_50, width, yerr=np.array(pos_rng) / 2, label='Post-development', color='tab:blue')
+    #
     # Add some text for labels, title and custom x-axis tick labels, etc.
     plt.ylabel('mm')
     plt.xticks(x, vars)
+    plt.grid(True, axis='y')
     plt.legend()
-    plt.show()
-
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder +  '\Flows_prepost.png'.format(v)
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+    #
+    #
+    vars = ['Cpy', 'Sfs', 'Unz']
+    pre_50 = list()
+    pos_50 = list()
+    pre_rng = list()
+    pos_rng = list()
     for v in vars:
+        print(v)
+        pre_50.append(np.mean(pre_df['{}_50'.format(v)].values))
+        pos_50.append(np.mean(pos_df['{}_50'.format(v)].values))
+        _lo = np.mean(pre_df['{}_05'.format(v)].values)
+        _hi = np.mean(pre_df['{}_95'.format(v)].values)
+        pre_rng.append(_hi - _lo)
+        _lo = np.mean(pos_df['{}_05'.format(v)].values)
+        _hi = np.mean(pos_df['{}_95'.format(v)].values)
+        pos_rng.append(_hi - _lo)
+    labels = vars
+    x = np.arange(len(labels))  # the label locations
+    width = 0.3  # the width of the bars
+    fig = plt.figure(figsize=(3.5, 4))  # Width, Height
+    plt.subplot(111)
+    plt.bar(x - width / 2, pre_50, width, yerr=np.array(pre_rng) / 2, label='Pre-devel.', color='tab:green')
+    plt.bar(x + width / 2, pos_50, width, yerr=np.array(pos_rng) / 2, label='Post-devel.', color='tab:blue')
+    #
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    plt.ylabel('mm')
+    plt.xticks(x, vars)
+    plt.grid(True, axis='y')
+    plt.legend()
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '\Stocks_prepost.png'.format(v)
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+    #
+    # vars
+    vars = ['Cpy', 'Sfs', 'Unz', 'TF', 'ET', 'Evc', 'Evs', 'Tpun', 'Tpgw', 'R', 'Inf', 'Qv', 'Q', 'Qb']
+    for v in vars:
+        print(v)
         fig = plt.figure(figsize=(16, 2.5))  # Width, Height
         plt.fill_between(x=pos_df['Date'],
                          y1=pos_df['{}_05'.format(v)],
@@ -1133,10 +1187,17 @@ def view_pre_pos():
                          color='tab:blue',
                          alpha=0.4,
                          edgecolor='none')
-        plt.plot(pos_df['Date'], pos_df['{}_50'.format(v)], 'tab:blue', label='post')
-        plt.plot(pre_df['Date'], pre_df['{}_50'.format(v)], 'tab:green', label='pre')
-        if v == 'Q':
-            plt.yscale('log')
+        plt.plot(pos_df['Date'], pos_df['{}_50'.format(v)], 'tab:blue', label='post-development')
+        plt.plot(pre_df['Date'], pre_df['{}_50'.format(v)], 'tab:green', label='pre-development')
         plt.xlim((pre_df['Date'].values[0], pre_df['Date'].values[-1]))
         plt.legend(loc='upper right')
-        plt.show()
+        plt.title('{}'.format(v))
+        if show:
+            plt.show()
+            plt.close(fig)
+        else:
+            filepath = folder + '\{}_series_prepost.png'.format(v)
+            plt.savefig(filepath, dpi=400)
+            plt.close(fig)
+
+view_pre_pos(show=False)
