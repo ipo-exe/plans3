@@ -5,14 +5,14 @@ from tui import status
 import inp, out
 
 
-def step00_set_input_series(folder):
+def step00_set_input_series(folder, infolder, projectfolder):
     import resample
     from hydrology import convert_q2sq, convert_sq2q
     import inp
     #
     # combine the available series
     status('combining avaliable series')
-    in_folder = r'C:/000_myFiles/myDrive/myProjects/104_paper_castelhano/insumos'
+    in_folder = infolder
     files = ['ANA-flow_85830000_1978-2021__by-2021-12-16.txt',
              'ANA-prec_02952035_2004-2020__by-2020-12-29.txt',
              'ANA-prec_02952036_2004-2020__by-2020-12-29.txt',
@@ -44,7 +44,7 @@ def step00_set_input_series(folder):
             _df = _df.rename(columns={fields[i]: _field})
             _odf = pd.merge(_odf, _df, left_on='Date', right_on='Date')
     ##print(_odf.head().to_string())
-    fraster = r"C:\000_myFiles\myDrive\Plans3\pardinho\datasets\observed\calib_basin.asc"
+    fraster = projectfolder + "/datasets/observed/calib_basin.asc"
     meta, rmap = inp.asc_raster(file=fraster)
     _area = np.sum(rmap) * meta['cellsize'] * meta['cellsize']
     _odf['Q_StaCruz'] = convert_q2sq(q=_odf['Flow_Sta Cruz'].values, area=_area)
@@ -93,13 +93,13 @@ def step00_set_input_series(folder):
     status('setting input series')
     #
     # load other inputs
-    fcalib = r"C:\000_myFiles\myDrive\Plans3\pardinho\datasets\observed\calib_series.txt"
+    fcalib = projectfolder + "/datasets/observed/calib_series.txt"
     calib_df = pd.read_csv(fcalib, sep=';', parse_dates=['Date'])
     calib_s1_df = calib_df.copy()
     calib_s2_df = calib_df.copy()
     s3_frame = 'Date >= "2013-01-01"'
     calib_s3_df = calib_df.query(s3_frame).copy()
-    faoi = r"C:\000_myFiles\myDrive\Plans3\pardinho\datasets\observed\aoi_series.txt"
+    faoi = projectfolder + "/datasets/observed/aoi_series.txt"
     aoi_df = pd.read_csv(faoi, sep=';', parse_dates=['Date'])
     #
     fprec_sets = _of
@@ -113,13 +113,15 @@ def step00_set_input_series(folder):
     _odct = {'s1': calib_s1_df, 's2': calib_s2_df, 's3': calib_s3_df, 'aoi': aoi_df}
     _names = ['calib_s1_series.txt', 'calib_s2_series.txt', 'calib_s3_series.txt', 'aoi_series.txt']
     # output
+    _ofiles = list()
     for i in range(len(_dfs)):
         _of = folder + '/' + _names[i]
         _dfs[i].to_csv(_of, sep=';', index=False)
-    return _odct
+        _ofiles.append(_of)
+    return _ofiles
 
 
-def step01_search_models(folder, projectfolder):
+def step01_search_models(folder, projectfolder, fseries):
     import backend
     from tools import calibrate
     status('searching models')
@@ -129,7 +131,6 @@ def step01_search_models(folder, projectfolder):
     # get observed datasets standard names
     files_input = backend.get_input2calibhydro()
     folder = projectfolder + '/datasets/observed'
-    fseries = folder + '/' + files_input[0]
     fhydroparam = folder + '/' + files_input[1]
     fshruparam = folder + '/' + files_input[2]
     fhistograms = folder + '/' + files_input[3]
@@ -141,8 +142,8 @@ def step01_search_models(folder, projectfolder):
     fcanopy = folder + '/' + files_input[9]
     # Options: 'NSE', 'NSElog', 'RMSE', 'RMSElog', 'KGE', 'KGElog', 'PBias', 'RMSE-CFC', 'RMSElog-CFC'
     likelihood = 'KGElog'
-    generations = 10
-    popsize = 100
+    generations = 20
+    popsize = 1000
     calibfiles = calibrate(fseries=fseries,
                            fhydroparam=fhydroparam,
                            fshruparam=fshruparam,
@@ -207,12 +208,15 @@ def step02_select_models(folder, calibfolder, projectfolder):
                      tui=True)
     # filter
     status('selecting models')
-    fmodels = calib_folder + '/generations/population.txt'
+    fmodels = gluefiles['Folder'] + '/behavioural.txt' #calib_folder + '/generations/population.txt'
     models_df = pd.read_csv(fmodels, sep=';')
     models_df = models_df.drop_duplicates(subset=['SetIds'])
+    models_df = models_df.sort_values(by='L', ascending=False)
+    models_df = models_df.head(20)
+    print(len(models_df))
     #models_df['PBias_abs'] = models_df['PBias'].abs()
     # activate this:
-    models_df = models_df.query('L > -0.65 and KGElog > 0.4 and NSElog > 0 and Qb_R > 0.25')
+    #models_df = models_df.query('L > -0.65 and KGElog > 0.4 and NSElog > 0 and Qb_R > 0.25')
     #models_df = models_df.sort_values(by='PBias_abs', ascending=True)
     #print(models_df.head(20).to_string())
     #print(len(models_df))
@@ -227,10 +231,9 @@ def step02_select_models(folder, calibfolder, projectfolder):
     return gluefiles['Folder']
 
 
-def step03_map_processes(folder, gluefolder, projectfolder, vars='Qv-R'):
+def step03_map_processes(folder, gluefolder, projectfolder, fseries, vars='Qv-R'):
     from tools import bat_slh
     ftwi = projectfolder + "/datasets/observed/aoi_twi.asc"
-    fseries = projectfolder + "/datasets/observed/calib_series.txt"
     fshru_param = projectfolder + "/datasets/observed/calib_shru_param.txt"
     fbasin = projectfolder + "/datasets/observed/aoi_basin.asc"
     fcanopy = projectfolder +  "/datasets/observed/calib_canopy_series.txt"
@@ -301,14 +304,13 @@ def step03_map_processes(folder, gluefolder, projectfolder, vars='Qv-R'):
             'Pos_folder':pos_folder['Folder']}
 
 
-def step04_map_asla(folder, prefolder, posfolder, projectfolder):
+def step04_map_asla(folder, prefolder, posfolder, projectfolder, fseries):
     """
     uses the median runoff as the runoff for ASLA assessment
     :return:
     """
     from tools import asla
     #
-    fseries = projectfolder + "/datasets/observed/calib_series.txt"
     flulc_param = projectfolder + "/datasets/observed/aoi_lulc_param.txt"
     fslope = projectfolder + "/datasets/observed/aoi_slope.asc"
     fsoils =  projectfolder + "/datasets/observed/aoi_soils.asc"
@@ -760,8 +762,7 @@ def view_anomaly(anomfolder, hy_prefolder, hy_posfolder, asla_prefolder, asla_po
             plt.close(fig)
 
 
-
-def main(folder, projectfolder):
+def main(folder, infolder, projectfolder):
     from backend import create_rundir
     import os
     # -01 SET UP FOLDERS
@@ -775,19 +776,22 @@ def main(folder, projectfolder):
         os.mkdir(f)
     #
     # 00 SET INPUT SERIES
-    dct = step00_set_input_series(folder=folder)
+    series_lst = step00_set_input_series(folder=folder,
+                                  infolder=infolder,
+                                  projectfolder=projectfolder)
     lbls = ['s1', 's2', 's3', 'aoi']
-    for i in lbls:
-        print(dct[i].head().to_string())
+    mapvars = 'Qv-R'
     #
     #
     # loop in sets
-    for folder in folder_lst[:1]:
-        print(folder)
+    for i in len(folder_lst):
+        folder = folder_lst[i]
+        fseries = series_lst[i]
         #
         # 01 SEARCH MODELS
         calib_folder = step01_search_models(folder=folder,
-                                            projectfolder=projectfolder)
+                                            projectfolder=projectfolder,
+                                            fseries=fseries)
         #
         # 02 SELECT BEHAVIOURAL MODELS
         glue_folder = step02_select_models(folder=folder,
@@ -797,30 +801,37 @@ def main(folder, projectfolder):
         # 03 MAP HYDRO PROCESSES FOR AOI PRE and POS
         map_folders = step03_map_processes(folder=folder,
                                            gluefolder=glue_folder,
-                                           projectfolder=projectfolder)
+                                           projectfolder=projectfolder,
+                                           fseries=fseries, vars=mapvars)
         #
         # 04 MAP ASLA PROCESSES FOI AOI PRE AND POS
         asla_folders = asla_folders = step04_map_asla(folder=folder,
                                                       prefolder=map_folders['Pre_folder'],
                                                       posfolder=map_folders['Pos_folder'],
-                                                      projectfolder=projectfolder)
+                                                      projectfolder=projectfolder,
+                                                      fseries=fseries)
         #
         # 05 COMPUTE ANOMALY
         step05_compute_anomaly(folder='C:/bin',
                                hy_prefolder=map_folders['Pre_folder'],
                                hy_posfolder=map_folders['Pos_folder'],
                                asla_prefolder=asla_folders['Pre_folder'],
-                               asla_posfolder=asla_folders['Pos_folder'])
+                               asla_posfolder=asla_folders['Pos_folder'],
+                               mapvars=mapvars)
         #
         # 06 COMPUTE UNCERTAINTY
         step06_compute_uncertainty(folder='C:/bin',
                                    hy_prefolder=map_folders['Pre_folder'],
-                                   hy_posfolder=map_folders['Pos_folder'])
+                                   hy_posfolder=map_folders['Pos_folder'],
+                                   mapvars=mapvars)
         #
 
 
-main(folder='C:/bin',
-     projectfolder='C:/000_myFiles/myDrive/Plans3/pardinho')
+main(folder='/home/ipora/Documents/produtos_v2',
+     infolder='/home/ipora/Documents/produtos_v2/inputs',
+     projectfolder='/home/ipora/Documents/produtos_v2/inputs/pardinho')
+
+
 '''
 folders = step03_map_processes(folder='C:/bin',
                      gluefolder='C:/bin/pardinho/produtos_v2/run__2022-01-06-16-11-24/s1/GLUE_L_2022-01-06-16-13-09',
