@@ -199,7 +199,7 @@ def step02_select_models(folder, calibfolder, projectfolder):
                      fcanopy=fcanopy,
                      likelihood='L',
                      nmodels=5000,
-                     behavioural=-2,
+                     behavioural=-0.65,
                      run_ensemble=True,
                      folder=outfolder,
                      wkpl=True,
@@ -211,11 +211,8 @@ def step02_select_models(folder, calibfolder, projectfolder):
     models_df = pd.read_csv(fmodels, sep=';')
     models_df = models_df.drop_duplicates(subset=['SetIds'])
     #models_df['PBias_abs'] = models_df['PBias'].abs()
-
     # activate this:
-    #models_df = models_df.query('L > -0.65 and KGElog > 0.5 and NSElog > 0 and Qb_R > 0.25')
-
-
+    models_df = models_df.query('L > -0.65 and KGElog > 0.4 and NSElog > 0 and Qb_R > 0.25')
     #models_df = models_df.sort_values(by='PBias_abs', ascending=True)
     #print(models_df.head(20).to_string())
     #print(len(models_df))
@@ -785,7 +782,7 @@ def main(folder, projectfolder):
     #
     #
     # loop in sets
-    for folder in folder_lst:
+    for folder in folder_lst[:1]:
         print(folder)
         #
         # 01 SEARCH MODELS
