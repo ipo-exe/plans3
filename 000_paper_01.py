@@ -7,10 +7,9 @@ import inp
 import out
 import numpy as np
 
-
+# ok
 def demo_bat_slh_pre_pos():
     from tools import bat_slh
-
     folder = r"C:/bin/pardinho/optimization/000_calib_Hydrology_KGElog_2021-10-27-18-01-16"
     ftwi = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/aoi_twi.asc"
     fseries = r"C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_series.txt"
@@ -76,7 +75,7 @@ def demo_bat_slh_pre_pos():
             annualize=True,
             folder='C:/bin/pardinho')
 
-
+# ok
 def asla_median():
     """
     uses the median runoff as the runoff for ASLA assessment
@@ -127,7 +126,7 @@ def asla_median():
          nutrients=True,
          folder='C:/bin/pardinho/produtos')
 
-
+# ok
 def bat_anomaly():
     import os
     import numpy as np
@@ -564,7 +563,7 @@ def zonal_stats_car():
     fout = 'C:/bin/pardinho/produtos/aoi_car_zonal_stats.txt'
     _out_df.to_csv(fout, sep=';', index=False)
 
-
+# ok
 def view_evolution_1():
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -585,7 +584,7 @@ def view_evolution_1():
     plt.savefig(expfile, dpi=400)
     plt.close(fig)
 
-
+# ok
 def view_evolution_2():
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -594,7 +593,7 @@ def view_evolution_2():
     pop_df = pd.read_csv(full_f, sep=';')
     beha_df = pop_df.query('L > -0.65')
     pop_df = pop_df.query('L <= -0.65')
-    print(pop_df.head().to_string())
+    #print(pop_df.head().to_string())
     noise = np.random.normal(loc=0, scale=0.1, size=len(pop_df))
     noise2 = np.random.normal(loc=0, scale=0.1, size=len(beha_df))
     plt.scatter(x=pop_df['Gen'] + noise, y=pop_df['L'], marker='.', c='tab:grey', alpha=0.1, edgecolors='none')
@@ -609,6 +608,7 @@ def view_evolution_2():
     plt.savefig(expfile, dpi=400)
     plt.close(fig)
 
+# ok
 def demo_glue():
     from backend import get_input2calibhydro
     from tools import glue
@@ -1200,4 +1200,198 @@ def view_pre_pos(show=True):
             plt.savefig(filepath, dpi=400)
             plt.close(fig)
 
-view_pre_pos(show=False)
+# ok
+def combine_series():
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import resample
+    folder = r'C:/000_myFiles/myDrive/myProjects/104_paper_castelhano/insumos'
+    files = ['ANA-flow_85830000_1978-2021__by-2021-12-16.txt',
+             'ANA-prec_02952035_2004-2020__by-2020-12-29.txt',
+             'ANA-prec_02952036_2004-2020__by-2020-12-29.txt',
+             'ANA-prec_02952037_2004-2021__by-2021-12-16.txt']
+    names = ['Sta Cruz', 'Herveiras', 'Boqueirao', 'Deodoro']
+    fields = ['Flow', 'Prec', 'Prec', 'Prec']
+
+    df_lst = dict()
+    for i in range(0, len(files)):
+        _path = folder + '/{}'.format(files[i])
+        _df = pd.read_csv(_path, sep=';', parse_dates=['Date'])
+        _df = _df.query('Date >= "2011-01-01" and Date < "2015-01-01"')
+        print(names[i])
+        _gaps = np.sum(_df[fields[i]].isna())
+        print(_gaps)
+        if _gaps > 0:
+            _df = resample.interpolate_gaps(_df, fields[i], size=3, type='zero')
+            _df = _df[['Date', 'Interpolation']]
+            _df = _df.rename(columns={'Interpolation': fields[i]})
+        df_lst[names[i]] = _df.copy()
+
+    for i in range(len(names)):
+        _field = fields[i] + '_' + names[i]
+        print(_field)
+        if i == 0:
+            _odf = df_lst[names[i]]
+            _odf = _odf.rename(columns={fields[i]: _field})
+        else:
+            _df = df_lst[names[i]]
+            _df = _df.rename(columns={fields[i]: _field})
+            _odf = pd.merge(_odf, _df, left_on='Date', right_on='Date')
+        print(_odf.head().to_string())
+    _of = folder + '/obs_data_all.txt'
+    _odf.to_csv(_of, sep=';', index=False)
+
+# ok
+def view_obs_data_analyst(show=True):
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    import resample
+    folder = r'C:/000_myFiles/myDrive/myProjects/104_paper_castelhano/insumos'
+    _f = folder + '/obs_data_all.txt'
+    _df = pd.read_csv(_f, sep=';', parse_dates=['Date'])
+    print(_df.head().to_string())
+    fields = list(_df.columns[2:])
+    month_dct = dict()
+    # process
+    for field in fields:
+        month_dct[field] = dict()
+        _df_yr = resample.d2m_prec(dataframe=_df, var_field=field)
+        dct_q = resample.group_by_month(dataframe=_df_yr, var_field='Sum', zeros=True)
+        months = 'J-F-M-A-M-J-J-A-S-O-N-D'.split('-')
+        months_ids = np.arange(12)
+        mean = np.zeros(12)
+        p95 = np.zeros(12)
+        p05 = np.zeros(12)
+        count = 0
+        for keys in dct_q:
+            mean[count] = np.mean(dct_q[keys]['Sum'].values)
+            p95[count] = np.percentile(dct_q[keys]['Sum'].values, q=75)
+            p05[count] = np.percentile(dct_q[keys]['Sum'].values, q=25)
+            count = count + 1
+        month_dct[field] = pd.DataFrame({'Month': months,
+                                         'Month_id': months_ids,
+                                         'Mean': mean,
+                                         'P75': p95,
+                                         'P25': p05})
+    # plot
+    fig = plt.figure(figsize=(16, 6))  # Width, Height
+    gs = mpl.gridspec.GridSpec(4, 9, wspace=1, hspace=0.8, left=0.05, bottom=0.05, top=0.95, right=0.95)
+    order = ['Prec_Herveiras', 'Prec_Boqueirao', 'Prec_Deodoro', 'Q_StaCruz']
+    names = {'Prec_Herveiras': 'Precip. Herveiras Station',
+             'Prec_Boqueirao': 'Precip. Boqueirao Station',
+             'Prec_Deodoro': 'Precip. Deodoro Station',
+             'Q_StaCruz': 'Streamflow Santa Cruz Station'}
+    count = 0
+    for field in order:
+        #
+        # series plot
+        plt.subplot(gs[count: count + 1, :6])
+        plt.title(names[field], loc='left')
+        color = 'tab:blue'
+        if 'Q' in field:
+            color = 'navy'
+        plt.plot(_df['Date'], _df[field], color)
+        if 'Prec' in field:
+            plt.ylim((0, 150))
+        plt.xlim((_df['Date'].values[0], _df['Date'].values[-1]))
+        plt.ylabel('mm')
+        #
+        # monthly plot
+        plt.subplot(gs[count: count + 1, 6:8])
+        plt.title('monthly yield', loc='left')
+        plt.plot(month_dct[field]['Month_id'], month_dct[field]['Mean'], color)
+        plt.xticks(ticks=month_dct[field]['Month_id'].values, labels=month_dct[field]['Month'].values)
+        plt.fill_between(x=month_dct[field]['Month_id'],
+                         y1=month_dct[field]['P25'],
+                         y2=month_dct[field]['P75'],
+                         color='tab:grey',
+                         alpha=0.4,
+                         edgecolor='none')
+        plt.ylim(0, 350)
+        plt.ylabel('mm')
+        #
+        # yearly plot
+        plt.subplot(gs[count: count + 1, 8:])
+        plt.title('yearly yield', loc='left')
+        _y = 365 * (_df[field].sum() / len(_df))
+        _x = 0.5
+        plt.bar(x=_x, height=_y, width=0.3, tick_label='')
+        plt.text(x=_x, y=1.1 * _y, s=str(int(_y)))
+        plt.xlim(0.1, 1.1)
+        plt.ylim(0, 3000)
+        plt.ylabel('mm')
+
+        #
+        count = count + 1
+    # export
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/obs_data_all_analyst.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+# ok
+def define_prec_sets():
+    import pandas as pd
+
+    folder = r'C:/000_myFiles/myDrive/myProjects/104_paper_castelhano/insumos'
+    _f = folder + '/obs_data_all.txt'
+    _df = pd.read_csv(_f, sep=';', parse_dates=['Date'])
+    print(_df.head().to_string())
+
+    areas_calib = {'Prec_Herveiras': 56788,
+                   'Prec_Boqueirao': 26542,
+                   'Prec_Deodoro': 2207}
+
+    areas_aoi = {'Prec_Herveiras': 0,
+                 'Prec_Boqueirao': 4823,
+                 'Prec_Deodoro': 3351}
+    # calib:
+    area_total = 0
+    for k in areas_calib:
+        area_total = area_total + areas_calib[k]
+    print(area_total)
+    factors = dict()
+    for k in areas_calib:
+        factors[k] = areas_calib[k] / area_total
+        _df[k + '_calibf'] = factors[k]
+    print(factors)
+    print(_df.head().to_string())
+    #
+    # aoi
+    area_total = 0
+    for k in areas_aoi:
+        area_total = area_total + areas_aoi[k]
+    print(area_total)
+    factors = dict()
+    for k in areas_aoi:
+        factors[k] = areas_aoi[k] / area_total
+        _df[k + '_aoif'] = factors[k]
+    print(factors)
+    print(_df.head().to_string())
+
+    _df['Prec_calib_S1'] = 0
+    for k in areas_calib:
+        _df['Prec_calib_S1'] = _df['Prec_calib_S1'] + (_df[k] * _df[k + '_calibf'])
+    print(365 * (_df['Prec_calib_S1'].sum() / len(_df)))
+    print(_df.head().to_string())
+
+    _df['Prec_calib_S2'] = (_df['Prec_Boqueirao'] * (_df['Prec_Herveiras_calibf'] + _df['Prec_Boqueirao_calibf'])) + (
+                _df['Prec_Deodoro'] * _df['Prec_Deodoro_calibf'])
+    print(365 * (_df['Prec_calib_S2'].sum() / len(_df)))
+    print(_df.head().to_string())
+
+    _df['Prec_calib_S3'] = _df['Prec_calib_S2']
+
+    _df['Prec_AOI'] = 0
+    for k in areas_calib:
+        _df['Prec_AOI'] = _df['Prec_AOI'] + (_df[k] * _df[k + '_aoif'])
+    print(365 * (_df['Prec_AOI'].sum() / len(_df)))
+    print(_df.head().to_string())
+    _of = folder + '/obs_data_precsets.txt'
+    _df.to_csv(_of, sep=';', index=False)

@@ -1979,6 +1979,7 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
             mapvar='all',
             mapdates='all',
             integrate=False,
+            integrate_only=False,
             slicedates='all',
             qobs=False,
             folder='C:/bin',
@@ -2027,6 +2028,8 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
     import os
     from backend import get_mapid
     from visuals import plot_ensemble
+    if tui:
+        from tui import status
     # Run Folder setup
     if wkpl:  # if the passed folder is a workplace, create a sub folder within it
         from backend import create_rundir
@@ -2077,6 +2080,8 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
                       mapraster=mapraster,
                       mapvar=mapvar,
                       integrate=integrate,
+                      integrate_only=integrate_only,
+                      integrate_skipraster=True,
                       slicedates=slicedates,
                       qobs=qobs,
                       folder=lcl_folder,
@@ -2087,6 +2092,8 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
         series_dct[models_df[model_id].values[i]] = lcl_dct['Series']
     #
     # compute ensemble
+    if tui:
+        status('computing ensemble of models')
     if ensemble:
         ensemble_vars = backend.get_all_simvars().split('-')
         series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
@@ -2134,7 +2141,12 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
                           qobs=lcl_qobs)
     #
     # stats across integration
+    if tui:
+        status('computing distributed stats')
     if integrate and stats:
+        from hydrology import map_back
+        meta, twi = inp.asc_raster(file=ftwi, dtype='float32')
+        meta, shru = inp.asc_raster(file=fshru, dtype='float32')
         if annualize:
             _lcl_series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
             annual_factor = len(_lcl_series_df) / 365
@@ -2146,8 +2158,12 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
         # variable loop
         for v in mapvars:
             # models loop
-            _maps = list()
+            _zmaps = list()
             for i in range(len(lcl_folders)):
+                lcl_file = '{}/integration/zmap_integral_{}.txt'.format(lcl_folders[i], v)
+                lcl_zmap, twi_bins, shru_bins = inp.zmap(file=lcl_file)
+                # old code:
+                """
                 lcl_file = '{}/integration/raster_integral_{}.asc'.format(lcl_folders[i], v)
                 # import map
                 meta, lcl_map = inp.asc_raster(lcl_file, dtype='float32')
@@ -2158,20 +2174,40 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
             _maps = np.array(_maps)
             # get stats dict
             _stats_dict = geo.local_stats(maps=_maps, tui=True)
+            """
+                if annualize:
+                    lcl_zmap = lcl_zmap / annual_factor
+                _zmaps.append(lcl_zmap)
+            # vectorize
+            _zmaps = np.array(_zmaps)
+            # get stats dict
+            if tui:
+                status('computing {} stats'.format(v))
+            _stats_zmap_dict = geo.local_stats(maps=_zmaps, tui=True)
+            _stats_raster_dict = dict()
+            for stat in _stats_zmap_dict:
+                if tui:
+                    status('mapping back {} {}'.format(v, stat))
+                _stats_raster_dict[stat] = map_back(zmatrix=_stats_zmap_dict[stat],
+                                                    a1=twi,
+                                                    a2=shru,
+                                                    bins1=twi_bins,
+                                                    bins2=shru_bins)
             # loop in dict keys:
-            for stat in _stats_dict:
+            for stat in _stats_raster_dict:
                 filename = '{}_{}'.format(stat, v)
                 if annualize:
                     filename = 'annual_{}_{}'.format(v, stat)
-                print(filename)
-                favg_map = out.asc_raster(_stats_dict[stat], meta, folder=folder, filename=filename)
+                if tui:
+                    status('exporting {} {} raster map'.format(v, stat))
+                favg_map = out.asc_raster(_stats_raster_dict[stat], meta, folder=folder, filename=filename)
                 mapid = get_mapid(v)
-                visuals.plot_map_view(_stats_dict[stat], meta,
-                                      ranges=[0,  np.max(_stats_dict[stat])],
+                visuals.plot_map_view(_stats_raster_dict[stat], meta,
+                                      ranges=[0,  np.max(_stats_raster_dict[stat])],
                                       mapid=mapid, mapttl='{} {}'.format(stat, v),
                                       filename=filename,
                                       folder=folder)
-
+        return {'Folder':folder}
 
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
         mapback=False,
@@ -2180,6 +2216,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         mapdates='all',
         integrate=False,
         integrate_only=False,
+        integrate_skipraster=False,
         slicedates='all',
         qobs=False,
         folder='C:/bin',
@@ -2415,13 +2452,16 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
             from hydrology import map_back
             from visuals import plot_map_view
             #
-            # heavy imports
-            if tui:
-                status('importing twi raster')
-            meta, twi = inp.asc_raster(ftwi, dtype='float32')
-            if tui:
-                status('importing shru raster')
-            meta, shru = inp.asc_raster(fshru, dtype='float32')
+            if integrate_skipraster:
+                pass
+            else:
+                # heavy imports
+                if tui:
+                    status('importing twi raster')
+                meta, twi = inp.asc_raster(ftwi, dtype='float32')
+                if tui:
+                    status('importing shru raster')
+                meta, shru = inp.asc_raster(fshru, dtype='float32')
         #
         if integrate or integrate_only:
             # make integration directory
@@ -2484,24 +2524,30 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                     lcl_label = 'avg'
                 # export integral zmap
                 lcl_filename = 'zmap_integral_{}'.format(var)
-                lcl_file = zmap(zmap=integration, twibins=twibins, shrubins=shrubins,
-                                folder=int_folder, filename=lcl_filename)
+                lcl_file = zmap(zmap=integration,
+                                twibins=twibins,
+                                shrubins=shrubins,
+                                folder=int_folder,
+                                filename=lcl_filename)
                 intmaps_files.append(lcl_files)
                 #
                 # recover raster
-                mp = map_back(integration, a1=twi, a2=shru, bins1=twibins, bins2=shrubins)
-                # export raster map
-                lcl_filename = 'raster_integral_{}'.format(var)
-                lcl_file = out.asc_raster(mp, meta, int_folder, lcl_filename)
-                intmaps_files.append(lcl_file)
-                # export raster view
-                mapid = get_mapid(var)
-                #
-                ranges = [np.min(integration), np.max(integration)]  # set global ranges
-                # plot raster view
-                lcl_ttl = '{} of {}\n {} to {} | {} days'.format(lcl_label, var, stamp[0], stamp[len(stamp) - 1], len(stamp))
-                plot_map_view(mp, meta, ranges, mapid, mapttl=lcl_ttl,folder=int_folder,
-                              filename=lcl_filename, show=False, integration=True)
+                if integrate_skipraster:
+                    pass
+                else:
+                    mp = map_back(integration, a1=twi, a2=shru, bins1=twibins, bins2=shrubins)
+                    # export raster map
+                    lcl_filename = 'raster_integral_{}'.format(var)
+                    lcl_file = out.asc_raster(mp, meta, int_folder, lcl_filename)
+                    intmaps_files.append(lcl_file)
+                    # export raster view
+                    mapid = get_mapid(var)
+                    #
+                    ranges = [np.min(integration), np.max(integration)]  # set global ranges
+                    # plot raster view
+                    lcl_ttl = '{} of {}\n {} to {} | {} days'.format(lcl_label, var, stamp[0], stamp[len(stamp) - 1], len(stamp))
+                    plot_map_view(mp, meta, ranges, mapid, mapttl=lcl_ttl,folder=int_folder,
+                                  filename=lcl_filename, show=False, integration=True)
             #
             if integrate_only:
                 pass
@@ -3316,11 +3362,11 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     # export behaviroural models:
     if tui:
         status('exporting behavioural models datasets')
-    exp_file0 = '{}/behaviroural.txt'.format(folder)
+    exp_file0 = '{}/behavioural.txt'.format(folder)
     behav_df = behav_df.sort_values(by=likelihood, ascending=False)
     behav_df.to_csv(exp_file0, sep=';', index=False)
     if normalize:
-        exp_file0 = '{}/behaviroural_normalized.txt'.format(folder)
+        exp_file0 = '{}/behavioural_normalized.txt'.format(folder)
         behav_df_norm = behav_df_norm.sort_values(by=likelihood, ascending=False)
         behav_df_norm.to_csv(exp_file0, sep=';', index=False)
     #
@@ -3455,8 +3501,7 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
     #
     #
     #
-    return 666
-
+    return {'Folder':folder}
 
 def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
          aero=6000,
@@ -3530,7 +3575,8 @@ def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
                             erosivity=aero,
                             annual_p=annual_prec,
                             cum_cusle_factor=1.5,
-                            folder=folder)
+                            folder=folder,
+                            filename='asl')
     if log:
         if tui:
             status('computing log10 of USLE-M Annual Soil Loss')
@@ -3539,7 +3585,7 @@ def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
         # process
         asl_log10 = np.log10(asl + zero)
         # export
-        filename = 'a_usle_m_log'
+        filename = 'asllog'
         fmap_asllog = out.asc_raster(asl_log10, meta, folder, filename=filename)
         # plot
         from visuals import plot_map_view
@@ -3554,10 +3600,11 @@ def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
     if nutrients:
         if tui:
             status('computing Annual Nitrogen Load')
-        map_n_load(flulc=flulc, fmap_proxy=fmap_asl, flulcparam=flulcparam, folder=folder)
+        map_n_load(flulc=flulc, fmap_proxy=fmap_asl, flulcparam=flulcparam, folder=folder, filename='nload')
         if tui:
             status('computing Annual Phosphorous Load')
-        map_p_load(flulc=flulc, fmap_proxy=fmap_asl, flulcparam=flulcparam, folder=folder)
+        map_p_load(flulc=flulc, fmap_proxy=fmap_asl, flulcparam=flulcparam, folder=folder, filename='pload')
+    return {'Folder': folder}
 
 
 def sal_d_by_twi(ftwi1, ftwi2, m=10, dmax=100, size=100, label='', wkpl=False, folder='C:/bin'):

@@ -1086,10 +1086,11 @@ def local_loads(loads, zones_ids, zones, proxy):
     return _loads
 
 
-def local_stats(maps, tui=False):
+def local_stats(maps, tui=False, full=False):
     """
     Compute the local stats of a pile of maps
     :param maps: 3d numpy array with the 2d maps
+    :param full: boolean to compute full stats
     :return: dictionary with the local stats maps (2d numpy arrays)
     """
     if tui:
@@ -1098,14 +1099,16 @@ def local_stats(maps, tui=False):
         _count = 0
     # declare stats arrays
     _median = np.zeros(shape=np.shape(maps[0]))
-    _mean = np.zeros(shape=np.shape(maps[0]))
-    _max = np.zeros(shape=np.shape(maps[0]))
-    _min = np.zeros(shape=np.shape(maps[0]))
     _5th_ptile = np.zeros(shape=np.shape(maps[0]))
-    _50th_ptile = np.zeros(shape=np.shape(maps[0]))
     _95th_ptile = np.zeros(shape=np.shape(maps[0]))
     _range_90 = np.zeros(shape=np.shape(maps[0]))
-    _range_minmax = np.zeros(shape=np.shape(maps[0]))
+    if full:
+        _mean = np.zeros(shape=np.shape(maps[0]))
+        _max = np.zeros(shape=np.shape(maps[0]))
+        _min = np.zeros(shape=np.shape(maps[0]))
+        _50th_ptile = np.zeros(shape=np.shape(maps[0]))
+        _range_minmax = np.zeros(shape=np.shape(maps[0]))
+
     # scan the arrays
     for i in range(len(maps[0])):
         if tui:
@@ -1122,24 +1125,31 @@ def local_stats(maps, tui=False):
             #
             # sample stas
             _median[i][j] = np.median(_x_values)
-            _mean[i][j] = np.mean(_x_values)
-            _min[i][j] = np.min(_x_values)
-            _max[i][j] = np.max(_x_values)
             _5th_ptile[i][j] = np.percentile(_x_values, q=5)
-            _50th_ptile[i][j] = np.percentile(_x_values, q=50)
             _95th_ptile[i][j] = np.percentile(_x_values, q=95)
-    _range_90 = _95th_ptile - _50th_ptile
-    _range_minmax = _max - _min
-    return {'Median':_median,
-            'Mean': _mean,
-            'Min': _min,
-            'Max': _max,
-            '5th_p': _5th_ptile,
-            '50th_p': _5th_ptile,
-            '95th_p': _95th_ptile,
-            'Range_90': _range_90,
-            'Range_minmax': _range_minmax}
-
+            if full:
+                _mean[i][j] = np.mean(_x_values)
+                _min[i][j] = np.min(_x_values)
+                _max[i][j] = np.max(_x_values)
+                _50th_ptile[i][j] = np.percentile(_x_values, q=50)
+    _range_90 = _95th_ptile - _5th_ptile
+    if full:
+        _range_minmax = _max - _min
+    if full:
+        return {'Median':_median,
+                'Mean': _mean,
+                'Min': _min,
+                'Max': _max,
+                '5th_p': _5th_ptile,
+                '50th_p': _50th_ptile,
+                '95th_p': _95th_ptile,
+                'Range_90': _range_90,
+                'Range_minmax': _range_minmax}
+    else:
+        return {'Median': _median,
+                '5th_p': _5th_ptile,
+                '95th_p': _95th_ptile,
+                'Range_90': _range_90}
 
 def mask(array, mask):
     """
