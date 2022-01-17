@@ -549,6 +549,260 @@ def step06_compute_uncertainty(folder, hy_prefolder, hy_posfolder, mapvars='Qv-R
                       nodata=-99999)
 
 
+def step07_zonal_stats(fcar_map, anom_folder, unc_folder):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import geo
+    fcar = fcar_map
+    meta, car = inp.asc_raster(file=fcar, dtype='int16')
+    _ids = np.unique(car)
+    vars = ['R', 'RIE', 'Qv', 'Inf', 'ET', 'Tpgw', 'asl', 'pload', 'nload']
+    _out_df = pd.DataFrame({'id_car':_ids})
+    for v in vars:
+        # annual anomaly
+        if v in ['asl', 'pload', 'nload']:
+            fanm = "{}/annual_{}_anomaly.asc".format(anom_folder, v)
+        else:
+            fanm = "{}/annual_{}_Mean_anomaly.asc".format(anom_folder, v)
+        meta, lcl_map = inp.asc_raster(file=fanm, dtype='float32')
+        _dct = geo.zonalstats(field=lcl_map, zones=car, tui=True)
+        _out_df['{}_aa_mean'.format(v)] = _dct['Mean']
+        # average uncertainty
+        if v in ['asl', 'pload', 'nload']:
+            pass
+        else:
+            fanm = "{}/avg_{}_uncertainty.asc".format(unc_folder, v)
+            meta, lcl_map = inp.asc_raster(file=fanm, dtype='float32')
+            _dct = geo.zonalstats(field=lcl_map, zones=car, tui=True)
+            _out_df['{}_un_mean'.format(v)] = _dct['Mean']
+    print(_out_df.head(10).to_string())
+    fout = 'C:/bin/pardinho/produtos/aoi_car_zonal_stats.txt'
+    _out_df.to_csv(fout, sep=';', index=False)
+
+
+def step08_map_index(folder, fcar_stats, fcar_basic, show=True):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    import numpy as np
+    import shapefile
+    folder1 = folder
+    folder2 = '{}/hist_maps'.format(folder)
+
+    fbasic = fcar_basic
+    fstats = fcar_stats
+    fbasin = r"C:\000_myFiles\myDrive\gis\pnh\misc\aoi_basin.shp"
+
+    basic_df = pd.read_csv(fbasic, sep=';')
+    # print(basic_df.head().to_string())
+    stats_df = pd.read_csv(fstats, sep=';')
+    # print(stats_df.head().to_string())
+    df = pd.merge(basic_df, stats_df, 'inner', left_on='id_imovel', right_on='id_car')
+
+    vars = ['R', 'Qv', 'RIE', 'Inf', 'ET', 'Tpgw', 'asl', 'nload', 'pload', 'Prx', 'area']
+    _ptiles1 = [0.20, 0.40, 0.60, 0.80, 0.95]
+    _ptiles2 = [0.05, 0.20, 0.40, 0.60, 0.80]
+    _classes1 = [1, 2, 3, 4, 5, 6]
+    _classes2 = [6, 5, 4, 3, 2, 1]
+    ptiles = {'aa': {'R': _ptiles1,
+                     'Qv': _ptiles2,
+                     'RIE': _ptiles1,
+                     'Inf': _ptiles2,
+                     'ET': _ptiles2,
+                     'Tpgw': _ptiles2,
+                     'asl': _ptiles1,
+                     'nload': _ptiles1,
+                     'pload': _ptiles1,
+                     'Prx': _ptiles2,
+                     'area': _ptiles1},
+              'un': {'R': _ptiles2,
+                     'Qv': _ptiles2,
+                     'RIE': _ptiles2,
+                     'Inf': _ptiles2,
+                     'ET': _ptiles2,
+                     'Tpgw': _ptiles2}}
+    classes = {'aa': {'R': _classes1,
+                      'Qv': _classes2,
+                      'RIE': _classes1,
+                      'Inf': _classes2,
+                      'ET': _classes2,
+                      'Tpgw': _classes2,
+                      'asl': _classes1,
+                      'nload': _classes1,
+                      'pload': _classes1,
+                      'Prx': _classes2,
+                      'area':_classes1},
+               'un': {'R': _classes2,
+                      'Qv': _classes2,
+                      'RIE': _classes2,
+                      'Inf': _classes2,
+                      'ET': _classes2,
+                      'Tpgw': _classes2}}
+    _colors1 = ['aqua', 'lime', 'gold', 'orange', 'red', 'black']
+    _colors2 = ['black', 'red', 'orange', 'gold', 'lime', 'aqua']
+    _colors3 = ['black', 'grey', 'darkgrey', 'silver', 'lightgrey', 'whitesmoke', ]
+    colors = {'aa': {'R': _colors1,
+                     'Qv': _colors2,
+                     'RIE': _colors1,
+                     'Inf': _colors2,
+                     'ET': _colors2,
+                     'Tpgw': _colors2,
+                     'asl': _colors1,
+                     'nload': _colors1,
+                     'pload': _colors1,
+                     'Prx': _colors2,
+                     'area':_colors1},
+              'un': {'R': _colors3,
+                     'Qv': _colors3,
+                     'RIE': _colors3,
+                     'Inf': _colors3,
+                     'ET': _colors3,
+                     'Tpgw': _colors3}}
+    #
+    units = {'aa': {'R': 'mm',
+                    'Qv': 'mm',
+                    'RIE': 'mm',
+                    'Inf': 'mm',
+                    'ET': 'mm',
+                    'Tpgw': 'mm',
+                    'asl': 'ton/year',
+                    'nload': 'kg-N/year',
+                    'pload': 'kg-P/year',
+                    'Prx': 'm',
+                    'area': 'ha'},
+             'un': {'R': '%',
+                    'Qv': '%',
+                    'RIE': '%',
+                    'Inf': '%',
+                    'ET': '%',
+                    'Tpgw': '%'}}
+    #
+    #
+    stats_types = ['aa', 'un']
+    for stats in stats_types:
+        for v in vars:
+            print(v)
+            if stats == 'un' and v in ['asl', 'nload', 'pload', 'Prx', 'area']:
+                pass
+            else:
+                # get ptiles
+                if v in ['Prx', 'area']:
+                    _lcl_field = v
+                else:
+                    _lcl_field = '{}_{}_mean'.format(v, stats)
+                _lcl_x = df[_lcl_field].values
+                _ptiles = np.quantile(a=_lcl_x, q=ptiles[stats][v])
+                df['{}_{}_ind'.format(v, stats)] = 0
+                for i in range(len(df)):
+                    if _lcl_x[i] < _ptiles[0]:
+                        df['{}_{}_ind'.format(v, stats)].values[i] = classes[stats][v][0]
+                    elif _lcl_x[i] < _ptiles[1] and _lcl_x[i] >= _ptiles[0]:
+                        df['{}_{}_ind'.format(v, stats)].values[i] = classes[stats][v][1]
+                    elif _lcl_x[i] < _ptiles[2] and _lcl_x[i] >= _ptiles[1]:
+                        df['{}_{}_ind'.format(v, stats)].values[i] = classes[stats][v][2]
+                    elif _lcl_x[i] < _ptiles[3] and _lcl_x[i] >= _ptiles[2]:
+                        df['{}_{}_ind'.format(v, stats)].values[i] = classes[stats][v][3]
+                    elif _lcl_x[i] < _ptiles[4] and _lcl_x[i] >= _ptiles[3]:
+                        df['{}_{}_ind'.format(v, stats)].values[i] = classes[stats][v][4]
+                    else:
+                        df['{}_{}_ind'.format(v, stats)].values[i] = classes[stats][v][5]
+                output = folder1 + '/aoi_car_full_indices.txt'
+                df.to_csv(output, sep=';', index=False)
+                #
+                #
+                # plot
+                sf = shapefile.Reader(fbasin)
+                fig = plt.figure(figsize=(10, 4.5))  # Width, Height
+                fig.suptitle('{} {}'.format(stats, v))
+                gs = mpl.gridspec.GridSpec(3, 5, wspace=0.05, hspace=0.05)
+                ax = fig.add_subplot(gs[:, 3:])
+                for i in range(len(_classes1)):
+                    _lcl_df = df.query('{}_{}_ind == {}'.format(v, stats, classes[stats][v][i]))
+                    plt.scatter(_lcl_df['long'], _lcl_df['lat'],
+                                c=colors[stats][v][i],
+                                marker='.',
+                                zorder=classes[stats][v][i],
+                                label=str(classes[stats][v][i]))
+                plt.legend()
+                # overlay shapefile
+                patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
+                ax.add_patch(patch)
+                ax.axis('scaled')
+                ax.set_xticks([])
+                ax.set_yticks([])
+                ax.set_xlim([360694, 385296])
+                ax.set_ylim([6721596, 6752258])
+                #
+                #
+                ax = fig.add_subplot(gs[1:, :3])
+                _hist = plt.hist(x=_lcl_x, bins=100, color='grey')
+                for i in range(len(_ptiles)):
+                    plt.vlines(x=_ptiles[i], ymin=0, ymax=1.2 * np.max(_hist[0]), colors='tab:red')
+                for i in range(len(_classes1)):
+                    if i == 0:
+                        lcl_lcl_x = (_ptiles[i] + np.min(_lcl_x)) / 2
+                    elif i < len(_classes1) - 1:
+                        lcl_lcl_x = (_ptiles[i] + _ptiles[i - 1]) / 2
+                    else:
+                        lcl_lcl_x = (_ptiles[i - 1] + np.max(_lcl_x)) / 2
+                    plt.plot(lcl_lcl_x, 1.1 * np.max(_hist[0]),
+                             marker='o',
+                             color=colors[stats][v][i],
+                             markersize=10)
+                plt.ylim(0, 1.2 * np.max(_hist[0]))
+
+                if stats == 'un' and v == 'Qv':
+                    plt.xlim(0, 500)
+
+                plt.ylabel('freq.')
+                plt.xlabel(units[stats][v])
+                #
+                if show:
+                    plt.show()
+                    plt.close(fig)
+                else:
+                    filepath = folder2 + '/{}_{}.png'.format(stats, v)
+                    plt.savefig(filepath, dpi=400)
+                    plt.close(fig)
+
+
+def step08_priority(folder, fcar_index):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    import numpy as np
+    import shapefile
+    _df = pd.read_csv(fcar_index, sep=';')
+
+    print(_df.head().to_string())
+    aa_vars = ['R', 'Qv']
+    s = ''
+    for i in range(len(aa_vars)):
+        s = s + ' {}_aa_ind >= 5 and'.format(aa_vars[i])
+    s = s + ' R_un_ind >= 5'
+    print(s)
+    priority_df = _df.query(s)
+    print(priority_df.head().to_string())
+    print(len(priority_df))
+    fbasin = r"C:\000_myFiles\myDrive\gis\pnh\misc\aoi_basin.shp"
+    # plot
+    sf = shapefile.Reader(fbasin)
+    fig = plt.figure(figsize=(6, 4.5))  # Width, Height
+    ax = fig.add_subplot()
+    plt.scatter(priority_df['long'], priority_df['lat'], c='tab:red', marker='o')
+    # overlay shapefile
+    patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
+    ax.add_patch(patch)
+    ax.axis('scaled')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim([360694, 385296])
+    ax.set_ylim([6721596, 6752258])
+    plt.title(s)
+    plt.show()
+
+
+
 def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=True):
     import matplotlib as mpl
     import resample
@@ -636,45 +890,128 @@ def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=Tr
         plt.close(fig)
 
 
-def view_evolution_1(folder, calibfolder, gluefolder):
+def view_evolution_1(folder, calibfolder, gluefolder, show=True):
     full_f = calibfolder + '/generations/population.txt'
     pop_df = pd.read_csv(full_f, sep=';')
     behav_f = gluefolder + '/behavioural.txt'
     behav_df = pd.read_csv(behav_f, sep=';')
-    select_f = gluefolder +  '/selection.txt'
+    select_f = gluefolder + '/selection.txt'
     select_df = pd.read_csv(select_f, sep=';')
     fig = plt.figure(figsize=(7, 7), )  # Width, Height
     plt.scatter(x=pop_df['L_ET'], y=pop_df['L_Q'], marker='.', c='tab:grey', alpha=0.4, edgecolors='none')
     plt.scatter(x=behav_df['L_ET'], y=behav_df['L_Q'], marker='.', c='black')
     plt.scatter(x=select_df['L_ET'], y=select_df['L_Q'], marker='.', c='magenta')
-    plt.ylim((0, 0.75))
+    plt.ylim((0, 0.9))
     plt.xlim((-1, -0.4))
     plt.grid(True)
-    expfile = folder + '/pop_zoom.png'
-    plt.savefig(expfile, dpi=400)
-    plt.close(fig)
+    filename = 'zoom_pop'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
 
 
-def view_evolution_2(folder, calibfolder):
+def view_evolution_2(folder, calibfolder, show=True):
     fig = plt.figure(figsize=(7, 4), )  # Width, Height
     full_f = calibfolder + '/generations/population.txt'
     pop_df = pd.read_csv(full_f, sep=';')
-    beha_df = pop_df.query('L > -0.65')
-    pop_df = pop_df.query('L <= -0.65')
-    print(pop_df.head().to_string())
+    _x = list()
+    _y = list()
+    for g in range(0, 20):
+        lcl_df = pop_df.query('Gen == {}'.format(g))
+        lcl_y = np.percentile(lcl_df['L'].values, 50)
+        lcl_x = g
+        _x.append(lcl_x)
+        _y.append(lcl_y)
+    beha_df = pop_df.query('L > -0.9')
+    beha_df = beha_df.nlargest(1000, columns=['L'])
+    pop_df = pop_df.query('L <= {}'.format(beha_df['L'].min()))
+    # print(pop_df.head().to_string())
     noise = np.random.normal(loc=0, scale=0.1, size=len(pop_df))
     noise2 = np.random.normal(loc=0, scale=0.1, size=len(beha_df))
     plt.scatter(x=pop_df['Gen'] + noise, y=pop_df['L'], marker='.', c='tab:grey', alpha=0.1, edgecolors='none')
     plt.scatter(x=beha_df['Gen'] + noise2, y=beha_df['L'], marker='.', c='black', alpha=0.3, edgecolors='none')
-    plt.xlim((-1, 10))
+    plt.plot(_x, _y, 'blue')
+    plt.xlim((-1, 20))
     plt.ylim((-3, -0.5))
     plt.ylabel('Ly[M|y]')
     plt.xlabel('Generations')
-    plt.xticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-               labels=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    expfile = folder + '/evolution.png'
-    plt.savefig(expfile, dpi=400)
-    plt.close(fig)
+    plt.xticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+               labels=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+    filename = 'evolution'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
+def view_evolution_3(folder, show=True):
+    fig = plt.figure(figsize=(7, 4), )  # Width, Height
+    sets_lst = ['s1', 's2', 's3']
+    colors_dct = {'s1':'green', 's2':'orange', 's3':'maroon'}
+    for s in sets_lst:
+        full_f = '{}/{}/search/generations/population.txt'.format(folder, s)
+        pop_df = pd.read_csv(full_f, sep=';')
+        _x = list()
+        _y50 = list()
+        _y25 = list()
+        _y75 = list()
+        for g in range(0, 20):
+            lcl_df = pop_df.query('Gen == {}'.format(g))
+            lcl_y50 = np.percentile(lcl_df['L'].values, 97.5)
+            lcl_y25 = np.percentile(lcl_df['L'].values, 96)
+            lcl_y75 = np.percentile(lcl_df['L'].values, 99)
+            lcl_x = g
+            _x.append(lcl_x)
+            _y50.append(lcl_y50)
+            _y25.append(lcl_y25)
+            _y75.append(lcl_y75)
+        plt.plot(_x, _y50, c=colors_dct[s])
+        plt.fill_between(x=_x, y1=_y25, y2=_y75, color=colors_dct[s], alpha=0.2, edgecolor='none')
+    plt.xlim((1, 19))
+    plt.ylim((-1, -0.57))
+    plt.ylabel('Ly[M|y]')
+    plt.xlabel('Generations')
+    plt.xticks(ticks=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+               labels=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+    filename = 'evolution_all'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
+def view_evolution_4(folder, show=True):
+    sets_lst = ['s1', 's2', 's3']
+    colors_dct = {'s1': 'green', 's2': 'orange', 's3': 'maroon'}
+    fig = plt.figure(figsize=(7, 7), )  # Width, Height
+    for s in sets_lst:
+        behav_f = '{}/{}/select/behavioural.txt'.format(folder, s)
+        behav_df = pd.read_csv(behav_f, sep=';')
+        select_f = '{}/{}/select/selection.txt'.format(folder, s)
+        select_df = pd.read_csv(select_f, sep=';')
+        plt.scatter(x=behav_df['L_ET'], y=behav_df['L_Q'], marker='.', c=colors_dct[s], alpha=0.3, edgecolors='none')
+        plt.scatter(x=select_df['L_ET'], y=select_df['L_Q'], marker='.', c=colors_dct[s])
+    plt.ylim((0.3, 0.9))
+    plt.xlim((-0.65, -0.45))
+    plt.grid(True)
+    filename = 'zoom_pop'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
 
 
 def view_anomaly(anomfolder, hy_prefolder, hy_posfolder, asla_prefolder, asla_posfolder, mapvars='Qv-R', show=True):
@@ -762,6 +1099,363 @@ def view_anomaly(anomfolder, hy_prefolder, hy_posfolder, asla_prefolder, asla_po
             plt.close(fig)
 
 
+def view_uncertainty(folder, pos_folder, show=True):
+    from visuals import _custom_cmaps
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    #
+    _xs = [100, 150, 320, 290]
+    _ys = [400, 100, 460, 300]
+    labels = ['s1', 's2', 's3', 's4']
+
+    folder = folder
+    vars = ['R', 'Qv'] #, 'Inf', 'ET', 'Tpgw', 'VSA']
+    units = {'R':'mm',
+             'RIE':'mm',
+             'Qv':'mm',
+             'Inf':'mm',
+             'ET':'mm',
+             'Tpgw':'mm',
+             'VSA':'%'}
+    colors = {'R': 'white',
+             'RIE': 'white',
+             'Qv': 'white',
+             'Inf': 'white',
+             'ET': 'black',
+             'Tpgw': 'black',
+             'VSA': 'black'}
+    _cmaps = _custom_cmaps()
+    cmaps = {'R':_cmaps['flow'],
+             'RIE':_cmaps['flow'],
+             'Qv':_cmaps['flow'],
+             'Inf':_cmaps['flow'],
+             'ET':_cmaps['flow_v'],
+             'Tpgw':_cmaps['flow_v'],
+             'VSA':'Blues'}
+    for v in vars:
+        print(v)
+        #values = sample_histograms(x=_xs, y=_ys, var=v)
+        fmed = pos_folder + "/annual_{}_Mean.asc".format(v)
+        frng = pos_folder +  "/annual_{}_Range_90.asc".format(v)
+        func = pos_folder + "/annual_{}_uncertainty.asc".format(v)
+        files_lst = [fmed, frng, func]
+        maps_lst = list()
+        for f in files_lst:
+            meta, rmap = inp.asc_raster(file=f, dtype='float32')
+            rmap = rmap[600:1200, 500:900]
+            maps_lst.append(rmap.copy())
+        meds = list()
+        rngs = list()
+        for i in range(len(labels)):
+            lcl_y = _ys[i]
+            lcl_x = _xs[i]
+            lcl_med = maps_lst[0][lcl_y][lcl_x]
+            meds.append(lcl_med)
+            lcl_rng = maps_lst[1][lcl_y][lcl_x]
+            rngs.append(lcl_rng)
+        rngs = np.array(rngs)
+        #
+        # get values
+        #
+        fig = plt.figure(figsize=(10, 6))  # Width, Height
+        gs = mpl.gridspec.GridSpec(6, 9, wspace=0.8, hspace=0.6)
+        fig.suptitle('{} uncertainty'.format(v))
+        #
+        plt.subplot(gs[:4, :3])
+        im = plt.imshow(maps_lst[0], cmap=cmaps[v], vmin=0, vmax=1600)
+        plt.title('Median ({})'.format(units[v]))
+        for p in range(len(_xs)):
+            plt.plot(_xs[p], _ys[p], '.', color=colors[v])
+            plt.text(_xs[p] + 10, _ys[p] + 10, s=labels[p], color=colors[v])
+        plt.colorbar(im, shrink=0.4)
+        plt.axis('off')
+        #
+        plt.subplot(gs[:4, 3:6])
+        im = plt.imshow(maps_lst[1], cmap=cmaps[v], vmin=0, vmax=np.max(maps_lst[1]))
+        plt.title('90% range ({})'.format(units[v]))
+        for p in range(len(_xs)):
+            plt.plot(_xs[p], _ys[p], '.', color=colors[v])
+            plt.text(_xs[p] + 10, _ys[p] + 10, s=labels[p], color=colors[v])
+        plt.colorbar(im, shrink=0.4)
+        plt.axis('off')
+        #
+        plt.subplot(gs[:4, 6:9])
+        im = plt.imshow(maps_lst[2], cmap='Greys', vmin=0, vmax=100)
+        plt.title('uncertainty (%)')
+        for p in range(len(_xs)):
+            plt.plot(_xs[p], _ys[p], '.', color='black')
+            plt.text(_xs[p] + 10, _ys[p] + 10, s=labels[p], color='black')
+        plt.colorbar(im, shrink=0.4)
+        plt.axis('off')
+        #
+        plt.subplot(gs[4:, :3])
+        plt.bar(labels, meds, yerr=rngs/2, color='tab:grey')
+        plt.ylabel(units[v])
+        #
+        filename = '{}_uncertainty'.format(v)
+        if show:
+            plt.show()
+            plt.close(fig)
+        else:
+            filepath = folder + '/' + filename + '.png'
+            plt.savefig(filepath, dpi=400)
+            plt.close(fig)
+
+
+def view_ensemble_q(calibfolder, gluefolder, outputfolder, show=True):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    #
+    folder = outputfolder
+    #
+    f_ensemble_et = gluefolder + "/ensemble_et.txt"
+    f_ensemble_q = gluefolder + "/ensemble_q.txt"
+    f_global_et = calibfolder + "/MLM/full_period/osa_zmaps/analyst_sim_series.txt"
+    #
+    #
+    q_df = pd.read_csv(f_ensemble_q, sep=';', parse_dates=['Date'])
+    q_obs_df = pd.read_csv(f_global_et, sep=';', parse_dates=['Date'])
+    # print(et_df.head().to_string())
+    fig = plt.figure(figsize=(16, 2.5))  # Width, Height
+    plt.fill_between(x=q_df['Date'], y1=q_df['Lo_5'], y2=q_df['Hi_95'],
+                     color='silver')
+    plt.plot(q_df['Date'], q_df['Mid_50'], 'tab:blue')
+    plt.plot(q_obs_df['Date'], q_obs_df['Qobs'], 'k.')
+    plt.xlim((q_df['Date'].values[0], q_df['Date'].values[-1]))
+    plt.ylim((0.001, 35))
+    plt.yscale('log')
+    plt.grid(True)
+    # plt.ylabel('mm')
+    filename = 'q_series'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
+def view_ensemble_et(calibfolder, gluefolder, outputfolder, show=True):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    #
+    folder = outputfolder
+    #
+    f_ensemble_et = gluefolder + "/ensemble_et.txt"
+    f_ensemble_q = gluefolder + "/ensemble_q.txt"
+    f_global_et = calibfolder + "/MLM/full_period/osa_zmaps/analyst_sim_series.txt"
+    #
+    #
+    et_df = pd.read_csv(f_ensemble_et, sep=';', parse_dates=['Date'])
+    et_obs_df = pd.read_csv(f_global_et, sep=';', parse_dates=['Date'])
+    #print(et_df.head().to_string())
+    fig = plt.figure(figsize=(16, 2.5))  # Width, Height
+    plt.fill_between(x=et_df['Date'], y1=et_df['Lo_5'], y2=et_df['Hi_95'],
+                     color='silver')
+    plt.plot(et_df['Date'], et_df['Mid_50'], 'tab:red')
+    plt.plot(et_obs_df['Date'], et_obs_df['ETobs'], 'ko')
+    plt.xlim((et_df['Date'].values[0], et_df['Date'].values[-1]))
+    plt.ylim((0, 6))
+    plt.grid(True)
+    #plt.ylabel('mm')
+    filename = 'et_series'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
+def view_et_pannel(folder, calibfolder, show=False):
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    import inp
+    from hydrology import map_back
+    from visuals import _custom_cmaps
+    #
+    folder = folder
+    _cmaps = _custom_cmaps()
+    #
+    date = '2014-07-07'
+    etobs_sebal_raster_f = "C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/etpat/calib_etpat_{}.asc".format(date)
+    etobs_sampled_zmap_f = "C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/etpat/zmap_etpat_{}.txt".format(date)
+    ftwi = "C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_twi_window.asc"
+    fshru = "C:/000_myFiles/myDrive/Plans3/pardinho/datasets/observed/calib_shru_window.asc"
+    f_etsim_raster = calib_folder + "/full_period/sim_ET/raster_ET_{}.asc".format(date)
+    #
+    #
+    # import stuff
+    meta, twi = inp.asc_raster(file=ftwi, dtype='float32')
+    meta, shru = inp.asc_raster(file=fshru, dtype='float32')
+    meta, et_sebal = inp.asc_raster(file=etobs_sebal_raster_f, dtype='float32')
+    meta, et_sim = inp.asc_raster(file=f_etsim_raster, dtype='float32')
+    zmap_et, twi_bins, shru_bins = inp.zmap(file=etobs_sampled_zmap_f)
+    et_sebal_sampled = map_back(zmatrix=zmap_et, a1=twi, a2=shru, bins1=twi_bins, bins2=shru_bins)
+    #
+    #
+    v_max = 2
+    fig = plt.figure(figsize=(16, 5))  # Width, Height
+    gs = mpl.gridspec.GridSpec(1, 4, wspace=0.1, hspace=0.1)
+    plt.subplot(gs[0, 0])
+    im = plt.imshow(et_sebal, _cmaps['flow_v'], vmin=0, vmax=v_max)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    plt.subplot(gs[0, 1])
+    im = plt.imshow(et_sebal_sampled, _cmaps['flow_v'], vmin=0, vmax=v_max)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    plt.subplot(gs[0, 2])
+    im = plt.imshow(et_sim, _cmaps['flow_v'], vmin=0, vmax=v_max)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    plt.subplot(gs[0, 3])
+    im = plt.imshow(et_sebal_sampled - et_sim, 'seismic_r', vmin=-v_max, vmax=v_max)
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    #
+    filename = 'et_pannel'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
+def view_pre_pos(folder, pre_folder, pos_folder, show=True):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+    fpos = "{}\series_ensemble.txt".format(pos_folder)
+    fpre = "{}\series_ensemble.txt".format(pre_folder)
+    pos_df = pd.read_csv(fpos, sep=';', parse_dates=['Date'])
+    pre_df = pd.read_csv(fpre, sep=';', parse_dates=['Date'])
+    print(pos_df.head().to_string())
+    vars = ['Prec','TF', 'ET', 'Evc', 'Evs', 'Tpun', 'Tpgw', 'R', 'RIE', 'RSE', 'Inf', 'Qv', 'Q', 'Qb', 'Qs']
+    pre_50 = list()
+    pos_50 = list()
+    pre_rng = list()
+    pos_rng = list()
+    for v in vars:
+        print(v)
+        if v == 'Prec':
+            pre_50.append(365 * np.sum(pre_df['Prec'.format(v)].values) / len(pre_df))
+            pos_50.append(365 * np.sum(pos_df['Prec'.format(v)].values) / len(pre_df))
+            _lo = 365 * np.sum(pre_df['Prec'.format(v)].values) / len(pre_df)
+            _hi = 365 * np.sum(pre_df['Prec'.format(v)].values) / len(pre_df)
+            pre_rng.append(_hi - _lo)
+            _lo = 365 * np.sum(pos_df['Prec'.format(v)].values) / len(pre_df)
+            _hi = 365 * np.sum(pos_df['Prec'.format(v)].values) / len(pre_df)
+            pos_rng.append(_hi - _lo)
+        else:
+            pre_50.append(365 * np.sum(pre_df['{}_50'.format(v)].values) / len(pre_df))
+            pos_50.append(365 * np.sum(pos_df['{}_50'.format(v)].values) / len(pre_df))
+            _lo = 365 * np.sum(pre_df['{}_05'.format(v)].values) / len(pre_df)
+            _hi = 365 * np.sum(pre_df['{}_95'.format(v)].values) / len(pre_df)
+            pre_rng.append(_hi - _lo)
+            _lo = 365 * np.sum(pos_df['{}_05'.format(v)].values) / len(pre_df)
+            _hi = 365 * np.sum(pos_df['{}_95'.format(v)].values) / len(pre_df)
+            pos_rng.append(_hi - _lo)
+    labels = vars
+    x = np.arange(len(labels))  # the label locations
+    width = 0.3  # the width of the bars
+    fig = plt.figure(figsize=(10, 4))  # Width, Height
+    plt.subplot(111)
+    plt.bar(x - (width / 2), pre_50, width, yerr=np.array(pre_rng) / 2, label='Pre-development', color='tab:green')
+    plt.bar(x + (width / 2), pos_50, width, yerr=np.array(pos_rng) / 2, label='Post-development', color='tab:blue')
+    #
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    plt.ylabel('mm')
+    plt.xticks(x, vars)
+    plt.grid(True, axis='y')
+    plt.legend()
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder +  '\Flows_prepost.png'.format(v)
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+    #
+    #
+    vars = ['Cpy', 'Sfs', 'Unz']
+    pre_50 = list()
+    pos_50 = list()
+    pre_rng = list()
+    pos_rng = list()
+    for v in vars:
+        print(v)
+        pre_50.append(np.mean(pre_df['{}_50'.format(v)].values))
+        pos_50.append(np.mean(pos_df['{}_50'.format(v)].values))
+        _lo = np.mean(pre_df['{}_05'.format(v)].values)
+        _hi = np.mean(pre_df['{}_95'.format(v)].values)
+        pre_rng.append(_hi - _lo)
+        _lo = np.mean(pos_df['{}_05'.format(v)].values)
+        _hi = np.mean(pos_df['{}_95'.format(v)].values)
+        pos_rng.append(_hi - _lo)
+    labels = vars
+    x = np.arange(len(labels))  # the label locations
+    width = 0.3  # the width of the bars
+    fig = plt.figure(figsize=(3.5, 4))  # Width, Height
+    plt.subplot(111)
+    plt.bar(x - width / 2, pre_50, width, yerr=np.array(pre_rng) / 2, label='Pre-devel.', color='tab:green')
+    plt.bar(x + width / 2, pos_50, width, yerr=np.array(pos_rng) / 2, label='Post-devel.', color='tab:blue')
+    #
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    plt.ylabel('mm')
+    plt.xticks(x, vars)
+    plt.grid(True, axis='y')
+    plt.legend()
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '\Stocks_prepost.png'.format(v)
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+    #
+    # vars
+    vars = ['Cpy', 'Sfs', 'Unz', 'TF', 'ET', 'Evc', 'Evs', 'Tpun', 'Tpgw', 'R', 'Inf', 'Qv', 'Q', 'Qb']
+    for v in vars:
+        print(v)
+        fig = plt.figure(figsize=(16, 2.5))  # Width, Height
+        plt.fill_between(x=pos_df['Date'],
+                         y1=pos_df['{}_05'.format(v)],
+                         y2=pos_df['{}_95'.format(v)],
+                         color='tab:green',
+                         alpha=0.4,
+                         edgecolor='none')
+        plt.fill_between(x=pre_df['Date'],
+                         y1=pre_df['{}_05'.format(v)],
+                         y2=pre_df['{}_95'.format(v)],
+                         color='tab:blue',
+                         alpha=0.4,
+                         edgecolor='none')
+        plt.plot(pos_df['Date'], pos_df['{}_50'.format(v)], 'tab:blue', label='post-development')
+        plt.plot(pre_df['Date'], pre_df['{}_50'.format(v)], 'tab:green', label='pre-development')
+        plt.xlim((pre_df['Date'].values[0], pre_df['Date'].values[-1]))
+        plt.legend(loc='upper right')
+        plt.title('{}'.format(v))
+        if show:
+            plt.show()
+            plt.close(fig)
+        else:
+            filepath = folder + '\{}_series_prepost.png'.format(v)
+            plt.savefig(filepath, dpi=400)
+            plt.close(fig)
+
+
 def main(folder, infolder, projectfolder):
     from backend import create_rundir
     import os
@@ -827,12 +1521,28 @@ def main(folder, infolder, projectfolder):
         #
 
 
+sets_lst = ['s1', 's2', 's3']
+for s in sets_lst:
+    folder = 'C:/bin/pardinho/produtos_v2/run_02a/{}'.format(s)
+    calib_folder = '{}/search'.format(folder)
+    glue_folder = '{}/select'.format(folder)
+    pos_folder = '{}/pos_bat'.format(folder)
+    pre_folder = '{}/pre_bat'.format(folder)
+    fcar_index = '{}/aoi_car_full_indices.txt'.format(folder)
+    step08_priority(folder=folder, fcar_index=fcar_index)
+#folder = 'C:/bin/pardinho/produtos_v2/run_02a'
+#view_evolution_4(folder=folder, show=False)
+    #view_evolution_2(folder=folder, calibfolder=calib_folder, show=False)
+    #view_evolution_1(folder=folder, calibfolder=calib_folder, gluefolder=glue_folder, show=True)
+
+
+'''
+
+
 main(folder='/home/ipora/Documents/produtos_v2',
      infolder='/home/ipora/Documents/produtos_v2/inputs',
      projectfolder='/home/ipora/Documents/produtos_v2/inputs/pardinho')
 
-
-'''
 folders = step03_map_processes(folder='C:/bin',
                      gluefolder='C:/bin/pardinho/produtos_v2/run__2022-01-06-16-11-24/s1/GLUE_L_2022-01-06-16-13-09',
                      projectfolder='C:/000_myFiles/myDrive/Plans3/pardinho')

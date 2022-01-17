@@ -955,7 +955,7 @@ def pannel_global(series_df, qobs=False, etobs=False, grid=True, show=False, fol
     #
     fig = plt.figure(figsize=(20, 12))  # Width, Height
     fig.suptitle('Pannel of simulated hydrological processes')
-    gs = mpl.gridspec.GridSpec(5, 18, wspace=0.0, hspace=0.2)  # nrows, ncols
+    gs = mpl.gridspec.GridSpec(5, 18, wspace=0.0, hspace=0.2, left=0.05, bottom=0.05, top=0.95, right=0.95)  # nrows, ncols
     col1 = 8
     col2 = 10
     max_prec = 1.2 * np.max(series_df['Prec'].values)
@@ -1494,7 +1494,11 @@ def plot_histograms(countmatrix, xs, ys, xt, yt, show=False, folder='C:/bin', fi
         return expfile
 
 
-def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, p1, p2, p_lbl='m', vmax=500, vmin=0, dgbl_max=100,
+def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, p1, p2,
+                      p_lbl='m',
+                      vmax=500,
+                      vmin=0,
+                      dgbl_max=100,
                       filename='SAL_d_frame_X',
                       folder='C:/bin', supttl='Sensitivity to the m parameter'):
     fig = plt.figure(figsize=(10, 6), )  # Width, Height

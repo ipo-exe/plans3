@@ -959,7 +959,11 @@ def map_twito(ftwi, ffto, folder='C:/bin', filename='twito'):
     return exp_file
 
 
-def compute_histograms(fshruparam, fshru, ftwi, faoi='none', ntwibins=20, folder='C:/bin', filename='histograms',
+def compute_histograms(fshruparam, fshru, ftwi,
+                       faoi='none',
+                       ntwibins=20,
+                       folder='C:/bin',
+                       filename='histograms',
                        tui=False):
     """
     Compute the 2d histogram
@@ -3758,5 +3762,16 @@ def sal_d_by_lamb(ftwi, m=10, lamb1=5, lamb2=15, dmax=100, size=100, label='', w
         lcl_vsai_2 = topmodel_vsai(di=lcl_di_2)
         # plot frame
         lcl_flnm = 'sal_d_by_lamb__{}'.format(id_label(id=i))
-        sal_deficit_frame(dgbl=lcl_d, d1=lcl_di_1, d2=lcl_di_2, p1=lamb1, p2=lamb2, p_lbl='lamb', vsa1=lcl_vsai_1, vsa2=lcl_vsai_2,
-                          dgbl_max=dmax, vmax=dmax, filename=lcl_flnm, folder=folder, supttl='Sensitivity to lambda | m={}'.format(m))
+        sal_deficit_frame(dgbl=lcl_d,
+                          d1=lcl_di_1,
+                          d2=lcl_di_2,
+                          p1=lamb1,
+                          p2=lamb2,
+                          p_lbl='lamb',
+                          vsa1=lcl_vsai_1,
+                          vsa2=lcl_vsai_2,
+                          dgbl_max=dmax,
+                          vmax=dmax,
+                          filename=lcl_flnm,
+                          folder=folder,
+                          supttl='Sensitivity to lambda | m={}'.format(m))

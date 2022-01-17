@@ -221,7 +221,7 @@ def bat_anomaly():
                       mapttl='{} anomaly'.format(vars[i]),
                       nodata=-99999)
 
-
+# ok
 def bat_uncertainty():
     import os
     import numpy as np
@@ -273,7 +273,7 @@ def bat_uncertainty():
                           mapttl='{} uncertainty'.format(vars[i]),
                           nodata=-99999)
 
-
+# ok
 def bat_uncertainty_avg():
     import os
     import numpy as np
@@ -427,7 +427,7 @@ def sample_histograms(x, y, var='R'):
             values[i][j] = maps_array[j][lcl_y][lcl_x]
     return values
 
-
+# ok
 def view_uncertainty(show=True):
     from visuals import _custom_cmaps
     import numpy as np
@@ -647,7 +647,7 @@ def demo_glue():
                      normalize=False,
                      tui=True)
 
-
+# ok
 def view_et_pannel(show=False):
     import matplotlib.pyplot as plt
     import matplotlib as mpl
@@ -707,7 +707,7 @@ def view_et_pannel(show=False):
         plt.savefig(filepath, dpi=400)
         plt.close(fig)
 
-
+# ok
 def view_ensemble_et(show=True):
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -741,7 +741,7 @@ def view_ensemble_et(show=True):
         plt.savefig(filepath, dpi=400)
         plt.close(fig)
 
-
+# ok
 def view_ensemble_q(show=True):
     import pandas as pd
     import matplotlib.pyplot as plt
