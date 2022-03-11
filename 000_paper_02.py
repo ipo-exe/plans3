@@ -766,7 +766,7 @@ def step08_map_index(folder, fcar_stats, fcar_basic, show=True):
                     plt.close(fig)
 
 
-def step08_priority(folder, fcar_index):
+def deprec__step08_priority(folder, fcar_index, show=False):
     import pandas as pd
     import matplotlib.pyplot as plt
     import matplotlib as mpl
@@ -775,7 +775,7 @@ def step08_priority(folder, fcar_index):
     _df = pd.read_csv(fcar_index, sep=';')
 
     print(_df.head().to_string())
-    aa_vars = ['R', 'Qv']
+    aa_vars = ['R']
     s = ''
     for i in range(len(aa_vars)):
         s = s + ' {}_aa_ind >= 5 and'.format(aa_vars[i])
@@ -784,12 +784,21 @@ def step08_priority(folder, fcar_index):
     priority_df = _df.query(s)
     print(priority_df.head().to_string())
     print(len(priority_df))
+    qv = np.sum((priority_df['Qv_aa_mean'].values * priority_df['area'].values)) / priority_df['area'].sum()
+    print(qv)
+    r = np.sum((priority_df['R_aa_mean'].values * priority_df['area'].values)) / priority_df['area'].sum()
+    print(r)
+
+    fout = '{}/priority_policy.txt'.format(folder)
+    priority_df.to_csv(fout, sep=';', index=False)
+
     fbasin = r"C:\000_myFiles\myDrive\gis\pnh\misc\aoi_basin.shp"
     # plot
     sf = shapefile.Reader(fbasin)
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     ax = fig.add_subplot()
-    plt.scatter(priority_df['long'], priority_df['lat'], c='tab:red', marker='o')
+    plt.scatter(priority_df['long'], priority_df['lat'], c='tab:grey', marker='o')
+    #
     # overlay shapefile
     patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
     ax.add_patch(patch)
@@ -799,8 +808,243 @@ def step08_priority(folder, fcar_index):
     ax.set_xlim([360694, 385296])
     ax.set_ylim([6721596, 6752258])
     plt.title(s)
-    plt.show()
+    # export
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        fout = '{}/priority_policy.png'.format(folder)
+        plt.savefig(fout, dpi=400)
+        plt.close(fig)
 
+
+def step08_priority_index(folder, fcar_index, show=False):
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    import shapefile
+
+    investment = 100000 # R$
+
+    ppsa = 200 # R$ / ha
+
+    max_area = investment / ppsa
+
+    print('area : {}'.format(max_area))
+
+    _df = pd.read_csv(fcar_index, sep=';')
+
+    vars_aa = ['R', 'Qv', 'Inf', 'Qv', 'asl', 'nload', 'pload'] #, 'Inf', 'Qv', 'asl', 'nload', 'pload']
+    vars_un = ['R', 'Qv', 'Inf', 'Qv', 'R', 'R', 'R'] #, 'Inf', 'Qv', 'R', 'R', 'R']
+    #
+    # get reference priority index
+    ip_0 = np.zeros(len(_df))
+    for v in vars_aa:
+        ip_0 = ip_0 + _df['{}_aa_ind'.format(v)].values
+    ip_0 = ip_0 / len(vars_aa)
+    _df['IP_0'] = ip_0 #reclass(v=ip_0)
+    #
+    # define order
+    _df = _df.sort_values(by='IP_0', ascending=False)
+    ip_0_rnk = np.zeros(len(_df))
+    area_count = 0
+    for i in range(len(_df)):
+        area_count = area_count + _df['area'].values[i]
+        if area_count <= max_area:
+            ip_0_rnk[i] = i + 1
+        else:
+            ip_0_rnk[i] = 0
+    _df['IP_0_rnk'] = ip_0_rnk
+
+    #
+    # get priority considering uncertainty
+    ip_1 = np.zeros(len(_df))
+    ip_1_iu_sum = np.zeros(len(_df))
+    for i in range(len(vars_aa)):
+        ip_1 = ip_1 + (_df['{}_aa_ind'.format(vars_aa[i])].values * _df['{}_un_ind'.format(vars_un[i])].values)
+        ip_1_iu_sum = ip_1_iu_sum + _df['{}_un_ind'.format(vars_un[i])].values
+    ip_1 = ip_1 / ip_1_iu_sum
+    _df['IP_1'] = ip_1 #reclass(v=ip_1)
+    #
+    # define order
+    _df = _df.sort_values(by='IP_1', ascending=False)
+    ip_1_rnk = np.zeros(len(_df))
+    area_count = 0
+    for i in range(len(_df)):
+        area_count = area_count + _df['area'].values[i]
+        if area_count <= max_area:
+            ip_1_rnk[i] = i + 1
+        else:
+            ip_1_rnk[i] = 0
+    _df['IP_1_rnk'] = ip_1_rnk
+
+    _df['IP_1_rnk_diff'] = _df['IP_1_rnk'] - _df['IP_0_rnk']
+
+    _rnk_min = np.min([_df['IP_0_rnk'].values, _df['IP_1_rnk'].values])
+    _rnk_max = np.max([_df['IP_0_rnk'].values, _df['IP_1_rnk'].values])
+
+    _rnk_dff_min = _df['IP_1_rnk_diff'].min()
+    _rnk_dff_max = _df['IP_1_rnk_diff'].max()
+    _rnk_dff_rng = np.max([_rnk_dff_min, _rnk_dff_max])
+
+    print(_df.head(10).to_string())
+
+    fout = '{}/priority_policy.txt'.format(folder)
+    _df.to_csv(fout, sep=';', index=False)
+
+    # load shapefile
+    fbasin = r"C:\000_myFiles\myDrive\gis\pnh\misc\aoi_basin.shp"
+    sf = shapefile.Reader(fbasin)
+    #
+    # plot
+    _p_cmp = 'RdYlGn'
+
+    fig = plt.figure(figsize=(12, 5))  # Width, Height
+    fig.suptitle('R${} | R${}/ha | {}ha'.format(investment, ppsa, max_area))
+    gs = mpl.gridspec.GridSpec(3, 9, wspace=0.8, hspace=0.6)
+    #
+    # IP0
+    ax = fig.add_subplot(gs[:4, :3])
+    _df0 = _df.query('IP_0_rnk > 0')
+    _long = np.append(_df0['long'].values, [386300, 386300])
+    _lat = np.append(_df0['lat'].values, [6752259, 6752259])
+    _z = np.append(_df0['IP_0_rnk'].values, [_rnk_min, _rnk_max])
+    plt.scatter(_long, _lat, c=_z, cmap=_p_cmp, marker='.')
+    plt.colorbar(shrink=0.4)
+    #
+    # overlay shapefile
+    patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
+    ax.add_patch(patch)
+    ax.axis('scaled')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim([360694, 385296])
+    ax.set_ylim([6721596, 6752258])
+    plt.title('priority rank:\nanomaly only')
+    #
+    # IP1
+    ax = fig.add_subplot(gs[:4, 3:6])
+    _df1 = _df.query('IP_1_rnk > 0')
+    _long = np.append(_df1['long'].values, [386300, 386300])
+    _lat = np.append(_df1['lat'].values, [6752259, 6752259])
+    _z = np.append(_df1['IP_1_rnk'].values, [_rnk_min, _rnk_max])
+    plt.scatter(_long, _lat, c=_z, cmap=_p_cmp, marker='.')
+    plt.colorbar(shrink=0.4)
+    #
+    # overlay shapefile
+    patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
+    ax.add_patch(patch)
+    ax.axis('scaled')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim([360694, 385296])
+    ax.set_ylim([6721596, 6752258])
+    plt.title('priority rank:\nanomaly & uncertainty')
+
+    ax = fig.add_subplot(gs[:4, 6:9])
+    _long = np.append(_df1['long'].values, [386300, 386300])
+    _lat = np.append(_df1['lat'].values, [6752259, 6752259])
+    _z = np.append(_df1['IP_1_rnk_diff'].values, [-_rnk_dff_rng, _rnk_dff_max])
+    plt.scatter(_long, _lat, c=_z, cmap='seismic', marker='.')
+    plt.colorbar(shrink=0.4)
+    #
+    # overlay shapefile
+    patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
+    ax.add_patch(patch)
+    ax.axis('scaled')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim([360694, 385296])
+    ax.set_ylim([6721596, 6752258])
+    plt.title('rank difference')
+    #
+    filename = 'priority_ranks'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
+
+
+
+def step09_compare_policies(folder, show=False):
+    """
+    comparing datasets policies
+    :param folder:
+    :param show:
+    :return:
+    """
+    ffull_s1 = '{}/s1/aoi_car_full_indices.txt'.format(folder)
+    fpolicy_s1 = '{}/s1/priority_policy.txt'.format(folder)
+    fpolicy_s2 = '{}/s2/priority_policy.txt'.format(folder)
+    fpolicy_s3 = '{}/s3/priority_policy.txt'.format(folder)
+    # load dataframe
+    full_df = pd.read_csv(ffull_s1, sep=';')
+    policy_s1_df = pd.read_csv(fpolicy_s1, sep=';')
+    print(len(policy_s1_df))
+    policy_s2_df = pd.read_csv(fpolicy_s2, sep=';')
+    print(len(policy_s2_df))
+    policy_s3_df = pd.read_csv(fpolicy_s3, sep=';')
+    print(len(policy_s3_df))
+    policies = [policy_s1_df, policy_s2_df, policy_s3_df]
+    labels = ['s1', 's2', 's3']
+    variables = ['R', 'Qv', 'Inf', 'ET', 'asl', 'nload', 'pload']
+    out_df = pd.DataFrame({'Var':variables})
+    for i in range(0, len(policies)):
+        lcl_df_0 = policies[i]
+        lcl_df = pd.merge(full_df, policies[i], how='right', on='id_car', suffixes=('_s1', '_' + labels[i]))
+        out_df[labels[i]] = 0
+        out_df[labels[i] + 's1'] = 0
+        out_df[labels[i] + 's1_d'] = 0
+        for j in range(len(variables)):
+            v = variables[j]
+            v_d0_lbl = '{}_aa_mean'.format(v)
+            v_d1_lbl = '{}_aa_mean_s1'.format(v)
+            v_d0 = np.sum(lcl_df_0[v_d0_lbl].values * lcl_df_0['area'].values) / np.sum(lcl_df_0['area'].values)
+            v_d1 = np.sum(lcl_df[v_d1_lbl].values * lcl_df['area_s1'].values) / np.sum(lcl_df['area_s1'].values)
+            v_disc = v_d0 - v_d1
+            out_df[labels[i]].values[j] = v_d0
+            out_df[labels[i] + 's1'].values[j] = v_d1
+            out_df[labels[i] + 's1_d'].values[j] = v_disc
+    print(out_df.to_string())
+    fout = '{}/compare_policies.txt'.format(folder)
+    out_df.to_csv(fout, sep=';', index=False)
+    #
+    # plot
+    labels = {'s2':['ds0' ,'dsA', 'dsA|ds0', 'discrep.'],
+              's3':['ds0' ,'dsB', 'dsB|ds0', 'discrep.']}
+
+    for i in range(len(variables)):
+        lcl_policies = ['s2', 's3']
+        for j in range(len(lcl_policies)):
+            values1 = (out_df['s1'].values[i], out_df[lcl_policies[j]].values[i],
+                       out_df['{}s1'.format(lcl_policies[j])].values[i],
+                       out_df['{}s1_d'.format(lcl_policies[j])].values[i])
+            #values2 = (out_df['s3'].values[0], out_df['s3s1'].values[0], out_df['s3s1_d'].values[0])
+            x = np.arange(len(labels[lcl_policies[j]]))  # the label locations
+            width = 0.4  # the width of the bars
+            fig = plt.figure(figsize=(5, 2.5))  # Width, Height
+            plt.subplot(111)
+            plt.bar(x, values1, width, label='ok', color='tab:grey')
+            #plt.bar(x + (width / 2), values2, width, label='ok', color='maroon')
+            #
+            # Add some text for labels, title and custom x-axis tick labels, etc.
+            plt.ylabel('mm')
+            plt.xticks(x, labels[lcl_policies[j]])
+            plt.title(variables[i] + ' {}'.format(lcl_policies[j]))
+            plt.grid(True, axis='y')
+            if show:
+                plt.show()
+                plt.close(fig)
+            else:
+                filepath = folder + '\{}_{}_compare.png'.format(variables[i], lcl_policies[j])
+                plt.savefig(filepath, dpi=400)
+                plt.close(fig)
 
 
 def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=True):
@@ -1529,45 +1773,4 @@ for s in sets_lst:
     pos_folder = '{}/pos_bat'.format(folder)
     pre_folder = '{}/pre_bat'.format(folder)
     fcar_index = '{}/aoi_car_full_indices.txt'.format(folder)
-    step08_priority(folder=folder, fcar_index=fcar_index)
-#folder = 'C:/bin/pardinho/produtos_v2/run_02a'
-#view_evolution_4(folder=folder, show=False)
-    #view_evolution_2(folder=folder, calibfolder=calib_folder, show=False)
-    #view_evolution_1(folder=folder, calibfolder=calib_folder, gluefolder=glue_folder, show=True)
-
-
-'''
-
-
-main(folder='/home/ipora/Documents/produtos_v2',
-     infolder='/home/ipora/Documents/produtos_v2/inputs',
-     projectfolder='/home/ipora/Documents/produtos_v2/inputs/pardinho')
-
-folders = step03_map_processes(folder='C:/bin',
-                     gluefolder='C:/bin/pardinho/produtos_v2/run__2022-01-06-16-11-24/s1/GLUE_L_2022-01-06-16-13-09',
-                     projectfolder='C:/000_myFiles/myDrive/Plans3/pardinho')
-
-asla_folders = step04_map_asla(folder='C:/bin',
-                                prefolder='C:/bin/PRE_batSLH_2022-01-07-09-32-57',
-                                posfolder='C:/bin/POS_batSLH_2022-01-07-09-36-07',
-                                projectfolder='C:/000_myFiles/myDrive/Plans3/pardinho')
-
-step05_compute_anomaly(folder='C:/bin',
-                       hy_prefolder='C:/bin/PRE_batSLH_2022-01-07-09-32-57',
-                       hy_posfolder='C:/bin/POS_batSLH_2022-01-07-09-36-07',
-                       asla_prefolder=asla_folders['Pre_folder'],
-                       asla_posfolder=asla_folders['Pos_folder'])
-
-step06_compute_uncertainty(folder='C:/bin',
-                           hy_prefolder='C:/bin/PRE_batSLH_2022-01-07-09-32-57',
-                           hy_posfolder='C:/bin/POS_batSLH_2022-01-07-09-36-07',)
-
-
-step05_compute_anomaly(folder='C:/bin',
-                       hy_prefolder='C:/bin/PRE_batSLH_2022-01-07-09-32-57',
-                       hy_posfolder='C:/bin/POS_batSLH_2022-01-07-09-36-07',
-                       asla_prefolder='C:/bin/PRE_ASLA_2022-01-07-10-00-55',
-                       asla_posfolder='C:/bin/POS_ASLA_2022-01-07-10-01-32')
-
-'''
-
+    step08_priority_index(folder=folder, fcar_index=fcar_index, show=False)

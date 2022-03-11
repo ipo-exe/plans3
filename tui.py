@@ -92,6 +92,7 @@ def status(msg='Status message', process=True):
     else:
         print('\n\t>>> {:60}\n'.format(msg))
 
+
 def validade_project_name(msg='Enter project name', wng='Warning!',
                           wng1='Invalid name. No spaces allowed',
                           wng2='Invalid name. Max of 20 characters allowed'):
@@ -267,14 +268,14 @@ def menu(options, title='Menu', msg='Chose key', exit=True, exitkey='e', exitmsg
             if chosen not in set(keys_full):
                 warning(wng=wng, msg=wngmsg)
             else:
-                index = int(chosen) - 1
+                lcl_index = int(chosen) - 1
                 ok()
-                print(chsn + ':\t' + options_prime[index] + '\n')
+                print(chsn + ':\t' + options_prime[lcl_index] + '\n')
                 break
     if exit_flag:
         return exitmsg
     else:
-        return options_prime[index]
+        return options_prime[lcl_index]
 
 
 def pick_dir():
