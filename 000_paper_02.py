@@ -586,6 +586,7 @@ def step08_map_index(folder, fcar_stats, fcar_basic, show=True):
     import matplotlib as mpl
     import numpy as np
     import shapefile
+
     folder1 = folder
     folder2 = '{}/hist_maps'.format(folder)
 
@@ -766,66 +767,18 @@ def step08_map_index(folder, fcar_stats, fcar_basic, show=True):
                     plt.close(fig)
 
 
-def deprec__step08_priority(folder, fcar_index, show=False):
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
-    import numpy as np
-    import shapefile
-    _df = pd.read_csv(fcar_index, sep=';')
-
-    print(_df.head().to_string())
-    aa_vars = ['R']
-    s = ''
-    for i in range(len(aa_vars)):
-        s = s + ' {}_aa_ind >= 5 and'.format(aa_vars[i])
-    s = s + ' R_un_ind >= 5'
-    print(s)
-    priority_df = _df.query(s)
-    print(priority_df.head().to_string())
-    print(len(priority_df))
-    qv = np.sum((priority_df['Qv_aa_mean'].values * priority_df['area'].values)) / priority_df['area'].sum()
-    print(qv)
-    r = np.sum((priority_df['R_aa_mean'].values * priority_df['area'].values)) / priority_df['area'].sum()
-    print(r)
-
-    fout = '{}/priority_policy.txt'.format(folder)
-    priority_df.to_csv(fout, sep=';', index=False)
-
-    fbasin = r"C:\000_myFiles\myDrive\gis\pnh\misc\aoi_basin.shp"
-    # plot
-    sf = shapefile.Reader(fbasin)
-    fig = plt.figure(figsize=(6, 4.5))  # Width, Height
-    ax = fig.add_subplot()
-    plt.scatter(priority_df['long'], priority_df['lat'], c='tab:grey', marker='o')
-    #
-    # overlay shapefile
-    patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
-    ax.add_patch(patch)
-    ax.axis('scaled')
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_xlim([360694, 385296])
-    ax.set_ylim([6721596, 6752258])
-    plt.title(s)
-    # export
-    if show:
-        plt.show()
-        plt.close(fig)
-    else:
-        fout = '{}/priority_policy.png'.format(folder)
-        plt.savefig(fout, dpi=400)
-        plt.close(fig)
-
-
-def step08_priority_index(folder, fcar_index, show=False):
+def step09_priority_index(folder, fcar_index, show=False, wkpl=False):
     import pandas as pd
     import numpy as np
     import matplotlib.pyplot as plt
     import matplotlib as mpl
     import shapefile
 
-    investment = 100000 # R$
+    if wkpl:
+        from backend import create_rundir
+        folder = create_rundir(label='step09', wkplc=folder)
+
+    investment = 200000 # R$
 
     ppsa = 200 # R$ / ha
 
@@ -835,8 +788,8 @@ def step08_priority_index(folder, fcar_index, show=False):
 
     _df = pd.read_csv(fcar_index, sep=';')
 
-    vars_aa = ['R', 'Qv', 'Inf', 'Qv', 'asl', 'nload', 'pload'] #, 'Inf', 'Qv', 'asl', 'nload', 'pload']
-    vars_un = ['R', 'Qv', 'Inf', 'Qv', 'R', 'R', 'R'] #, 'Inf', 'Qv', 'R', 'R', 'R']
+    vars_aa = ['R', 'Qv', 'Inf', 'Qv', 'asl', 'nload', 'pload', 'ET', 'Tpgw'] #, 'Inf', 'Qv', 'asl', 'nload', 'pload']
+    vars_un = ['R', 'Qv', 'Inf', 'Qv', 'R', 'R', 'R', 'ET', 'Tpgw'] #, 'Inf', 'Qv', 'R', 'R', 'R']
     #
     # get reference priority index
     ip_0 = np.zeros(len(_df))
@@ -890,6 +843,8 @@ def step08_priority_index(folder, fcar_index, show=False):
 
     print(_df.head(10).to_string())
 
+    view_rank_diff(folder=folder, policy_df=_df)
+
     fout = '{}/priority_policy.txt'.format(folder)
     _df.to_csv(fout, sep=';', index=False)
 
@@ -898,20 +853,23 @@ def step08_priority_index(folder, fcar_index, show=False):
     sf = shapefile.Reader(fbasin)
     #
     # plot
-    _p_cmp = 'RdYlGn'
+    _p_cmp = 'YlOrRd_r'
 
     fig = plt.figure(figsize=(12, 5))  # Width, Height
-    fig.suptitle('R${} | R${}/ha | {}ha'.format(investment, ppsa, max_area))
-    gs = mpl.gridspec.GridSpec(3, 9, wspace=0.8, hspace=0.6)
+    fig.suptitle('RS{} | RS{}/ha | {:.2f}ha'.format(investment, ppsa, max_area))
+    gs = mpl.gridspec.GridSpec(3, 9, wspace=0.2, hspace=0.1)
     #
     # IP0
     ax = fig.add_subplot(gs[:4, :3])
     _df0 = _df.query('IP_0_rnk > 0')
+    print(len(_df0))
+    print(_df0['area'].sum())
     _long = np.append(_df0['long'].values, [386300, 386300])
     _lat = np.append(_df0['lat'].values, [6752259, 6752259])
     _z = np.append(_df0['IP_0_rnk'].values, [_rnk_min, _rnk_max])
     plt.scatter(_long, _lat, c=_z, cmap=_p_cmp, marker='.')
-    plt.colorbar(shrink=0.4)
+    cbar = plt.colorbar(shrink=0.4)
+    cbar.ax.invert_yaxis()
     #
     # overlay shapefile
     patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
@@ -926,11 +884,14 @@ def step08_priority_index(folder, fcar_index, show=False):
     # IP1
     ax = fig.add_subplot(gs[:4, 3:6])
     _df1 = _df.query('IP_1_rnk > 0')
+    print(len(_df1))
+    print(_df1['area'].sum())
     _long = np.append(_df1['long'].values, [386300, 386300])
     _lat = np.append(_df1['lat'].values, [6752259, 6752259])
     _z = np.append(_df1['IP_1_rnk'].values, [_rnk_min, _rnk_max])
     plt.scatter(_long, _lat, c=_z, cmap=_p_cmp, marker='.')
-    plt.colorbar(shrink=0.4)
+    cbar = plt.colorbar(shrink=0.4)
+    cbar.ax.invert_yaxis()
     #
     # overlay shapefile
     patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
@@ -941,8 +902,13 @@ def step08_priority_index(folder, fcar_index, show=False):
     ax.set_xlim([360694, 385296])
     ax.set_ylim([6721596, 6752258])
     plt.title('priority rank:\nanomaly & uncertainty')
-
+    #
+    # difference
     ax = fig.add_subplot(gs[:4, 6:9])
+    _df_aux = _df1.query('IP_0_rnk == 0')
+    print(_df_aux.head(10).to_string())
+    plt.scatter(_df_aux['long'], _df_aux['lat'], c='tab:grey', marker='.')
+    _df1 = _df1.query('IP_0_rnk > 0')
     _long = np.append(_df1['long'].values, [386300, 386300])
     _lat = np.append(_df1['lat'].values, [6752259, 6752259])
     _z = np.append(_df1['IP_1_rnk_diff'].values, [-_rnk_dff_rng, _rnk_dff_max])
@@ -957,7 +923,7 @@ def step08_priority_index(folder, fcar_index, show=False):
     ax.set_yticks([])
     ax.set_xlim([360694, 385296])
     ax.set_ylim([6721596, 6752258])
-    plt.title('rank difference')
+    plt.title('rank difference | {} new'.format(len(_df_aux)))
     #
     filename = 'priority_ranks'
     if show:
@@ -969,75 +935,96 @@ def step08_priority_index(folder, fcar_index, show=False):
         plt.close(fig)
 
 
-
-
-
-def step09_compare_policies(folder, show=False):
+def step10_compare_policies(folder, show=False, wkpl=False):
     """
     comparing datasets policies
     :param folder:
     :param show:
     :return:
     """
-    ffull_s1 = '{}/s1/aoi_car_full_indices.txt'.format(folder)
-    fpolicy_s1 = '{}/s1/priority_policy.txt'.format(folder)
-    fpolicy_s2 = '{}/s2/priority_policy.txt'.format(folder)
-    fpolicy_s3 = '{}/s3/priority_policy.txt'.format(folder)
-    # load dataframe
+    import matplotlib.pyplot as plt
+    import shapefile
+    # get filepaths first
+    ffull_s1 = '{}/ds0/aoi_car_full_indices.txt'.format(folder)
+    fpolicy_ds0 = '{}/ds0/priority_policy.txt'.format(folder)
+    fpolicy_dsA = '{}/dsA/priority_policy.txt'.format(folder)
+    fpolicy_dsB = '{}/dsB/priority_policy.txt'.format(folder)
+
+    if wkpl:
+        from backend import create_rundir
+        folder = create_rundir(label='step10', wkplc=folder)
+    # load dataframes
     full_df = pd.read_csv(ffull_s1, sep=';')
-    policy_s1_df = pd.read_csv(fpolicy_s1, sep=';')
-    print(len(policy_s1_df))
-    policy_s2_df = pd.read_csv(fpolicy_s2, sep=';')
-    print(len(policy_s2_df))
-    policy_s3_df = pd.read_csv(fpolicy_s3, sep=';')
-    print(len(policy_s3_df))
-    policies = [policy_s1_df, policy_s2_df, policy_s3_df]
-    labels = ['s1', 's2', 's3']
+    policy_ds0_df = pd.read_csv(fpolicy_ds0, sep=';')
+    policy_ds0_df = policy_ds0_df.query('IP_1_rnk > 0')
+    #print(policy_ds0_df.head(30).to_string())
+    #print(len(policy_ds0_df))
+    #print(policy_ds0_df['pload_aa_mean'].mean())
+    policy_dsA_df = pd.read_csv(fpolicy_dsA, sep=';')
+    policy_dsA_df = policy_dsA_df.query('IP_1_rnk > 0')
+
+    policy_dsB_df = pd.read_csv(fpolicy_dsB, sep=';')
+    policy_dsB_df = policy_dsB_df.query('IP_1_rnk > 0')
+    #
+    # compare this variables:
     variables = ['R', 'Qv', 'Inf', 'ET', 'asl', 'nload', 'pload']
     out_df = pd.DataFrame({'Var':variables})
-    for i in range(0, len(policies)):
-        lcl_df_0 = policies[i]
-        lcl_df = pd.merge(full_df, policies[i], how='right', on='id_car', suffixes=('_s1', '_' + labels[i]))
-        out_df[labels[i]] = 0
-        out_df[labels[i] + 's1'] = 0
-        out_df[labels[i] + 's1_d'] = 0
-        for j in range(len(variables)):
-            v = variables[j]
-            v_d0_lbl = '{}_aa_mean'.format(v)
-            v_d1_lbl = '{}_aa_mean_s1'.format(v)
-            v_d0 = np.sum(lcl_df_0[v_d0_lbl].values * lcl_df_0['area'].values) / np.sum(lcl_df_0['area'].values)
-            v_d1 = np.sum(lcl_df[v_d1_lbl].values * lcl_df['area_s1'].values) / np.sum(lcl_df['area_s1'].values)
-            v_disc = v_d0 - v_d1
-            out_df[labels[i]].values[j] = v_d0
-            out_df[labels[i] + 's1'].values[j] = v_d1
-            out_df[labels[i] + 's1_d'].values[j] = v_disc
+    out_df['ds0'] = 0.0
+    out_df['dsA'] = 0.0
+    out_df['ds0dsA_d'] = 0.0
+    out_df['dsB'] = 0.0
+    out_df['ds0dsB_d'] = 0.0
+
+    # variable loop:
+    for i in range(len(variables)):
+        lcl_v = variables[i]
+        out_df['ds0'].values[i] = policy_ds0_df['{}_aa_mean'.format(lcl_v)].mean()
+        out_df['dsA'].values[i] = policy_dsA_df['{}_aa_mean'.format(lcl_v)].mean()
+        out_df['dsB'].values[i] = policy_dsB_df['{}_aa_mean'.format(lcl_v)].mean()
+    out_df['ds0dsA_d'] = out_df['ds0'] - out_df['dsA']
+    out_df['ds0dsB_d'] = out_df['ds0'] - out_df['dsB']
     print(out_df.to_string())
     fout = '{}/compare_policies.txt'.format(folder)
     out_df.to_csv(fout, sep=';', index=False)
-    #
-    # plot
-    labels = {'s2':['ds0' ,'dsA', 'dsA|ds0', 'discrep.'],
-              's3':['ds0' ,'dsB', 'dsB|ds0', 'discrep.']}
-
+    # bar plot of variables
+    labels = {'dsA':['ds0' ,'dsA', 'ds0 - dsA'],
+              'dsB':['ds0' ,'dsB', 'ds0 - dsB']}
     for i in range(len(variables)):
-        lcl_policies = ['s2', 's3']
+        lcl_policies = ['dsA', 'dsB']
+        lcl_max = 1.3 * np.max([out_df['ds0'].values[i],
+                                out_df['dsA'].values[i],
+                                out_df['ds0dsA_d'].values[i],
+                                out_df['dsB'].values[i],
+                                out_df['ds0dsB_d'].values[i]])
+        lcl_min = 1.3 * np.min([out_df['ds0'].values[i],
+                                out_df['dsA'].values[i],
+                                out_df['ds0dsA_d'].values[i],
+                                out_df['dsB'].values[i],
+                                out_df['ds0dsB_d'].values[i]])
+        if lcl_min >= 0:
+            lcl_min = 0
+        print('{}\nmax {}\n min {}\n\n'.format(variables[i], lcl_max, lcl_min))
         for j in range(len(lcl_policies)):
-            values1 = (out_df['s1'].values[i], out_df[lcl_policies[j]].values[i],
-                       out_df['{}s1'.format(lcl_policies[j])].values[i],
-                       out_df['{}s1_d'.format(lcl_policies[j])].values[i])
+            values1 = [out_df['ds0'].values[i],
+                       out_df[lcl_policies[j]].values[i],
+                       out_df['ds0{}_d'.format(lcl_policies[j])].values[i]]
+            values1 = np.round(values1, 2)
             #values2 = (out_df['s3'].values[0], out_df['s3s1'].values[0], out_df['s3s1_d'].values[0])
             x = np.arange(len(labels[lcl_policies[j]]))  # the label locations
             width = 0.4  # the width of the bars
-            fig = plt.figure(figsize=(5, 2.5))  # Width, Height
-            plt.subplot(111)
-            plt.bar(x, values1, width, label='ok', color='tab:grey')
+
+            fig, ax = plt.subplots(figsize=(5, 2.5))  # Width, Height
+            p = ax.bar(x, values1, width, label='', color='tab:grey')
+            ax.bar_label(p)
             #plt.bar(x + (width / 2), values2, width, label='ok', color='maroon')
             #
             # Add some text for labels, title and custom x-axis tick labels, etc.
             plt.ylabel('mm')
+            plt.ylim((lcl_min, lcl_max))
             plt.xticks(x, labels[lcl_policies[j]])
             plt.title(variables[i] + ' {}'.format(lcl_policies[j]))
             plt.grid(True, axis='y')
+            #plt.show()
             if show:
                 plt.show()
                 plt.close(fig)
@@ -1045,6 +1032,64 @@ def step09_compare_policies(folder, show=False):
                 filepath = folder + '\{}_{}_compare.png'.format(variables[i], lcl_policies[j])
                 plt.savefig(filepath, dpi=400)
                 plt.close(fig)
+    # plot policies
+    policies = [policy_ds0_df, policy_dsA_df, policy_dsB_df]
+    labels = ['ds0', 'dsA', 'dsB']
+    for i in range(0, len(policies)):
+        # plot policy
+        print(policies[i]['area'].sum())
+        # load shapefile
+        fbasin = r"C:\000_myFiles\myDrive\gis\pnh\misc\aoi_basin.shp"
+        sf = shapefile.Reader(fbasin)
+        fig = plt.figure(figsize=(5, 6))  # Width, Height
+        fig.suptitle('n={} area={}ha'.format(len(policies[i]), policies[i]['area'].sum()))
+        #
+        # IP0
+        ax = fig.add_subplot()
+        plt.scatter(policies[i]['long'], policies[i]['lat'], c='tab:grey', marker='o')
+        #
+        # overlay shapefile
+        patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
+        ax.add_patch(patch)
+        ax.axis('scaled')
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xlim([360694, 385296])
+        ax.set_ylim([6721596, 6752258])
+        filename = '{}_policy'.format(labels[i])
+        if show:
+            plt.show()
+            plt.close(fig)
+        else:
+            filepath = folder + '/' + filename + '.png'
+            plt.savefig(filepath, dpi=400)
+            plt.close(fig)
+        #
+
+
+def view_rank_diff(folder, policy_df):
+    _df0 = policy_df.query('IP_0_rnk > 0')
+    x0 = np.ones(len(_df0))
+    _df1 = policy_df.query('IP_1_rnk > 0')
+    x1 = np.ones(len(_df1)) * 2
+    for i in range(len(_df1)):
+
+        _al = 0.9 * np.abs(_df1['IP_1_rnk_diff'].values[i]) / len(_df1)
+
+        if _df1['IP_1_rnk_diff'].values[i] > 0 and _df1['IP_0_rnk'].values[i] != 0:
+            _c = 'red'
+        elif _df1['IP_0_rnk'].values[i] == 0:
+            _df1['IP_0_rnk'].values[i] = len(_df1)
+            _c = 'tab:grey'
+        else:
+            _c = 'blue'
+        plt.plot([1, 2],
+                 [_df1['IP_0_rnk'].values[i], _df1['IP_1_rnk'].values[i]],
+                 color=_c,
+                 alpha=_al)
+    plt.xlim(1, 2)
+    plt.gca().invert_yaxis()
+    plt.show()
 
 
 def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=True):
@@ -1764,8 +1809,7 @@ def main(folder, infolder, projectfolder):
                                    mapvars=mapvars)
         #
 
-
-sets_lst = ['s1', 's2', 's3']
+sets_lst = ['ds0', 'dsA', 'dsB']
 for s in sets_lst:
     folder = 'C:/bin/pardinho/produtos_v2/run_02a/{}'.format(s)
     calib_folder = '{}/search'.format(folder)
@@ -1773,4 +1817,7 @@ for s in sets_lst:
     pos_folder = '{}/pos_bat'.format(folder)
     pre_folder = '{}/pre_bat'.format(folder)
     fcar_index = '{}/aoi_car_full_indices.txt'.format(folder)
-    step08_priority_index(folder=folder, fcar_index=fcar_index, show=False)
+    step09_priority_index(folder=folder, fcar_index=fcar_index, show=False, wkpl=True)
+#folder = 'C:/bin/pardinho/produtos_v2/run_02a'
+#step10_compare_policies(folder=folder, show=False, wkpl=True)
+
