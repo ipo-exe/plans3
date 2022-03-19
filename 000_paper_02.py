@@ -843,7 +843,7 @@ def step09_priority_index(folder, fcar_index, show=False, wkpl=False):
 
     print(_df.head(10).to_string())
 
-    view_rank_diff(folder=folder, policy_df=_df)
+    view_rank_diff(folder=folder, policy_df=_df, show=show)
 
     fout = '{}/priority_policy.txt'.format(folder)
     _df.to_csv(fout, sep=';', index=False)
@@ -907,7 +907,7 @@ def step09_priority_index(folder, fcar_index, show=False, wkpl=False):
     ax = fig.add_subplot(gs[:4, 6:9])
     _df_aux = _df1.query('IP_0_rnk == 0')
     print(_df_aux.head(10).to_string())
-    plt.scatter(_df_aux['long'], _df_aux['lat'], c='tab:grey', marker='.')
+    plt.scatter(_df_aux['long'], _df_aux['lat'], c='tab:green', marker='.')
     _df1 = _df1.query('IP_0_rnk > 0')
     _long = np.append(_df1['long'].values, [386300, 386300])
     _lat = np.append(_df1['lat'].values, [6752259, 6752259])
@@ -1067,36 +1067,48 @@ def step10_compare_policies(folder, show=False, wkpl=False):
         #
 
 
-def view_rank_diff(folder, policy_df):
+def view_rank_diff(folder, policy_df, show=False):
     _df0 = policy_df.query('IP_0_rnk > 0')
     x0 = np.ones(len(_df0))
     _df1 = policy_df.query('IP_1_rnk > 0')
     x1 = np.ones(len(_df1)) * 2
+    fig, ax = plt.subplots(figsize=(3, 2.5), tight_layout=True) # Width, Height
     for i in range(len(_df1)):
-
         _al = 0.9 * np.abs(_df1['IP_1_rnk_diff'].values[i]) / len(_df1)
-
         if _df1['IP_1_rnk_diff'].values[i] > 0 and _df1['IP_0_rnk'].values[i] != 0:
             _c = 'red'
         elif _df1['IP_0_rnk'].values[i] == 0:
             _df1['IP_0_rnk'].values[i] = len(_df1)
-            _c = 'tab:grey'
+            _c = 'tab:green'
+            _al = 0.9 * np.abs(len(_df1) - _df1['IP_1_rnk'].values[i]) / len(_df1)
         else:
             _c = 'blue'
         plt.plot([1, 2],
                  [_df1['IP_0_rnk'].values[i], _df1['IP_1_rnk'].values[i]],
                  color=_c,
                  alpha=_al)
+    ax1 = ax.twinx()
+    ax1.plot([3, 3], [0, len(_df1)])
+    ax.set_ylim(0, len(_df1))
+    ax1.set_ylim(0, len(_df1))
+    ax.invert_yaxis()
+    ax1.invert_yaxis()
     plt.xlim(1, 2)
-    plt.gca().invert_yaxis()
-    plt.show()
+    plt.xticks([1, 2], ['', ''])
+    filename = 'rank_change'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
 
 
 def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=True):
     import matplotlib as mpl
     import resample
     _df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
-    #print(_df.head().to_string())
     fields = list(_df.columns[2:])
     month_dct = dict()
     # process
