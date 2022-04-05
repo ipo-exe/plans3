@@ -1105,10 +1105,11 @@ def view_rank_diff(folder, policy_df, show=False):
         plt.close(fig)
 
 
-def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=True):
+def view_obs_data_analyst(fseries, fetobs, folder='C:/bin/pardinho/produtos_v2', show=True):
     import matplotlib as mpl
     import resample
     _df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    _df2 = pd.read_csv(fetobs, sep=';', parse_dates=['Date'])
     fields = list(_df.columns[2:])
     month_dct = dict()
     # process
@@ -1133,9 +1134,9 @@ def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=Tr
                                          'P75': p95,
                                          'P25': p05})
     # plot
-    fig = plt.figure(figsize=(16, 6))  # Width, Height
-    gs = mpl.gridspec.GridSpec(4, 9, wspace=1, hspace=0.8, left=0.05, bottom=0.05, top=0.95, right=0.95)
-    order = ['Prec_Herveiras', 'Prec_Boqueirao', 'Prec_Deodoro', 'Q_StaCruz']
+    fig = plt.figure(figsize=(16, 7))  # Width, Height
+    gs = mpl.gridspec.GridSpec(5, 9, wspace=1, hspace=0.8, left=0.05, bottom=0.05, top=0.95, right=0.95)
+    order = ['Prec_Deodoro', 'Prec_Boqueirao', 'Prec_Herveiras',  'Q_StaCruz']
     names = {'Prec_Herveiras': 'Precip. Herveiras Station',
              'Prec_Boqueirao': 'Precip. Boqueirao Station',
              'Prec_Deodoro': 'Precip. Deodoro Station',
@@ -1145,8 +1146,8 @@ def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=Tr
         #
         # series plot
         plt.subplot(gs[count: count + 1, :6])
-        plt.title(names[field], loc='left')
-        color = 'tab:blue'
+        #plt.title(names[field], loc='left')
+        color = 'tab:grey'
         if 'Q' in field:
             color = 'navy'
         plt.plot(_df['Date'], _df[field], color)
@@ -1181,6 +1182,22 @@ def view_obs_data_analyst(fseries, folder='C:/bin/pardinho/produtos_v2', show=Tr
         plt.ylabel('mm')
         #
         count = count + 1
+
+    ax = plt.subplot(gs[count: count + 1, :6])
+
+    ax1 = ax.twinx()
+    color = 'tab:orange'
+    ax1.plot(_df2['Date'], _df2['Temp'], color, zorder=10)
+    ax1.set_xlim((_df['Date'].values[0], _df['Date'].values[-1]))
+    ax1.set_ylim(0, 35)
+    ax1.set_ylabel('°C')
+
+    color = 'darkred'
+    ax.plot(_df2['Date'], _df2['ETobs'], color, marker='.', zorder=0)
+    ax.set_xlim((_df['Date'].values[0], _df['Date'].values[-1]))
+    ax.set_ylabel('mm')
+    ax.set_ylim(0, 10)
+
     # export
     if show:
         plt.show()
@@ -1548,7 +1565,7 @@ def view_ensemble_et(calibfolder, gluefolder, outputfolder, show=True):
     #
     f_ensemble_et = gluefolder + "/ensemble_et.txt"
     f_ensemble_q = gluefolder + "/ensemble_q.txt"
-    f_global_et = calibfolder + "/MLM/full_period/osa_zmaps/analyst_sim_series.txt"
+    f_global_et = calibfolder + "/et_obs.txt"
     #
     #
     et_df = pd.read_csv(f_ensemble_et, sep=';', parse_dates=['Date'])
@@ -1829,7 +1846,10 @@ for s in sets_lst:
     pos_folder = '{}/pos_bat'.format(folder)
     pre_folder = '{}/pre_bat'.format(folder)
     fcar_index = '{}/aoi_car_full_indices.txt'.format(folder)
-    step09_priority_index(folder=folder, fcar_index=fcar_index, show=False, wkpl=True)
-#folder = 'C:/bin/pardinho/produtos_v2/run_02a'
+    #step09_priority_index(folder=folder, fcar_index=fcar_index, show=False, wkpl=True)
+folder = 'C:/bin/pardinho/produtos_v2/run_02a'
+fseries = folder + '/step01a__obs_data_all.txt'
+fetseries = folder + '/etobs_series.txt'
+view_obs_data_analyst(fseries=fseries, fetobs=fetseries, folder=folder, show=False)
 #step10_compare_policies(folder=folder, show=False, wkpl=True)
 
