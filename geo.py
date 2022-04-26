@@ -1099,16 +1099,15 @@ def local_stats(maps, tui=False, full=False):
         _count = 0
     # declare stats arrays
     _median = np.zeros(shape=np.shape(maps[0]))
+    _mean = np.zeros(shape=np.shape(maps[0]))
     _5th_ptile = np.zeros(shape=np.shape(maps[0]))
     _95th_ptile = np.zeros(shape=np.shape(maps[0]))
     _range_90 = np.zeros(shape=np.shape(maps[0]))
     if full:
-        _mean = np.zeros(shape=np.shape(maps[0]))
         _max = np.zeros(shape=np.shape(maps[0]))
         _min = np.zeros(shape=np.shape(maps[0]))
         _50th_ptile = np.zeros(shape=np.shape(maps[0]))
         _range_minmax = np.zeros(shape=np.shape(maps[0]))
-
     # scan the arrays
     for i in range(len(maps[0])):
         if tui:
@@ -1125,6 +1124,7 @@ def local_stats(maps, tui=False, full=False):
             #
             # sample stas
             _median[i][j] = np.median(_x_values)
+            _mean[i][j] = np.mean(_x_values)
             _5th_ptile[i][j] = np.percentile(_x_values, q=5)
             _95th_ptile[i][j] = np.percentile(_x_values, q=95)
             if full:
@@ -1147,6 +1147,7 @@ def local_stats(maps, tui=False, full=False):
                 'Range_minmax': _range_minmax}
     else:
         return {'Median': _median,
+                'Mean': _mean,
                 '5th_p': _5th_ptile,
                 '95th_p': _95th_ptile,
                 'Range_90': _range_90}

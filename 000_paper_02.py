@@ -231,7 +231,10 @@ def step02_select_models(folder, calibfolder, projectfolder):
     return gluefiles['Folder']
 
 
-def step03_map_processes(folder, gluefolder, projectfolder, fseries, vars='Qv-R'):
+def step03_map_processes(folder, gluefolder, projectfolder, fseries,
+                         vars='R-Qv-D-VSA',
+                         pre=True,
+                         pos=True):
     from tools import bat_slh
     ftwi = projectfolder + "/datasets/observed/aoi_twi.asc"
     fshru_param = projectfolder + "/datasets/observed/calib_shru_param.txt"
@@ -242,66 +245,142 @@ def step03_map_processes(folder, gluefolder, projectfolder, fseries, vars='Qv-R'
     #
     mapvars = vars
     #
+    out_dct = dict()
     # pre
-    fshru = projectfolder + "/datasets/projected/scn__lulc_predc/aoi_shru.asc"
-    fhists = projectfolder + "/datasets/projected/scn__lulc_predc/aoi_histograms.txt"
-    fbasin_hists = projectfolder + "/datasets/projected/scn__lulc_predc/aoi_basin_histograms.txt"
-    pre_folder = bat_slh(fmodels=fmodels,
-                            fseries=fseries,
-                            fhydroparam=fhydrop,
-                            fshruparam=fshru_param,
-                            fshru=fshru,
-                            ftwi=ftwi,
-                            fhistograms=fhists,
-                            fbasinhists=fbasin_hists,
-                            fbasin=fbasin,
-                            fcanopy=fcanopy,
-                            model_id='Id',
-                            wkpl=True,
-                            tui=True,
-                            mapback=True,
-                            mapvar=mapvars,
-                            integrate=True,
-                            integrate_only=True,
-                            qobs=True,
-                            pannel=False,
-                            ensemble=True,
-                            stats=True,
-                            annualize=True,
-                            label='PRE',
-                            folder=folder)
+    if pre:
+        fshru = projectfolder + "/datasets/projected/scn__lulc_predc/aoi_shru.asc"
+        fhists = projectfolder + "/datasets/projected/scn__lulc_predc/aoi_histograms.txt"
+        fbasin_hists = projectfolder + "/datasets/projected/scn__lulc_predc/aoi_basin_histograms.txt"
+        pre_folder = bat_slh(fmodels=fmodels,
+                                fseries=fseries,
+                                fhydroparam=fhydrop,
+                                fshruparam=fshru_param,
+                                fshru=fshru,
+                                ftwi=ftwi,
+                                fhistograms=fhists,
+                                fbasinhists=fbasin_hists,
+                                fbasin=fbasin,
+                                fcanopy=fcanopy,
+                                model_id='Id',
+                                wkpl=True,
+                                tui=True,
+                                mapback=True,
+                                mapvar=mapvars,
+                                integrate=True,
+                                integrate_only=True,
+                                qobs=True,
+                                pannel=False,
+                                ensemble=False,
+                                stats=True,
+                                annualize=True,
+                                stats_raster=False,
+                                label='PRE',
+                                folder=folder)
+        out_dct['Pre_folder'] = pre_folder['Folder']
     #
     #
     # pos
-    fshru = projectfolder + "/datasets/observed/aoi_shru.asc"
-    fhists = projectfolder + "/datasets/observed/aoi_histograms.txt"
-    fbasin_hists = projectfolder + "/datasets/observed/aoi_basin_histograms.txt"
-    pos_folder = bat_slh(fmodels=fmodels,
-                            fseries=fseries,
-                            fhydroparam=fhydrop,
-                            fshruparam=fshru_param,
-                            fshru=fshru,
-                            ftwi=ftwi,
-                            fhistograms=fhists,
-                            fbasinhists=fbasin_hists,
-                            fbasin=fbasin,
-                            fcanopy=fcanopy,
-                            model_id='Id',
-                            wkpl=True,
-                            tui=True,
-                            mapback=True,
-                            mapvar=mapvars,
-                            integrate=True,
-                            integrate_only=True,
-                            qobs=True,
-                            pannel=False,
-                            ensemble=True,
-                            stats=True,
-                            annualize=True,
-                            label='POS',
-                            folder=folder)
-    return {'Pre_folder':pre_folder['Folder'],
-            'Pos_folder':pos_folder['Folder']}
+    if pos:
+        fshru = projectfolder + "/datasets/observed/aoi_shru.asc"
+        fhists = projectfolder + "/datasets/observed/aoi_histograms.txt"
+        fbasin_hists = projectfolder + "/datasets/observed/aoi_basin_histograms.txt"
+        pos_folder = bat_slh(fmodels=fmodels,
+                                fseries=fseries,
+                                fhydroparam=fhydrop,
+                                fshruparam=fshru_param,
+                                fshru=fshru,
+                                ftwi=ftwi,
+                                fhistograms=fhists,
+                                fbasinhists=fbasin_hists,
+                                fbasin=fbasin,
+                                fcanopy=fcanopy,
+                                model_id='Id',
+                                wkpl=True,
+                                tui=True,
+                                mapback=True,
+                                mapvar=mapvars,
+                                integrate=True,
+                                integrate_only=True,
+                                qobs=True,
+                                pannel=False,
+                                ensemble=False,
+                                stats=True,
+                                annualize=True,
+                                stats_raster=False,
+                                label='POS',
+                                folder=folder)
+        out_dct['Pos_folder'] = pos_folder['Folder']
+    return out_dct
+
+
+def step03_map_raster(folder, mapvar='D-R-Evs', pre=True, pos=True):
+    import inp, out
+    from visuals import plot_map_view
+    from hydrology import map_back
+    from tui import status
+    from backend import get_mapid
+    mapvars = mapvar.split('-')
+    ftwi = 'C:/bin/pardinho/produtos_v2/inputs/pardinho/datasets/observed/aoi_twi.asc'
+    fpos_shru = 'C:/bin/pardinho/produtos_v2/inputs/pardinho/datasets/observed/aoi_shru.asc'
+    fpre_shru = "C:/bin/pardinho/produtos_v2/inputs/pardinho/datasets/projected/scn__lulc_predc/aoi_shru.asc"
+    # import maps
+    status('importing maps')
+    meta, twi = inp.asc_raster(file=ftwi, dtype='float32')
+    stats = ['Range_90']
+    for s in stats:
+        if pre:
+            for v in mapvars:
+                meta, shru = inp.asc_raster(file=fpre_shru, dtype='float32')
+                lcl_file = '{}/pre_bat/zmaps/annual_{}_{}.txt'.format(folder, v, s)
+                status('loading zmap of {} {}'.format(v, s))
+                lcl_zmap, twi_bins, shru_bins = inp.zmap(file=lcl_file)
+                status('mapping back {} {}'.format(v, s))
+                lcl_raster = map_back(zmatrix=lcl_zmap,
+                                      a1=twi,
+                                      a2=shru,
+                                      bins1=twi_bins,
+                                      bins2=shru_bins)
+                status('exporting raster of {} {}'.format(v, s))
+                out.asc_raster(array=lcl_raster,
+                               meta=meta,
+                               folder='{}/pre_bat/rasters'.format(folder),
+                               filename='annual_{}_{}'.format(v, s),
+                               dtype='float32')
+                status('plotting view of {} {}'.format(v, s))
+                mapid = get_mapid(v)
+                plot_map_view(lcl_raster, meta,
+                              ranges=[0, np.max(lcl_raster)],
+                              mapid=mapid,
+                              mapttl='{} {}'.format(v, s),
+                              filename='annual_{}_{}'.format(v, s),
+                              folder='{}/pre_bat/rasters'.format(folder))
+
+        if pos:
+            for v in mapvars:
+                meta, shru = inp.asc_raster(file=fpos_shru, dtype='float32')
+                lcl_file = '{}/pos_bat/zmaps/annual_{}_{}.txt'.format(folder, v, s)
+                status('loading zmap of {} {}'.format(v, s))
+                lcl_zmap, twi_bins, shru_bins = inp.zmap(file=lcl_file)
+                status('mapping back {} {}'.format(v, s))
+                lcl_raster = map_back(zmatrix=lcl_zmap,
+                                      a1=twi,
+                                      a2=shru,
+                                      bins1=twi_bins,
+                                      bins2=shru_bins)
+                status('exporting raster of {} {}'.format(v, s))
+                out.asc_raster(array=lcl_raster,
+                               meta=meta,
+                               folder='{}/pos_bat/rasters'.format(folder),
+                               filename='annual_{}_{}'.format(v, s),
+                               dtype='float32')
+                status('plotting view of {} {}'.format(v, s))
+                mapid = get_mapid(v)
+                plot_map_view(lcl_raster, meta,
+                              ranges=[0, np.max(lcl_raster)],
+                              mapid=mapid,
+                              mapttl='{} {}'.format(v, s),
+                              filename='annual_{}_{}'.format(v, s),
+                              folder='{}/pos_bat/rasters'.format(folder))
 
 
 def step04_map_asla(folder, prefolder, posfolder, projectfolder, fseries):
@@ -317,7 +396,7 @@ def step04_map_asla(folder, prefolder, posfolder, projectfolder, fseries):
     fsoils_param =  projectfolder + "/datasets/observed/aoi_soils_param.txt"
     #
     # PRE
-    frunoff = prefolder + "/annual_R_Median.asc"
+    frunoff = prefolder + "/annual_R_Mean.asc"
     flulc =  projectfolder + "/datasets/projected/scn__lulc_predc/aoi_lulc_predc.asc"
     label = 'PRE'
     # run asla for pre
@@ -335,7 +414,7 @@ def step04_map_asla(folder, prefolder, posfolder, projectfolder, fseries):
                      nutrients=True,
                      folder=folder)
     # POS
-    frunoff = posfolder + "/annual_R_Median.asc"
+    frunoff = posfolder + "/annual_R_Mean.asc"
     flulc = projectfolder + "/datasets/observed/aoi_lulc.asc"
     label = 'POS'
     # run asla for pos
@@ -355,7 +434,8 @@ def step04_map_asla(folder, prefolder, posfolder, projectfolder, fseries):
     return {'Pre_folder': pre_asla['Folder'], 'Pos_folder': pos_asla['Folder']}
 
 
-def step05_compute_anomaly(folder, hy_prefolder, hy_posfolder, asla_prefolder, asla_posfolder, mapvars='Qv-R'):
+def step05_compute_anomaly(folder, hy_prefolder, hy_posfolder, asla_prefolder, asla_posfolder,
+                           mapvars='Qv-R', asla=True):
     import os
     import numpy as np
     from visuals import plot_map_view
@@ -363,25 +443,22 @@ def step05_compute_anomaly(folder, hy_prefolder, hy_posfolder, asla_prefolder, a
     import inp, out
     outfolder = create_rundir(label='Anomaly', wkplc=folder)
     #
-    stats = ['Median']
+    stats = ['Mean']
     # variables
-    vars = mapvars.split('-')
+    mapvars = mapvars.split('-')
     # POS
     pos_folder = hy_posfolder
     pos_all_files = os.listdir(pos_folder)
     # PRE
     pre_folder = hy_prefolder
     pre_all_files = os.listdir(pre_folder)
+    # stats loop
     for s in stats:
-        for i in range(len(vars)):
+        for i in range(len(mapvars)):
             # find file path
-            for f in pre_all_files:
-                if vars[i] + '_' in f and s in f and '.asc' in f:
-                    lcl_pre_file_path = '{}/{}'.format(pre_folder, f)
+            lcl_pre_file_path = '{}/rasters/annual_{}_Mean.asc'.format(pre_folder, mapvars[i])
             # find file path
-            for f in pos_all_files:
-                if vars[i] + '_' in f and s in f and '.asc' in f:
-                    lcl_pos_file_path = '{}/{}'.format(pos_folder, f)
+            lcl_pos_file_path = '{}/rasters/annual_{}_Mean.asc'.format(pos_folder, mapvars[i])
             print(lcl_pre_file_path)
             print(lcl_pos_file_path)
             status('loading raster maps')
@@ -389,10 +466,10 @@ def step05_compute_anomaly(folder, hy_prefolder, hy_posfolder, asla_prefolder, a
             meta, pos_map = inp.asc_raster(file=lcl_pos_file_path, dtype='float32')
             meta['NODATA_value'] = -99999
             #
-            #
+            # compute anomaly
             anom_map = pos_map - pre_map
             #
-            lcl_filename = 'annual_{}_{}_anomaly'.format(vars[i], s)
+            lcl_filename = 'annual_{}_{}_anomaly'.format(mapvars[i], s)
             status('exporting')
             out_file = out.asc_raster(anom_map, meta, folder=outfolder, filename=lcl_filename, dtype='float32')
             rng = (np.abs(np.min(anom_map)), np.abs(np.max(anom_map)))
@@ -404,57 +481,85 @@ def step05_compute_anomaly(folder, hy_prefolder, hy_posfolder, asla_prefolder, a
                           filename=lcl_filename,
                           folder=outfolder,
                           metadata=False,
-                          mapttl='{} {} anomaly'.format(vars[i], s),
-                          nodata=-99999)
+                          mapttl='{} {} anomaly'.format(mapvars[i], s),
+                          nodata=-99999,
+                          show=False)
+            view_anomaly(anomfolder=outfolder,
+                         premap=pre_map,
+                         posmap=pos_map,
+                         anommap=anom_map,
+                         show=False,
+                         mapvar=mapvars[i])
+            if mapvars[i] == 'R':
+                pre_map = pre_map / 2000
+                pos_map = pos_map / 2000
+                anom_map = pos_map - pre_map
+                lcl_filename = 'annual_CR_{}_anomaly'.format(s)
+                status('exporting')
+                out_file = out.asc_raster(anom_map, meta, folder=outfolder, filename=lcl_filename, dtype='float32')
+                rng = (np.abs(np.min(anom_map)), np.abs(np.max(anom_map)))
+                rng = (-np.max(rng), np.max(rng))
+                plot_map_view(map=anom_map,
+                              meta=meta,
+                              ranges=rng,
+                              mapid='anom',
+                              filename=lcl_filename,
+                              folder=outfolder,
+                              metadata=False,
+                              mapttl='CR {} anomaly'.format(s),
+                              nodata=-99999,
+                              show=False)
+                view_anomaly(anomfolder=outfolder,
+                             premap=pre_map,
+                             posmap=pos_map,
+                             anommap=anom_map,
+                             show=False,
+                             mapvar=mapvars[i])
+
     #
     #
     # ASLA
-    vars = ['asl', 'pload', 'nload']
-    # POS
-    pos_folder = asla_posfolder
-    pos_all_files = os.listdir(pos_folder)
-    # PRE
-    pre_folder = asla_prefolder
-    pre_all_files = os.listdir(pre_folder)
-    for i in range(len(vars)):
-        # find file path
-        for f in pre_all_files:
-            if vars[i] in f and '.asc' in f and 'log' not in f:
-                lcl_pre_file_path = '{}/{}'.format(pre_folder, f)
-        # find file path
-        for f in pos_all_files:
-            if vars[i] in f and '.asc' in f and 'log' not in f:
-                lcl_pos_file_path = '{}/{}'.format(pos_folder, f)
-        print(lcl_pre_file_path)
-        print(lcl_pos_file_path)
-        status('loading raster maps')
-        meta, pre_map = inp.asc_raster(file=lcl_pre_file_path, dtype='float32')
-        meta, pos_map = inp.asc_raster(file=lcl_pos_file_path, dtype='float32')
-        meta['NODATA_value'] = -99999
-        #
-        #
-        anom_map = pos_map - pre_map
-        #
-        lcl_filename = 'annual_{}_anomaly'.format(vars[i])
-        status('exporting')
-        out_file = out.asc_raster(anom_map, meta, folder=outfolder, filename=lcl_filename, dtype='float32')
-        rng = (np.abs(np.min(anom_map)), np.abs(np.max(anom_map)))
-        rng = (-np.max(rng), np.max(rng))
-        plot_map_view(map=anom_map,
-                      meta=meta,
-                      ranges=rng,
-                      mapid='anom',
-                      filename=lcl_filename,
-                      folder=outfolder,
-                      metadata=False,
-                      mapttl='{} anomaly'.format(vars[i]),
-                      nodata=-99999)
-    view_anomaly(anomfolder=outfolder,
-                 hy_prefolder=hy_prefolder,
-                 hy_posfolder=hy_posfolder,
-                 asla_posfolder=asla_posfolder,
-                 asla_prefolder=asla_prefolder,
-                 mapvars=mapvars, show=False)
+    if asla:
+        mapvars = ['c_usle', 'k_usle', 's_rusle', 'l_rusle'] #'asl', 'asllog', 'pload', 'nload',
+        # POS
+        pos_folder = asla_posfolder
+        pos_all_files = os.listdir(pos_folder)
+        # PRE
+        pre_folder = asla_prefolder
+        pre_all_files = os.listdir(pre_folder)
+        for i in range(len(mapvars)):
+            lcl_pre_file_path = '{}/{}.asc'.format(pre_folder, mapvars[i])
+            lcl_pos_file_path = '{}/{}.asc'.format(pos_folder, mapvars[i])
+            print(lcl_pre_file_path)
+            print(lcl_pos_file_path)
+            status('loading raster maps')
+            meta, pre_map = inp.asc_raster(file=lcl_pre_file_path, dtype='float32')
+            meta, pos_map = inp.asc_raster(file=lcl_pos_file_path, dtype='float32')
+            meta['NODATA_value'] = -99999
+            #
+            # compute anomaly
+            anom_map = pos_map - pre_map
+            #
+            lcl_filename = 'annual_{}_anomaly'.format(mapvars[i])
+            status('exporting raster map')
+            out_file = out.asc_raster(anom_map, meta, folder=outfolder, filename=lcl_filename, dtype='float32')
+            rng = (np.abs(np.min(anom_map)), np.abs(np.max(anom_map)))
+            rng = (-np.max(rng), np.max(rng))
+            plot_map_view(map=anom_map,
+                          meta=meta,
+                          ranges=rng,
+                          mapid='anom',
+                          filename=lcl_filename,
+                          folder=outfolder,
+                          metadata=False,
+                          mapttl='{} anomaly'.format(mapvars[i]),
+                          nodata=-99999)
+            view_anomaly(anomfolder=outfolder,
+                         premap=pre_map,
+                         posmap=pos_map,
+                         anommap=anom_map,
+                         show=False,
+                         mapvar=mapvars[i])
     return outfolder
 
 
@@ -465,39 +570,43 @@ def step06_compute_uncertainty(folder, hy_prefolder, hy_posfolder, mapvars='Qv-R
     from backend import create_rundir
     #
     # variables
-    vars = mapvars.split('-')
+    mapvars = mapvars.split('-')
     #
     # PRE and POS unc
     pos_folder = hy_posfolder
     pre_folder = hy_prefolder
-    folders = [pos_folder, pre_folder]
-    pos_outfolder = create_rundir('POS_Uncertainty', folder)
-    pre_outfolder = create_rundir('PRE_Uncertainty', folder)
-    outfolders = [pos_outfolder, pre_outfolder]
-    for j in range(len(folders)):
-        lcl_folder = folders[j]
-        print(lcl_folder)
-        all_files = os.listdir(lcl_folder)
-        for i in range(len(vars)):
-            # find file path
-            for f in all_files:
-                if vars[i] + '_' in f and 'Range_90' in f and '.asc' in f:
-                    lcl_range_file_path = '{}/{}'.format(lcl_folder, f)
-            # find file path
-            for f in all_files:
-                if vars[i] + '_' in f and 'Median' in f and '.asc' in f:
-                    lcl_median_file_path = '{}/{}'.format(lcl_folder, f)
-            print(lcl_range_file_path)
-            print(lcl_median_file_path)
+    folders = [pre_folder, pos_folder,]
+    unc_folder = create_rundir('Uncertainty', folder)
+    pos_outfolder = create_rundir('POS_Uncertainty', unc_folder)
+    pre_outfolder = create_rundir('PRE_Uncertainty', unc_folder)
+    outfolders = [pre_outfolder, pos_outfolder]
+    # variable loop
+    for i in range(len(mapvars)):
+        print(mapvars[i])
+        # pre and post analysis
+        unc_maps_lst = list()
+        rng_maps_lst = list()
+        mean_maps_lst = list()
+        for j in range(len(folders)):
+            range_fpath = '{}/rasters/annual_{}_Range_90.asc'.format(folders[j], mapvars[i])
+            mean_fpath = '{}/rasters/annual_{}_Mean.asc'.format(folders[j], mapvars[i])
+            # load
             print('loading raster maps...')
-            meta, range_map = inp.asc_raster(file=lcl_range_file_path, dtype='float32')
-            meta, median_map = inp.asc_raster(file=lcl_median_file_path, dtype='float32')
+            meta, range_map = inp.asc_raster(file=range_fpath, dtype='float32')
+            meta, mean_map = inp.asc_raster(file=mean_fpath, dtype='float32')
             meta['NODATA_value'] = -99999
             #
-            #
-            unc_map = 100 * (range_map / (median_map + (1 * (median_map == 0))))  # range 90 / median
-            #
-            lcl_filename = 'annual_{}_uncertainty'.format(vars[i])
+            """
+            '+ 1' to avoid zero division and '!= 0' to set zero where mean is zero 
+            """
+            print('computing uncertainty')
+            unc_map = (100 * (range_map + 1) / (mean_map + 1)) * (mean_map != 0) #
+
+            unc_maps_lst.append(unc_map.copy())
+            rng_maps_lst.append(range_map.copy())
+            mean_maps_lst.append(mean_map.copy())
+
+            lcl_filename = 'annual_{}_uncertainty'.format(mapvars[i])
             print('exporting...')
             out_file = out.asc_raster(unc_map, meta, folder=outfolders[j], filename=lcl_filename, dtype='float32')
             rng = (0, np.percentile(unc_map, q=95))
@@ -508,45 +617,39 @@ def step06_compute_uncertainty(folder, hy_prefolder, hy_posfolder, mapvars='Qv-R
                           filename=lcl_filename,
                           folder=outfolders[j],
                           metadata=False,
-                          mapttl='{} uncertainty'.format(vars[i]),
-                          nodata=-99999)
-    #
-    # Avg Unc
-    pos_folder = pos_outfolder
-    pos_all = os.listdir(pos_folder)
-    pre_folder = pre_outfolder
-    pre_all = os.listdir(pre_folder)
-    folders = [pos_folder, pre_folder]
-    outfolder = create_rundir('AVG_Uncertainty', folder)
-    for v in vars:
-        for f in pos_all:
-            if v + '_' in f and '.asc' in f:
-                lcl_pos_file = '{}/{}'.format(pos_folder, f)
-                print(lcl_pos_file)
-        for f in pre_all:
-            if v + '_' in f and '.asc' in f:
-                lcl_pre_file = '{}/{}'.format(pre_folder, f)
-                print(lcl_pre_file)
-        meta, pre_map = inp.asc_raster(file=lcl_pre_file, dtype='float32')
-        meta, pos_map = inp.asc_raster(file=lcl_pos_file, dtype='float32')
-        meta['NODATA_value'] = -99999
+                          mapttl='{} uncertainty'.format(mapvars[i]),
+                          nodata=-99999,
+                          show=False)
         #
+        # compute avg unc
+        avg_unc = (unc_maps_lst[0] + unc_maps_lst[1]) / 2
         #
-        avg_unc = (pre_map + pos_map) / 2
-        #
-        lcl_filename = 'avg_{}_uncertainty'.format(v)
+        lcl_filename = 'avg_{}_uncertainty'.format(mapvars[i])
         print('exporting...')
-        out_file = out.asc_raster(avg_unc, meta, folder=outfolder, filename=lcl_filename, dtype='float32')
+        out_file = out.asc_raster(avg_unc, meta, folder=unc_folder, filename=lcl_filename, dtype='float32')
         rng = (0, np.percentile(avg_unc, q=95))
         plot_map_view(map=avg_unc,
                       meta=meta,
                       ranges=rng,
                       mapid='unc',
                       filename=lcl_filename,
-                      folder=outfolder,
+                      folder=unc_folder,
                       metadata=False,
-                      mapttl='{} average uncertainty'.format(v),
-                      nodata=-99999)
+                      mapttl='{} average uncertainty'.format(mapvars[i]),
+                      nodata=-99999,
+                      show=False)
+        #
+        # plot pannel
+        view_uncertainty(uncfolder=unc_folder,
+                         premean=mean_maps_lst[0],
+                         posmean=mean_maps_lst[1],
+                         prerng=rng_maps_lst[0],
+                         posrng=rng_maps_lst[1],
+                         preunc=unc_maps_lst[0],
+                         posunc=unc_maps_lst[1],
+                         uncmap=avg_unc,
+                         mapvar=mapvars[i],
+                         show=False)
 
 
 def step07_zonal_stats(fcar_map, anom_folder, unc_folder):
@@ -953,19 +1056,83 @@ def step10_compare_policies(folder, show=False, wkpl=False):
     if wkpl:
         from backend import create_rundir
         folder = create_rundir(label='step10', wkplc=folder)
-    # load dataframes
+    # load policies dataframes
     full_df = pd.read_csv(ffull_s1, sep=';')
     policy_ds0_df = pd.read_csv(fpolicy_ds0, sep=';')
     policy_ds0_df = policy_ds0_df.query('IP_1_rnk > 0')
-    #print(policy_ds0_df.head(30).to_string())
-    #print(len(policy_ds0_df))
-    #print(policy_ds0_df['pload_aa_mean'].mean())
+    policy_ds0_s_df = policy_ds0_df[['id_car', 'lat', 'long', 'area']]
+
     policy_dsA_df = pd.read_csv(fpolicy_dsA, sep=';')
     policy_dsA_df = policy_dsA_df.query('IP_1_rnk > 0')
+    policy_dsA_s_df = policy_dsA_df[['id_car', 'lat', 'long', 'area']]
 
     policy_dsB_df = pd.read_csv(fpolicy_dsB, sep=';')
     policy_dsB_df = policy_dsB_df.query('IP_1_rnk > 0')
+    policy_dsB_s_df = policy_dsB_df[['id_car', 'lat', 'long', 'area']]
+
+    # create dsA outer join
+    dfA0 = pd.merge(policy_dsA_s_df, policy_ds0_s_df,
+                    how='outer',
+                    left_on='id_car',
+                    right_on='id_car',
+                    suffixes=('_A', '_0'))
+    dfA0['Kind'] = ''
+    for i in range(len(dfA0)):
+        if pd.isna(dfA0['area_A'].values[i]):
+            dfA0['Kind'].values[i] = 'Missing'
+        elif pd.notna(dfA0['area_A'].values[i]) and pd.isna(dfA0['area_0'].values[i]):
+            dfA0['Kind'].values[i] = 'Extra'
+        else:
+            dfA0['Kind'].values[i] = 'Shared'
+    # create dsB outer join
+    dfB0 = pd.merge(policy_dsB_s_df, policy_ds0_s_df,
+                    how='outer',
+                    left_on='id_car',
+                    right_on='id_car',
+                    suffixes=('_B', '_0'))
+    dfB0['Kind'] = ''
+    for i in range(len(dfB0)):
+        if pd.isna(dfB0['area_B'].values[i]):
+            dfB0['Kind'].values[i] = 'Missing'
+        elif pd.notna(dfB0['area_B'].values[i]) and pd.isna(dfB0['area_0'].values[i]):
+            dfB0['Kind'].values[i] = 'Extra'
+        else:
+            dfB0['Kind'].values[i] = 'Shared'
     #
+    #
+    # create summary dataframe
+
+    dfA0_shared = dfA0.query('Kind == "Shared"')
+    dfB0_shared = dfB0.query('Kind == "Shared"')
+    dfA0_extra = dfA0.query('Kind == "Extra"')
+    dfB0_extra = dfB0.query('Kind == "Extra"')
+    dfA0_missing = dfA0.query('Kind == "Missing"')
+    dfB0_missing = dfB0.query('Kind == "Missing"')
+
+
+    summary_df = pd.DataFrame({'Policy': ['ds0', 'dsA', 'dsB'],
+                               'data_years': [16, 8, 4],
+                               'data_diff': [0, 8, 12],
+                               'n': [len(policy_ds0_s_df), len(policy_dsA_s_df), len(policy_dsB_s_df)],
+                               'n_shared':[0, len(dfA0_shared), len(dfB0_shared)],
+                               'n_extra':[0, len(dfA0_extra), len(dfB0_extra)],
+                               'n_missing':[0, len(dfA0_missing), len(dfB0_missing)],
+                               'psa': [200, 200, 200],
+                               'area': [policy_ds0_s_df['area'].sum(),
+                                        dfA0_shared['area_A'].sum() + dfA0_extra['area_A'].sum(),
+                                        dfB0_shared['area_B'].sum() + dfB0_extra['area_B'].sum()],
+                               'area_missing': [0,
+                                                dfA0_missing['area_0'].sum(),
+                                                dfB0_missing['area_0'].sum()]
+                               })
+    summary_df['ann_cost_est'] = summary_df['psa'] * summary_df['area']
+    summary_df['ann_cost_miss'] = summary_df['psa'] * summary_df['area_missing']
+    summary_df['ann_cost'] = summary_df['ann_cost_est'] + summary_df['ann_cost_miss']
+    summary_df['ann_cost_avoid'] = summary_df['ann_cost'] - summary_df['ann_cost_est']
+    print(summary_df.to_string())
+    fout = '{}/summary_policies.txt'.format(folder)
+    summary_df.to_csv(fout, sep=';', index=False)
+
     # compare this variables:
     variables = ['R', 'Qv', 'Inf', 'ET', 'asl', 'nload', 'pload']
     out_df = pd.DataFrame({'Var':variables})
@@ -974,7 +1141,6 @@ def step10_compare_policies(folder, show=False, wkpl=False):
     out_df['ds0dsA_d'] = 0.0
     out_df['dsB'] = 0.0
     out_df['ds0dsB_d'] = 0.0
-
     # variable loop:
     for i in range(len(variables)):
         lcl_v = variables[i]
@@ -1032,21 +1198,35 @@ def step10_compare_policies(folder, show=False, wkpl=False):
                 filepath = folder + '\{}_{}_compare.png'.format(variables[i], lcl_policies[j])
                 plt.savefig(filepath, dpi=400)
                 plt.close(fig)
+    #
+    #
+    #
     # plot policies
-    policies = [policy_ds0_df, policy_dsA_df, policy_dsB_df]
+    policies = [policy_ds0_df, dfA0, dfB0]
     labels = ['ds0', 'dsA', 'dsB']
     for i in range(0, len(policies)):
-        # plot policy
-        print(policies[i]['area'].sum())
         # load shapefile
         fbasin = r"C:\000_myFiles\myDrive\gis\pnh\misc\aoi_basin.shp"
         sf = shapefile.Reader(fbasin)
         fig = plt.figure(figsize=(5, 6))  # Width, Height
-        fig.suptitle('n={} area={}ha'.format(len(policies[i]), policies[i]['area'].sum()))
-        #
-        # IP0
+        fig.suptitle(labels[i])
         ax = fig.add_subplot()
-        plt.scatter(policies[i]['long'], policies[i]['lat'], c='tab:grey', marker='o')
+        if i == 0:
+            plt.scatter(policies[i]['long'], policies[i]['lat'], c='tab:green', marker='o')
+        elif i == 1:
+            shared_df = policies[i].query('Kind == "Shared"')
+            extra_df = policies[i].query('Kind == "Extra"')
+            missing_df = policies[i].query('Kind == "Missing"')
+            plt.scatter(shared_df['long_A'], shared_df['lat_A'], c='tab:green', marker='o', zorder=3)
+            plt.scatter(extra_df['long_A'], extra_df['lat_A'], c='orange', marker='o', zorder=2)
+            plt.scatter(missing_df['long_0'], missing_df['lat_0'], c='tab:red', marker='o', zorder=1)
+        else:
+            shared_df = policies[i].query('Kind == "Shared"')
+            extra_df = policies[i].query('Kind == "Extra"')
+            missing_df = policies[i].query('Kind == "Missing"')
+            plt.scatter(shared_df['long_B'], shared_df['lat_B'], c='tab:green', marker='o', zorder=3)
+            plt.scatter(extra_df['long_B'], extra_df['lat_B'], c='orange', marker='o', zorder=2)
+            plt.scatter(missing_df['long_0'], missing_df['lat_0'], c='tab:red', marker='o', zorder=1)
         #
         # overlay shapefile
         patch = plt.Polygon(sf.shape(0).points, facecolor='none', edgecolor='black', linewidth=1, zorder=10)
@@ -1057,6 +1237,7 @@ def step10_compare_policies(folder, show=False, wkpl=False):
         ax.set_xlim([360694, 385296])
         ax.set_ylim([6721596, 6752258])
         filename = '{}_policy'.format(labels[i])
+        #show = True
         if show:
             plt.show()
             plt.close(fig)
@@ -1208,7 +1389,7 @@ def view_obs_data_analyst(fseries, fetobs, folder='C:/bin/pardinho/produtos_v2',
         plt.close(fig)
 
 
-def view_evolution_1(folder, calibfolder, gluefolder, show=True):
+def view_evolution_lspace(folder, calibfolder, gluefolder, show=True):
     full_f = calibfolder + '/generations/population.txt'
     pop_df = pd.read_csv(full_f, sep=';')
     behav_f = gluefolder + '/behavioural.txt'
@@ -1218,7 +1399,7 @@ def view_evolution_1(folder, calibfolder, gluefolder, show=True):
     fig = plt.figure(figsize=(7, 7), )  # Width, Height
     plt.scatter(x=pop_df['L_ET'], y=pop_df['L_Q'], marker='.', c='tab:grey', alpha=0.4, edgecolors='none')
     plt.scatter(x=behav_df['L_ET'], y=behav_df['L_Q'], marker='.', c='black')
-    plt.scatter(x=select_df['L_ET'], y=select_df['L_Q'], marker='.', c='magenta')
+    plt.scatter(x=select_df['L_ET'], y=select_df['L_Q'], marker='.', c='orange')
     plt.ylim((0, 0.9))
     plt.xlim((-1, -0.4))
     plt.grid(True)
@@ -1232,7 +1413,7 @@ def view_evolution_1(folder, calibfolder, gluefolder, show=True):
         plt.close(fig)
 
 
-def view_evolution_2(folder, calibfolder, show=True):
+def view_evolution_gens(folder, calibfolder, show=True):
     fig = plt.figure(figsize=(7, 4), )  # Width, Height
     full_f = calibfolder + '/generations/population.txt'
     pop_df = pd.read_csv(full_f, sep=';')
@@ -1269,10 +1450,10 @@ def view_evolution_2(folder, calibfolder, show=True):
         plt.close(fig)
 
 
-def view_evolution_3(folder, show=True):
+def view_evolution_datasets(folder, show=True):
     fig = plt.figure(figsize=(7, 4), )  # Width, Height
-    sets_lst = ['s1', 's2', 's3']
-    colors_dct = {'s1':'green', 's2':'orange', 's3':'maroon'}
+    sets_lst = ['ds0', 'dsA', 'dsB']
+    colors_dct = {'ds0': 'orange', 'dsA': 'silver', 'dsB': 'peru'}
     for s in sets_lst:
         full_f = '{}/{}/search/generations/population.txt'.format(folder, s)
         pop_df = pd.read_csv(full_f, sep=';')
@@ -1309,8 +1490,8 @@ def view_evolution_3(folder, show=True):
 
 
 def view_evolution_4(folder, show=True):
-    sets_lst = ['s1', 's2', 's3']
-    colors_dct = {'s1': 'green', 's2': 'orange', 's3': 'maroon'}
+    sets_lst = ['ds0', 'dsA', 'dsB']
+    colors_dct = {'ds0': 'orange', 'dsA': 'silver', 'dsB': 'peru'}
     fig = plt.figure(figsize=(7, 7), )  # Width, Height
     for s in sets_lst:
         behav_f = '{}/{}/select/behavioural.txt'.format(folder, s)
@@ -1332,7 +1513,103 @@ def view_evolution_4(folder, show=True):
         plt.close(fig)
 
 
-def view_anomaly(anomfolder, hy_prefolder, hy_posfolder, asla_prefolder, asla_posfolder, mapvars='Qv-R', show=True):
+def view_evolution_scatter(dir_glue, dir_calib, fparam, show=True):
+    import matplotlib as mpl
+    import inp
+    from visuals import glue_scattergram
+
+    def extract_ranges(fhydroparam):
+        dct, hydroparam_df = inp.hydroparams(fhydroparam=fhydroparam)
+        #
+        # extract set range values
+        out_dct = {'Params_df': hydroparam_df,
+                   'm_rng': (dct['m']['Min'], dct['m']['Max']),
+                   'lamb_rng': (dct['lamb']['Min'], dct['lamb']['Max']),
+                   'qo_rng': (dct['qo']['Min'], dct['qo']['Max']),
+                   'cpmax_rng': (dct['cpmax']['Min'], dct['cpmax']['Max']),
+                   'sfmax_rng': (dct['sfmax']['Min'], dct['sfmax']['Max']),
+                   'erz_rng': (dct['erz']['Min'], dct['erz']['Max']),
+                   'ksat_rng': (dct['ksat']['Min'], dct['ksat']['Max']),
+                   'c_rng': (dct['c']['Min'], dct['c']['Max']),
+                   'k_rng': (dct['k']['Min'], dct['k']['Max']),
+                   'n_rng': (dct['n']['Min'], dct['n']['Max']),
+                   'lat': dct['lat']['Set']}
+        return out_dct
+
+    full_f = dir_calib + '/generations/population.txt'
+    pop_df = pd.read_csv(full_f, sep=';')
+
+    f_behav = '{}/behavioural.txt'.format(dir_glue)
+    df_behav = pd.read_csv(f_behav, sep=';')
+    print(df_behav.head().to_string())
+    print(len(df_behav))
+    print(df_behav['L'].min())
+    f_select = '{}/selection.txt'.format(dir_glue)
+    df_select = pd.read_csv(f_select, sep=';')
+    print(df_select.head().to_string())
+    print(len(df_select))
+
+    rng_dct = extract_ranges(fhydroparam=fparam)
+    print(rng_dct)
+
+    models_df = df_behav.copy()
+    likelihood = 'L'
+    criteria = '>'
+    behavioural = df_behav['L'].min()
+    folder = dir_glue
+    filename = 'scattergrams_2'
+
+
+    fig = plt.figure(figsize=(14, 6), )  # Width, Height
+    fig.suptitle('GLUE | Likelihood scattergrams of behavioural models'
+                 ' | Criteria: {} {} {} | N = {}'.format(likelihood, criteria, behavioural, len(models_df)))
+    rows = 2
+    cols = 5
+    gs = mpl.gridspec.GridSpec(rows, cols, wspace=0.55, hspace=0.45)
+    #
+    params = ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
+    units = ('mm', 'twi', 'mm/d', 'mm', 'mm', 'mm', 'mm/d', '°C', 'days', 'n')
+    #
+    #
+    if behavioural >= 0:
+        ymin = 0
+    else:
+        ymin = behavioural + 0.5 * behavioural
+    ind = 0
+    for i in range(rows):
+        for j in range(cols):
+            lcl_prm = params[ind]
+            lcl_units = units[ind]
+            ax = fig.add_subplot(gs[i, j])
+            plt.title('{}'.format(lcl_prm))
+            plt.scatter(pop_df[lcl_prm].values, pop_df[likelihood].values,
+                     marker='.', c='tab:grey', alpha=0.2, edgecolors='none')
+            plt.plot(models_df[lcl_prm].values, models_df[likelihood].values, 'k.', zorder=1)
+            plt.scatter(df_select[lcl_prm].values, df_select[likelihood].values,
+                        marker='.', c='orange', edgecolors='none', zorder=2)
+            plt.hlines(y=behavioural,
+                       xmin=rng_dct['{}_rng'.format(lcl_prm)][0],
+                       xmax=rng_dct['{}_rng'.format(lcl_prm)][1],
+                       colors='tab:red', linestyles='--')
+            # plt.plot(models_df[lcl_prm].values, criteria_line, 'tab:red')
+            plt.ylabel('Ly[M|y]')
+            plt.xlabel('{}'.format(lcl_units))
+            plt.xlim(rng_dct['{}_rng'.format(lcl_prm)])
+            plt.ylim((-0.65, -0.55))
+            # plt.ylim((ymin, 1.1))
+            ind = ind + 1
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile, dpi=400)
+        plt.close(fig)
+        return expfile
+
+
+def view_anomaly(anomfolder, premap, posmap, anommap, mapvar='R', show=True):
     from visuals import _custom_cmaps
     import numpy as np
     import matplotlib.pyplot as plt
@@ -1340,213 +1617,99 @@ def view_anomaly(anomfolder, hy_prefolder, hy_posfolder, asla_prefolder, asla_po
     #
     folder = anomfolder
     # variables
-    vars = mapvars.split('-')
     #
     _cmaps = _custom_cmaps()
-    cmaps = {'R':_cmaps['flow'],
-             'RIE':_cmaps['flow'],
-             'Qv':_cmaps['flow'],
-             'Inf':_cmaps['flow'],
-             'ET':_cmaps['flow_v'],
-             'Tpgw':_cmaps['flow_v'],
-             'VSA':'Blues',
-             'asl':_cmaps['sed'],
-             'pload':_cmaps['sed'],
-             'nload':_cmaps['sed']}
+    cmaps = {'R': _cmaps['flow'],
+             'RIE': _cmaps['flow'],
+             'RSE': _cmaps['flow'],
+             'Qv': _cmaps['flow'],
+             'Inf': _cmaps['flow'],
+             'ET': _cmaps['flow_v'],
+             'Evc': _cmaps['flow_v'],
+             'Evs': _cmaps['flow_v'],
+             'Tpgw': _cmaps['flow_v'],
+             'Tpun': _cmaps['flow_v'],
+             'VSA': 'Blues',
+             'D': _cmaps['D'],
+             'Cpy': _cmaps['stk'],
+             'Sfs': _cmaps['stk'],
+             'Unz': _cmaps['stk'],
+             'asl': _cmaps['sed'],
+             'asllog': _cmaps['sed'],
+             'pload': _cmaps['sed'],
+             'nload': _cmaps['sed'],
+             'c_usle': 'YlGn_r',
+             'k_usle': 'Oranges',
+             's_rusle': 'OrRd',
+             'l_rusle': 'OrRd'
+             }
     units = {'R': 'mm',
              'RIE': 'mm',
+             'RSE': 'mm',
              'Qv': 'mm',
              'Inf': 'mm',
              'ET': 'mm',
+             'Evc': 'mm',
+             'Evs': 'mm',
+             'Tpgw': 'mm',
+             'Tpun': 'mm',
              'Tpgw': 'mm',
              'VSA': '%',
+             'D': 'mm',
+             'Cpy': 'mm',
+             'Sfs': 'mm',
+             'Unz': 'mm',
              'asl': 'ton/yr',
+             'asllog': 'log(ton/yr)',
              'pload': 'kgP/yr',
-             'nload': 'kgN/yr'
+             'nload': 'kgN/yr',
+             'c_usle': '-',
+             'k_usle': 'ton h MJ-1 mm-1 ',
+             's_rusle': '-',
+             'l_rusle': '-'
              }
-    for v in vars:
-        print(v)
-        if v in ['asl', 'pload', 'nload']:
-            fpos = "{}/{}.asc".format(asla_posfolder, v)
-            fpre = "{}/{}.asc".format(asla_prefolder, v)
-            fanm = "{}/annual_{}_anomaly.asc".format(anomfolder, v)
-        else:
-            fpos = "{}/annual_{}_Median.asc".format(hy_posfolder, v)
-            fpre = "{}/annual_{}_Median.asc".format(hy_prefolder, v)
-            fanm = "{}/annual_{}_Median_anomaly.asc".format(anomfolder, v)
-        files_lst = [fpre, fpos, fanm]
-        maps_lst = list()
-        for f in files_lst:
-            meta, rmap = inp.asc_raster(file=f, dtype='float32')
-            rmap = rmap[600:1200, 500:900]
-            maps_lst.append(rmap.copy())
-        #
-        # get values
-        _vmax = np.max((np.percentile(maps_lst[0], q=90), np.percentile(maps_lst[1], q=90)))
-        _vanm = np.max((np.abs(np.min(maps_lst[2])), np.abs(np.max(maps_lst[2]))))
-        #
-        fig = plt.figure(figsize=(10, 4))  # Width, Height
-        gs = mpl.gridspec.GridSpec(3, 9, wspace=0.8, hspace=0.6)
-        fig.suptitle('{} median anomaly'.format(v))
-        #
-        plt.subplot(gs[:4, :3])
-        im = plt.imshow(maps_lst[0], cmap=cmaps[v], vmin=0, vmax=1600)
-        plt.title('pre-develop. ({})'.format(units[v]))
-        plt.colorbar(im, shrink=0.4)
-        plt.axis('off')
-        #
-        plt.subplot(gs[:4, 3:6])
-        im = plt.imshow(maps_lst[1], cmap=cmaps[v], vmin=0, vmax=1600)
-        plt.title('post-develop. ({})'.format(units[v]))
-        plt.colorbar(im, shrink=0.4)
-        plt.axis('off')
-        #
-        plt.subplot(gs[:4, 6:9])
-        im = plt.imshow(maps_lst[2], cmap='seismic_r', vmin=-_vanm, vmax=_vanm)
-        plt.title('anomaly ({})'.format(units[v]))
-        plt.colorbar(im, shrink=0.4)
-        plt.axis('off')
-        #
-        filename = '{}_median_anomaly'.format(v)
-        if show:
-            plt.show()
-            plt.close(fig)
-        else:
-            filepath = folder + '/' + filename + '.png'
-            plt.savefig(filepath, dpi=400)
-            plt.close(fig)
+
+    ext_xmin = 550
+    ext_xmax = 1150
+    ext_ymin = 400
+    ext_ymax = 1000
+
+    premap = premap[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    posmap = posmap[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    anommap = anommap[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    v_max = np.max((np.percentile(premap, q=98), np.percentile(posmap, q=98)))
+    v_min = np.max((np.percentile(premap, q=2), np.percentile(posmap, q=2)))
 
 
-def view_uncertainty(folder, pos_folder, show=True):
-    from visuals import _custom_cmaps
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
-    #
-    _xs = [100, 150, 320, 290]
-    _ys = [400, 100, 460, 300]
-    labels = ['s1', 's2', 's3', 's4']
+    maps_lst = [premap, posmap, anommap]
+    maps_lst_ttl = ['pre', 'pos', 'anomaly']
+    lims = {'pre': {'min': v_min,
+                    'max': v_max},
+            'pos': {'min': v_min,
+                    'max': v_max},
+            'anomaly': {'min': -np.max(np.abs(anommap)),
+                        'max': np.max(np.abs(anommap))}}
 
-    folder = folder
-    vars = ['R', 'Qv'] #, 'Inf', 'ET', 'Tpgw', 'VSA']
-    units = {'R':'mm',
-             'RIE':'mm',
-             'Qv':'mm',
-             'Inf':'mm',
-             'ET':'mm',
-             'Tpgw':'mm',
-             'VSA':'%'}
-    colors = {'R': 'white',
-             'RIE': 'white',
-             'Qv': 'white',
-             'Inf': 'white',
-             'ET': 'black',
-             'Tpgw': 'black',
-             'VSA': 'black'}
-    _cmaps = _custom_cmaps()
-    cmaps = {'R':_cmaps['flow'],
-             'RIE':_cmaps['flow'],
-             'Qv':_cmaps['flow'],
-             'Inf':_cmaps['flow'],
-             'ET':_cmaps['flow_v'],
-             'Tpgw':_cmaps['flow_v'],
-             'VSA':'Blues'}
-    for v in vars:
-        print(v)
-        #values = sample_histograms(x=_xs, y=_ys, var=v)
-        fmed = pos_folder + "/annual_{}_Mean.asc".format(v)
-        frng = pos_folder +  "/annual_{}_Range_90.asc".format(v)
-        func = pos_folder + "/annual_{}_uncertainty.asc".format(v)
-        files_lst = [fmed, frng, func]
-        maps_lst = list()
-        for f in files_lst:
-            meta, rmap = inp.asc_raster(file=f, dtype='float32')
-            rmap = rmap[600:1200, 500:900]
-            maps_lst.append(rmap.copy())
-        meds = list()
-        rngs = list()
-        for i in range(len(labels)):
-            lcl_y = _ys[i]
-            lcl_x = _xs[i]
-            lcl_med = maps_lst[0][lcl_y][lcl_x]
-            meds.append(lcl_med)
-            lcl_rng = maps_lst[1][lcl_y][lcl_x]
-            rngs.append(lcl_rng)
-        rngs = np.array(rngs)
-        #
-        # get values
-        #
-        fig = plt.figure(figsize=(10, 6))  # Width, Height
-        gs = mpl.gridspec.GridSpec(6, 9, wspace=0.8, hspace=0.6)
-        fig.suptitle('{} uncertainty'.format(v))
-        #
-        plt.subplot(gs[:4, :3])
-        im = plt.imshow(maps_lst[0], cmap=cmaps[v], vmin=0, vmax=1600)
-        plt.title('Median ({})'.format(units[v]))
-        for p in range(len(_xs)):
-            plt.plot(_xs[p], _ys[p], '.', color=colors[v])
-            plt.text(_xs[p] + 10, _ys[p] + 10, s=labels[p], color=colors[v])
-        plt.colorbar(im, shrink=0.4)
+    fig = plt.figure(figsize=(12, 4))  # Width, Height
+    gs = mpl.gridspec.GridSpec(2, 9, wspace=0.2, hspace=0.2, left=0.05, bottom=0.05, top=0.95, right=0.95)
+    fig.suptitle('{} mean anomaly'.format(mapvar))
+    anchors_l = [0, 3, 6]
+    anchors_r = [3, 6, 9]
+    for i in range(len(maps_lst)):
+        lcl_cmap = cmaps[mapvar]
+        if i == 2:
+            lcl_cmap = 'seismic_r'
+        wind_left = 0
+        wind_right = 3
+        plt.subplot(gs[:, anchors_l[i]:anchors_r[i]])
+        im = plt.imshow(maps_lst[i],
+                        cmap=lcl_cmap,
+                        vmin=lims[maps_lst_ttl[i]]['min'],
+                        vmax=lims[maps_lst_ttl[i]]['max'])
+        #plt.title('{} ({})'.format(maps_lst_ttl[i], units[mapvar]))
+        plt.colorbar(im, shrink=0.3)
         plt.axis('off')
-        #
-        plt.subplot(gs[:4, 3:6])
-        im = plt.imshow(maps_lst[1], cmap=cmaps[v], vmin=0, vmax=np.max(maps_lst[1]))
-        plt.title('90% range ({})'.format(units[v]))
-        for p in range(len(_xs)):
-            plt.plot(_xs[p], _ys[p], '.', color=colors[v])
-            plt.text(_xs[p] + 10, _ys[p] + 10, s=labels[p], color=colors[v])
-        plt.colorbar(im, shrink=0.4)
-        plt.axis('off')
-        #
-        plt.subplot(gs[:4, 6:9])
-        im = plt.imshow(maps_lst[2], cmap='Greys', vmin=0, vmax=100)
-        plt.title('uncertainty (%)')
-        for p in range(len(_xs)):
-            plt.plot(_xs[p], _ys[p], '.', color='black')
-            plt.text(_xs[p] + 10, _ys[p] + 10, s=labels[p], color='black')
-        plt.colorbar(im, shrink=0.4)
-        plt.axis('off')
-        #
-        plt.subplot(gs[4:, :3])
-        plt.bar(labels, meds, yerr=rngs/2, color='tab:grey')
-        plt.ylabel(units[v])
-        #
-        filename = '{}_uncertainty'.format(v)
-        if show:
-            plt.show()
-            plt.close(fig)
-        else:
-            filepath = folder + '/' + filename + '.png'
-            plt.savefig(filepath, dpi=400)
-            plt.close(fig)
-
-
-def view_ensemble_q(calibfolder, gluefolder, outputfolder, show=True):
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
-    #
-    folder = outputfolder
-    #
-    f_ensemble_et = gluefolder + "/ensemble_et.txt"
-    f_ensemble_q = gluefolder + "/ensemble_q.txt"
-    f_global_et = calibfolder + "/MLM/full_period/osa_zmaps/analyst_sim_series.txt"
-    #
-    #
-    q_df = pd.read_csv(f_ensemble_q, sep=';', parse_dates=['Date'])
-    q_obs_df = pd.read_csv(f_global_et, sep=';', parse_dates=['Date'])
-    # print(et_df.head().to_string())
-    fig = plt.figure(figsize=(16, 2.5))  # Width, Height
-    plt.fill_between(x=q_df['Date'], y1=q_df['Lo_5'], y2=q_df['Hi_95'],
-                     color='silver')
-    plt.plot(q_df['Date'], q_df['Mid_50'], 'tab:blue')
-    plt.plot(q_obs_df['Date'], q_obs_df['Qobs'], 'k.')
-    plt.xlim((q_df['Date'].values[0], q_df['Date'].values[-1]))
-    plt.ylim((0.001, 35))
-    plt.yscale('log')
-    plt.grid(True)
-    # plt.ylabel('mm')
-    filename = 'q_series'
+    filename = 'annual_{}_Mean_anomaly'.format(mapvar)
     if show:
         plt.show()
         plt.close(fig)
@@ -1554,6 +1717,298 @@ def view_ensemble_q(calibfolder, gluefolder, outputfolder, show=True):
         filepath = folder + '/' + filename + '.png'
         plt.savefig(filepath, dpi=400)
         plt.close(fig)
+
+
+def view_uncertainty(uncfolder, premean, posmean, prerng, posrng, preunc, posunc, uncmap,
+                     mapvar='R', show=True):
+    from visuals import _custom_cmaps
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    #
+    folder = uncfolder
+    # variables
+    #
+    _cmaps = _custom_cmaps()
+    cmaps = {'R': _cmaps['flow'],
+             'RIE': _cmaps['flow'],
+             'RSE': _cmaps['flow'],
+             'Qv': _cmaps['flow'],
+             'Inf': _cmaps['flow'],
+             'ET': _cmaps['flow_v'],
+             'Evc': _cmaps['flow_v'],
+             'Evs': _cmaps['flow_v'],
+             'Tpgw': _cmaps['flow_v'],
+             'Tpun': _cmaps['flow_v'],
+             'VSA': 'Blues',
+             'D': _cmaps['D'],
+             'Cpy': _cmaps['stk'],
+             'Sfs': _cmaps['stk'],
+             'Unz': _cmaps['stk'],
+             'asl': _cmaps['sed'],
+             'asllog': _cmaps['sed'],
+             'pload': _cmaps['sed'],
+             'nload': _cmaps['sed']}
+    units = {'R': 'mm',
+             'RIE': 'mm',
+             'RSE': 'mm',
+             'Qv': 'mm',
+             'Inf': 'mm',
+             'ET': 'mm',
+             'Evc': 'mm',
+             'Evs': 'mm',
+             'Tpgw': 'mm',
+             'Tpun': 'mm',
+             'Tpgw': 'mm',
+             'VSA': '%',
+             'D': 'mm',
+             'Cpy': 'mm',
+             'Sfs': 'mm',
+             'Unz': 'mm',
+             'asl': 'ton/yr',
+             'asllog': 'log(ton/yr)',
+             'pload': 'kgP/yr',
+             'nload': 'kgN/yr'
+             }
+
+    ext_xmin = 550
+    ext_xmax = 1150
+    ext_ymin = 400
+    ext_ymax = 1000
+    # clip extents:
+    premean = premean[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    posmean = posmean[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    prerng = prerng[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    posrng = posrng[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    preunc = preunc[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    posunc = posunc[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    uncmap = uncmap[ext_xmin:ext_xmax, ext_ymin:ext_ymax]
+    # get min max
+    v_max = np.max((np.percentile(premean, q=98), np.percentile(posmean, q=98)))
+    v_min = np.max((np.percentile(premean, q=2), np.percentile(posmean, q=2)))
+    vunc_max = np.max((np.percentile(preunc, q=98), np.percentile(posunc, q=98)))
+    vunc_min = np.max((np.percentile(preunc, q=2), np.percentile(posunc, q=2)))
+    #
+    maps_lst = [[premean, prerng, preunc],
+                [posmean, posrng, posunc]]
+    maps_lst_ttl = ['pre', 'pos', 'unc']
+    lims = {'pre': {'min': v_min,
+                    'max': v_max},
+            'pos': {'min': v_min,
+                    'max': v_max},
+            'unc': {'min': vunc_min,
+                    'max': vunc_max}}
+
+    fig = plt.figure(figsize=(12, 8))  # Width, Height
+    gs = mpl.gridspec.GridSpec(6, 9, wspace=0.01, hspace=0.07, left=0.05, bottom=0.05, top=0.95, right=0.95)
+    fig.suptitle('{} uncertainty'.format(mapvar))
+    col_anchors_left = [0, 3, 6]
+    col_anchors_right = [3, 6, 9]
+    row_anchors_upper = [0, 2]
+    row_anchors_lower = [2, 4]
+    for j in range(len(maps_lst)):
+        for i in range(len(maps_lst[j])):
+            lcl_cmap = cmaps[mapvar]
+            if i == 2:
+                lcl_cmap = 'Greys'
+            plt.subplot(gs[row_anchors_upper[j]:row_anchors_lower[j],
+                        col_anchors_left[i]:col_anchors_right[i]])
+            im = plt.imshow(maps_lst[j][i],
+                            cmap=lcl_cmap,
+                            vmin=lims[maps_lst_ttl[i]]['min'],
+                            vmax=lims[maps_lst_ttl[i]]['max'])
+            #plt.title('{} ({})'.format(maps_lst_ttl[i], units[mapvar]))
+            plt.colorbar(im, shrink=0.3)
+            plt.axis('off')
+    # avg unc
+    plt.subplot(gs[4:6, 6:9])
+    im = plt.imshow(uncmap,
+                    cmap='Greys',
+                    vmin=lims['unc']['min'],
+                    vmax=lims['unc']['max'])
+    # plt.title('{} ({})'.format(maps_lst_ttl[i], units[mapvar]))
+    plt.colorbar(im, shrink=0.3)
+    plt.axis('off')
+    filename = 'annual_{}_Mean_uncertainty'.format(mapvar)
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
+def view_ensemble(calibfolder, gluefolder, outputfolder, show=True):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    #
+    folder = outputfolder
+    #
+
+    f_ensemble = gluefolder + "/ensemble_q.txt"
+    #f_ensemble = gluefolder + "/ensemble_et.txt"
+    f_global = calibfolder + "/MLM/full_period/osa_zmaps/analyst_sim_series.txt" # "/et_obs.txt"
+    #f_global = calibfolder + "/etobs_series.txt"
+    #
+    #
+    ensemb_df = pd.read_csv(f_ensemble, sep=';', parse_dates=['Date'])
+    v_obs_df = pd.read_csv(f_global, sep=';', parse_dates=['Date'])
+    # print(et_df.head().to_string())
+
+    obs_field = 'Qobs'
+    #obs_field = 'ETobs'
+    filename = '{}_series'.format(obs_field)
+    dct_colors = {'Qobs': 'tab:blue',
+                  'ETobs': 'tab:red'}
+    dct_lims = {'Qobs': {'Main': (0.001, 40), 'Unc': (0, 500), 'Enc': (0, 101)},
+                'ETobs': {'Main': (0.0, 6), 'Unc': (0, 250), 'Enc': (0, 20)}}
+    dct_mark = {'Qobs': 'k.',
+                  'ETobs': 'ko'}
+
+    join_df = pd.merge(ensemb_df[['Date', 'Lo_5', 'Mid_50', 'Hi_95']],
+                       v_obs_df[['Date', obs_field]], 'left', on='Date')
+
+    print(join_df.head().to_string())
+    join_df['Encaps'] = 0
+    for i in range(len(join_df)):
+        lcl_obs = join_df[obs_field].values[i]
+        lcl_lo = join_df['Lo_5'].values[i]
+        lcl_hi = join_df['Hi_95'].values[i]
+        if lcl_obs >= lcl_lo and lcl_obs <= lcl_hi:
+            join_df['Encaps'].values[i] = 1
+    join_df['Encaps_sum7'] = 0
+    window = 7
+    for i in range(window - 1, len(join_df)):
+        lcl_sum = np.sum(join_df['Encaps'].values[i - window: i])
+        join_df['Encaps_sum7'].values[i] = lcl_sum
+    join_df['Encaps_sum7'] = 100 * join_df['Encaps_sum7'] / window
+    print(join_df.head().to_string())
+    join_df['Unc_coef'] = 100 * (join_df['Hi_95'] - join_df['Lo_5']) / (join_df['Mid_50'] + 0.001)
+    join_df['Unc_coef_sum7'] = 0
+    for i in range(6, len(join_df)):
+        lcl_sum = np.sum(join_df['Unc_coef'].values[i - 7: i])
+        if pd.isna(lcl_sum):
+            join_df['Unc_coef_sum7'].values[i] = np.nan
+        else:
+            join_df['Unc_coef_sum7'].values[i] = lcl_sum
+    join_df['Unc_coef_sum7'] = join_df['Unc_coef_sum7'] / 7
+    print(join_df.head().to_string())
+
+    calib_join_df = join_df.query('Date < "2013-10-19"')
+    valid_join_df = join_df.query('Date >= "2013-10-19"')
+    calib_join_df['Encaps_mean'] = calib_join_df['Encaps_sum7'].mean()
+    valid_join_df['Encaps_mean'] = valid_join_df['Encaps_sum7'].mean()
+    print(calib_join_df['Encaps_sum7'].mean())
+    print(valid_join_df['Encaps_sum7'].mean())
+    calib_join_df['Unc_mean'] = calib_join_df['Unc_coef_sum7'].mean()
+    valid_join_df['Unc_mean'] = valid_join_df['Unc_coef_sum7'].mean()
+    print(calib_join_df['Unc_coef_sum7'].mean())
+    print(valid_join_df['Unc_coef_sum7'].mean())
+
+    join_df.to_csv('{}/{}_ensemble.txt'.format(folder, obs_field), sep=';', index=False)
+    #
+    #
+    #plt.style.use('dark_background')
+    fig = plt.figure(figsize=(16, 6))  # Width, Height
+    gs = mpl.gridspec.GridSpec(7, 1, wspace=0.3, hspace=0.9, left=0.05, bottom=0.05, top=0.95, right=0.95)
+
+    ax = fig.add_subplot(gs[0:3, 0])
+    plt.fill_between(x=ensemb_df['Date'], y1=ensemb_df['Lo_5'], y2=ensemb_df['Hi_95'],
+                     color='silver')
+    plt.plot(ensemb_df['Date'], ensemb_df['Mid_50'], dct_colors[obs_field])
+    plt.plot(v_obs_df['Date'], v_obs_df[obs_field], dct_mark[obs_field])
+    plt.vlines(x=valid_join_df['Date'].values[0], ymin=0.001, ymax=35, colors='tab:red')
+    plt.xlim((ensemb_df['Date'].values[0], ensemb_df['Date'].values[-1]))
+    plt.ylim(dct_lims[obs_field]['Main'])
+    if obs_field == 'Qobs':
+        plt.yscale('log')
+    plt.grid(True)
+
+    ax = fig.add_subplot(gs[3:5, 0])
+    plt.plot(join_df['Date'], join_df['Unc_coef_sum7'], 'tab:grey')
+    plt.vlines(x=valid_join_df['Date'].values[0], ymin=0, ymax=500, colors='tab:red')
+    plt.plot(calib_join_df['Date'], calib_join_df['Unc_mean'], '--k')
+    plt.plot(valid_join_df['Date'], valid_join_df['Unc_mean'], '--k')
+    plt.xlim((ensemb_df['Date'].values[0], ensemb_df['Date'].values[-1]))
+    plt.ylim(dct_lims[obs_field]['Unc'])
+
+    ax = fig.add_subplot(gs[5:, 0])
+    plt.plot(join_df['Date'], join_df['Encaps_sum7'], 'tab:grey')
+    if obs_field == 'ETobs':
+        pass
+    else:
+        plt.plot(calib_join_df['Date'], calib_join_df['Encaps_mean'], '--k')
+        plt.plot(valid_join_df['Date'], valid_join_df['Encaps_mean'], '--k')
+    plt.vlines(x=valid_join_df['Date'].values[0], ymin=0, ymax=120, colors='tab:red')
+    plt.xlim((join_df['Date'].values[0], join_df['Date'].values[-1]))
+    plt.ylim(dct_lims[obs_field]['Enc'])
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+    if obs_field == 'Qobs':
+        import analyst
+        kge_mid = analyst.kge(obs=np.log10(join_df['Qobs'].values),
+                              sim=np.log10(join_df['Mid_50'].values))
+        print('KGE mid = {}'.format(kge_mid))
+        nse_mid = analyst.nse(obs=np.log10(join_df['Qobs'].values),
+                              sim=np.log10(join_df['Mid_50'].values))
+        print('NSE mid = {}'.format(nse_mid))
+
+        r_mid = analyst.linreg(obs=np.log10(join_df['Qobs'].values),
+                               sim=np.log10(join_df['Mid_50'].values))
+        print(r_mid)
+        r_lo = analyst.linreg(obs=np.log10(join_df['Qobs'].values),
+                               sim=np.log10(join_df['Lo_5'].values))
+        print(r_lo)
+        r_hi = analyst.linreg(obs=np.log10(join_df['Qobs'].values),
+                               sim=np.log10(join_df['Hi_95'].values))
+        print(r_hi)
+        # scatter plot
+        fig = plt.figure(figsize=(4, 4))
+        plt.scatter(join_df['Qobs'], join_df['Lo_5'], color='b', alpha=0.2, marker='o', edgecolors='none')
+        plt.scatter(join_df['Qobs'], join_df['Hi_95'], color='r', alpha=0.2, marker='o', edgecolors='none')
+        plt.scatter(join_df['Qobs'], join_df['Mid_50'], color='k', alpha=0.7, marker='o', edgecolors='none')
+        plt.ylim(0.01, 50)
+        plt.xlim(0.01, 50)
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.grid(True)
+        if show:
+            plt.show()
+            plt.close(fig)
+        else:
+            filepath = folder + '/' + filename + '_scatter.png'
+            plt.savefig(filepath, dpi=400)
+            plt.close(fig)
+        # CFCs
+        fig = plt.figure(figsize=(4, 4))
+        freq_obs_df = analyst.frequency(dataframe=join_df, var_field='Qobs')
+        freq_mid_df = analyst.frequency(dataframe=join_df, var_field='Mid_50')
+        freq_lo_df = analyst.frequency(dataframe=join_df, var_field='Lo_5')
+        freq_hi_df = analyst.frequency(dataframe=join_df, var_field='Hi_95')
+        print(freq_obs_df.head().to_string())
+        plt.plot(freq_mid_df['Exceedance'], freq_mid_df['Values'], 'tab:blue')
+        plt.plot(freq_obs_df['Exceedance'], freq_obs_df['Values'], 'ko')
+        plt.fill_between(x=freq_obs_df['Exceedance'],
+                         y1=freq_lo_df['Values'],
+                         y2=freq_hi_df['Values'],
+                         color='silver')
+        plt.yscale('log')
+        plt.grid(True)
+        if show:
+            plt.show()
+            plt.close(fig)
+        else:
+            filepath = folder + '/' + filename + '_cfc.png'
+            plt.savefig(filepath, dpi=400)
+            plt.close(fig)
 
 
 def view_ensemble_et(calibfolder, gluefolder, outputfolder, show=True):
@@ -1565,7 +2020,7 @@ def view_ensemble_et(calibfolder, gluefolder, outputfolder, show=True):
     #
     f_ensemble_et = gluefolder + "/ensemble_et.txt"
     f_ensemble_q = gluefolder + "/ensemble_q.txt"
-    f_global_et = calibfolder + "/et_obs.txt"
+    f_global_et = calibfolder + "/etobs_series.txt"
     #
     #
     et_df = pd.read_csv(f_ensemble_et, sep=';', parse_dates=['Date'])
@@ -1655,11 +2110,87 @@ def view_pre_pos(folder, pre_folder, pos_folder, show=True):
     import pandas as pd
     import matplotlib.pyplot as plt
     import numpy as np
+    from analyst import frequency
     fpos = "{}\series_ensemble.txt".format(pos_folder)
     fpre = "{}\series_ensemble.txt".format(pre_folder)
     pos_df = pd.read_csv(fpos, sep=';', parse_dates=['Date'])
     pre_df = pd.read_csv(fpre, sep=';', parse_dates=['Date'])
     print(pos_df.head().to_string())
+    #
+    # CFC plots
+    vars = ['Q', 'Qb', 'ET']
+    for v in vars:
+        cfc_mid_pre_df = frequency(dataframe=pre_df, var_field='{}_50'.format(v))
+        cfc_lo_pre_df = frequency(dataframe=pre_df, var_field='{}_05'.format(v))
+        cfc_hi_pre_df = frequency(dataframe=pre_df, var_field='{}_95'.format(v))
+        cfc_mid_pos_df = frequency(dataframe=pos_df, var_field='{}_50'.format(v))
+        cfc_lo_pos_df = frequency(dataframe=pos_df, var_field='{}_05'.format(v))
+        cfc_hi_pos_df = frequency(dataframe=pos_df, var_field='{}_95'.format(v))
+        print(cfc_mid_pre_df.head().to_string())
+        fig = plt.figure(figsize=(4, 4))  # Width, Height
+        plt.fill_between(x=cfc_hi_pos_df['Exceedance'],
+                         y1=cfc_lo_pos_df['Values'],
+                         y2=cfc_hi_pos_df['Values'],
+                         color='tab:blue',
+                         alpha=0.4,
+                         edgecolor='none')
+        plt.fill_between(x=cfc_hi_pre_df['Exceedance'],
+                         y1=cfc_lo_pre_df['Values'],
+                         y2=cfc_hi_pre_df['Values'],
+                         color='tab:green',
+                         alpha=0.4,
+                         edgecolor='none')
+        plt.plot(cfc_mid_pre_df['Exceedance'], cfc_mid_pre_df['Values'], 'tab:green')
+        plt.plot(cfc_mid_pos_df['Exceedance'], cfc_mid_pos_df['Values'], 'tab:blue')
+        plt.xlim(0, 100)
+        if v == 'Q':
+            plt.yscale('log')
+        plt.grid(True)
+        if show:
+            plt.show()
+            plt.close(fig)
+        else:
+            filepath = folder + '\{}_cfc_prepost.png'.format(v)
+            plt.savefig(filepath, dpi=400)
+            plt.close(fig)
+
+    #
+    # Series plots
+    # vars
+    vars = ['Cpy', 'Sfs', 'Unz', 'TF', 'ET', 'Evc', 'Evs', 'Tpun', 'Tpgw', 'R', 'Inf', 'Qv', 'Q', 'Qb']
+    for v in vars:
+        print(v)
+        fig = plt.figure(figsize=(16, 3))  # Width, Height
+        plt.fill_between(x=pos_df['Date'],
+                         y1=pos_df['{}_05'.format(v)],
+                         y2=pos_df['{}_95'.format(v)],
+                         color='tab:blue',
+                         alpha=0.4,
+                         edgecolor='none')
+        plt.fill_between(x=pre_df['Date'],
+                         y1=pre_df['{}_05'.format(v)],
+                         y2=pre_df['{}_95'.format(v)],
+                         color='tab:green',
+                         alpha=0.4,
+                         edgecolor='none')
+        plt.plot(pos_df['Date'], pos_df['{}_50'.format(v)], 'tab:blue', label='post-development')
+        plt.plot(pre_df['Date'], pre_df['{}_50'.format(v)], 'tab:green', label='pre-development')
+        plt.xlim((pre_df['Date'].values[0], pre_df['Date'].values[-1]))
+        plt.title('{}'.format(v))
+        plt.grid(True)
+        if v == 'Q':
+            plt.yscale('log')
+            plt.legend(loc='lower right')
+        else:
+            plt.legend(loc='upper right')
+        if show:
+            plt.show()
+            plt.close(fig)
+        else:
+            filepath = folder + '\{}_series_prepost.png'.format(v)
+            plt.savefig(filepath, dpi=400)
+            plt.close(fig)
+
     vars = ['Prec','TF', 'ET', 'Evc', 'Evs', 'Tpun', 'Tpgw', 'R', 'RIE', 'RSE', 'Inf', 'Qv', 'Q', 'Qb', 'Qs']
     pre_50 = list()
     pos_50 = list()
@@ -1742,36 +2273,6 @@ def view_pre_pos(folder, pre_folder, pos_folder, show=True):
         filepath = folder + '\Stocks_prepost.png'.format(v)
         plt.savefig(filepath, dpi=400)
         plt.close(fig)
-    #
-    # vars
-    vars = ['Cpy', 'Sfs', 'Unz', 'TF', 'ET', 'Evc', 'Evs', 'Tpun', 'Tpgw', 'R', 'Inf', 'Qv', 'Q', 'Qb']
-    for v in vars:
-        print(v)
-        fig = plt.figure(figsize=(16, 2.5))  # Width, Height
-        plt.fill_between(x=pos_df['Date'],
-                         y1=pos_df['{}_05'.format(v)],
-                         y2=pos_df['{}_95'.format(v)],
-                         color='tab:green',
-                         alpha=0.4,
-                         edgecolor='none')
-        plt.fill_between(x=pre_df['Date'],
-                         y1=pre_df['{}_05'.format(v)],
-                         y2=pre_df['{}_95'.format(v)],
-                         color='tab:blue',
-                         alpha=0.4,
-                         edgecolor='none')
-        plt.plot(pos_df['Date'], pos_df['{}_50'.format(v)], 'tab:blue', label='post-development')
-        plt.plot(pre_df['Date'], pre_df['{}_50'.format(v)], 'tab:green', label='pre-development')
-        plt.xlim((pre_df['Date'].values[0], pre_df['Date'].values[-1]))
-        plt.legend(loc='upper right')
-        plt.title('{}'.format(v))
-        if show:
-            plt.show()
-            plt.close(fig)
-        else:
-            filepath = folder + '\{}_series_prepost.png'.format(v)
-            plt.savefig(filepath, dpi=400)
-            plt.close(fig)
 
 
 def main(folder, infolder, projectfolder):
@@ -1838,18 +2339,53 @@ def main(folder, infolder, projectfolder):
                                    mapvars=mapvars)
         #
 
-sets_lst = ['ds0', 'dsA', 'dsB']
+
+sets_lst = ['ds0']
+folder = 'C:/bin/pardinho/produtos_v2/run_02a/ds0'
+calib_folder = 'C:/bin/pardinho/produtos_v2/run_02a/ds0/search'
+glue_folder = 'C:/bin/pardinho/produtos_v2/run_02a/ds0/select'
+f_hydroparam =  'C:/bin/pardinho/produtos_v2/run_02a/ds0/search/MLM/mlm_parameters.txt'
+
+view_evolution_lspace(folder=folder, calibfolder=calib_folder, gluefolder=glue_folder, show=False)
+view_evolution_scatter(dir_glue=glue_folder, dir_calib=calib_folder, fparam=f_hydroparam, show=False)
+view_evolution_datasets(folder='C:/bin/pardinho/produtos_v2/run_02a', show=False)
+view_evolution_4(folder='C:/bin/pardinho/produtos_v2/run_02a', show=False)
+
+
+project_folder = 'C:/bin/pardinho/produtos_v2/inputs/pardinho'
+fseries = 'C:/bin/pardinho/produtos_v2/inputs/pardinho/datasets/observed/aoi_series.txt'
 for s in sets_lst:
     folder = 'C:/bin/pardinho/produtos_v2/run_02a/{}'.format(s)
-    calib_folder = '{}/search'.format(folder)
-    glue_folder = '{}/select'.format(folder)
-    pos_folder = '{}/pos_bat'.format(folder)
-    pre_folder = '{}/pre_bat'.format(folder)
-    fcar_index = '{}/aoi_car_full_indices.txt'.format(folder)
-    #step09_priority_index(folder=folder, fcar_index=fcar_index, show=False, wkpl=True)
-folder = 'C:/bin/pardinho/produtos_v2/run_02a'
-fseries = folder + '/step01a__obs_data_all.txt'
-fetseries = folder + '/etobs_series.txt'
-view_obs_data_analyst(fseries=fseries, fetobs=fetseries, folder=folder, show=False)
-#step10_compare_policies(folder=folder, show=False, wkpl=True)
+    pre_folder = 'C:/bin/pardinho/produtos_v2/run_02a/{}/pre_bat'.format(s)
+    pos_folder = 'C:/bin/pardinho/produtos_v2/run_02a/{}/pos_bat'.format(s)
+    asl_pre_folder = 'C:/bin/pardinho/produtos_v2/run_02a/{}/pre_asla'.format(s)
+    asl_pos_folder = 'C:/bin/pardinho/produtos_v2/run_02a/{}/pos_asla'.format(s)
+    """
+    step03_map_processes(folder=folder,
+                         gluefolder=glue_folder,
+                         projectfolder=project_folder,
+                         fseries=fseries,
+                         vars='R-RIE-RSE-D-ET-Qv-Tpgw-Inf-Evc-Evs-Tpun-Cpy-Sfs-Unz',
+                         pre=True,
+                         pos=False)
+                         
+    step03_map_raster(folder=folder, mapvar='Evs-Evc')
+    step05_compute_anomaly(folder,
+                           hy_prefolder=pre_folder,
+                           hy_posfolder=pos_folder,
+                           asla_prefolder=asl_pre_folder,
+                           asla_posfolder=asl_pos_folder,
+                           mapvars='R-RIE',#R-RSE-Inf-Qv-ET-Tpun-Tpgw-Evc-Evs-D-Cpy-Sfs-Unz',
+                           asla=False
+                           )
+    step06_compute_uncertainty(folder,
+                               hy_prefolder=pre_folder,
+                               hy_posfolder=pos_folder,
+                               mapvars='R-RIE',
+                               )
+    """
+
+
+
+
 

@@ -1548,7 +1548,9 @@ def qualmap_analyst(fmap, fparams,
                     type='lulc',
                     folder='C:/bin',
                     wkpl=False,
-                    label=''):
+                    label='',
+                    tui=False,
+                    ):
     """
     Analyst of qualitative maps.
     :param fmap: string file path to raster map .asc file
@@ -1563,6 +1565,8 @@ def qualmap_analyst(fmap, fparams,
     from geo import areas
     from visuals import plot_lulc_view
     from backend import create_rundir
+    if tui:
+        from tui import status
     #
     # Run Folder setup
     if wkpl:  # if the passed folder is a workplace, create a sub folder within it
@@ -1582,6 +1586,8 @@ def qualmap_analyst(fmap, fparams,
         namefield = 'SoilName'
         colorfield = 'ColorSoil'
     # imports
+    if tui:
+        status('importing maps')
     meta, qmap = inp.asc_raster(fmap, dtype='float32')
     param_df = pd.read_csv(fparams, sep=';')
     param_df = inp.dataframe_prepro(param_df, strfields=str_fields)
@@ -1591,6 +1597,8 @@ def qualmap_analyst(fmap, fparams,
         aoi = 1.0 + (0.0 * qmap)
     #
     # Compute areas
+    if tui:
+        status('computing areas')
     areas_m2 = areas(qmap * aoi, meta['cellsize'], values=param_df[idfield])
     areas_ha = areas_m2 / (100 * 100)
     areas_km2 = areas_m2 / (1000 * 1000)
@@ -1608,6 +1616,8 @@ def qualmap_analyst(fmap, fparams,
     # Export pannel
     if type == 'lulc':
         plot_lulc_view(qmap, param_df, areas_df, aoi, meta, folder=folder)
+    # todo other plots
+    return {'Folder': folder, 'File': exp_file1}
 
 
 def osa_series(fseries,
@@ -1994,7 +2004,8 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
             pannel=False,
             ensemble=False,
             stats=False,
-            annualize=False):
+            annualize=False,
+            stats_raster=False):
     """
 
     Batch of SLH
@@ -2025,8 +2036,9 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
     :param aoi: boolean to consider AOI basin
     :param pannel: boolean to export simulation pannel
     :param ensemble: boolean to export ensemble of models
-    :param stats: boolean to export stats maps (if integration is allowed)
+    :param stats: boolean to export zmaps stats maps (if integration is allowed)
     :param annualize: boolean to annualize stats maps (if stats is allowed)
+    :param stats_raster: boolean to export raster stats maps (if integration is allowed)
     :return: none
     """
     import os
@@ -2034,6 +2046,7 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
     from visuals import plot_ensemble
     if tui:
         from tui import status
+    #
     # Run Folder setup
     if wkpl:  # if the passed folder is a workplace, create a sub folder within it
         from backend import create_rundir
@@ -2052,7 +2065,8 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
     lcl_folders = list()
     params = ('m', 'lamb', 'qo', 'cpmax', 'sfmax', 'erz', 'ksat', 'c', 'k', 'n')
     for i in range(len(models_df)):
-        print('Model ID: {}'.format(models_df[model_id].values[i]))
+        if tui:
+            status('running {} of {}'.format(i, len(models_df)))
         # create local folder
         lcl_folder = folder + '/model_{}'.format(models_df[model_id].values[i])
         lcl_folders.append(lcl_folder)
@@ -2066,7 +2080,7 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
         for p in params:
             lcl_hydroparam_df.at[p, 'Set'] = models_df[p].values[i]
         lcl_hydroparam_df.reset_index(inplace=True)
-        print(lcl_hydroparam_df[['Parameter', 'Set']])
+        #print(lcl_hydroparam_df[['Parameter', 'Set']])
         lcl_fhydroparam = lcl_folder + '/hydro_param.txt'
         lcl_hydroparam_df.to_csv(lcl_fhydroparam, sep=';', index=False)
         #
@@ -2090,7 +2104,7 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
                       qobs=qobs,
                       folder=lcl_folder,
                       wkpl=False,
-                      tui=tui,
+                      tui=False,
                       aoi=aoi,
                       pannel=pannel)
         series_dct[models_df[model_id].values[i]] = lcl_dct['Series']
@@ -2148,9 +2162,10 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
     if tui:
         status('computing distributed stats')
     if integrate and stats:
-        from hydrology import map_back
-        meta, twi = inp.asc_raster(file=ftwi, dtype='float32')
-        meta, shru = inp.asc_raster(file=fshru, dtype='float32')
+        if stats_raster:
+            from hydrology import map_back
+            meta, twi = inp.asc_raster(file=ftwi, dtype='float32')
+            meta, shru = inp.asc_raster(file=fshru, dtype='float32')
         if annualize:
             _lcl_series_df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
             annual_factor = len(_lcl_series_df) / 365
@@ -2166,52 +2181,52 @@ def bat_slh(fmodels, fseries, fhydroparam, fshruparam, fhistograms, fbasinhists,
             for i in range(len(lcl_folders)):
                 lcl_file = '{}/integration/zmap_integral_{}.txt'.format(lcl_folders[i], v)
                 lcl_zmap, twi_bins, shru_bins = inp.zmap(file=lcl_file)
-                # old code:
-                """
-                lcl_file = '{}/integration/raster_integral_{}.asc'.format(lcl_folders[i], v)
-                # import map
-                meta, lcl_map = inp.asc_raster(lcl_file, dtype='float32')
-                if annualize:
-                    lcl_map = lcl_map / annual_factor
-                _maps.append(lcl_map)
-            # vectorize
-            _maps = np.array(_maps)
-            # get stats dict
-            _stats_dict = geo.local_stats(maps=_maps, tui=True)
-            """
                 if annualize:
                     lcl_zmap = lcl_zmap / annual_factor
                 _zmaps.append(lcl_zmap)
-            # vectorize
+            # vectorize zmaps
             _zmaps = np.array(_zmaps)
             # get stats dict
             if tui:
                 status('computing {} stats'.format(v))
             _stats_zmap_dict = geo.local_stats(maps=_zmaps, tui=True)
+            #
+            # export loop
             _stats_raster_dict = dict()
             for stat in _stats_zmap_dict:
                 if tui:
-                    status('mapping back {} {}'.format(v, stat))
-                _stats_raster_dict[stat] = map_back(zmatrix=_stats_zmap_dict[stat],
-                                                    a1=twi,
-                                                    a2=shru,
-                                                    bins1=twi_bins,
-                                                    bins2=shru_bins)
+                    status('exporting zmap {} {}'.format(v, stat))
+                fzmap = out.zmap(zmap=_stats_zmap_dict[stat],
+                                 twibins=twi_bins,
+                                 shrubins=shru_bins,
+                                 folder=folder,
+                                 filename='annual_{}_{}'.format(v, stat))
+                if stats_raster:
+                    if tui:
+                        status('mapping back {} {}'.format(v, stat))
+                    _stats_raster_dict[stat] = map_back(zmatrix=_stats_zmap_dict[stat],
+                                                        a1=twi,
+                                                        a2=shru,
+                                                        bins1=twi_bins,
+                                                        bins2=shru_bins)
             # loop in dict keys:
-            for stat in _stats_raster_dict:
-                filename = '{}_{}'.format(stat, v)
-                if annualize:
-                    filename = 'annual_{}_{}'.format(v, stat)
-                if tui:
-                    status('exporting {} {} raster map'.format(v, stat))
-                favg_map = out.asc_raster(_stats_raster_dict[stat], meta, folder=folder, filename=filename)
-                mapid = get_mapid(v)
-                visuals.plot_map_view(_stats_raster_dict[stat], meta,
-                                      ranges=[0,  np.max(_stats_raster_dict[stat])],
-                                      mapid=mapid, mapttl='{} {}'.format(stat, v),
-                                      filename=filename,
-                                      folder=folder)
+            if stats_raster:
+                for stat in _stats_raster_dict:
+                    filename = 'raster_{}_{}'.format(v, stat)
+                    if annualize:
+                        filename = 'annual_{}_{}'.format(v, stat)
+                    if tui:
+                        status('exporting {} {} raster map'.format(v, stat))
+                    favg_map = out.asc_raster(_stats_raster_dict[stat], meta, folder=folder, filename=filename)
+                    mapid = get_mapid(v)
+                    visuals.plot_map_view(_stats_raster_dict[stat], meta,
+                                          ranges=[0,  np.max(_stats_raster_dict[stat])],
+                                          mapid=mapid,
+                                          mapttl='{} {}'.format(stat, v),
+                                          filename=filename,
+                                          folder=folder)
         return {'Folder':folder}
+
 
 def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi, fshru, fcanopy,
         mapback=False,

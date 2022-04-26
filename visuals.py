@@ -1386,7 +1386,7 @@ def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview',
                'VSA':['Blues', 'Boolean', '%'], 
                'RC':['YlOrRd', '%', '%'],
                'anom': ['seismic_r', 'Anomaly units'],
-               'unc':['inferno', 'Uncertainty units', '%']}
+               'unc':['Greys', 'Uncertainty units', '%']}
     #
     fig = plt.figure(figsize=(6, 4.5))  # Width, Height
     gs = mpl.gridspec.GridSpec(3, 4, wspace=0.0, hspace=0.0)
