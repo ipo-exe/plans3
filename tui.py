@@ -616,7 +616,9 @@ def main(root='default', importing=True):
                 header(opt)
                 asmt_options = ['CALIB Basin | Hydrology Calibration Assessment',
                                 'CALIB Basin | LULC Assessment',
-                                'AOI Basin | LULC Assessment',]
+                                'AOI Basin | LULC Assessment',
+                                'CALIB Basin | Soils Assessment',
+                                'AOI Basin | Soils Assessment',]
                 lcl_opt = menu({lng[6]: asmt_options},
                                title='Assessment menu',
                                exitmsg=lng[10],
@@ -674,10 +676,12 @@ def main(root='default', importing=True):
                     out_dct = tools.qualmap_analyst(fmap=fmap,
                                                     fparams=fparams,
                                                     faoi=faoi,
+                                                    kind='lulc',
+                                                    label='LULC',
                                                     folder=projectdirs['Assessment'],
                                                     tui=True,
                                                     wkpl=True)
-                # calib LULC assessment
+                # AOI LULC assessment
                 elif lcl_opt == asmt_options[2]:
                     folder = projectdirs['Observed']
                     fmap = folder + '/aoi_lulc.asc'
@@ -686,6 +690,36 @@ def main(root='default', importing=True):
                     out_dct = tools.qualmap_analyst(fmap=fmap,
                                                     fparams=fparams,
                                                     faoi=faoi,
+                                                    kind='lulc',
+                                                    label='LULC',
+                                                    folder=projectdirs['Assessment'],
+                                                    tui=True,
+                                                    wkpl=True)
+                # calib soils assessment
+                elif lcl_opt == asmt_options[3]:
+                    folder = projectdirs['Observed']
+                    fmap = folder + '/calib_soils.asc'
+                    fparams = folder + '/calib_soils_param.txt'
+                    faoi = folder + '/calib_basin.asc'
+                    out_dct = tools.qualmap_analyst(fmap=fmap,
+                                                    fparams=fparams,
+                                                    faoi=faoi,
+                                                    kind='soils',
+                                                    label='SOILS',
+                                                    folder=projectdirs['Assessment'],
+                                                    tui=True,
+                                                    wkpl=True)
+                # aoi soils assessment
+                elif lcl_opt == asmt_options[4]:
+                    folder = projectdirs['Observed']
+                    fmap = folder + '/aoi_soils.asc'
+                    fparams = folder + '/aoi_soils_param.txt'
+                    faoi = folder + '/aoi_basin.asc'
+                    out_dct = tools.qualmap_analyst(fmap=fmap,
+                                                    fparams=fparams,
+                                                    faoi=faoi,
+                                                    kind='soils',
+                                                    label='SOILS',
                                                     folder=projectdirs['Assessment'],
                                                     tui=True,
                                                     wkpl=True)

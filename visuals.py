@@ -75,7 +75,7 @@ def pannel_obs_sim_analyst(series, freq, params, fld_obs='Obs', fld_sim='Sim', f
     """
     #
     fig = plt.figure(figsize=(18, 9))  # Width, Height
-    gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9)
+    gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9, left=0.05, bottom=0.1, top=0.9, right=0.95)
     fig.suptitle(title)
     if units == 'flow':
         units = 'mm/d'
@@ -227,7 +227,7 @@ def pannel_calib_valid(series_full, series_calib, series_valid, freq_full, param
     """
     #
     fig = plt.figure(figsize=(18, 9))  # Width, Height
-    gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9)
+    gs = mpl.gridspec.GridSpec(5, 13, wspace=0.9, hspace=0.9, left=0.05, bottom=0.1, top=0.9, right=0.95)
     fig.suptitle(title)
     if units == 'flow':
         units = 'mm/d'
@@ -455,7 +455,7 @@ def pannel_local(series, star, deficit, sups, mids, star_rng, deficit_rng,
     #
     # Star plot
     fig = plt.figure(figsize=(17, 8))  # Width, Height
-    gs = mpl.gridspec.GridSpec(8, 17, wspace=0.8, hspace=0.6)
+    gs = mpl.gridspec.GridSpec(8, 17, wspace=0.8, hspace=0.6, left=0.05, bottom=0.1, top=0.9, right=0.95)
     fig.suptitle(suptitle)
     #
     # STAR
@@ -647,7 +647,7 @@ def pannel_prec_q(t, prec, q, grid=True, folder='C:/bin', filename='pannel_prec_
     """
     #
     fig = plt.figure(figsize=(16, 8))  # Width, Height
-    gs = mpl.gridspec.GridSpec(2, 1, wspace=0.8, hspace=0.6)
+    gs = mpl.gridspec.GridSpec(2, 1, wspace=0.8, hspace=0.6, left=0.05, bottom=0.1, top=0.9, right=0.95)
     # plot prec
     y = prec
     ymax = np.max(y)
@@ -879,7 +879,12 @@ def pannel_aoi_series(dataframe, grid=True, folder='C:/bin', filename='aoi_serie
         return filepath
 
 
-def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True, folder='C:/bin', filename='pannel_sim_prec_q_logq', suff='', show=False):
+def pannel_sim_prec_q_logq(t, prec, qobs, qsim,
+                           grid=True,
+                           folder='C:/bin',
+                           filename='pannel_sim_prec_q_logq',
+                           suff='',
+                           show=False):
     """
 
     Plot a Pannel of Qsim and Qobs in linear and log scale
@@ -939,7 +944,14 @@ def pannel_sim_prec_q_logq(t, prec, qobs, qsim, grid=True, folder='C:/bin', file
         return filepath
 
 
-def pannel_global(series_df, qobs=False, etobs=False, grid=True, show=False, folder='C:/bin', filename='pannel', suff=''):
+def pannel_global(series_df,
+                  qobs=False,
+                  etobs=False,
+                  grid=True,
+                  show=False,
+                  folder='C:/bin',
+                  filename='pannel',
+                  suff=''):
     """
     visualize the model global variables in a single pannel
     :param series_df: pandas dataframe from hydrology.topmodel_sim()
@@ -1128,7 +1140,27 @@ def pannel_global(series_df, qobs=False, etobs=False, grid=True, show=False, fol
         return filepath
 
 
-def plot_lulc_view(lulc, lulc_df, basin, meta, mapttl='lulc', filename='mapview', folder='C:/bin', metadata=False, show=False):
+def plot_lulc_view(lulc, lulc_df, basin, meta,
+                   mapttl='lulc',
+                   filename='mapview',
+                   folder='C:/bin',
+                   metadata=False,
+                   show=False):
+    """
+
+    plot a simple LULC view
+
+    :param lulc: 2d numpy array map
+    :param lulc_df: pandas dataframe
+    :param basin: 2d numpy array map
+    :param meta: dict of metadata
+    :param mapttl: string map title
+    :param filename: string file name
+    :param folder: path to folder
+    :param metadata: boolean to plot meta
+    :param show: boolean to show instead of saving
+    :return: filepath
+    """
     from geo import reclassify, mask
     from matplotlib.colors import ListedColormap
     colors = lulc_df['ColorLULC'].values
@@ -1231,7 +1263,27 @@ def plot_lulc_view(lulc, lulc_df, basin, meta, mapttl='lulc', filename='mapview'
         return expfile
 
 
-def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='C:/bin', ttl='SHRU', metadata=True, show=False):
+def plot_shrumap_view(lulc, soils, meta, shruparam,
+                      filename='mapview',
+                      folder='C:/bin',
+                      ttl='SHRU',
+                      metadata=True,
+                      show=False):
+    """
+
+    plot a simple LULC view
+
+    :param lulc:
+    :param soils:
+    :param meta:
+    :param shruparam:
+    :param filename:
+    :param folder:
+    :param ttl:
+    :param metadata:
+    :param show:
+    :return:
+    """
     from matplotlib.colors import ListedColormap
     cmap_lulc = ListedColormap(shruparam['ColorLULC'].values)
     cmap_soil = ListedColormap(shruparam['ColorSoil'].values)
@@ -1286,8 +1338,12 @@ def plot_shrumap_view(lulc, soils, meta, shruparam, filename='mapview', folder='
         return expfile
 
 
-def plot_qmap_view(map, meta, colors, names, ranges, mapid='lulc', filename='mapview', folder='C:/bin',
-                   metadata=True, show=False):
+def plot_qmap_view(map, meta, colors, names, ranges,
+                   mapid='lulc',
+                   filename='mapview',
+                   folder='C:/bin',
+                   metadata=True,
+                   show=False):
     """
 
     Plot generic qualitative map
@@ -1343,8 +1399,16 @@ def plot_qmap_view(map, meta, colors, names, ranges, mapid='lulc', filename='map
         return expfile
 
 
-def plot_map_view(map, meta, ranges, mapid='dem', mapttl='', filename='mapview', folder='C:/bin',
-                  metadata=True, show=False, integration=False, png=True, nodata=-1):
+def plot_map_view(map, meta, ranges,
+                  mapid='dem',
+                  mapttl='',
+                  filename='mapview',
+                  folder='C:/bin',
+                  metadata=True,
+                  show=False,
+                  integration=False,
+                  png=True,
+                  nodata=-1):
     """
 
     Plot a generic map view
@@ -1501,6 +1565,7 @@ def sal_deficit_frame(dgbl, d1, vsa1, d2, vsa2, p1, p2,
                       dgbl_max=100,
                       filename='SAL_d_frame_X',
                       folder='C:/bin', supttl='Sensitivity to the m parameter'):
+    # todo docstring
     fig = plt.figure(figsize=(10, 6), )  # Width, Height
     fig.suptitle(supttl)
     gs = mpl.gridspec.GridSpec(2, 3, wspace=0.3, hspace=0.45)
@@ -1607,7 +1672,11 @@ def glue_scattergram(models_df, rng_dct,
         return expfile
 
 
-def glue_posterior(posterior_df, rng_dct, filename='posterior_analysis', folder='C:/bin', show=False, label=''):
+def glue_posterior(posterior_df, rng_dct,
+                   filename='posterior_analysis',
+                   folder='C:/bin',
+                   show=False,
+                   label=''):
     """
     Plot the 10 CFDs of GLUE analysis
     :param models_df: pandas dataframe - models dataframe (behavioural)
@@ -1658,9 +1727,15 @@ def glue_posterior(posterior_df, rng_dct, filename='posterior_analysis', folder=
         return expfile
 
 
-def glue_ensemble(sim_df, ensemble_df, grid=True, show=False, baseflow=False, scale='log', suff='',
-                  filename='glue_ensemble', folder='C:/bin', ):
-    #
+def glue_ensemble(sim_df, ensemble_df,
+                  grid=True,
+                  show=False,
+                  baseflow=False,
+                  scale='log',
+                  suff='',
+                  filename='glue_ensemble',
+                  folder='C:/bin', ):
+    # todo docstring
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     fig.suptitle('GLUE | 90% confidence ensemble of behavioural models')
     gs = mpl.gridspec.GridSpec(2, 1, wspace=0.8, hspace=0.6)
@@ -1724,8 +1799,13 @@ def glue_ensemble(sim_df, ensemble_df, grid=True, show=False, baseflow=False, sc
         return filepath
 
 
-def plot_lulc_view(lulc, lulcparam_df, areas_df, aoi, meta, mapttl='lulc', filename='mapview', folder='C:/bin',
-                   metadata=False, show=False):
+def plot_lulc_analyst(lulc, lulcparam_df, areas_df, aoi, meta,
+                      mapttl='lulc',
+                      filename='mapview',
+                      folder='C:/bin',
+                      metadata=False,
+                      show=False,
+                      dpi=600):
     """
     Plot LULC view analyst
     :param lulc: 2d numpy array of LULC classes
@@ -1749,7 +1829,7 @@ def plot_lulc_view(lulc, lulcparam_df, areas_df, aoi, meta, mapttl='lulc', filen
     cmap = ListedColormap(colors)
     #
     fig = plt.figure(figsize=(14, 9))  # Width, Height
-    gs = mpl.gridspec.GridSpec(8, 13, wspace=0.5, hspace=0.5)
+    gs = mpl.gridspec.GridSpec(8, 13, wspace=0.5, hspace=0.5, left=0.05, bottom=0.1, top=0.9, right=0.95)
     #
     ax = fig.add_subplot(gs[:4, :4])
     fmap = mask(lulc, aoi)
@@ -1908,14 +1988,153 @@ def plot_lulc_view(lulc, lulcparam_df, areas_df, aoi, meta, mapttl='lulc', filen
         plt.close(fig)
     else:
         expfile = folder + '/' + filename + '.png'
-        plt.savefig(expfile)
+        plt.savefig(expfile, dpi=dpi)
         plt.close(fig)
         return expfile
+
+
+def plot_soils_analyst(soils, soilsparam_df, areas_df, aoi, meta,
+                       mapttl='soils',
+                       filename='mapview',
+                       folder='C:/bin',
+                       metadata=False,
+                       show=False,
+                       dpi=600):
+    """
+    Plot Solis view analyst
+    :param soils: 2d numpy array of Soils classes
+    :param soilsparam_df: pandas dataframe object of soils parameters
+    :param areas_df: pandas dataframe object of areas
+    :param aoi: 2d numpy array of AOI
+    :param meta: metadata dictionary for maps
+    :param mapttl: string title
+    :param filename: string filename
+    :param folder: string path to output directory
+    :param metadata: boolean to plot metadata
+    :param show: boolean to show instead of saving
+    :return: none
+    """
+    from geo import reclassify, mask
+    from matplotlib.colors import ListedColormap
+    colors = soilsparam_df['ColorSoil'].values
+    names = soilsparam_df['SoilName'].values
+    ids = soilsparam_df['IdSoil'].values
+    ranges = [np.min(ids), np.max(ids)]
+    cmap = ListedColormap(colors)
+    #
+    fig = plt.figure(figsize=(14, 9))  # Width, Height
+    gs = mpl.gridspec.GridSpec(8, 13, wspace=0.5, hspace=0.5, left=0.05, bottom=0.1, top=0.9, right=0.95)
+    #
+    ax = fig.add_subplot(gs[:4, :4])
+    fmap = mask(soils, aoi)
+    im = plt.imshow(fmap, cmap=cmap, vmin=ranges[0], vmax=ranges[1])
+    plt.title(mapttl)
+    plt.axis('off')
+    #
+    #
+    # transmissivity map
+    fmap = reclassify(soils, upvalues=ids, classes=soilsparam_df['f_To'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[4:6, 0:2])
+    im = plt.imshow(fmap, cmap='viridis_r')
+    plt.title('To factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # Ksat
+    fmap = reclassify(soils, upvalues=ids, classes=soilsparam_df['f_Ksat'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[4:6, 2:4])
+    im = plt.imshow(fmap, cmap='viridis_r', vmin=0)
+    plt.title('Ksat factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # Porosity
+    fmap = reclassify(soils, upvalues=ids, classes=soilsparam_df['Porosity'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[4:6, 4:6])
+    im = plt.imshow(fmap, cmap='viridis_r', vmin=0)
+    plt.title('Porosity factor', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    # K USLE
+    fmap = reclassify(soils, upvalues=ids, classes=soilsparam_df['K_USLE'].values)
+    fmap = mask(fmap, aoi)
+    ax = fig.add_subplot(gs[6:, 0:2])
+    im = plt.imshow(fmap, cmap='Reds', vmin=0)
+    plt.title('K USLE', fontdict={'fontsize': 10})
+    plt.colorbar(im, shrink=0.4)
+    plt.axis('off')
+    #
+    #
+    ax = fig.add_subplot(gs[:3, 5:6])
+    labels = soilsparam_df['SoilName']
+    y_pos = np.arange(len(labels))
+    bars = areas_df['Area_%'].values
+    ax.barh(y_pos, bars, align='center', color=colors)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('%')
+    ax.set_title('% areas', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 6:7])
+    y_pos = np.arange(len(labels))
+    bars = soilsparam_df['f_To'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('f_To', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 7:8])
+    y_pos = np.arange(len(labels))
+    bars = soilsparam_df['f_Ksat'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('f_Ksat', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 8:9])
+    y_pos = np.arange(len(labels))
+    bars = soilsparam_df['Porosity'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('Porosity', fontdict={'fontsize': 10})
+    #
+    ax = fig.add_subplot(gs[:3, 9:10])
+    y_pos = np.arange(len(labels))
+    bars = soilsparam_df['K_USLE'].values
+    ax.barh(y_pos, bars, align='center', color='tab:grey')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([])
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Factor')
+    ax.set_title('K USLE', fontdict={'fontsize': 10})
+    #
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        expfile = folder + '/' + filename + '.png'
+        plt.savefig(expfile, dpi=dpi)
+        plt.close(fig)
+        return expfile
+
 
 #
 # problems:
 def plot_obssim_zmaps(obs, sim, metric, ranges='local', rangesmetric='local', ttl='title', show=False,
                       filename='obssim_zmaps', folder='C:/bin'):
+    # todo docstring
     fig = plt.figure(figsize=(6, 6),)  # Width, Height
     fig.suptitle('ZMAP | {}'.format(ttl))
     gs = mpl.gridspec.GridSpec(3, 1, wspace=0.3, hspace=0.3)
@@ -2195,6 +2414,7 @@ def plot_population(pop_df,
                     show=False,
                     folde='C:/bin',
                     filename='population'):
+    # todo docstring
     fig = plt.figure(figsize=(7, 7), )  # Width, Height
     fig.suptitle('Likelihood space | {}'.format(ttl))
     pop_df = pop_df.query('{} >= {} and {} >= {} and {} <= {} and {} <= {}'.format(xfield, x_min, yfield, y_min, xfield, x_max, yfield, y_max))
@@ -2228,7 +2448,7 @@ def plot_ensemble(dataframe,
                   show=True,
                   grid=True,
                   qobs=False):
-    #
+    # todo docstring
     fig = plt.figure(figsize=(16, 8))  # Width, Height
     gs = mpl.gridspec.GridSpec(2, 1, wspace=0.8, hspace=0.25)
     fig.suptitle(ttl)

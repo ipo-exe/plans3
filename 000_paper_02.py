@@ -1247,6 +1247,42 @@ def step10_compare_policies(folder, show=False, wkpl=False):
             plt.close(fig)
         #
 
+def view_rank_diff_hist(folder='C:/bin/pardinho/produtos_v2/run_02a/ds0', show=False):
+    from analyst import frequency
+    fcar_index = r"C:\bin\pardinho\produtos_v2\run_02a\ds0\priority_policy.txt"
+    _df = pd.read_csv(fcar_index, sep=';')
+    _df1 = _df.query('IP_1_rnk > 0')
+    _df1['IP_1_rnk_diff_abs'] = np.abs(_df1['IP_1_rnk_diff'].values)
+    #
+    # hist
+    fig, ax = plt.subplots(figsize=(3, 2.5), tight_layout=True) # Width, Height
+    n, bins, patches = plt.hist(_df1['IP_1_rnk_diff_abs'], 50, density=True,
+                                facecolor='tab:grey', alpha=1)
+    plt.xlim(0, 250)
+    filename = 'policy_abschange_hist'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+    
+    df_freq = frequency(dataframe=_df1, var_field='IP_1_rnk_diff_abs')
+    fig, ax = plt.subplots(figsize=(3, 2.5), tight_layout=True) # Width, Height
+    plt.plot(df_freq['Values'], df_freq['Percentiles'], 'tab:grey')
+    plt.ylim(0, 100)
+    plt.xlim(0, 250)
+    filename = 'policy_abschange_cfc'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+    
+    
 
 def view_rank_diff(folder, policy_df, show=False):
     _df0 = policy_df.query('IP_0_rnk > 0')
@@ -2346,10 +2382,10 @@ calib_folder = 'C:/bin/pardinho/produtos_v2/run_02a/ds0/search'
 glue_folder = 'C:/bin/pardinho/produtos_v2/run_02a/ds0/select'
 f_hydroparam =  'C:/bin/pardinho/produtos_v2/run_02a/ds0/search/MLM/mlm_parameters.txt'
 
-view_evolution_lspace(folder=folder, calibfolder=calib_folder, gluefolder=glue_folder, show=False)
-view_evolution_scatter(dir_glue=glue_folder, dir_calib=calib_folder, fparam=f_hydroparam, show=False)
-view_evolution_datasets(folder='C:/bin/pardinho/produtos_v2/run_02a', show=False)
-view_evolution_4(folder='C:/bin/pardinho/produtos_v2/run_02a', show=False)
+#view_evolution_lspace(folder=folder, calibfolder=calib_folder, gluefolder=glue_folder, show=False)
+#view_evolution_scatter(dir_glue=glue_folder, dir_calib=calib_folder, fparam=f_hydroparam, show=False)
+#view_evolution_datasets(folder='C:/bin/pardinho/produtos_v2/run_02a', show=False)
+#view_evolution_4(folder='C:/bin/pardinho/produtos_v2/run_02a', show=False)
 
 
 project_folder = 'C:/bin/pardinho/produtos_v2/inputs/pardinho'
@@ -2385,7 +2421,7 @@ for s in sets_lst:
                                )
     """
 
-
+view_rank_diff_hist()
 
 
 

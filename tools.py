@@ -1545,7 +1545,7 @@ def sdiag(fseries, filename='sim_diagnostics', folder='C:/bin', tui=False):
 
 def qualmap_analyst(fmap, fparams,
                     faoi='full',
-                    type='lulc',
+                    kind='lulc',
                     folder='C:/bin',
                     wkpl=False,
                     label='',
@@ -1556,14 +1556,14 @@ def qualmap_analyst(fmap, fparams,
     :param fmap: string file path to raster map .asc file
     :param fparams: string file path to .txt map parameter file
     :param faoi: string file path to aoi raster map .asc file OR default by pass code='full' for full extension
-    :param type: string code for type of map. Allowed types: 'lulc' and 'soils' . Default: 'lulc'
+    :param kind: string code for type of map. Allowed types: 'lulc' and 'soils' . Default: 'lulc'
     :param folder: string file path to output directory
     :param wkpl: boolean to set the folder param as an workplace
     :param label: string label for output file naming
     :return:
     """
     from geo import areas
-    from visuals import plot_lulc_view
+    from visuals import plot_lulc_analyst, plot_soils_analyst
     from backend import create_rundir
     if tui:
         from tui import status
@@ -1575,12 +1575,12 @@ def qualmap_analyst(fmap, fparams,
         folder = create_rundir(label=label + 'QMAP', wkplc=folder)
     #
     # type setup
-    if type == 'lulc':
+    if kind == 'lulc':
         str_fields = 'LULCName,ColorLULC,ConvertTo'
         idfield = 'IdLULC'
         namefield = 'LULCName'
         colorfield = 'ColorLULC'
-    elif type == 'soils':
+    elif kind == 'soils':
         str_fields = 'SoilName,ColorSoil'
         idfield = 'IdSoil'
         namefield = 'SoilName'
@@ -1610,13 +1610,14 @@ def qualmap_analyst(fmap, fparams,
     print(areas_df.to_string())
     #
     # Export areas
-    exp_file1 = '{}/areas_{}.txt'.format(folder, type)
+    exp_file1 = '{}/areas_{}.txt'.format(folder, kind)
     areas_df.to_csv(exp_file1, sep=';', index=False)
     #
     # Export pannel
-    if type == 'lulc':
-        plot_lulc_view(qmap, param_df, areas_df, aoi, meta, folder=folder)
-    # todo other plots
+    if kind == 'lulc':
+        plot_lulc_analyst(qmap, param_df, areas_df, aoi, meta, filename='lulc_analyst', folder=folder)
+    elif kind == 'soils':
+        plot_soils_analyst(qmap, param_df, areas_df, aoi, meta, filename='soils_analyst', folder=folder)
     return {'Folder': folder, 'File': exp_file1}
 
 
