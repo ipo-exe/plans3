@@ -1822,6 +1822,11 @@ def plot_lulc_analyst(lulc, lulcparam_df, areas_df, aoi, meta,
     """
     from geo import reclassify, mask
     from matplotlib.colors import ListedColormap
+
+    # sort dataframe
+    lulcparam_df2 = lulcparam_df.copy()
+    lulcparam_df.sort_values(by='IdLULC', inplace=True)
+
     colors = lulcparam_df['ColorLULC'].values
     names = lulcparam_df['LULCName'].values
     ids = lulcparam_df['IdLULC'].values
@@ -1902,6 +1907,7 @@ def plot_lulc_analyst(lulc, lulcparam_df, areas_df, aoi, meta,
     plt.axis('off')
     #
     #
+    lulcparam_df = lulcparam_df2.copy()
     ax = fig.add_subplot(gs[:3, 5:6])
     labels = lulcparam_df['LULCName']
     y_pos = np.arange(len(labels))
@@ -2016,6 +2022,12 @@ def plot_soils_analyst(soils, soilsparam_df, areas_df, aoi, meta,
     """
     from geo import reclassify, mask
     from matplotlib.colors import ListedColormap
+
+    # sort dataframe
+    soilsparam_df2 = soilsparam_df.copy()
+    soilsparam_df.sort_values(by='IdSoil', inplace=True)
+
+
     colors = soilsparam_df['ColorSoil'].values
     names = soilsparam_df['SoilName'].values
     ids = soilsparam_df['IdSoil'].values
@@ -2070,7 +2082,7 @@ def plot_soils_analyst(soils, soilsparam_df, areas_df, aoi, meta,
     #
     #
     ax = fig.add_subplot(gs[:3, 5:6])
-    labels = soilsparam_df['SoilName']
+    labels = soilsparam_df2['SoilName']
     y_pos = np.arange(len(labels))
     bars = areas_df['Area_%'].values
     ax.barh(y_pos, bars, align='center', color=colors)
@@ -2082,7 +2094,7 @@ def plot_soils_analyst(soils, soilsparam_df, areas_df, aoi, meta,
     #
     ax = fig.add_subplot(gs[:3, 6:7])
     y_pos = np.arange(len(labels))
-    bars = soilsparam_df['f_To'].values
+    bars = soilsparam_df2['f_To'].values
     ax.barh(y_pos, bars, align='center', color='tab:grey')
     ax.set_yticks(y_pos)
     ax.set_yticklabels([])
@@ -2092,7 +2104,7 @@ def plot_soils_analyst(soils, soilsparam_df, areas_df, aoi, meta,
     #
     ax = fig.add_subplot(gs[:3, 7:8])
     y_pos = np.arange(len(labels))
-    bars = soilsparam_df['f_Ksat'].values
+    bars = soilsparam_df2['f_Ksat'].values
     ax.barh(y_pos, bars, align='center', color='tab:grey')
     ax.set_yticks(y_pos)
     ax.set_yticklabels([])
@@ -2102,7 +2114,7 @@ def plot_soils_analyst(soils, soilsparam_df, areas_df, aoi, meta,
     #
     ax = fig.add_subplot(gs[:3, 8:9])
     y_pos = np.arange(len(labels))
-    bars = soilsparam_df['Porosity'].values
+    bars = soilsparam_df2['Porosity'].values
     ax.barh(y_pos, bars, align='center', color='tab:grey')
     ax.set_yticks(y_pos)
     ax.set_yticklabels([])
@@ -2112,7 +2124,7 @@ def plot_soils_analyst(soils, soilsparam_df, areas_df, aoi, meta,
     #
     ax = fig.add_subplot(gs[:3, 9:10])
     y_pos = np.arange(len(labels))
-    bars = soilsparam_df['K_USLE'].values
+    bars = soilsparam_df2['K_USLE'].values
     ax.barh(y_pos, bars, align='center', color='tab:grey')
     ax.set_yticks(y_pos)
     ax.set_yticklabels([])
