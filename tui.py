@@ -571,7 +571,7 @@ def main(root='default', importing=True):
                                         ok()
                                     elif lcl_lcl_opt == 'calib_etpat_series.txt':
                                         print('\n' + lng[31] + '...')
-                                        normalize = False  # todo dialog menu
+                                        normalize = False  # todo dialog menu for normalize
                                         derivedfile = tools.import_etpat_series(filesp[0],
                                                                                 rasterfolder=projectdirs['ETpat'],
                                                                                 folder=projectdirs['Observed'],
@@ -768,7 +768,6 @@ def main(root='default', importing=True):
                             # get settings
                             settings = settings_simulation(lng[6])
                             slicedates = slice_series(fseries=fseries)
-                            #
                             # run slh
                             out_dct = tools.slh(fseries=fseries,
                                                 fhydroparam=fhydroparam,
@@ -784,8 +783,10 @@ def main(root='default', importing=True):
                                                 wkpl=True,
                                                 tui=True,
                                                 qobs=True,
+                                                mapvar='Qv-ET-Tpgw',
+                                                mapdates='2011-09-01 & 2011-10-01 & 2011-11-01 & 2011-12-01 & 2012-01-01 & 2012-02-01 & 2012-03-01 & 2012-04-01 & 2012-05-01',
                                                 mapback=settings['Mapback'],
-                                                mapraster=settings['Mapraster'],
+                                                mapraster=True, #settings['Mapraster'],
                                                 slicedates=slicedates,
                                                 label='CALIB')
                             #
@@ -826,7 +827,7 @@ def main(root='default', importing=True):
                             settings = settings_simulation(lng[6])
                             slicedates = slice_series(fseries=fseries)
                             #
-                            #
+                            #mapdates = '2011-10-01 & 2011-11-01 & 2011-12-01 & 2012-01-01 & 2012-02-01 & 2012-03-01 & 2012-04-01 & 2012-05-01'
                             #
                             # run slh
                             out_dct = tools.slh(fseries=fseries,
@@ -835,8 +836,8 @@ def main(root='default', importing=True):
                                                 fhistograms=fhistograms,
                                                 fbasinhists=fbasinhists,
                                                 fbasin=fbasin,
-                                                ftwi=ftwi,
-                                                fshru=fshru,
+                                                ftwi=ftwi_window,
+                                                fshru=fshru_window,
                                                 fcanopy=fcanopy,
                                                 folder=projectdirs['Simulation'],
                                                 integrate=settings['Integrate'],
@@ -844,6 +845,7 @@ def main(root='default', importing=True):
                                                 tui=True,
                                                 mapback=settings['Mapback'],
                                                 mapraster=settings['Mapraster'],
+                                                mapvar='RSE-D-Qv-Tpgw-Tpun-Unz-VSA-R-RIE',
                                                 slicedates=slicedates,
                                                 label='AOI',
                                                 aoi=True)

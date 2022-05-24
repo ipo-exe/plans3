@@ -228,7 +228,7 @@ def export_local_pannels(ftwi, fshru,
                          frametype='all',
                          filter_date=False,
                          date_init='2011-01-01',
-                         date_end = '2011-04-01',
+                         date_end = '2014-04-01',
                          tui=False):
     """
 
@@ -2262,7 +2262,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
     :param mapraster: boolean to map back raster maps
     :param mapvar: string of variables to map. Pass concatenated by '-'. Ex: 'ET-TF-Inf'.
     Options: 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA'
-    :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-21-01 & 21-22-01'
+    :param mapdates: string of dates to map. Pass concatenated by ' & '. Ex: '2011-12-01 & 2011-12-02'
     :param integrate: boolean to include variable integration over the simulation period
     :param slicedates: string code to slice series. 'all' or 'YYYY-MM-DD to YYYY-MM-DD'
     :param qobs: boolean to inclue Qobs in visuals
@@ -2627,7 +2627,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                     ranges = [np.min(mapped[var]), np.max(mapped[var])] # set global ranges
                     # plot raster view
                     plot_map_view(mp, meta, ranges, mapid, mapttl='{} | {}'.format(var, stamp[t]),
-                                  folder=lcl_folder, filename=lcl_filename, show=False)
+                                  folder=lcl_folder, filename=lcl_filename, show=False, dpi=400)
                 #
                 # export map list file to main folder:
                 lcl_exp_df = pd.DataFrame({'Date': stamp, 'File': lcl_files})

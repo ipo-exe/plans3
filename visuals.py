@@ -1408,6 +1408,7 @@ def plot_map_view(map, meta, ranges,
                   show=False,
                   integration=False,
                   png=True,
+                  dpi=300,
                   nodata=-1):
     """
 
@@ -1489,7 +1490,7 @@ def plot_map_view(map, meta, ranges,
             filepath = filepath + '.png'
         else:
             filepath = filepath + '.jpg'
-        plt.savefig(filepath)
+        plt.savefig(filepath, dpi=dpi)
         plt.close(fig)
         return filepath
 

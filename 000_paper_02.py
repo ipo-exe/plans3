@@ -1525,6 +1525,48 @@ def view_evolution_datasets(folder, show=True):
         plt.close(fig)
 
 
+def view_datasets_parameters(folder, show=False):
+    from geo import fuzzy_transition
+
+    fig = plt.figure(figsize=(7, 4), )  # Width, Height
+    sets_lst = ['ds0', 'dsA', 'dsB']
+    colors_dct = {'ds0': 'orange', 'dsA': 'silver', 'dsB': 'peru'}
+    df_dct = dict()
+    for s in sets_lst:
+        full_f = '{}/{}/select/selection.txt'.format(folder, s)
+        df_selection = pd.read_csv(full_f, sep=';')
+        params = df_selection.columns[6:16]
+        print(params)
+        df_dct[s] = df_selection[params]
+        print(df_dct[s].head().to_string())
+    params_dct = dict()
+    for p in params:
+        lst_aux = list()
+        for s in sets_lst:
+            lst_aux.append(df_dct[s][p].values)
+        params_dct[p] = {'Min': np.min(np.array(lst_aux)), 'Max': np.max(np.array(lst_aux))}
+    print(params_dct)
+    for s in sets_lst:
+        for p in params:
+            df_dct[s][p] = fuzzy_transition(array=df_dct[s][p].values,
+                                            a=params_dct[p]['Min'],
+                                            b=params_dct[p]['Max'],
+                                            type='linear')
+        print(df_dct[s].head().to_string())
+        for i in range(len(df_dct[s])):
+            plt.plot(params, df_dct[s].values[i], c=colors_dct[s], alpha=0.1)
+    filename = 'signature'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = folder + '/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
+
+
 def view_evolution_4(folder, show=True):
     sets_lst = ['ds0', 'dsA', 'dsB']
     colors_dct = {'ds0': 'orange', 'dsA': 'silver', 'dsB': 'peru'}
@@ -2110,7 +2152,7 @@ def view_et_pannel(folder, calibfolder, show=False):
     #
     v_max = 2
     fig = plt.figure(figsize=(16, 5))  # Width, Height
-    gs = mpl.gridspec.GridSpec(1, 4, wspace=0.1, hspace=0.1)
+    gs = mpl.gridspec.GridSpec(1, 4, wspace=0.1, hspace=0.1, left=0.05, bottom=0.1, top=0.9, right=0.95)
     plt.subplot(gs[0, 0])
     im = plt.imshow(et_sebal, _cmaps['flow_v'], vmin=0, vmax=v_max)
     plt.colorbar(im, shrink=0.4)
@@ -2311,6 +2353,70 @@ def view_pre_pos(folder, pre_folder, pos_folder, show=True):
         plt.close(fig)
 
 
+def view_dry_season():
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+
+    df_models = pd.read_csv(r"C:\bin\pardinho\produtos_v2\run_02a\ds0\select\selection.txt", sep=';')
+    df_models = df_models.sort_values(by='Qb_R', ascending=False)
+    print(df_models.head().to_string())
+
+
+    fseries_obs = r"C:\000_myFiles\myDrive\myProjects\104_paper_castelhano\inputs\data\obs_data_precsets.txt"
+    df_obs = pd.read_csv(fseries_obs, sep=';', parse_dates=['Date'])
+    df_obs = df_obs.query('Date >= "2011-09-01" and Date <= "2012-04-01"')
+    
+    fseries = r"C:\000_myFiles\myDrive\myProjects\104_paper_castelhano\inputs\data\sim_series_dry.txt"
+    df = pd.read_csv(fseries, sep=';', parse_dates=['Date'])
+    df = df.query('Date >= "2011-09-01" and Date <= "2012-05-01"')
+    fig = plt.figure(figsize=(14, 7))  # Width, Height
+    gs = mpl.gridspec.GridSpec(5, 1, wspace=0.1, hspace=0.5, left=0.08, bottom=0.05, top=0.95, right=0.92)
+    #
+    plt.subplot(gs[0, 0])
+    plt.plot(df['Date'], df['Prec'], 'tab:grey')
+    plt.xlim(df['Date'].values[0], df['Date'].values[-1])
+    plt.ylabel('mm')
+    #
+    plt.subplot(gs[1, 0])
+    plt.plot(df['Date'], df['Qb'], 'navy', zorder=3)
+    #plt.plot(df['Date'], df['Q'], 'tab:blue', zorder=2)
+    plt.plot(df_obs['Date'], df_obs['Q_StaCruz'], '.', c='silver', zorder=1)
+    plt.xlim(df['Date'].values[0], df['Date'].values[-1])
+    plt.ylim(0.001, 100)
+    plt.ylabel('mm')
+    plt.yscale('log')
+    #
+    plt.subplot(gs[2, 0])
+    plt.plot(df['Date'], df['D'], 'k')
+    plt.xlim(df['Date'].values[0], df['Date'].values[-1])
+    plt.ylabel('mm')
+    plt.ylim(0, 200)
+    #
+    plt.subplot(gs[3, 0])
+    plt.plot(df['Date'], df['Qv'], 'tab:blue')
+    plt.xlim(df['Date'].values[0], df['Date'].values[-1])
+    plt.ylim(0, 4)
+    plt.ylabel('mm')
+    #
+    plt.subplot(gs[4, 0])
+    plt.plot(df['Date'], df['PET'], 'tab:grey')
+    plt.plot(df['Date'], df['Tpgw'], 'darkgreen')
+    plt.plot(df['Date'], df['Tpun'], 'yellowgreen')
+    plt.xlim(df['Date'].values[0], df['Date'].values[-1])
+    plt.ylabel('mm')
+
+    show = False
+    #
+    filename = 'dry_season'
+    if show:
+        plt.show()
+        plt.close(fig)
+    else:
+        filepath = 'C:/bin/pardinho/produtos_v2/run_02a/' + filename + '.png'
+        plt.savefig(filepath, dpi=400)
+        plt.close(fig)
+
+
 def main(folder, infolder, projectfolder):
     from backend import create_rundir
     import os
@@ -2385,8 +2491,9 @@ f_hydroparam =  'C:/bin/pardinho/produtos_v2/run_02a/ds0/search/MLM/mlm_paramete
 #view_evolution_lspace(folder=folder, calibfolder=calib_folder, gluefolder=glue_folder, show=False)
 #view_evolution_scatter(dir_glue=glue_folder, dir_calib=calib_folder, fparam=f_hydroparam, show=False)
 #view_evolution_datasets(folder='C:/bin/pardinho/produtos_v2/run_02a', show=False)
+#view_datasets_parameters(folder='C:/bin/pardinho/produtos_v2/run_02a')
 #view_evolution_4(folder='C:/bin/pardinho/produtos_v2/run_02a', show=False)
-
+view_dry_season()
 
 project_folder = 'C:/bin/pardinho/produtos_v2/inputs/pardinho'
 fseries = 'C:/bin/pardinho/produtos_v2/inputs/pardinho/datasets/observed/aoi_series.txt'
@@ -2420,8 +2527,6 @@ for s in sets_lst:
                                mapvars='R-RIE',
                                )
     """
-
-view_rank_diff_hist()
 
 
 
