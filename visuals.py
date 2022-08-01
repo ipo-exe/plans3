@@ -986,7 +986,7 @@ def pannel_global(series_df,
     # Prec
     ax = fig.add_subplot(gs[0, 0:col1])
     plt.grid(grid)
-    plt.plot(series_df['Date'], series_df['Prec'], label='Precipitation')
+    plt.plot(series_df['Date'], series_df['Prec'], 'tab:grey', label='Precipitation')
     plt.ylabel('mm/d (Prec)')
     plt.ylim(0, max_prec)
     plt.legend(loc='upper left', ncol=1, framealpha=1, fancybox=False)
@@ -1004,7 +1004,7 @@ def pannel_global(series_df,
     # PET
     ax = fig.add_subplot(gs[0, col2:])
     plt.grid(grid)
-    plt.plot(series_df['Date'], series_df['PET'], 'tab:grey', label='Pot. ET')
+    plt.plot(series_df['Date'], series_df['PET'], 'tab:grey', label='PET')
     ncols = 2
     if etobs:
         ncols = ncols + 1

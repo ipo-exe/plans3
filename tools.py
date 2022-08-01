@@ -669,6 +669,7 @@ def map_a_usle_m(fmap_r, fmap_k_usle, fmap_l_rusle, fmap_s_rusle, fmap_c_usle, f
                  cum_cusle_factor=1.5,
                  folder='C:/bin',
                  filename='a_usle_m',
+                 factor_r=1.0,
                  view=True):
     """
     Annual Soil Loss of USLE-M model (Kinnell and Risse, 1998)
@@ -696,6 +697,7 @@ def map_a_usle_m(fmap_r, fmap_k_usle, fmap_l_rusle, fmap_s_rusle, fmap_c_usle, f
     meta, _c = inp.asc_raster(fmap_c_usle, dtype='float32')
     meta, _p = inp.asc_raster(fmap_p_usle, dtype='float32')
     #
+    _r = _r * factor_r
     # compute a
     _a = geo.usle_m_a(q=_r,
                       prec=annual_p,
@@ -3525,6 +3527,7 @@ def glue(fseries, fmodels, fhydroparam, fshruparam, fhistograms, fbasinhists, fb
 
 def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
          aero=6000,
+         annualize_r=False,
          label='',
          wkpl=False,
          tui=False,
@@ -3564,6 +3567,7 @@ def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
     if tui:
         status('computing USLE K map')
     fmap_k = map_k_usle(fsoils=fsoils, fsoilsparam=fsoilsparam, folder=folder)
+    fmap_k = "C:/bin/gramado/_kusle.asc"
     if tui:
         status('computing RUSLE L map')
     fmap_l = map_l_rusle(fslope=fslope, folder=folder)
@@ -3586,6 +3590,10 @@ def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
     # compute annual soil loss
     if tui:
         status('computing USLE-M Annual Soil Loss')
+    factor_r = 1.0
+    if annualize_r:
+        factor_r = 1 / (len(series_df) / 365)
+    print(factor_r)
     fmap_asl = map_a_usle_m(fmap_r=fmap_r,
                             fmap_k_usle=fmap_k,
                             fmap_l_rusle=fmap_l,
@@ -3593,6 +3601,7 @@ def asla(fmap_r, fslope, flulc, fsoils, flulcparam, fsoilsparam, fseries,
                             fmap_c_usle=fmap_c,
                             fmap_p_usle=fmap_p,
                             erosivity=aero,
+                            factor_r=factor_r,
                             annual_p=annual_prec,
                             cum_cusle_factor=1.5,
                             folder=folder,

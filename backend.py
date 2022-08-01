@@ -282,8 +282,10 @@ def get_all_lclvars():
 def get_all_vars():
     return 'Prec-Temp-IRA-IRI-PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA-Q-Qs-Qb'
 
+
 def get_all_simvars():
     return 'PET-D-Cpy-TF-Sfs-R-RSE-RIE-RC-Inf-Unz-Qv-Evc-Evs-Tpun-Tpgw-ET-VSA-Q-Qs-Qb'
+
 
 def get_prj_dirs_paths(p0='name', wkplc='C:'):
     """
@@ -295,7 +297,7 @@ def get_prj_dirs_paths(p0='name', wkplc='C:'):
     dirs = get_prj_dirs()
     dir0 = wkplc + '/' + p0
     dir01 = dir0 + '/' + dirs['Datasets']
-    dir02 = 'C:/bin/pardinho' #dir0 + '/' + dirs['Runbin']
+    dir02 = 'C:/bin/gramado' #dir0 + '/' + dirs['Runbin']
     dir011 = dir01 + '/' + dirs['Observed']
     dir012 = dir01 + '/' + dirs['Projected']
     dir021 = dir02 + '/' + dirs['Simulation']

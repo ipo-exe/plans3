@@ -814,6 +814,7 @@ def main(root='default', importing=True):
                             fseries = folder + '/' + files_input[0]
                             fhydroparam = folder + '/' + files_input[1]
                             fshruparam = folder + '/' + files_input[2]
+
                             fhistograms = folder + '/' + files_input[3]
                             fbasinhists = folder + '/' + files_input[4]
                             fbasin = folder + '/' + files_input[5]
@@ -830,14 +831,16 @@ def main(root='default', importing=True):
                             #mapdates = '2011-10-01 & 2011-11-01 & 2011-12-01 & 2012-01-01 & 2012-02-01 & 2012-03-01 & 2012-04-01 & 2012-05-01'
                             #
                             # run slh
+                            print(fshruparam)
+
                             out_dct = tools.slh(fseries=fseries,
                                                 fhydroparam=fhydroparam,
                                                 fshruparam=fshruparam,
                                                 fhistograms=fhistograms,
                                                 fbasinhists=fbasinhists,
                                                 fbasin=fbasin,
-                                                ftwi=ftwi_window,
-                                                fshru=fshru_window,
+                                                ftwi=ftwi, #ftwi_window, # change here
+                                                fshru=fshru, #fshru_window, # change here
                                                 fcanopy=fcanopy,
                                                 folder=projectdirs['Simulation'],
                                                 integrate=settings['Integrate'],
@@ -845,7 +848,7 @@ def main(root='default', importing=True):
                                                 tui=True,
                                                 mapback=settings['Mapback'],
                                                 mapraster=settings['Mapraster'],
-                                                mapvar='RSE-D-Qv-Tpgw-Tpun-Unz-VSA-R-RIE',
+                                                mapvar='all',
                                                 slicedates=slicedates,
                                                 label='AOI',
                                                 aoi=True)
