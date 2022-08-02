@@ -831,19 +831,18 @@ def main(root='default', importing=True):
                             #mapdates = '2011-10-01 & 2011-11-01 & 2011-12-01 & 2012-01-01 & 2012-02-01 & 2012-03-01 & 2012-04-01 & 2012-05-01'
                             #
                             # run slh
-                            print(fshruparam)
-
                             out_dct = tools.slh(fseries=fseries,
                                                 fhydroparam=fhydroparam,
                                                 fshruparam=fshruparam,
                                                 fhistograms=fhistograms,
                                                 fbasinhists=fbasinhists,
                                                 fbasin=fbasin,
-                                                ftwi=ftwi, #ftwi_window, # change here
-                                                fshru=fshru, #fshru_window, # change here
+                                                ftwi=ftwi,#_window, # change here
+                                                fshru=fshru,#_window, # change here
                                                 fcanopy=fcanopy,
                                                 folder=projectdirs['Simulation'],
                                                 integrate=settings['Integrate'],
+                                                annualize=True,
                                                 wkpl=True,
                                                 tui=True,
                                                 mapback=settings['Mapback'],

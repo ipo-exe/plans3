@@ -2237,6 +2237,7 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
         mapvar='all',
         mapdates='all',
         integrate=False,
+        annualize=False,
         integrate_only=False,
         integrate_skipraster=False,
         slicedates='all',
@@ -2544,6 +2545,10 @@ def slh(fseries, fhydroparam, fshruparam, fhistograms, fbasinhists, fbasin, ftwi
                     if var == 'VSA':
                         integration = integration * 100
                     lcl_label = 'avg'
+                else:
+                    if annualize:
+                        integration = integration / (len(series_df) / 365)
+                        lcl_label = lcl_label + ' annual'
                 # export integral zmap
                 lcl_filename = 'zmap_integral_{}'.format(var)
                 lcl_file = zmap(zmap=integration,
