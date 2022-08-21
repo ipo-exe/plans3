@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6975564.svg)](https://doi.org/10.5281/zenodo.6975564)
+
 ![logo](https://github.com/ipo-exe/plans3/blob/main/docs/figs/logo.png "Logo")
 # `plans3` - **Planning Nature-based Solutions**
 
