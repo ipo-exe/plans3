@@ -837,11 +837,12 @@ def main(root='default', importing=True):
                                                 fhistograms=fhistograms,
                                                 fbasinhists=fbasinhists,
                                                 fbasin=fbasin,
-                                                ftwi=ftwi,#_window, # change here
-                                                fshru=fshru,#_window, # change here
+                                                ftwi=ftwi, #ftwi_window, # change here
+                                                fshru=fshru, #fshru_window, # change here
                                                 fcanopy=fcanopy,
                                                 folder=projectdirs['Simulation'],
                                                 integrate=settings['Integrate'],
+                                                integrate_only=True,
                                                 annualize=True,
                                                 wkpl=True,
                                                 tui=True,
