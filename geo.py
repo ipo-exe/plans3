@@ -81,9 +81,9 @@ def xmap(map1, map2, map1ids, map2ids, map1f=100, map2f=1):
     return xmap
 
 
-def downstream_coordinates(dir, x, y, s_convention='ldd'):
+def downstream_coordinates(n_dir, i, j, s_convention='ldd'):
     """
-    Compute x and y donwstream cell coordinates based on cell flow direction
+    Compute i and j donwstream cell coordinates based on cell flow direction
 
     d8 - Direction convention:
 
@@ -97,48 +97,51 @@ def downstream_coordinates(dir, x, y, s_convention='ldd'):
     4   5   6
     1   2   3
 
-    :param dir: int flow direction code
-    :param x: int x (row) array index
-    :param y: int y (column) array index
-    :return: x and y downstream cell array indexes
+    di is VERTICAL, DESCENDING direction
+    dj is HORIZONTAL, ASCENDING direction
+
+    :param n_dir: int flow direction code
+    :param i: int i (row) array index
+    :param j: int j (column) array index
+    :param s_convention: string of flow dir covention. Options: 'ldd' and 'd8'
+    :return: dict of downstream i, j and distance factor  
     """
-    if s_convention == 'ldd':
-        dct_dir = {
-            '1': {'dx': 1, 'dy': -1},
-            '2': {'dx': 1, 'dy':  0},
-            '3': {'dx': 1, 'dy':  1},
-            '4': {'dx': 0, 'dy': -1},
-            '5': {'dx': 0, 'dy':  0},
-            '6': {'dx': 0, 'dy':  1},
-            '7': {'dx':-1, 'dy': -1},
-            '8': {'dx':-1, 'dy':  0},
-            '9': {'dx':-1, 'dy':  1}
+    # directions dictionaries
+    dct_dirs = {
+        'ldd': {
+            '1': {'di': 1, 'dj': -1},
+            '2': {'di': 1, 'dj':  0},
+            '3': {'di': 1, 'dj':  1},
+            '4': {'di': 0, 'dj': -1},
+            '5': {'di': 0, 'dj':  0},
+            '6': {'di': 0, 'dj':  1},
+            '7': {'di':-1, 'dj': -1},
+            '8': {'di':-1, 'dj':  0},
+            '9': {'di':-1, 'dj':  1}
+        },
+        'd8': {
+            '0': {'di': 0, 'dj': 0},
+            '1': {'di': 0, 'dj': 1},
+            '2': {'di':-1, 'dj': 1},
+            '3': {'di':-1, 'dj': 0},
+            '4': {'di':-1, 'dj':-1},
+            '5': {'di': 0, 'dj':-1},
+            '6': {'di': 1, 'dj':-1},
+            '7': {'di': 1, 'dj': 0},
+            '8': {'di': 1, 'dj': 1}            
         }
-    elif s_convention == 'd8':
-        dct_dir = {
-            '1': {'dx': 0, 'dy': 1},
-            '2': {'dx':-1, 'dy': 1},
-            '3': {'dx':-1, 'dy': 0},
-            '4': {'dx':-1, 'dy':-1},
-            '5': {'dx': 0, 'dy':-1},
-            '6': {'dx': 1, 'dy':-1},
-            '7': {'dx': 1, 'dy': 0},
-            '8': {'dx': 1, 'dy': 1},
-            '9': {'dx': 0, 'dy': 0}
-        }
-    else:
-        dct_dir = {
-            '1': {'dx': 0, 'dy': 1},
-            '2': {'dx':-1, 'dy': 1},
-            '3': {'dx':-1, 'dy': 0},
-            '4': {'dx':-1, 'dy':-1},
-            '5': {'dx': 0, 'dy':-1},
-            '6': {'dx': 1, 'dy':-1},
-            '7': {'dx': 1, 'dy': 0},
-            '8': {'dx': 1, 'dy': 1},
-            '9': {'dx': 0, 'dy': 0}
-        }
-    return x + dct_dir[str(dir)]['dx'], y + dct_dir[str(dir)]['dy'] 
+    }
+    # set dir dict
+    dct_dir = dct_dirs[s_convention]
+    di = dct_dir[str(dir)]['di']
+    dj = dct_dir[str(dir)]['dj']
+    dist = np.sqrt(np.power(di, 2) + np.power(dj, 2))
+    dct_output = {
+        'i': i + di,
+        'j': j + dj,
+        'distance': dist
+    }
+    return dct_output
 
 
 def extract_grid_centroids(array, meta, byvalue=False, value=1):
@@ -356,7 +359,9 @@ def flow_acc(flowdir, status=False):
                     direction = flowdir[x][y]
                     #
                     # move to downstream cell -- get next x and y
-                    x, y = downstream_coordinates(dir=direction, x=x, y=y)
+                    dct_out = downstream_coordinates(s_dir=direction, i=x, j=y, s_convention='d8')
+                    x = dct_out['i']
+                    y = dct_out['j']
                     #
                     # update flow accumulation array
                     downstream_flow_accum = flow_accum[x][y]
