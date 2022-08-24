@@ -37,9 +37,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-plans - planning nature-based solutions
-Version: 3.0
-
 '''
 import numpy as np
 
@@ -84,49 +81,64 @@ def xmap(map1, map2, map1ids, map2ids, map1f=100, map2f=1):
     return xmap
 
 
-def downstream_coordinates(dir, x, y):
+def downstream_coordinates(dir, x, y, s_convention='ldd'):
     """
     Compute x and y donwstream cell coordinates based on cell flow direction
 
-    D8 - Direction convetion:
+    d8 - Direction convention:
 
     4   3   2
     5   0   1
     6   7   8
+
+    ldd - Direction convention:
+
+    7   8   9 
+    4   5   6
+    1   2   3
 
     :param dir: int flow direction code
     :param x: int x (row) array index
     :param y: int y (column) array index
     :return: x and y downstream cell array indexes
     """
-    if dir == 1:
-        x = x
-        y = y + 1
-    elif dir == 2:
-        x = x - 1
-        y = y + 1
-    elif dir == 3:
-        x = x - 1
-        y = y
-    elif dir == 4:
-        x = x - 1
-        y = y - 1
-    elif dir == 5:
-        x = x
-        y = y - 1
-    elif dir == 6:
-        x = x + 1
-        y = y - 1
-    elif dir == 7:
-        x = x + 1
-        y = y
-    elif dir == 8:
-        x = x + 1
-        y = y + 1
-    elif dir == 0:
-        x = x
-        y = y
-    return x, y
+    if s_convention == 'ldd':
+        dct_dir = {
+            '1': {'dx': 1, 'dy': -1},
+            '2': {'dx': 1, 'dy':  0},
+            '3': {'dx': 1, 'dy':  1},
+            '4': {'dx': 0, 'dy': -1},
+            '5': {'dx': 0, 'dy':  0},
+            '6': {'dx': 0, 'dy':  1},
+            '7': {'dx':-1, 'dy': -1},
+            '8': {'dx':-1, 'dy':  0},
+            '9': {'dx':-1, 'dy':  1}
+        }
+    elif s_convention == 'd8':
+        dct_dir = {
+            '1': {'dx': 0, 'dy': 1},
+            '2': {'dx':-1, 'dy': 1},
+            '3': {'dx':-1, 'dy': 0},
+            '4': {'dx':-1, 'dy':-1},
+            '5': {'dx': 0, 'dy':-1},
+            '6': {'dx': 1, 'dy':-1},
+            '7': {'dx': 1, 'dy': 0},
+            '8': {'dx': 1, 'dy': 1},
+            '9': {'dx': 0, 'dy': 0}
+        }
+    else:
+        dct_dir = {
+            '1': {'dx': 0, 'dy': 1},
+            '2': {'dx':-1, 'dy': 1},
+            '3': {'dx':-1, 'dy': 0},
+            '4': {'dx':-1, 'dy':-1},
+            '5': {'dx': 0, 'dy':-1},
+            '6': {'dx': 1, 'dy':-1},
+            '7': {'dx': 1, 'dy': 0},
+            '8': {'dx': 1, 'dy': 1},
+            '9': {'dx': 0, 'dy': 0}
+        }
+    return x + dct_dir[str(dir)]['dx'], y + dct_dir[str(dir)]['dy'] 
 
 
 def extract_grid_centroids(array, meta, byvalue=False, value=1):
