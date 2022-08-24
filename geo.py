@@ -1221,6 +1221,80 @@ def ndwi_w(green, nir):
     return (green - nir) / (green + nir)
 
 
+def outlet_distance(grd_basin, grd_flowacc, grd_flowdir, n_res=30, s_convention='ldd', b_tui=True):
+    """
+    Compute the outlet distance raster of a given basin
+
+    Note: distance is set to 0 outside the basin area
+
+    :param grd_basin: 2d numpy array of basin (pseudo-boolean) 
+    :param grd_flowacc: 2d numpy array of flow accumulation 
+    :param grd_flowdir: 2d numpy array of flow direction 
+    :param s_convention: string of flow dir covention. Options: 'ldd' and 'd8'
+    :param b_tui: boolean for tui display
+    :return: 2d numpy array distance 
+    """
+    # compute total number of cells:
+    n_total = np.sum(grd_basin)
+    # compute the flowacc max value:
+    n_flowmax = np.max(grd_basin * grd_flowacc)
+    # get diagonal distance:
+    n_diag = np.sqrt(np.power(n_res, 2) + np.power(n_res, 2))
+    # deploy distance raster
+    grd_distance = np.zeros(shape=np.shape(grd_basin), dtype='uint32')
+    # set loop parameters
+    n_rows = np.shape(grd_basin)[0]
+    n_cols = np.shape(grd_basin)[1]
+    n_counter = 0
+    # main loop
+    for i in range(n_rows):
+        for j in range(n_cols):
+            # get local cell in basin
+            lcl_cell_basin = grd_basin[i][j]
+            # skip criteria
+            if lcl_cell_basin == 0:
+                pass
+            else:
+                n_counter = n_counter + 1
+                # print status
+                if b_tui:
+                    print('Status: {:.3f} %'.format(100 * n_counter / n_total))
+                # initiate cell loop:
+                i_current = i
+                j_current = j
+                # get local flow dir
+                lcl_flowdir = grd_flowdir[i_current][j_current]
+                # get flowacc
+                lcl_flowacc = grd_flowacc[i_current][j_current]
+                lcl_counter = 0
+                while True:
+                    # update position
+                    dct_out = downstream_coordinates(
+                        n_dir=lcl_flowdir, 
+                        i=i_current,
+                        j=j_current,
+                        s_convention=s_convention)
+                    #print(dct_out)
+                    i_current = dct_out['i']
+                    j_current = dct_out['j']
+                    n_dist = dct_out['distance']
+                    # update flowdir
+                    lcl_flowdir = grd_flowdir[i_current][j_current]
+                    # get flowacc
+                    lcl_flowacc = grd_flowacc[i_current][j_current]
+                    # accumulate distance
+                    lcl_counter = lcl_counter + (n_res * n_dist)
+                    # local loop halt criteria
+                    if lcl_flowacc > n_flowmax:
+                        break
+                # set to distance raster:
+                grd_distance[i][j] = lcl_counter
+            # main loop halt criterion
+            if n_counter > n_total:
+                break
+    return grd_distance
+  
+  
 def reclassify(array, upvalues, classes):
     """
     utility function -
