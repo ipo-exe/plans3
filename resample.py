@@ -1,33 +1,41 @@
 '''
-***** UNIVERSIDADE FEDERAL DO RIO GRANDE DO SUL *****
-********** GESPLA IPH/UFGRS PYTHON LIBRARY **********
+PLANS - Planning Nature-based Solutions
 
-Website: https://www.ufrgs.br/warp/
-Repository: https://github.com/gespla-iph-ufrgs/gespla
+Resampling routines.
 
-This file is under LICENSE: GNU General Public License v3.0
+Copyright (C) 2022 Iporã Brito Possantti
+
+************ GNU GENERAL PUBLIC LICENSE ************
+
+https://www.gnu.org/licenses/gpl-3.0.en.html
+
 Permissions:
-    Commercial use
-    Modification
-    Distribution
-    Patent use
-    Private use
-Limitations:
-    Liability
-    Warranty
+ - Commercial use
+ - Distribution
+ - Modification
+ - Patent use
+ - Private use
 Conditions:
-    License and copyright notice
-    State changes
-    Disclose source
-    Same license
+ - Disclose source
+ - License and copyright notice
+ - Same license
+ - State changes
+Limitations:
+ - Liability
+ - Warranty
 
-Module description:
--- collection of model functions and convenience functions for resample time scale
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-Authors:
-Ipora Possantti: https://github.com/ipo-exe
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-First commit: 20 of October of 2020
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import pandas as pd
