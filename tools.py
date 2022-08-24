@@ -1,36 +1,41 @@
 ''' 
-UFRGS - Universidade Federal do Rio Grande do Sul
-IPH - Instituto de Pesquisas Hidráulicas
-WARP - Research Group in Water Resources Management and Planning
-Porto Alegre, Rio Grande do Sul, Brazil
+PLANS - Planning Nature-based Solutions
 
-plans - planning nature-based solutions
-Version: 3.0
+User tools.
 
-This software is under the GNU GPL3.0 license
+Copyright (C) 2022 Iporã Brito Possantti
 
-Source code repository: https://github.com/ipo-exe/plans3/
-Authors: Ipora Possantti: https://github.com/ipo-exe
+************ GNU GENERAL PUBLIC LICENSE ************
 
-This file is under LICENSE: GNU General Public License v3.0
+https://www.gnu.org/licenses/gpl-3.0.en.html
+
 Permissions:
-    Commercial use
-    Modification
-    Distribution
-    Patent use
-    Private use 
-Limitations:
-    Liability
-    Warranty 
+ - Commercial use
+ - Distribution
+ - Modification
+ - Patent use
+ - Private use
 Conditions:
-    License and copyright notice
-    State changes
-    Disclose source
-    Same license 
+ - Disclose source
+ - License and copyright notice
+ - Same license
+ - State changes
+Limitations:
+ - Liability
+ - Warranty
 
-Module description:
-This module stores all frontend functions of plans3. 
-Input parameters are all strings and booleans.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import numpy as np
