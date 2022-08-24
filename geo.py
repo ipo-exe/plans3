@@ -133,8 +133,8 @@ def downstream_coordinates(n_dir, i, j, s_convention='ldd'):
     }
     # set dir dict
     dct_dir = dct_dirs[s_convention]
-    di = dct_dir[str(dir)]['di']
-    dj = dct_dir[str(dir)]['dj']
+    di = dct_dir[str(n_dir)]['di']
+    dj = dct_dir[str(n_dir)]['dj']
     dist = np.sqrt(np.power(di, 2) + np.power(dj, 2))
     dct_output = {
         'i': i + di,
